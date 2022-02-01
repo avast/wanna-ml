@@ -827,6 +827,23 @@ url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple
 reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
 
 [[package]]
+name = "mkdocs-click"
+version = "0.5.0"
+description = "An MkDocs extension to generate documentation for Click command line applications"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+click = ">=7,<9"
+markdown = ">=3.0.0,<4.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
 name = "mkdocs-graphviz"
 version = "1.4.4"
 description = "Render Graphviz graphs in Mkdocs, as inline SVGs and PNGs, natively compatible with Mkdocs Light & Dark Themes, directly from your Markdown (python3 version)"
@@ -1818,7 +1835,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "783c0d83a048eb8533af4c56b26079097d9164b0724bd5756b13a31a69082962"
+content-hash = "4c76ce772e87bfe3a6e75d47d2a48c6536386d436e6f660aff3655ae5ad34ec5"
 
 [metadata.files]
 arrow = [
@@ -2179,6 +2196,10 @@ mkdocs = [
 mkdocs-autorefs = [
     {file = "mkdocs-autorefs-0.3.1.tar.gz", hash = "sha256:12baad29359f468b44d980ed35b713715409097a1d8e3d0ef90962db95205eda"},
     {file = "mkdocs_autorefs-0.3.1-py3-none-any.whl", hash = "sha256:f0fd7c115eaafda7fb16bf5ff5d70eda55d7c0599eac64f8b25eacf864312a85"},
+]
+mkdocs-click = [
+    {file = "mkdocs_click-0.5.0-py3-none-any.whl", hash = "sha256:ded9c09e3a7966fba8b147bbe2a3ef0b31a21072340b8c08cd8c885da57d0746"},
+    {file = "mkdocs_click-0.5.0.tar.gz", hash = "sha256:a506983881da5e9405fdecc03351806661f433e1c2f81092fb05c9b93998c11a"},
 ]
 mkdocs-graphviz = [
     {file = "mkdocs_graphviz-1.4.4-py3-none-any.whl", hash = "sha256:c0679138f7ceface13e29dea477300f85b12df354889cb2bb34e03e27df0cd30"},
