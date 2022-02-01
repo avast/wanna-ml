@@ -3,7 +3,7 @@
 [![TeamCity](https://tc.ida.avast.com/app/rest/builds/buildType:BigDataSystem_Projects_Wanna_Publish___Release,branch:<default>/statusIcon)](https://tc.ida.avast.com/project/BigDataSystem_Projects_Wanna?mode=builds)
 [![Artifactory](https://pypi-badger.luft.avast.com/image/pypi-local/wanna)](https://artifactory.ida.avast.com/artifactory/webapp/#/artifacts/browse/tree/General/pypi-local/wanna)
 
-Wanna for managing ML on Vertex AI
+WANNA manage ML on Vertex AI :-)
 
 ### Development
 
