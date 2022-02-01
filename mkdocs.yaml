@@ -1,0 +1,39 @@
+site_name: WANNA 
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep orange
+    accent: indigo
+    features:
+      - navigation.instant
+      - navigation.tracking
+      - navigation.tabs
+      - navigation.tabs.sticky
+      - navigation.sections
+      - navigation.expand
+      - navigation.indexes
+    highlightjs: true
+    hljs_languages:
+        - yaml
+        - python
+
+nav:
+    - Home: 'index.md'
+    - 'CLI': 
+      - 'overview': 'cli/index.md'
+      - 'api': 'cli/api.md'
+      - 'commands':
+          - 'notebook': 'cli/commands/notebook.md'
+    - 'SDK': 'sdk.md'
+
+plugins:
+- search
+- mkdocstrings
+
+markdown_extensions:
+    - mkdocs-typer
+    - mkdocs_graphviz
+    - toc:
+        permalink: "#"
+        

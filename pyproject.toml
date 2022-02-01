@@ -1,0 +1,84 @@
+[tool.poetry]
+authors = ["Joao Da Silva <joao.silva1@avast.com>"]
+description = "CLI tool for managing ML projects on Vertex AI"
+name = "wanna"
+version = "0.0.0"
+packages = [
+    { include = "wanna", from = "src" },
+]
+include = ["CHANGELOG.md"]
+
+[tool.poetry.extras]
+test = ["pytest"]
+
+[tool.poetry.dependencies]
+pathvalidate = "^2.5.0"
+Jinja2 = "2.11.2"
+PyGithub = "^1.54.1"
+PyYAML = "^5.3.1"
+typer = "^0.4.0"
+docker = "^5.0.3"
+gitpython = "^3.1.26"
+python = "^3.8"
+importlib-metadata = "^4.0"
+packaging = "^21.3"
+marshmallow-dataclass = { version = "^8.5.3", extras = ["enum", "union"]}
+pyyaml-include = "^1.2.post2"
+pytest-docker = "^0.10.3"
+cookiecutter = "^1.7.3"
+
+[tool.poetry.dev-dependencies]
+mkdocs-material = "^8.1.6"
+mkdocs-graphviz = "^1.4.4"
+black = "^21.12b0"
+flake8 = "^3.8.4"
+isort = "^5.10.1"
+mypy = "^0.931"
+pre-commit = "^2.10.1"
+pytest = "^6.2.5"
+pytest-mock = "^3.6.1"
+taskipy = "^1.9.0"
+mkdocstrings = "^0.17.0"
+mkdocs-typer = "^0.0.2"
+pylint = "^2.12.2"
+
+
+[tool.poetry.scripts]
+wanna = "wanna.cli.__main__:main"
+
+[tool.pytest.ini_options]
+addopts = "--verbose -s --durations=0"
+filterwarnings = [
+    "error",
+    "ignore::UserWarning", # note the use of single quote below to denote "raw" strings in TOML
+    'ignore::DeprecationWarning',
+    'ignore::SyntaxWarning',
+    'ignore::ResourceWarning',
+]
+
+[tool.taskipy.tasks]
+docs-deploy = "mkdocs gh-deploy"
+docs-serve = "mkdocs serve"
+build = "pre-commit run --all-files"
+pre_build = "pre-commit install"
+
+[mypy]
+ignore_missing_imports = "true"
+strict = "true"
+
+[tool.black]
+extend-ignore = "E203"
+max-line-length = 120
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+
+[[tool.poetry.source]]
+default = true
+name = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple/" # URL used to download your packages from
+
+[[tool.poetry.source]]
+name = "avast-local"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/"
