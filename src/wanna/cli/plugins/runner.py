@@ -1,8 +1,8 @@
 import typer
 
-from .job.job_plugin import JobPlugin
-from .notebook.notebook_plugin import NotebookPlugin
-from .pipeline.pipeline_plugin import PipelinePlugin
+from .job_plugin import JobPlugin
+from .notebook_plugin import NotebookPlugin
+from .pipeline_plugin import PipelinePlugin
 
 
 class PluginRunner:

@@ -1,18 +1,20 @@
 from .plugins.runner import PluginRunner
 
-
 runner = PluginRunner()
-app = runner.app
 
-@app.callback()
+
+# required to get mkdocs to play nicely
+@runner.app.callback()
 def wanna():
     """
-    Main entrypoint for wanna cli 
+    Main entrypoint for wanna cli
     """
-    app.run()
+    runner.run()
+
 
 def main() -> None:
     wanna()
+
 
 if __name__ == "__main__":
     main()
