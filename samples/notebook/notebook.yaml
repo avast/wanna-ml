@@ -1,0 +1,25 @@
+wanna-project: notebook-example-1
+wanna-project-version: 1
+
+gcp:
+  project: us-burger-gcp-poc
+
+notebooks:
+  - name: my-notebook-example-1
+    location: europe-west4-a
+    machine_type: n1-standard-1
+    labels:
+    vm_image_family: common-cpu-notebooks
+    vm_image_project: deeplearning-platform-release
+    gpu:
+      count: 1
+      accelerator_type: NVIDIA_TESLA_A100
+    boot_disk:
+      disk_type: pd_standard
+      size_gb: 100
+    data_disk:
+      disk_type: pd_standard
+      size_gb: 100
+
+extra: !include includes/extra.yaml
+
