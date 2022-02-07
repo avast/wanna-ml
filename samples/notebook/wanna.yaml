@@ -1,0 +1,47 @@
+wanna_project:
+  name: notebook-example-1
+  version: 1
+
+gcp_settings:
+  project_id: us-burger-gcp-poc
+  zone: europe-west4-a
+  labels:
+  service_account:
+
+notebooks:
+  - name: my-notebook-example-1
+    #project_id: us-burger-gcp-poc
+    #zone: europe-west4-b
+    machine_type: n1-standard-2
+    labels:
+    environment:
+      vm_image:
+        framework: pytorch
+        version: 1-9-xla
+        os:
+      # container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
+    gpu:
+      count: 2
+      accelerator_type: NVIDIA_TESLA_A100
+      install_gpu_driver: false
+    boot_disk:
+      disk_type: pd_standard
+      size_gb: 100
+    data_disk:
+      disk_type: pd_standard
+      size_gb: 100
+    bucket_mount:
+      remote_path: gs://us-burger-gcp-poc-mooncloud/data
+      local_path: /mounted/gcs
+    network:
+      network_id: my-network
+      subnet:
+    tensorboard:
+      enable: true
+      log_dir: /logs/my-experiment-logs/
+    requirements:
+      # file: requirements.txt
+      package_list:
+        - numpy
+        - botocore
+  - name: my-notebook-example-2

@@ -36,7 +36,6 @@ instance_request = CreateInstanceRequest(
     instance_id="my-new-notebook",
     instance=instance,
 )
-instance_request
 
 resp = notebook_client.create_instance(instance_request)
 

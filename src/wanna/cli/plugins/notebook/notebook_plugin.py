@@ -1,6 +1,8 @@
 import typer
 
+from pathlib import Path
 from wanna.cli.plugins.base import BasePlugin
+from wanna.cli.plugins.notebook.service import NotebookService
 
 
 class NotebookPlugin(BasePlugin):
@@ -16,6 +18,7 @@ class NotebookPlugin(BasePlugin):
                 self.call_everything,
                 self.hello,
                 self.goodbye,
+                self.create
             ]
         )
 
@@ -32,6 +35,19 @@ class NotebookPlugin(BasePlugin):
     @staticmethod
     def goodbye(name: str) -> None:
         typer.echo(f"Goodbye Notebook, {name}")
+
+    @staticmethod
+    def create(
+            file: Path = typer.Option("wanna.yaml", help="Path to the wanna-ml yaml configuration")
+    ) -> None:
+        """
+        Notebook create command
+        """
+        typer.echo(f"Let us create a notebook from {file}")
+        nb = NotebookService(file)
+        nb.load_notebook_service()
+        print(nb.notebooks_instances)
+
 
     @staticmethod
     def expose_context(ctx: typer.Context) -> None:
