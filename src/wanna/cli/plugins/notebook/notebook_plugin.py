@@ -46,7 +46,6 @@ class NotebookPlugin(BasePlugin):
         typer.echo(f"Let us create a notebook from {file}")
         nb = NotebookService(file)
         nb.load_notebook_service()
-        print(nb.notebooks_instances)
 
 
     @staticmethod

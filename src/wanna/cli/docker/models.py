@@ -24,11 +24,15 @@ class DockerBuildType(Enum):
     Provided : str
         represents an already built image
         provided by the user from outside a worflow repo
+    GCPBaseImage : str
+        represents an image that will be base on Deep Learning image provided by google
+        https://cloud.google.com/deep-learning-containers/docs/overview
     """
 
     Python37 = "python37"
     Plain = "plain"
     Provided = "provided"
+    GCPBaseImage = "gcp_base_image"
 
 
 @dataclass
@@ -65,7 +69,9 @@ class DockerRef:
     volumes: List[str] = field(default_factory=list)
     env_files: List[str] = field(default_factory=list)
 
-    _volumes_pattern = re.compile("(\\/[\\/a-zA-Z0-9._-]+):(\\/[\\/\\a-zA-Z0-9._-]+)(:[ro]+)?")
+    _volumes_pattern = re.compile(
+        "(\\/[\\/a-zA-Z0-9._-]+):(\\/[\\/\\a-zA-Z0-9._-]+)(:[ro]+)?"
+    )
 
     _envs_pattern = re.compile("^(.*)=(.*)$")
 
@@ -123,7 +129,9 @@ class DockerRef:
                 clean_volumes.append("-v")
                 clean_volumes.append(volume.strip())
             else:
-                raise ValueError(f"Volume: {volume} does not match regex {self._volumes_pattern}")
+                raise ValueError(
+                    f"Volume: {volume} does not match regex {self._volumes_pattern}"
+                )
 
         # Cascade & collect docker ENVs
         all_envs = set(itertools.chain(self.environment, environment))
@@ -134,7 +142,9 @@ class DockerRef:
                 clean_envs.append("-e")
                 clean_envs.append(env.strip())
             else:
-                raise ValueError(f"Env: {env} does not match regex {self._envs_pattern}")
+                raise ValueError(
+                    f"Env: {env} does not match regex {self._envs_pattern}"
+                )
 
         # Cascade & collect docker ENV files paths
         all_env_files = set(itertools.chain(self.env_files, env_files))
@@ -198,3 +208,4 @@ class DockerBuild:
     docker_file: Optional[str] = field(default=None)
     push: Optional[bool] = field(default=True)
     build_args: Dict[str, str] = field(default_factory=dict)
+    base_image: Optional[str] = field(default=None)

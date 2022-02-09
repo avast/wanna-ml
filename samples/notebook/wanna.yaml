@@ -12,18 +12,19 @@ notebooks:
   - name: my-notebook-example-1
     #project_id: us-burger-gcp-poc
     #zone: europe-west4-b
-    machine_type: n1-standard-2
+    machine_type: n1-standard-4
     labels:
     environment:
-      vm_image:
-        framework: pytorch
-        version: 1-9-xla
-        os:
+      #vm_image:
+      #  framework: pytorch
+      #  version: 1-9-xla
       # container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
+      custom_python_container:
+        requirements_file: requirements.txt
     gpu:
-      count: 2
-      accelerator_type: NVIDIA_TESLA_A100
-      install_gpu_driver: false
+      count: 1
+      accelerator_type: NVIDIA_TESLA_V100
+      install_gpu_driver: true
     boot_disk:
       disk_type: pd_standard
       size_gb: 100
@@ -33,15 +34,10 @@ notebooks:
     bucket_mount:
       remote_path: gs://us-burger-gcp-poc-mooncloud/data
       local_path: /mounted/gcs
-    network:
-      network_id: my-network
-      subnet:
+    #network:
+    #  network_id:
+    #  subnet:
     tensorboard:
       enable: true
       log_dir: /logs/my-experiment-logs/
-    requirements:
-      # file: requirements.txt
-      package_list:
-        - numpy
-        - botocore
   - name: my-notebook-example-2

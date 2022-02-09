@@ -610,6 +610,23 @@ url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple
 reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
 
 [[package]]
+name = "google-cloud-build"
+version = "3.7.1"
+description = "Google Cloud Build API client library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+google-api-core = {version = ">=1.28.0,<3.0.0dev", extras = ["grpc"]}
+proto-plus = ">=0.4.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
 name = "google-cloud-compute"
 version = "1.0.0"
 description = ""
@@ -2183,7 +2200,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "04133e9f49d78bb10f7a5c539a5e2a13a4e87e515f4c7bf3df86a4830749825d"
+content-hash = "8c3c5787c5c302f36fc52b2a0ec8512bf7dcea7698e28fe18804a5efa2ca8d17"
 
 [metadata.files]
 arrow = [
@@ -2390,6 +2407,10 @@ google-api-core = [
 google-auth = [
     {file = "google-auth-2.6.0.tar.gz", hash = "sha256:ad160fc1ea8f19e331a16a14a79f3d643d813a69534ba9611d2c80dc10439dad"},
     {file = "google_auth-2.6.0-py2.py3-none-any.whl", hash = "sha256:218ca03d7744ca0c8b6697b6083334be7df49b7bf76a69d555962fd1a7657b5f"},
+]
+google-cloud-build = [
+    {file = "google-cloud-build-3.7.1.tar.gz", hash = "sha256:c00b5e21c62a05fe8f564c6738079528d1c488818eef1412d62f256bf6d14859"},
+    {file = "google_cloud_build-3.7.1-py2.py3-none-any.whl", hash = "sha256:6ffeec620a8490317871a305f95806c2bc7013173b6e95b075a965b34e26d679"},
 ]
 google-cloud-compute = [
     {file = "google-cloud-compute-1.0.0.tar.gz", hash = "sha256:9c849e69bc1dcdfeb499183df0de5567e6366b2019e02777f99746771aefbc0e"},

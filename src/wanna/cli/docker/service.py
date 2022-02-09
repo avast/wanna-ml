@@ -34,7 +34,9 @@ class DockerService:
             level=self.debug_level,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
-        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__, self.__class__.__name__))
+        self.logger = logging.getLogger(
+            "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
+        )
 
         self.build_dir = build_dir
         self.working_dir = working_dir
@@ -108,7 +110,9 @@ class DockerService:
                 if self.debug:
                     typer.echo(json_output["stream"].strip("\n"))
             if "errorDetail" in json_output:
-                msg = json_output["errorDetail"]["message"].replace("""\\r\\n""", "\r\n")
+                msg = json_output["errorDetail"]["message"].replace(
+                    """\\r\\n""", "\r\n"
+                )
                 raise DockerException(msg)
         else:
             typer.echo("Docker image build complete.")
@@ -144,14 +148,18 @@ class DockerService:
 
             shutil.copy2(docker_build_conda_env_src, docker_build_conda_env_dest)
 
-        if docker_build.kind == DockerBuildType.Python37:
-            template = self.jinja_env.get_template("mlops_python_template.Dockerfile")
-            docker_file_path = docker_build_dir / Path(f"{stage_name}.Dockerfile")
+        if docker_build.kind == DockerBuildType.GCPBaseImage:
+            template = self.jinja_env.get_template("notebook_template.Dockerfile")
+            docker_file_path = docker_build_dir / Path(f"{workflow_name}.Dockerfile")
 
             with open(docker_file_path, "w") as f:
                 docker_file = template.render(asdict(docker_build))
                 f.write(docker_file)
 
+            shutil.copy2(
+                docker_build.requirements_txt,
+                docker_build_dir / docker_build.requirements_txt,
+            )
             (image, repo, version) = self._build_image(
                 path=docker_build_dir,
                 docker_file_path=docker_file_path,
@@ -164,7 +172,9 @@ class DockerService:
 
         elif docker_build.kind == DockerBuildType.Plain:
             if hasattr(docker_build, "docker_file") and docker_build.docker_file:
-                docker_file_path = self.working_dir / Path(f"{docker_build.docker_file}")
+                docker_file_path = self.working_dir / Path(
+                    f"{docker_build.docker_file}"
+                )
 
                 (image, repo, version) = self._build_image(
                     path=self.working_dir,
@@ -175,7 +185,9 @@ class DockerService:
                 )
                 return (image, repo, version)
             else:
-                raise ValueError(f"{DockerBuildType.Plain} must specify a [docker_file]")
+                raise ValueError(
+                    f"{DockerBuildType.Plain} must specify a [docker_file]"
+                )
         else:
             raise ValueError(f"{docker_build.kind} must specify a [docker_file]")
 
@@ -188,13 +200,23 @@ class DockerService:
         for (_, repo, _, _) in images:
             status = ""
             self.logger.debug("docker push %s:%s", repo, workflow_version)
-            for line in self.docker_client.images.push(repo, workflow_version, stream=True, decode=True):
+            for line in self.docker_client.images.push(
+                repo, workflow_version, stream=True, decode=True
+            ):
                 self.logger.debug("%s", line)
                 new_status = line.get("status")
                 if line.get("errorDetail"):
                     msg = line["errorDetail"]["message"].replace("""\\r\\n""", "\r\n")
-                    self.logger.error("Failed to docker push %s:%s", repo, workflow_version)
+                    self.logger.error(
+                        "Failed to docker push %s:%s", repo, workflow_version
+                    )
                     raise ValueError(msg)
-                elif new_status is not None and new_status != status and not new_status.startswith("The push"):
+                elif (
+                    new_status is not None
+                    and new_status != status
+                    and not new_status.startswith("The push")
+                ):
                     status = new_status
-                    self.logger.info("docker push %s:%s is %s", repo, workflow_version, status)
+                    self.logger.info(
+                        "docker push %s:%s is %s", repo, workflow_version, status
+                    )

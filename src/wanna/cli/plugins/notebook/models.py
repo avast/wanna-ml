@@ -19,9 +19,12 @@ class Tensorboard(BaseModel, extra=Extra.forbid):
     log_dir: Path
 
 
-class Requirements(BaseModel, extra=Extra.forbid):
-    file: Optional[FilePath]
-    package_list: Optional[List[str]]
+class CustomPythonContainer(BaseModel, extra=Extra.forbid):
+    base_image: str = (
+        "gcr.io/deeplearning-platform-release/base-cpu"  # TODO: change to avast mirror
+    )
+    requirements_file: FilePath
+    build_options: Optional[List[dict]]
 
     _ = root_validator()(validators.validate_requirements)
 
@@ -51,6 +54,7 @@ class VMImage(BaseModel, extra=Extra.forbid):
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
     container_image: Optional[str]
     vm_image: Optional[VMImage]
+    custom_python_container: Optional[CustomPythonContainer]
 
     _ = root_validator(pre=True)(validators.validate_only_one_must_be_set)
 
@@ -77,7 +81,9 @@ class NotebookInstance(BaseModel, extra=Extra.forbid, validate_assignment=True):
     project_id: str
     zone: str
     machine_type: str = "n1-standard-4"
-    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
+    environment: NotebookEnvironment = NotebookEnvironment(
+        vm_image=VMImage(framework="common", version="cpu")
+    )
     tags: Optional[List[str]]
     labels: Optional[List[dict]]
     metadata: Optional[List[dict]]
@@ -88,10 +94,7 @@ class NotebookInstance(BaseModel, extra=Extra.forbid, validate_assignment=True):
     bucket_mount: Optional[BucketMount]
     network: Optional[Network]
     tensorboard: Optional[Tensorboard]
-    requirements: Optional[Requirements]
 
-    _ = validator("project_id", allow_reuse=True)(
-        validators.validate_project_id
-    )
+    _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)
     _ = validator("machine_type")(validators.validate_machine_type)
