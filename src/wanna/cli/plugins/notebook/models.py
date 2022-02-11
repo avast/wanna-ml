@@ -9,7 +9,7 @@ from pydantic import (
     root_validator,
     FilePath,
 )
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, Dict
 from pathlib import Path
 from wanna.cli.utils.gcp import validators
 
@@ -24,7 +24,7 @@ class CustomPythonContainer(BaseModel, extra=Extra.forbid):
         "gcr.io/deeplearning-platform-release/base-cpu"  # TODO: change to avast mirror
     )
     requirements_file: FilePath
-    build_options: Optional[List[dict]]
+    build_options: Optional[List[Dict]]
 
     _ = root_validator()(validators.validate_requirements)
 
@@ -37,10 +37,11 @@ class Network(BaseModel, extra=Extra.forbid):
 
 
 class BucketMount(BaseModel, extra=Extra.forbid):
-    remote_path: Path
+    bucket_name: str
+    bucket_dir: Path
     local_path: Path
 
-    _ = validator("remote_path")(validators.validate_bucket_name)
+    _ = validator("bucket_name")(validators.validate_bucket_name)
 
 
 class VMImage(BaseModel, extra=Extra.forbid):
@@ -85,13 +86,14 @@ class NotebookInstance(BaseModel, extra=Extra.forbid, validate_assignment=True):
         vm_image=VMImage(framework="common", version="cpu")
     )
     tags: Optional[List[str]]
-    labels: Optional[List[dict]]
-    metadata: Optional[List[dict]]
+    labels: Optional[Dict[str, str]]
+    metadata: Optional[List[Dict]]
     service_account: Optional[EmailStr]
+    instance_owner: Optional[EmailStr]
     gpu: Optional[NotebookGPU]
     boot_disk: Optional[NotebookDisk]
     data_disk: Optional[NotebookDisk]
-    bucket_mount: Optional[BucketMount]
+    bucket_mounts: Optional[List[BucketMount]]
     network: Optional[Network]
     tensorboard: Optional[Tensorboard]
 

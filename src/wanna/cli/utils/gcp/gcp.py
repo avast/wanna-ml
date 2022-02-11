@@ -1,6 +1,7 @@
 from google.cloud.compute import MachineTypesClient, ZonesClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
+from google.cloud import storage
 import re
 
 
@@ -33,3 +34,23 @@ def get_available_compute_image_families(
             if family_must_contain in image.family
         ]
     return [parse_image_name_family(image.family) for image in all_images]
+
+
+def upload_file_to_gcs(
+    filename: str, bucket_name: str, blob_name: str
+) -> storage.blob.Blob:
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_filename(filename)
+    return blob
+
+
+def upload_string_to_gcs(
+    data: str, bucket_name: str, blob_name: str
+) -> storage.blob.Blob:
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_string(data)
+    return blob

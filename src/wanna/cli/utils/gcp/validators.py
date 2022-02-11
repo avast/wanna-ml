@@ -13,9 +13,7 @@ from wanna.cli.utils.gcp.gcp import (
 def validate_zone(zone, values):
     available_zones = get_available_zones(project_id=values.get("project_id"))
     if not zone in available_zones:
-        raise ValueError(
-            f"Location invalid ({zone}). must be on of: {available_zones}"
-        )
+        raise ValueError(f"Location invalid ({zone}). must be on of: {available_zones}")
     return zone
 
 
@@ -50,8 +48,7 @@ def validate_network_name(network_name):
     return network_name
 
 
-def validate_bucket_name(remote_path):
-    bucket_name = str(remote_path).lstrip("gs://").partition("/")[0]
+def validate_bucket_name(bucket_name):
     try:
         exists = storage.Client().bucket(bucket_name).exists()
         if not exists:
@@ -60,7 +57,7 @@ def validate_bucket_name(remote_path):
         logging.warning(
             f"Your user does not have permission to access bucket {bucket_name}"
         )
-    return remote_path
+    return bucket_name
 
 
 def validate_vm_image(cls, v):

@@ -18,7 +18,7 @@ class NotebookPlugin(BasePlugin):
                 self.call_everything,
                 self.hello,
                 self.goodbye,
-                self.create
+                self.create,
             ]
         )
 
@@ -38,7 +38,9 @@ class NotebookPlugin(BasePlugin):
 
     @staticmethod
     def create(
-            file: Path = typer.Option("wanna.yaml", help="Path to the wanna-ml yaml configuration")
+        file: Path = typer.Option(
+            "wanna.yaml", help="Path to the wanna-ml yaml configuration"
+        )
     ) -> None:
         """
         Notebook create command
@@ -46,7 +48,7 @@ class NotebookPlugin(BasePlugin):
         typer.echo(f"Let us create a notebook from {file}")
         nb = NotebookService(file)
         nb.load_notebook_service()
-
+        nb.create()
 
     @staticmethod
     def expose_context(ctx: typer.Context) -> None:
