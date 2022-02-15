@@ -18,7 +18,7 @@ from wanna.cli.docker.service import DockerService
 from wanna.cli.plugins.notebook.models import NotebookInstance
 from wanna.cli.utils import loaders
 from wanna.cli.utils import templates
-from wanna.cli.utils.gcp.gcp import upload_string_to_gcs
+from wanna.cli.utils.gcp.gcp import upload_string_to_gcs, construct_vm_image_family_from_vm_image
 from wanna.cli.utils.gcp.models import WannaProject, GCPSettings
 from wanna.cli.utils.spinners import Spinner
 
@@ -228,26 +228,6 @@ class NotebookService:
             )
         return instances
 
-    def _construct_vm_image_family_from_vm_image(
-        self, framework: str, version: str, os: str
-    ) -> str:
-        """
-        Construct name of the Compute Engine VM family with given framework(eg. pytorch), version(eg. 1-9-xla)
-        and optional OS (eg. debian-10).
-
-        Args:
-            framework (str): VM image framework (pytorch, r, tf2, ...)
-            version (str): Version of the framework
-            os (str): operation system
-
-        Returns:
-            object: Compute Engine VM Family name
-        """
-        if os:
-            return f"{framework}-{version}-notebooks-{os}"
-        else:
-            return f"{framework}-{version}-notebooks"
-
     def _create_instance_request(
         self, notebook_instance: NotebookInstance
     ) -> CreateInstanceRequest:
@@ -308,7 +288,7 @@ class NotebookService:
         else:
             vm_image = VmImage(
                 project=f"deeplearning-platform-release",
-                image_family=self._construct_vm_image_family_from_vm_image(
+                image_family=construct_vm_image_family_from_vm_image(
                     notebook_instance.environment.vm_image.framework,
                     notebook_instance.environment.vm_image.version,
                     notebook_instance.environment.vm_image.os,

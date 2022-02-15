@@ -5,7 +5,8 @@ DEFAULT_SPINNER = "dots"  # Choose one of https://github.com/manrajgrover/py-spi
 
 class Spinner(Halo):
     """
-    This class builds on top of https://github.com/manrajgrover/halo spinner.
+    This class builds on top of https://github.com/manrajgrover/halo spinner and adds the automatic
+    succeeding and failing.
     """
 
     def __init__(self, **kwargs):

@@ -19,13 +19,13 @@ notebooks:
     #labels:
     #  - notebook_usecase: testing
     environment:
-      #vm_image:
-      #  framework: pytorch
-      #  version: 1-9-xla
+      vm_image:
+        framework: tf2
+        version: 1-9-xla
         # os: debian
       #container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
-      custom_python_container:
-        requirements_file: requirements.txt
+      #custom_python_container:
+      #  requirements_file: requirements.txt
     #gpu:
     #  count: 1
     #  accelerator_type: NVIDIA_TESLA_V100
