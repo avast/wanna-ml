@@ -157,7 +157,7 @@ class DockerService:
                 f.write(docker_file)
 
             shutil.copy2(
-                docker_build.requirements_txt,
+                work_dir / docker_build.requirements_txt,
                 docker_build_dir / docker_build.requirements_txt,
             )
             (image, repo, version) = self._build_image(

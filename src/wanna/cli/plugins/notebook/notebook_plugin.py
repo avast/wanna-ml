@@ -17,7 +17,7 @@ class NotebookPlugin(BasePlugin):
                 self.expose_context,
                 self.call_everything,
                 self.hello,
-                self.goodbye,
+                self.delete,
                 self.create,
             ]
         )
@@ -33,22 +33,36 @@ class NotebookPlugin(BasePlugin):
         typer.echo(f"Hello Notebook, {name}")
 
     @staticmethod
-    def goodbye(name: str) -> None:
-        typer.echo(f"Goodbye Notebook, {name}")
+    def delete(
+        file: Path = typer.Option(
+            "wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"
+        ),
+        notebook_name: str = typer.Option(
+            "all", "--notebook-name", "-n", help="Specify only one notebook from your wanna-ml yaml configuration to delete. Choose 'all' to delete all notebooks."
+        )
+    ) -> None:
+        """
+        Notebook delete command
+        """
+        nb_service = NotebookService()
+        nb_service.load_config_from_yaml(file)
+        nb_service.delete(notebook_name)
 
     @staticmethod
     def create(
         file: Path = typer.Option(
-            "wanna.yaml", help="Path to the wanna-ml yaml configuration"
+            "wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"
+        ),
+        notebook_name: str = typer.Option(
+            "all", "--notebook-name", "-n", help="Specify only one notebook from your wanna-ml yaml configuration to create. Choose 'all' to create all notebooks."
         )
     ) -> None:
         """
         Notebook create command
         """
-        typer.echo(f"Let us create a notebook from {file}")
-        nb = NotebookService(file)
-        nb.load_notebook_service()
-        nb.create()
+        nb_service = NotebookService()
+        nb_service.load_config_from_yaml(file)
+        nb_service.create(notebook_name)
 
     @staticmethod
     def expose_context(ctx: typer.Context) -> None:
@@ -57,4 +71,3 @@ class NotebookPlugin(BasePlugin):
     def call_everything(self, ctx: typer.Context, name: str) -> None:
         self.hello(name)
         self.expose_context(ctx)
-        self.goodbye(name)

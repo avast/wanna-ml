@@ -1,16 +1,15 @@
+from pathlib import Path
+from typing import Optional, Literal, List, Dict
+
 from pydantic import (
     BaseModel,
-    ValidationError,
     Extra,
     constr,
     conint,
     validator,
     EmailStr,
     root_validator,
-    FilePath,
 )
-from typing import Optional, Literal, List, Dict
-from pathlib import Path
 from wanna.cli.utils.gcp import validators
 
 
@@ -23,7 +22,7 @@ class CustomPythonContainer(BaseModel, extra=Extra.forbid):
     base_image: str = (
         "gcr.io/deeplearning-platform-release/base-cpu"  # TODO: change to avast mirror
     )
-    requirements_file: FilePath
+    requirements_file: Path
     build_options: Optional[List[Dict]]
 
     _ = root_validator()(validators.validate_requirements)
