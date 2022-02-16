@@ -20,7 +20,7 @@ notebooks:
     #  - notebook_usecase: testing
     environment:
       vm_image:
-        framework: tf2
+        framework: pytorch
         version: 1-9-xla
         # os: debian
       #container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest

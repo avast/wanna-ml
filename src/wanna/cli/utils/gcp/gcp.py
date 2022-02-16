@@ -10,8 +10,8 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
     """
     Get available GCP Compute Engine Machine Types based on project and zone.
     Args:
-        project (str): GCP project id
-        zone (str): GCP project location (zone)
+        project_id: GCP project id
+        zone: GCP project location (zone)
 
     Returns:
         list of available machine types
@@ -24,7 +24,7 @@ def get_available_zones(project_id: str) -> List[str]:
     """
     Get available GCP zones based on project.
     Args:
-        project (str): GCP project id
+        project_id: GCP project id
 
     Returns:
         list of available zones
@@ -52,13 +52,13 @@ def parse_image_name_family(name) -> Dict:
 
 
 def get_available_compute_image_families(
-    project_id: str, filter: str = None, family_must_contain: str = None
+    project: str, filter: str = None, family_must_contain: str = None
 ) -> List[Dict]:
     """
     List available Compute Engine VM image families.
 
     Args:
-        project_id: GCP Project ID
+        project: VM Image project ID
         filter: filter for the images https://googleapis.dev/python/compute/latest/compute_v1/types.html#google.cloud.compute_v1.types.ListImagesRequest.filter
         family_must_contain: additional string that must be a part of the image family name for easier filtering
                                 (eg. notebook to filter only the Vertex AI Workbench notebook-ready images)
@@ -66,7 +66,7 @@ def get_available_compute_image_families(
     Returns:
         List of dicts from parse_image_name_family
     """
-    list_images_request = ListImagesRequest(project=project_id, filter=filter)
+    list_images_request = ListImagesRequest(project=project, filter=filter)
     all_images = ImagesClient().list(list_images_request)
     if family_must_contain:
         return [
@@ -85,9 +85,9 @@ def construct_vm_image_family_from_vm_image(
     and optional OS (eg. debian-10).
 
     Args:
-        framework (str): VM image framework (pytorch, r, tf2, ...)
-        version (str): Version of the framework
-        os (str): operation system
+        framework: VM image framework (pytorch, r, tf2, ...)
+        version: Version of the framework
+        os: operation system
 
     Returns:
         object: Compute Engine VM Family name
@@ -105,9 +105,9 @@ def upload_file_to_gcs(
     Upload file to GCS bucket
 
     Args:
-        filename (str): local file
-        bucket_name (str):
-        blob_name (str):
+        filename: local file
+        bucket_name:
+        blob_name:
 
     Returns:
         storage.blob.Blob
@@ -125,9 +125,9 @@ def upload_string_to_gcs(
     """
     Upload a string to GCS bucket without saving it locally as a file.
     Args:
-        data (str): string that will form a file on GCS
-        bucket_name (str):
-        blob_name (str):
+        data: string that will form a file on GCS
+        bucket_name:
+        blob_name:
 
     Returns:
         storage.blob.Blob

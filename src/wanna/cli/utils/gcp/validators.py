@@ -19,7 +19,7 @@ def validate_zone(zone, values):
 
 def validate_machine_type(machine_type, values):
     available_machine_types = get_available_compute_machine_types(
-        project=values.get("project_id"), zone=values.get("zone")
+        project_id=values.get("project_id"), zone=values.get("zone")
     )
     if not machine_type in available_machine_types:
         raise ValueError(
@@ -38,7 +38,7 @@ def validate_requirements(cls, v):
 
 def validate_network_name(network_name):
     if not re.match(
-        "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z0-9-]+)$", network_name
+            "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z0-9-]+)$", network_name
     ):
         if not re.match("^[a-z0-9-]+$", network_name):
             raise ValueError(

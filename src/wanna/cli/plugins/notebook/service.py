@@ -38,7 +38,7 @@ class NotebookService:
         Create a Vertex AI workbench notebook with name notebook_name based on wanna-ml config.
 
         Args:
-            notebook_name (str): The name of the only notebook from wanna-ml config that should be created.
+            notebook_name: The name of the only notebook from wanna-ml config that should be created.
                                  Set to "all" to create all notebooks from configuration.
         """
         instances = self._filter_notebooks_by_name(notebook_name)
@@ -51,7 +51,7 @@ class NotebookService:
         Delete a Vertex AI workbench notebook with name notebook_name based on wanna-ml config if exists on GCP.
 
         Args:
-            notebook_name (str): The name of the only notebook from wanna-ml config that should be deleted.
+            notebook_name: The name of the only notebook from wanna-ml config that should be deleted.
                                  Set to "all" to create all notebooks from configuration.
         """
         instances = self._filter_notebooks_by_name(notebook_name)
@@ -63,7 +63,7 @@ class NotebookService:
                 instance_name=instance.name,
             )
             if exists:
-                with Spinner(text=f"Deleting notebook {instance}"):
+                with Spinner(text=f"Deleting notebook {instance.name}"):
                     self._delete_one_instance(instance)
             else:
                 typer.echo(
@@ -75,7 +75,7 @@ class NotebookService:
         Delete one notebook instance. This assumes that it has been already verified that notebook exists.
 
         Args:
-            notebook_instance (NotebookInstance): notebook to delete
+            notebook_instance: notebook to delete
         """
 
         deleted = self.notebook_client.delete_instance(
@@ -93,7 +93,7 @@ class NotebookService:
         5. Get and print the link to JupyterLab
 
         Args:
-            notebook_instance (NotebookInstance): notebook to be created
+            notebook_instance: notebook to be created
 
         """
         exists = self._instance_exists(
@@ -133,7 +133,7 @@ class NotebookService:
         This also includes the data validation.
 
         Args:
-            wanna_config_path (Path): path to the wanna-ml yaml file
+            wanna_config_path: path to the wanna-ml yaml file
         """
 
         with Spinner(text="Reading and validating yaml config"):
@@ -157,7 +157,7 @@ class NotebookService:
         notebook. The values as at the notebook instance take precedence over general wanna-ml settings.
 
         Args:
-            nb_instance (dict): dict with values from wanna-ml config from one notebook
+            nb_instance: dict with values from wanna-ml config from one notebook
 
         Returns:
             dict: nb_distance enriched with general gcp_settings if those information was not set on notebook level
@@ -172,11 +172,11 @@ class NotebookService:
         List all notebooks with given project_id and location.
 
         Args:
-            project_id (str): GCP project ID
-            location (str): GCP location (zone)
+            project_id: GCP project ID
+            location: GCP location (zone)
 
         Returns:
-            instace_names (List[str]): List of the full names on notebook instances (this includes project_id, and zone)
+            instace_names: List of the full names on notebook instances (this includes project_id, and zone)
 
         """
         instances = self.notebook_client.list_instances(
@@ -191,9 +191,9 @@ class NotebookService:
         """
         Check if the instance with given instance_name exists in given GCP project project_id and location.
         Args:
-            project_id (str): GCP project ID
-            location (str): GCP location (zone)
-            instance_name (str): Notebook name to verify
+            project_id: GCP project ID
+            location: GCP location (zone)
+            instance_name: Notebook name to verify
 
         Returns:
             True if notebook exists, False if not
@@ -208,10 +208,10 @@ class NotebookService:
         From self.notebooks_instances filter only the instances with name notebook_name.
 
         Args:
-            notebook_name (str): Name of the notebook to return. Set to "all" to return all instances.
+            notebook_name: Name of the notebook to return. Set to "all" to return all instances.
 
         Returns:
-            List[NotebookInstance]
+            instances
 
         """
         if notebook_name == "all":
@@ -236,7 +236,7 @@ class NotebookService:
         to the form suitable for GCP API.
 
         Args:
-            notebook_instance (NotebookInstance)
+            notebook_instance
 
         Returns:
             CreateInstanceRequest
@@ -368,7 +368,7 @@ class NotebookService:
         Get the default labels (GCP labels) that will be used with all notebooks.
 
         Returns:
-            dict
+            default labels
         """
         return {
             "wanna_project": self.wanna_project.name,
@@ -384,10 +384,10 @@ class NotebookService:
         This script run at the Compute Engine Instance creation time with a root user.
 
         Args:
-            nb_instance (NotebookInstance)
+            nb_instance
 
         Returns:
-            startup_script (str)
+            startup_script
         """
         bucket_mounts = nb_instance.bucket_mounts
         startup_script = templates.render_template(
@@ -458,8 +458,8 @@ class NotebookService:
         Validate if the given notebook instance is in given state.
 
         Args:
-            instance_id (str): Full notebook instance id
-            state (Instance.State): Notebook state (ACTIVE, PENDING,...)
+            instance_id: Full notebook instance id
+            state: Notebook state (ACTIVE, PENDING,...)
 
         Returns:
             True if desired state, False otherwise
@@ -476,10 +476,10 @@ class NotebookService:
         """
         Get a link to jupyterlab proxy based on given notebook instance id.
         Args:
-            instance_id (str): full notebook instance id
+            instance_id: full notebook instance id
 
         Returns:
-            proxy_uri (str): link to jupyterlab
+            proxy_uri: link to jupyterlab
         """
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return instance_info.proxy_uri
