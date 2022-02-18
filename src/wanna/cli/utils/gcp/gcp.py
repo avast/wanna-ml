@@ -2,8 +2,36 @@ from google.cloud.compute import MachineTypesClient, ZonesClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud import storage
+import google.auth
 from typing import List, Dict
+import subprocess
 import re
+
+
+def get_current_local_gcp_project_id() -> str:
+    """
+    Get current local GCP default project.
+
+    Returns:
+        project_id: your current local GCP default project
+    """
+    _, project_id = google.auth.default()
+    return project_id
+
+
+def get_current_local_user_account() -> str:
+    """
+    Get current logged in GCP account from local environment.
+
+    Returns:
+        account: email address of the service or user account
+                 eg. terraform-mlops@us-burger-gcp-poc.iam.gserviceaccount.com
+                 or john.doe@avast.com
+    """
+    # If anyone finds a way how to do it with python SDK, I will be forever grateful
+    cmd = "gcloud config list --format value(core.account)".split(" ")
+    process = subprocess.run(cmd, capture_output=True, text=True)
+    return process.stdout.strip()
 
 
 def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]:

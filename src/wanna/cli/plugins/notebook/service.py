@@ -18,7 +18,11 @@ from wanna.cli.docker.service import DockerService
 from wanna.cli.plugins.notebook.models import NotebookInstance
 from wanna.cli.utils import loaders
 from wanna.cli.utils import templates
-from wanna.cli.utils.gcp.gcp import upload_string_to_gcs, construct_vm_image_family_from_vm_image
+from wanna.cli.utils.gcp.gcp import (
+    upload_string_to_gcs,
+    construct_vm_image_family_from_vm_image,
+    get_current_local_user_account,
+)
 from wanna.cli.utils.gcp.models import WannaProject, GCPSettings
 from wanna.cli.utils.spinners import Spinner
 
@@ -176,7 +180,7 @@ class NotebookService:
             location: GCP location (zone)
 
         Returns:
-            instace_names: List of the full names on notebook instances (this includes project_id, and zone)
+            instance_names: List of the full names on notebook instances (this includes project_id, and zone)
 
         """
         instances = self.notebook_client.list_instances(
@@ -315,11 +319,12 @@ class NotebookService:
 
         # service account and instance owners
         service_account = notebook_instance.service_account
-        instance_owners = (
-            [notebook_instance.instance_owner]
-            if notebook_instance.instance_owner
-            else None
-        )
+        if notebook_instance.open_to_other_users:
+            instance_owners = None
+        else:
+            instance_owners = [
+                notebook_instance.instance_owner or get_current_local_user_account()
+            ]
 
         # labels and tags
         tags = notebook_instance.tags

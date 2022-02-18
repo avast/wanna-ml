@@ -13,11 +13,6 @@ from pydantic import (
 from wanna.cli.utils.gcp import validators
 
 
-class Tensorboard(BaseModel, extra=Extra.forbid):
-    enable: bool = False
-    log_dir: Path
-
-
 class CustomPythonContainer(BaseModel, extra=Extra.forbid):
     base_image: str = (
         "gcr.io/deeplearning-platform-release/base-cpu"  # TODO: change to avast mirror
@@ -88,13 +83,13 @@ class NotebookInstance(BaseModel, extra=Extra.forbid, validate_assignment=True):
     labels: Optional[Dict[str, str]]
     metadata: Optional[List[Dict]]
     service_account: Optional[EmailStr]
+    open_to_other_users: bool = False
     instance_owner: Optional[EmailStr]
     gpu: Optional[NotebookGPU]
     boot_disk: Optional[NotebookDisk]
     data_disk: Optional[NotebookDisk]
     bucket_mounts: Optional[List[BucketMount]]
     network: Optional[Network]
-    tensorboard: Optional[Tensorboard]
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)
