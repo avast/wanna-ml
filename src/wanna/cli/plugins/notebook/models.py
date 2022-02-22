@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional, Literal, List, Dict
+from wanna.cli.plugins.base.base_model import BaseInstanceModel
 
 from pydantic import (
     BaseModel,
@@ -69,7 +70,7 @@ class NotebookGPU(BaseModel, extra=Extra.forbid):
     _ = validator("accelerator_type")(validators.validate_accelerator_type)
 
 
-class NotebookInstance(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class NotebookModel(BaseInstanceModel, extra=Extra.forbid, validate_assignment=True):
     name: constr(
         min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
     )

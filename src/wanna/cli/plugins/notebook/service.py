@@ -15,66 +15,26 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from waiting import wait
 from wanna.cli.docker.models import DockerBuild, DockerBuildType
 from wanna.cli.docker.service import DockerService
-from wanna.cli.plugins.notebook.models import NotebookInstance
-from wanna.cli.utils import loaders
+from wanna.cli.plugins.notebook.models import NotebookModel
 from wanna.cli.utils import templates
 from wanna.cli.utils.gcp.gcp import (
     upload_string_to_gcs,
     construct_vm_image_family_from_vm_image,
     get_current_local_user_account,
 )
-from wanna.cli.utils.gcp.models import WannaProject, GCPSettings
 from wanna.cli.utils.spinners import Spinner
+
+from wanna.cli.plugins.base.base_service import BaseService
 
 GCS_BUCKET_NAME = "wanna-ml"
 
 
-class NotebookService:
+class NotebookService(BaseService):
     def __init__(self):
-        self.wanna_config_path = None
-        self.wanna_project = None
-        self.gcp_settings = None
-        self.notebooks_instances = []
+        super().__init__(instance_type="notebook", wanna_config_section="notebooks", instance_model=NotebookModel)
         self.notebook_client = NotebookServiceClient()
 
-    def create(self, notebook_name: str) -> None:
-        """
-        Create a Vertex AI workbench notebook with name notebook_name based on wanna-ml config.
-
-        Args:
-            notebook_name: The name of the only notebook from wanna-ml config that should be created.
-                                 Set to "all" to create all notebooks from configuration.
-        """
-        instances = self._filter_notebooks_by_name(notebook_name)
-
-        for instance in instances:
-            self._create_one_instance(instance)
-
-    def delete(self, notebook_name: str) -> None:
-        """
-        Delete a Vertex AI workbench notebook with name notebook_name based on wanna-ml config if exists on GCP.
-
-        Args:
-            notebook_name: The name of the only notebook from wanna-ml config that should be deleted.
-                                 Set to "all" to create all notebooks from configuration.
-        """
-        instances = self._filter_notebooks_by_name(notebook_name)
-
-        for instance in instances:
-            exists = self._instance_exists(
-                project_id=instance.project_id,
-                location=instance.zone,
-                instance_name=instance.name,
-            )
-            if exists:
-                with Spinner(text=f"Deleting notebook {instance.name}"):
-                    self._delete_one_instance(instance)
-            else:
-                typer.echo(
-                    f"Notebook with name {instance.name} was not found in zone {instance.zone}"
-                )
-
-    def _delete_one_instance(self, notebook_instance: NotebookInstance) -> None:
+    def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
         Delete one notebook instance. This assumes that it has been already verified that notebook exists.
 
@@ -82,16 +42,17 @@ class NotebookService:
             notebook_instance: notebook to delete
         """
 
-        deleted = self.notebook_client.delete_instance(
+        with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
+            deleted = self.notebook_client.delete_instance(
             name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
-        )
-        deleted.result()
+            )
+            deleted.result()
 
-    def _create_one_instance(self, notebook_instance: NotebookInstance) -> None:
+    def _create_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
-        Create a notebook instance based on information in NotebookInstance class.
+        Create a notebook instance based on information in NotebookModel class.
         1. Check if the notebook already exists
-        2. Parse the information from NotebookInstance to GCP API friendly format = instance_request
+        2. Parse the information from NotebookModel to GCP API friendly format = instance_request
         3. Wait for the compute instance behind the notebook to start
         4. Wait for JupyterLab to start
         5. Get and print the link to JupyterLab
@@ -100,15 +61,16 @@ class NotebookService:
             notebook_instance: notebook to be created
 
         """
-        exists = self._instance_exists(
-            notebook_instance.project_id, notebook_instance.zone, notebook_instance.name
-        )
+        exists = self._instance_exists(notebook_instance)
         if exists:
-            # TODO: prompt user for request if they want to restart the instance or not
             typer.echo(
                 f"Instance {notebook_instance.name} already exists in location {notebook_instance.zone}"
             )
-            return
+            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
+            if should_recreate:
+                self._delete_one_instance(notebook_instance)
+            else:
+                return
         with Spinner(
             text=f"Creating underlying compute engine instance for {notebook_instance.name}"
         ):
@@ -131,46 +93,6 @@ class NotebookService:
             jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
         typer.echo(f"\N{party popper} JupyterLab started at {jupyterlab_link}")
 
-    def load_config_from_yaml(self, wanna_config_path: Path) -> None:
-        """
-        Load the yaml file from wanna_config_path and parses the information to the models.
-        This also includes the data validation.
-
-        Args:
-            wanna_config_path: path to the wanna-ml yaml file
-        """
-
-        with Spinner(text="Reading and validating yaml config"):
-            self.wanna_config_path = wanna_config_path
-            with open(self.wanna_config_path) as f:
-                # Load workflow file
-                wanna_dict = loaders.load_yaml(f, Path("."))
-            self.wanna_project = WannaProject.parse_obj(wanna_dict.get("wanna_project"))
-            self.gcp_settings = GCPSettings.parse_obj(wanna_dict.get("gcp_settings"))
-
-            for nb_instance in wanna_dict.get("notebooks"):
-                instance = NotebookInstance.parse_obj(
-                    self._enrich_nb_info_with_gcp_settings_dict(nb_instance)
-                )
-                self.notebooks_instances.append(instance)
-
-    def _enrich_nb_info_with_gcp_settings_dict(self, nb_instance: dict) -> dict:
-        """
-        The dictionary nb_instance is updated with values from gcp_settings. This allows you to set values such as
-        project_id and zone only on the wanna-ml config level but also give you the freedom to set separately for each
-        notebook. The values as at the notebook instance take precedence over general wanna-ml settings.
-
-        Args:
-            nb_instance: dict with values from wanna-ml config from one notebook
-
-        Returns:
-            dict: nb_distance enriched with general gcp_settings if those information was not set on notebook level
-
-        """
-        nb_info = self.gcp_settings.dict().copy()
-        nb_info.update(nb_instance)
-        return nb_info
-
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
         List all notebooks with given project_id and location.
@@ -189,54 +111,25 @@ class NotebookService:
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
-    def _instance_exists(
-        self, project_id: str, location: str, instance_name: str
-    ) -> bool:
+    def _instance_exists(self, instance: NotebookModel) -> bool:
         """
         Check if the instance with given instance_name exists in given GCP project project_id and location.
         Args:
-            project_id: GCP project ID
-            location: GCP location (zone)
-            instance_name: Notebook name to verify
+            instance: notebook to verify if exists on GCP
 
         Returns:
             True if notebook exists, False if not
         """
-        full_instance_name = (
-            f"projects/{project_id}/locations/{location}/instances/{instance_name}"
+        full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
+        return full_instance_name in self._list_running_instances(
+            instance.project_id, instance.zone
         )
-        return full_instance_name in self._list_running_instances(project_id, location)
-
-    def _filter_notebooks_by_name(self, notebook_name: str) -> List[NotebookInstance]:
-        """
-        From self.notebooks_instances filter only the instances with name notebook_name.
-
-        Args:
-            notebook_name: Name of the notebook to return. Set to "all" to return all instances.
-
-        Returns:
-            instances
-
-        """
-        if notebook_name == "all":
-            instances = self.notebooks_instances
-            if not instances:
-                typer.echo(f"No notebook can be parsed from your wanna-ml yaml config.")
-        else:
-            instances = [
-                nb for nb in self.notebooks_instances if nb.name == notebook_name
-            ]
-        if not instances:
-            typer.echo(
-                f"Notebook with name {notebook_name} not found in your wanna-ml yaml config."
-            )
-        return instances
 
     def _create_instance_request(
-        self, notebook_instance: NotebookInstance
+        self, notebook_instance: NotebookModel
     ) -> CreateInstanceRequest:
         """
-        Transform the information about desired notebook from our NotebookInstance model (based on yaml config)
+        Transform the information about desired notebook from our NotebookModel model (based on yaml config)
         to the form suitable for GCP API.
 
         Args:
@@ -333,7 +226,7 @@ class NotebookService:
 
         # post startup script
         if notebook_instance.bucket_mounts:
-            script = self._prepare_startup_script(self.notebooks_instances[0])
+            script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
                 GCS_BUCKET_NAME,
@@ -368,22 +261,7 @@ class NotebookService:
             instance=instance,
         )
 
-    def _get_default_labels(self) -> dict:
-        """
-        Get the default labels (GCP labels) that will be used with all notebooks.
-
-        Returns:
-            default labels
-        """
-        return {
-            "wanna_project": self.wanna_project.name,
-            "wanna_project_version": str(self.wanna_project.version),
-            "wanna_project_author": self.wanna_project.author.partition("@")[0].replace(
-                ".", "_"
-            ),
-        }
-
-    def _prepare_startup_script(self, nb_instance: NotebookInstance) -> str:
+    def _prepare_startup_script(self, nb_instance: NotebookModel) -> str:
         """
         Prepare the notebook startup script based on the information from notebook.
         This script run at the Compute Engine Instance creation time with a root user.
@@ -405,7 +283,7 @@ class NotebookService:
         self,
         image_name: str,
         image_version: str,
-        notebook_instance: NotebookInstance,
+        notebook_instance: NotebookModel,
         docker_repository="eu.gcr.io/",
         build_args: dict = {},
     ) -> dict:

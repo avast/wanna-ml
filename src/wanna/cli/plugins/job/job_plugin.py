@@ -1,6 +1,6 @@
 import typer
 
-from wanna.cli.plugins.base import BasePlugin
+from wanna.cli.plugins.base.base_plugin import BasePlugin
 
 
 class JobPlugin(BasePlugin):

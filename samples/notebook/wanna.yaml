@@ -23,10 +23,10 @@ notebooks:
       vm_image:
         framework: pytorch
         version: 1-9-xla
-        # os: debian
+        #os: debian
       #container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
       #custom_python_container:
-      #  requirements_file: requirements.txt
+       # requirements_file: requirements.txt
     #gpu:
     #  count: 1
     #  accelerator_type: NVIDIA_TESLA_V100
@@ -45,3 +45,10 @@ notebooks:
     #  network_id:
     #  subnet:
   - name: my-notebook-example-2
+
+tensorboards:
+  - name: my-super-tensorboard
+    project_id:
+    location:
+    labels:
+  - name: my-ugly-tensorboard

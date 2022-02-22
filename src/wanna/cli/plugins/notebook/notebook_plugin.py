@@ -1,7 +1,7 @@
 import typer
 
 from pathlib import Path
-from wanna.cli.plugins.base import BasePlugin
+from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.notebook.service import NotebookService
 
 

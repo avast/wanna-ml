@@ -1,4 +1,4 @@
-from google.cloud.compute import MachineTypesClient, ZonesClient
+from google.cloud.compute import MachineTypesClient, ZonesClient, RegionsClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud import storage
@@ -59,6 +59,34 @@ def get_available_zones(project_id: str) -> List[str]:
     """
     response = ZonesClient().list(project=project_id)
     return [zone.name for zone in response.items]
+
+
+def get_available_regions(project_id: str) -> List[str]:
+    """
+    Get available GCP regions based on project.
+    Args:
+        project_id: GCP project id
+
+    Returns:
+        list of available regions
+    """
+    response = RegionsClient().list(project=project_id)
+    return [region.name for region in response.items]
+
+
+def get_region_from_zone(project_id: str, zone: str) -> str:
+    """
+    Get available GCP region from zone.
+    Args:
+        project_id: GCP project id
+        zone: GCP zone
+
+    Returns:
+        region: GCP region
+    """
+    region_fullname = ZonesClient().get(project=project_id, zone=zone).region
+    region = region_fullname.split("/")[-1]
+    return region
 
 
 def parse_image_name_family(name) -> Dict:

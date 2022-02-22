@@ -7,14 +7,22 @@ from wanna.cli.utils.gcp.gcp import (
     get_available_compute_image_families,
     get_available_compute_machine_types,
     get_available_zones,
+    get_available_regions,
 )
 
 
 def validate_zone(zone, values):
     available_zones = get_available_zones(project_id=values.get("project_id"))
     if not zone in available_zones:
-        raise ValueError(f"Location invalid ({zone}). must be on of: {available_zones}")
+        raise ValueError(f"Zone invalid ({zone}). must be on of: {available_zones}")
     return zone
+
+
+def validate_region(region, values):
+    available_regions = get_available_regions(project_id=values.get("project_id"))
+    if not region in available_regions:
+        raise ValueError(f"Zone invalid ({region}). must be on of: {available_regions}")
+    return region
 
 
 def validate_machine_type(machine_type, values):
@@ -38,7 +46,7 @@ def validate_requirements(cls, v):
 
 def validate_network_name(network_name):
     if not re.match(
-            "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z0-9-]+)$", network_name
+        "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z0-9-]+)$", network_name
     ):
         if not re.match("^[a-z0-9-]+$", network_name):
             raise ValueError(
