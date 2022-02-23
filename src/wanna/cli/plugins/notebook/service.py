@@ -24,14 +24,18 @@ from wanna.cli.utils.gcp.gcp import (
 )
 from wanna.cli.utils.spinners import Spinner
 
-from wanna.cli.plugins.base.base_service import BaseService
+from wanna.cli.plugins.base.service import BaseService
 
 GCS_BUCKET_NAME = "wanna-ml"
 
 
 class NotebookService(BaseService):
     def __init__(self):
-        super().__init__(instance_type="notebook", wanna_config_section="notebooks", instance_model=NotebookModel)
+        super().__init__(
+            instance_type="notebook",
+            wanna_config_section="notebooks",
+            instance_model=NotebookModel,
+        )
         self.notebook_client = NotebookServiceClient()
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
@@ -44,7 +48,7 @@ class NotebookService(BaseService):
 
         with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
             deleted = self.notebook_client.delete_instance(
-            name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
+                name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
             )
             deleted.result()
 
@@ -66,7 +70,9 @@ class NotebookService(BaseService):
             typer.echo(
                 f"Instance {notebook_instance.name} already exists in location {notebook_instance.zone}"
             )
-            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
+            should_recreate = typer.confirm(
+                "Are you sure you want to delete it and start a new?"
+            )
             if should_recreate:
                 self._delete_one_instance(notebook_instance)
             else:
@@ -118,7 +124,7 @@ class NotebookService(BaseService):
             instance: notebook to verify if exists on GCP
 
         Returns:
-            True if notebook exists, False if not
+            True if exists, False if not
         """
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
         return full_instance_name in self._list_running_instances(
@@ -222,7 +228,6 @@ class NotebookService(BaseService):
         # labels and tags
         tags = notebook_instance.tags
         labels = notebook_instance.labels if notebook_instance.labels else {}
-        labels.update(self._get_default_labels())
 
         # post startup script
         if notebook_instance.bucket_mounts:

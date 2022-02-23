@@ -31,7 +31,7 @@ def validate_machine_type(machine_type, values):
     )
     if not machine_type in available_machine_types:
         raise ValueError(
-            f"Location invalid ({machine_type}). must be on of: {available_machine_types}"
+            f"Machine type invalid ({machine_type}). must be on of: {available_machine_types}"
         )
     return machine_type
 

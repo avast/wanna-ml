@@ -1,11 +1,13 @@
+import re
+import subprocess
+from typing import List, Dict
+
+import google.auth
+from google.cloud import storage
 from google.cloud.compute import MachineTypesClient, ZonesClient, RegionsClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
-from google.cloud import storage
-import google.auth
-from typing import List, Dict
-import subprocess
-import re
+from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 
 def get_current_local_gcp_project_id() -> str:
@@ -89,6 +91,21 @@ def get_region_from_zone(project_id: str, zone: str) -> str:
     return region
 
 
+def convert_project_id_to_project_number(project_id: str) -> str:
+    """
+    Convert GCP project_id (eg. 'us-burger-gcp-poc') to project_number (eg. '966197297054')
+
+    Args:
+        project_id: GCP project id
+
+    Returns:
+        project_number: GCP project number
+    """
+    project_name = ProjectsClient().get_project(name=f"projects/{project_id}").name
+    project_number = re.sub("projects/", "", project_name)
+    return project_number
+
+
 def parse_image_name_family(name) -> Dict:
     """
     Based on GCP Compute Engine VM Image name family (eg. tf2-2-7-cu113-notebooks-debian-10)
@@ -137,8 +154,8 @@ def construct_vm_image_family_from_vm_image(
     framework: str, version: str, os: str
 ) -> str:
     """
-    Construct name of the Compute Engine VM family with given framework(eg. pytorch), version(eg. 1-9-xla)
-    and optional OS (eg. debian-10).
+    Construct name of the Compute Engine VM family with given framework(eg. pytorch),
+    version(eg. 1-9-xla) and optional OS (eg. debian-10).
 
     Args:
         framework: VM image framework (pytorch, r, tf2, ...)
@@ -150,8 +167,7 @@ def construct_vm_image_family_from_vm_image(
     """
     if os:
         return f"{framework}-{version}-notebooks-{os}"
-    else:
-        return f"{framework}-{version}-notebooks"
+    return f"{framework}-{version}-notebooks"
 
 
 def upload_file_to_gcs(

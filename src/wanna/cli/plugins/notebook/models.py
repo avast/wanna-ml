@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Optional, Literal, List, Dict
-from wanna.cli.plugins.base.base_model import BaseInstanceModel
 
 from pydantic import (
     BaseModel,
@@ -11,6 +10,7 @@ from pydantic import (
     EmailStr,
     root_validator,
 )
+from wanna.cli.plugins.base.models import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
 
@@ -74,14 +74,12 @@ class NotebookModel(BaseInstanceModel, extra=Extra.forbid, validate_assignment=T
     name: constr(
         min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
     )
-    project_id: str
     zone: str
     machine_type: str = "n1-standard-4"
     environment: NotebookEnvironment = NotebookEnvironment(
         vm_image=VMImage(framework="common", version="cpu")
     )
     tags: Optional[List[str]]
-    labels: Optional[Dict[str, str]]
     metadata: Optional[List[Dict]]
     service_account: Optional[EmailStr]
     open_to_other_users: bool = False

@@ -1,30 +1,37 @@
 from pathlib import Path
-from typing import List, Type
+from typing import List, Type, Dict
 from abc import ABCMeta, abstractmethod
 import typer
 
-from wanna.cli.plugins.base.base_model import BaseInstanceModel
+from wanna.cli.plugins.base.models import BaseInstanceModel, WannaProjectModel
 from wanna.cli.utils import loaders
-from wanna.cli.utils.gcp.models import WannaProject, GCPSettings
+from wanna.cli.utils.gcp.models import GCPSettingsModel
 from wanna.cli.utils.spinners import Spinner
 
 
 class BaseService:
     """
-    This is a base service and every other service (notebooks, jobs, pipelines,...) should build on top of this.
-    It implements some basic function (create, delete) and utils for loading the wanna config.
+    This is a base service and every other service (notebooks, jobs, pipelines,...)
+    should build on top of this. It implements some basic function (create, delete)
+    and utils for loading the wanna config.
 
     Args:
         instance_type: what are you working with (notebook, job, tensorboard) - used mainly in logging
         wanna_config_section: section of wanna-ml yaml config to read
         instance_model: pydantic instance model
     """
-    def __init__(self, instance_type: str, wanna_config_section: str, instance_model: Type[BaseInstanceModel]):
+
+    def __init__(
+        self,
+        instance_type: str,
+        wanna_config_section: str,
+        instance_model: Type[BaseInstanceModel],
+    ):
         __metaclass__ = ABCMeta
         self.wanna_config_path: Path
         self.wanna_config_section = wanna_config_section
-        self.wanna_project: WannaProject
-        self.gcp_settings: GCPSettings
+        self.wanna_project: WannaProjectModel
+        self.gcp_settings: GCPSettingsModel
         self.instances: List[BaseInstanceModel] = []
         self.instance_type = instance_type
         self.InstanceModel = instance_model
@@ -63,10 +70,16 @@ class BaseService:
 
     @abstractmethod
     def _delete_one_instance(self, instance: BaseInstanceModel) -> None:
+        """
+        Abstract class. Should delete one instance based on one model (eg. delete one notebook).
+        """
         ...
 
     @abstractmethod
     def _create_one_instance(self, instance: BaseInstanceModel) -> None:
+        """
+        Abstract class. Should create one instance based on one model (eg. create one notebook).
+        """
         ...
 
     def load_config_from_yaml(self, wanna_config_path: Path) -> None:
@@ -80,16 +93,22 @@ class BaseService:
 
         with Spinner(text="Reading and validating yaml config"):
             self.wanna_config_path = wanna_config_path
-            with open(self.wanna_config_path) as f:
+            with open(self.wanna_config_path) as file:
                 # Load workflow file
-                wanna_dict = loaders.load_yaml(f, Path("."))
-            self.wanna_project = WannaProject.parse_obj(wanna_dict.get("wanna_project"))
-            self.gcp_settings = GCPSettings.parse_obj(wanna_dict.get("gcp_settings"))
+                wanna_dict = loaders.load_yaml(file, Path("."))
+            self.wanna_project = WannaProjectModel.parse_obj(
+                wanna_dict.get("wanna_project")
+            )
+            self.gcp_settings = GCPSettingsModel.parse_obj(
+                wanna_dict.get("gcp_settings")
+            )
+            default_labels = self._generate_default_labels()
 
             for instance_dict in wanna_dict.get(self.wanna_config_section):
                 instance = self.InstanceModel.parse_obj(
                     self._enrich_instance_info_with_gcp_settings_dict(instance_dict)
                 )
+                instance = self._add_labels(instance, default_labels)
                 self.instances.append(instance)
 
     def _enrich_instance_info_with_gcp_settings_dict(self, instance_dict: dict) -> dict:
@@ -110,9 +129,7 @@ class BaseService:
         return instance_info
 
     @abstractmethod
-    def _instance_exists(
-            self, instance: BaseInstanceModel
-    ) -> bool:
+    def _instance_exists(self, instance: BaseInstanceModel) -> bool:
         """
         Abstract method to find it this instance already exists on GCP.
 
@@ -138,18 +155,36 @@ class BaseService:
         if instance_name == "all":
             instances = self.instances
             if not instances:
-                typer.echo(f"No {self.instance_type} can be parsed from your wanna-ml yaml config.")
+                typer.echo(
+                    f"No {self.instance_type} can be parsed from your wanna-ml yaml config."
+                )
         else:
-            instances = [
-                nb for nb in self.instances if nb.name == instance_name
-            ]
+            instances = [nb for nb in self.instances if nb.name == instance_name]
         if not instances:
             typer.echo(
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config."
             )
         return instances
 
-    def _get_default_labels(self) -> dict:
+    @staticmethod
+    def _add_labels(
+        instance: BaseInstanceModel, new_labels: Dict[str, str]
+    ) -> BaseInstanceModel:
+        """
+        Add new labels to the instance model.
+        Args:
+            instance: BaseInstanceModel
+            new_labels: new labels to be added
+
+        Returns:
+            new_instance: BaseInstanceModel with added labels
+        """
+        labels = instance.labels or {}
+        labels.update(new_labels)
+        instance.labels = labels
+        return instance
+
+    def _generate_default_labels(self) -> Dict[str, str]:
         """
         Get the default labels (GCP labels) that will be used with all instances.
 
