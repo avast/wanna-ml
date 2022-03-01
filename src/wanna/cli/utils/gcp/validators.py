@@ -1,7 +1,7 @@
 import logging
 import re
 from google.api_core import exceptions
-from google.cloud import storage
+from google.cloud.storage import Client as StorageClient
 from google.cloud.notebooks_v1.types.instance import Instance
 from wanna.cli.utils.gcp.gcp import (
     get_available_compute_image_families,
@@ -21,7 +21,9 @@ def validate_zone(zone, values):
 def validate_region(region, values):
     available_regions = get_available_regions(project_id=values.get("project_id"))
     if not region in available_regions:
-        raise ValueError(f"Zone invalid ({region}). must be on of: {available_regions}")
+        raise ValueError(
+            f"Region invalid ({region}). must be on of: {available_regions}"
+        )
     return region
 
 
@@ -46,9 +48,9 @@ def validate_requirements(cls, v):
 
 def validate_network_name(network_name):
     if not re.match(
-        "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z0-9-]+)$", network_name
+        "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z][a-z0-9-]+)$", network_name
     ):
-        if not re.match("^[a-z0-9-]+$", network_name):
+        if not re.match("^[a-z][a-z0-9-]+$", network_name):
             raise ValueError(
                 "Invalid format of network name. Either use the full name of VPC network 'projects/{project_id}/global/networks/{network_id}'"
                 "or just '{network_id}'. In the second case, the project_id will be parsed from notebook settings."
@@ -58,9 +60,9 @@ def validate_network_name(network_name):
 
 def validate_bucket_name(bucket_name):
     try:
-        exists = storage.Client().bucket(bucket_name).exists()
-        if not exists:
-            raise ValueError(f"Bucket with name {bucket_name} does not exist")
+        bucket = StorageClient().get_bucket(bucket_name)
+    except exceptions.NotFound:
+        raise ValueError(f"Bucket with name {bucket_name} does not exist")
     except exceptions.Forbidden as e:
         logging.warning(
             f"Your user does not have permission to access bucket {bucket_name}"
@@ -120,7 +122,7 @@ def validate_disk_type(disk_type):
     disk_type = disk_type.upper()
     if not disk_type in Instance.DiskType.__members__:
         raise ValueError(
-            f"GPU accelerator type invalid ({type}). must be on of: {Instance.DiskType._member_names_}"
+            f"Disk type invalid ({type}). must be on of: {Instance.DiskType._member_names_}"
         )
     return disk_type
 

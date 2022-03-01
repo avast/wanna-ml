@@ -20,7 +20,6 @@ from wanna.cli.utils import templates
 from wanna.cli.utils.gcp.gcp import (
     upload_string_to_gcs,
     construct_vm_image_family_from_vm_image,
-    get_current_local_user_account,
 )
 from wanna.cli.utils.spinners import Spinner
 
@@ -172,9 +171,9 @@ class NotebookService(BaseService):
                 repository=notebook_instance.environment.container_image.partition(":")[
                     0
                 ],
-                tag=notebook_instance.environment.container_image.partition(":")[1],
+                tag=notebook_instance.environment.container_image.partition(":")[-1],
             )
-        elif notebook_instance.environment.custom_python_container:
+        elif notebook_instance.environment.custom_container:
             vm_image = None
             typer.echo(
                 "\n Building docker image. This may take a while, stretch your legs or get a \N{hot beverage}"
@@ -183,6 +182,7 @@ class NotebookService(BaseService):
                 image_name=f"{self.wanna_project.name}/{notebook_instance.name}",
                 image_version=self.wanna_project.version,
                 notebook_instance=notebook_instance,
+                docker_repository="eu.gcr.io/",
             )
             container_image = ContainerImage(
                 repository=container_image_info.get("repository"),
@@ -218,12 +218,7 @@ class NotebookService(BaseService):
 
         # service account and instance owners
         service_account = notebook_instance.service_account
-        if notebook_instance.open_to_other_users:
-            instance_owners = None
-        else:
-            instance_owners = [
-                notebook_instance.instance_owner or get_current_local_user_account()
-            ]
+        instance_owners = [notebook_instance.instance_owner] or None
 
         # labels and tags
         tags = notebook_instance.tags
@@ -289,11 +284,11 @@ class NotebookService(BaseService):
         image_name: str,
         image_version: str,
         notebook_instance: NotebookModel,
-        docker_repository="eu.gcr.io/",
+        docker_repository: str,
         build_args: dict = {},
     ) -> dict:
         """
-        Build and puck a docker image.
+        Build and push a docker image.
 
         Args:
             image_name:
@@ -323,8 +318,8 @@ class NotebookService(BaseService):
         )
         build = DockerBuild(
             kind=DockerBuildType.GCPBaseImage,
-            base_image=notebook_instance.environment.custom_python_container.base_image,
-            requirements_txt=notebook_instance.environment.custom_python_container.requirements_file,
+            base_image=notebook_instance.environment.custom_container.base_image,
+            requirements_txt=notebook_instance.environment.custom_container.requirements_file,
         )
         full_image_name = (
             f"{notebook_instance.project_id}/vertex-ai-notebooks/{image_name}"
@@ -353,7 +348,7 @@ class NotebookService(BaseService):
             True if desired state, False otherwise
         """
         try:
-            instance_info = self.notebook_client.get_instance({"name": instance_id})
+            instance_info = self.notebook_client.get_instance(name=instance_id)
         except exceptions.NotFound:
             raise exceptions.NotFound(
                 f"Notebook {instance_id} was not found."

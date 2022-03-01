@@ -49,6 +49,10 @@ class TensorboardService(BaseService):
 
         """
         if self._instance_exists(instance):
+            existing_instance = self._find_tensorboard_by_display_name(instance)
+            typer.echo(
+                f"Tensorboard {instance.name} already exists and is running at {existing_instance.resource_name}"
+            )
             should_recreate = typer.confirm(
                 "Are you sure you want to delete it and start a new?"
             )
@@ -64,6 +68,8 @@ class TensorboardService(BaseService):
                 project=instance.project_id,
                 location=instance.region,
             )
+        created = self._find_tensorboard_by_display_name(instance)
+        typer.echo(f"Tensorboard {instance.name} is running at {created.resource_name}")
 
     def _find_tensorboard_by_display_name(
         self, instance: TensorboardModel
@@ -80,11 +86,7 @@ class TensorboardService(BaseService):
         for running_tensorboard in self._list_running_instances(
             instance.project_id, instance.region
         ):
-            if (
-                running_tensorboard.project == instance.project_id
-                and running_tensorboard.location == instance.region
-                and running_tensorboard.display_name == instance.name
-            ):
+            if running_tensorboard.display_name == instance.name:
                 return running_tensorboard
         return None
 
@@ -99,13 +101,10 @@ class TensorboardService(BaseService):
             True is we find a match, False otherwise
         """
         found = self._find_tensorboard_by_display_name(instance)
-        if found:
-            typer.echo(f"Instance {instance.name} exists at {found.resource_name}")
         return found is not None
 
-    def _list_running_instances(
-        self, project_id: str, region: str
-    ) -> List[Tensorboard]:
+    @staticmethod
+    def _list_running_instances(project_id: str, region: str) -> List[Tensorboard]:
         """
         List all tensorboards with given project_id and region
 

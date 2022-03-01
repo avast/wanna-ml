@@ -42,6 +42,7 @@ markupsafe = "2.0.0"
 jinja2 = "2.11.2"
 pylint-pydantic = "^0.1.4"
 emoji = "^1.6.3"
+mock = "^4.0.3"
 
 [tool.poetry.dev-dependencies]
 mkdocs-material = "^8.1.6"

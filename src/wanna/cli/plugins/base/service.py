@@ -193,7 +193,7 @@ class BaseService:
         """
         return {
             "wanna_project": self.wanna_project.name,
-            "wanna_project_version": str(self.wanna_project.version),
+            "wanna_project_version": str(self.wanna_project.version).replace(".", "__"),
             "wanna_project_author": self.wanna_project.author.partition("@")[0].replace(
                 ".", "_"
             ),

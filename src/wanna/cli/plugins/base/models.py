@@ -11,7 +11,7 @@ from wanna.cli.utils.gcp import validators
 
 class WannaProjectModel(BaseModel, extra=Extra.forbid):
     name: str
-    version: int
+    version: float
     author: EmailStr
 
 
@@ -24,6 +24,8 @@ class BaseInstanceModel(BaseModel, extra=Extra.forbid, validate_assignment=True)
     description: Optional[str]
     service_account: Optional[EmailStr]
 
-    _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
-    _ = validator("zone", allow_reuse=True)(validators.validate_zone)
-    _ = validator("region", allow_reuse=True)(validators.validate_region)
+    _project_id = validator("project_id", allow_reuse=True)(
+        validators.validate_project_id
+    )
+    _zone = validator("zone", allow_reuse=True)(validators.validate_zone)
+    _region = validator("region", allow_reuse=True)(validators.validate_region)
