@@ -10,7 +10,7 @@ from pydantic import (
     EmailStr,
     root_validator,
 )
-from wanna.cli.plugins.base.models import BaseInstanceModel
+from wanna.cli.models.base_instance import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
 

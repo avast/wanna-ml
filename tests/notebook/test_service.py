@@ -1,7 +1,7 @@
 from wanna.cli.plugins.notebook.service import NotebookService
 from google.cloud.notebooks_v1.types import Instance
 from tests.mocks import mocks
-from wanna.cli.plugins.notebook.models import (
+from wanna.cli.models.notebook import (
     NotebookModel,
     Network,
     NotebookGPU,

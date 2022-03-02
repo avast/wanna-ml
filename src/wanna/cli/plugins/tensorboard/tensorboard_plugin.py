@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
 class TensorboardPlugin(BasePlugin):
@@ -38,8 +39,9 @@ class TensorboardPlugin(BasePlugin):
         """
         Tensorboard delete command
         """
+        config = load_config_from_yaml(file)
         tb_service = TensorboardService()
-        tb_service.load_config_from_yaml(file)
+        tb_service.load_config(config)
         tb_service.delete(instance_name)
 
     @staticmethod
@@ -58,6 +60,7 @@ class TensorboardPlugin(BasePlugin):
         """
         Tensorboard create command
         """
+        config = load_config_from_yaml(file)
         tb_service = TensorboardService()
-        tb_service.load_config_from_yaml(file)
+        tb_service.load_config(config)
         tb_service.create(instance_name)

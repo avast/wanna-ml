@@ -77,19 +77,16 @@ def get_available_regions(project_id: str) -> List[str]:
     return [region.name for region in response.items]
 
 
-def get_region_from_zone(project_id: str, zone: str) -> str:
+def get_region_from_zone(zone: str) -> str:
     """
     Get available GCP region from zone.
     Args:
-        project_id: GCP project id
         zone: GCP zone
 
     Returns:
         region: GCP region
     """
-    region_fullname = ZonesClient().get(project=project_id, zone=zone).region
-    region = region_fullname.split("/")[-1]
-    return region
+    return zone.rpartition("-")[0]
 
 
 def convert_project_id_to_project_number(project_id: str) -> str:

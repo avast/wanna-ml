@@ -28,7 +28,7 @@ class GCPSettingsModel(BaseModel, extra=Extra.forbid):
             values.get("project_id"),
         )
         if (region is None) and (zone is not None):
-            values["region"] = get_region_from_zone(project_id, zone)
+            values["region"] = get_region_from_zone(zone)
         return values
 
     _ = validator("region", allow_reuse=True)(validators.validate_region)

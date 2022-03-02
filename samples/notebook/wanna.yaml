@@ -9,7 +9,7 @@ gcp_settings:
   labels:
   service_account:
 
-docker: #TODO
+# docker: #TODO
 
 notebooks:
   - name: my-notebook-example-1
@@ -21,13 +21,13 @@ notebooks:
     labels:
       notebook_usecase: testing
     environment:
-      #vm_image:
-      #  framework: pytorch
-      #  version: 1-9-xla
+      vm_image:
+        framework: pytorch
+        version: 1-9-xla
         #os: debian
       #container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
-      custom_container:
-        requirements_file: requirements.txt
+      #custom_container:
+      #  requirements_file: requirements.txt
     #gpu:
     #  count: 1
     #  accelerator_type: NVIDIA_TESLA_V100

@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.notebook.service import NotebookService
+from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
 class NotebookPlugin(BasePlugin):
@@ -38,8 +39,9 @@ class NotebookPlugin(BasePlugin):
         """
         Notebook delete command
         """
+        config = load_config_from_yaml(file)
         nb_service = NotebookService()
-        nb_service.load_config_from_yaml(file)
+        nb_service.load_config(config)
         nb_service.delete(instance_name)
 
     @staticmethod
@@ -58,6 +60,7 @@ class NotebookPlugin(BasePlugin):
         """
         Notebook create command
         """
+        config = load_config_from_yaml(file)
         nb_service = NotebookService()
-        nb_service.load_config_from_yaml(file)
+        nb_service.load_config(config)
         nb_service.create(instance_name)

@@ -15,27 +15,29 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from waiting import wait
 from wanna.cli.docker.models import DockerBuild, DockerBuildType
 from wanna.cli.docker.service import DockerService
-from wanna.cli.plugins.notebook.models import NotebookModel
+from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.utils import templates
 from wanna.cli.utils.gcp.gcp import (
     upload_string_to_gcs,
     construct_vm_image_family_from_vm_image,
 )
 from wanna.cli.utils.spinners import Spinner
-
+from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 
-GCS_BUCKET_NAME = "wanna-ml"
+GCS_BUCKET_NAME = "wanna-ml"  # TODO: read from env variable or settings
 
 
 class NotebookService(BaseService):
     def __init__(self):
         super().__init__(
             instance_type="notebook",
-            wanna_config_section="notebooks",
             instance_model=NotebookModel,
         )
         self.notebook_client = NotebookServiceClient()
+
+    def load_config(self, config: WannaConfigModel):
+        self.instances = config.notebooks
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -218,7 +220,11 @@ class NotebookService(BaseService):
 
         # service account and instance owners
         service_account = notebook_instance.service_account
-        instance_owners = [notebook_instance.instance_owner] or None
+        instance_owners = (
+            [notebook_instance.instance_owner]
+            if notebook_instance.instance_owner
+            else None
+        )
 
         # labels and tags
         tags = notebook_instance.tags

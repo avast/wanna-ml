@@ -1,8 +1,6 @@
 from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.plugins.tensorboard.models import TensorboardModel
-from pydantic.error_wrappers import ValidationError
+from wanna.cli.models.tensorboard import TensorboardModel
 from tests.mocks import mocks
-import pytest
 
 
 def test_find_tensorboard_by_display_name(mocker):

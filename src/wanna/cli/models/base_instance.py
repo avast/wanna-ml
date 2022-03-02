@@ -9,12 +9,6 @@ from pydantic import (
 from wanna.cli.utils.gcp import validators
 
 
-class WannaProjectModel(BaseModel, extra=Extra.forbid):
-    name: str
-    version: float
-    author: EmailStr
-
-
 class BaseInstanceModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     name: str
     project_id: str

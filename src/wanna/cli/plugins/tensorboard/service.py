@@ -1,11 +1,11 @@
 import logging
 from typing import List, Union
-
+from wanna.cli.models.wanna_config import WannaConfigModel
 import typer
 from google.cloud import aiplatform
 from google.cloud.aiplatform.tensorboard.tensorboard_resource import Tensorboard
 from wanna.cli.plugins.base.service import BaseService
-from wanna.cli.plugins.tensorboard.models import TensorboardModel
+from wanna.cli.models.tensorboard import TensorboardModel
 from wanna.cli.utils.spinners import Spinner
 
 logger = logging.getLogger("google.cloud")
@@ -16,9 +16,11 @@ class TensorboardService(BaseService):
     def __init__(self):
         super().__init__(
             instance_type="tensorboard",
-            wanna_config_section="tensorboards",
             instance_model=TensorboardModel,
         )
+
+    def load_config(self, config: WannaConfigModel):
+        self.instances = config.tensorboards
 
     def _delete_one_instance(self, instance: TensorboardModel) -> None:
         """

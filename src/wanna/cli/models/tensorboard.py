@@ -1,10 +1,8 @@
 from pydantic import (
     Extra,
     constr,
-    validator,
 )
-from wanna.cli.plugins.base.models import BaseInstanceModel
-from wanna.cli.utils.gcp import validators
+from wanna.cli.models.base_instance import BaseInstanceModel
 
 
 class TensorboardModel(BaseInstanceModel, extra=Extra.forbid, validate_assignment=True):

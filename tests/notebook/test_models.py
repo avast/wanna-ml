@@ -1,4 +1,4 @@
-from wanna.cli.plugins.notebook.models import (
+from wanna.cli.models.notebook import (
     Network,
     NotebookEnvironment,
     NotebookDisk,
@@ -88,7 +88,7 @@ class TestNotebookModel:
             model = NotebookGPU.parse_obj({"count": 1, "accelerator_type": gpu_type})
 
     def test_notebook_invalid_machine_type(self):
-        machine_type = "dobry-stroj-chcu"
+        machine_type = "expelliarmus"
         with pytest.raises(ValidationError) as e_info:
             model = NotebookModel.parse_obj(
                 {

@@ -1,12 +1,7 @@
-from pathlib import Path
 from typing import List, Type, Dict
 from abc import ABCMeta, abstractmethod
 import typer
-
-from wanna.cli.plugins.base.models import BaseInstanceModel, WannaProjectModel
-from wanna.cli.utils import loaders
-from wanna.cli.utils.gcp.models import GCPSettingsModel
-from wanna.cli.utils.spinners import Spinner
+from wanna.cli.models.base_instance import BaseInstanceModel
 
 
 class BaseService:
@@ -17,21 +12,15 @@ class BaseService:
 
     Args:
         instance_type: what are you working with (notebook, job, tensorboard) - used mainly in logging
-        wanna_config_section: section of wanna-ml yaml config to read
         instance_model: pydantic instance model
     """
 
     def __init__(
         self,
         instance_type: str,
-        wanna_config_section: str,
         instance_model: Type[BaseInstanceModel],
     ):
         __metaclass__ = ABCMeta
-        self.wanna_config_path: Path
-        self.wanna_config_section = wanna_config_section
-        self.wanna_project: WannaProjectModel
-        self.gcp_settings: GCPSettingsModel
         self.instances: List[BaseInstanceModel] = []
         self.instance_type = instance_type
         self.InstanceModel = instance_model
@@ -82,52 +71,6 @@ class BaseService:
         """
         ...
 
-    def load_config_from_yaml(self, wanna_config_path: Path) -> None:
-        """
-        Load the yaml file from wanna_config_path and parses the information to the models.
-        This also includes the data validation.
-
-        Args:
-            wanna_config_path: path to the wanna-ml yaml file
-        """
-
-        with Spinner(text="Reading and validating yaml config"):
-            self.wanna_config_path = wanna_config_path
-            with open(self.wanna_config_path) as file:
-                # Load workflow file
-                wanna_dict = loaders.load_yaml(file, Path("."))
-            self.wanna_project = WannaProjectModel.parse_obj(
-                wanna_dict.get("wanna_project")
-            )
-            self.gcp_settings = GCPSettingsModel.parse_obj(
-                wanna_dict.get("gcp_settings")
-            )
-            default_labels = self._generate_default_labels()
-
-            for instance_dict in wanna_dict.get(self.wanna_config_section):
-                instance = self.InstanceModel.parse_obj(
-                    self._enrich_instance_info_with_gcp_settings_dict(instance_dict)
-                )
-                instance = self._add_labels(instance, default_labels)
-                self.instances.append(instance)
-
-    def _enrich_instance_info_with_gcp_settings_dict(self, instance_dict: dict) -> dict:
-        """
-        The dictionary instance_dict is updated with values from gcp_settings. This allows you to set values such as
-        project_id and zone only on the wanna-ml config level but also give you the freedom to set separately for each
-        notebook, jobs, etc. The values as at the instance level take precedence over general wanna-ml settings.
-
-        Args:
-            instance_dict: dict with values from wanna-ml config from one instance (one job, one notebook)
-
-        Returns:
-            dict: enriched with general gcp_settings if those information was not set on instance level
-
-        """
-        instance_info = self.gcp_settings.dict().copy()
-        instance_info.update(instance_dict)
-        return instance_info
-
     @abstractmethod
     def _instance_exists(self, instance: BaseInstanceModel) -> bool:
         """
@@ -165,36 +108,3 @@ class BaseService:
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config."
             )
         return instances
-
-    @staticmethod
-    def _add_labels(
-        instance: BaseInstanceModel, new_labels: Dict[str, str]
-    ) -> BaseInstanceModel:
-        """
-        Add new labels to the instance model.
-        Args:
-            instance: BaseInstanceModel
-            new_labels: new labels to be added
-
-        Returns:
-            new_instance: BaseInstanceModel with added labels
-        """
-        labels = instance.labels or {}
-        labels.update(new_labels)
-        instance.labels = labels
-        return instance
-
-    def _generate_default_labels(self) -> Dict[str, str]:
-        """
-        Get the default labels (GCP labels) that will be used with all instances.
-
-        Returns:
-            default labels
-        """
-        return {
-            "wanna_project": self.wanna_project.name,
-            "wanna_project_version": str(self.wanna_project.version).replace(".", "__"),
-            "wanna_project_author": self.wanna_project.author.partition("@")[0].replace(
-                ".", "_"
-            ),
-        }
