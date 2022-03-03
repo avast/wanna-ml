@@ -1,7 +1,7 @@
 wanna_project:
   name: notebook-example-1
   version: 1
-  author: michal.mrazek@avast.com
+  authors: [michal.mrazek@avast.com]
 
 gcp_settings:
   project_id: us-burger-gcp-poc

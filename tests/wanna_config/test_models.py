@@ -25,8 +25,8 @@ class TestWannaConfigModel:
         self.wanna_config_dict = {
             "wanna_project": {
                 "name": "hogwarts-owl",
-                "version": "1",
-                "author": "luna.lovegood@avast.com",
+                "version": "1.2.3",
+                "authors": ["luna.lovegood@avast.com"],
             },
             "gcp_settings": {"project_id": "gcp-project", "zone": "us-east1-a"},
             "notebooks": [
@@ -40,8 +40,8 @@ class TestWannaConfigModel:
         assert wanna_config.notebooks[0].labels.get("grade") == "a"
         assert wanna_config.notebooks[0].labels.get("wanna_project") == "hogwarts-owl"
         assert (
-            wanna_config.notebooks[0].labels.get("wanna_project_author")
-            == "luna_lovegood"
+            wanna_config.notebooks[0].labels.get("wanna_project_authors")
+            == "luna-lovegood"
         )
 
     def test_parameters_propagation_dont_overwrite_if_exist(self):

@@ -32,8 +32,11 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
     return {
         "wanna_project": wanna_project.name,
         "wanna_project_version": str(wanna_project.version).replace(".", "__"),
-        "wanna_project_author": wanna_project.author.partition("@")[0].replace(
-            ".", "_"
+        "wanna_project_authors": "_".join(
+            [
+                author.partition("@")[0].replace(".", "-")
+                for author in wanna_project.authors
+            ]
         ),
     }
 

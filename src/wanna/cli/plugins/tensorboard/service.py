@@ -14,13 +14,11 @@ logger.setLevel(logging.ERROR)
 
 
 class TensorboardService(BaseService):
-    def __init__(self):
+    def __init__(self, config: WannaConfigModel):
         super().__init__(
             instance_type="tensorboard",
             instance_model=TensorboardModel,
         )
-
-    def load_config(self, config: WannaConfigModel):
         self.instances = config.tensorboards
 
     def _delete_one_instance(self, instance: TensorboardModel) -> None:

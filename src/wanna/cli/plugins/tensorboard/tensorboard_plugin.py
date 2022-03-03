@@ -40,8 +40,7 @@ class TensorboardPlugin(BasePlugin):
         Tensorboard delete command
         """
         config = load_config_from_yaml(file)
-        tb_service = TensorboardService()
-        tb_service.load_config(config)
+        tb_service = TensorboardService(config=config)
         tb_service.delete(instance_name)
 
     @staticmethod
@@ -61,6 +60,5 @@ class TensorboardPlugin(BasePlugin):
         Tensorboard create command
         """
         config = load_config_from_yaml(file)
-        tb_service = TensorboardService()
-        tb_service.load_config(config)
+        tb_service = TensorboardService(config=config)
         tb_service.create(instance_name)

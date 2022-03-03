@@ -3,9 +3,10 @@ from pydantic import (
     EmailStr,
     Extra,
 )
+from typing import List
 
 
 class WannaProjectModel(BaseModel, extra=Extra.forbid):
     name: str
-    version: float
-    author: EmailStr
+    version: str
+    authors: List[EmailStr]

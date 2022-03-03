@@ -29,16 +29,14 @@ GCS_BUCKET_NAME = "wanna-ml"  # TODO: read from env variable or settings
 
 
 class NotebookService(BaseService):
-    def __init__(self):
+    def __init__(self, config: WannaConfigModel):
         super().__init__(
             instance_type="notebook",
             instance_model=NotebookModel,
         )
-        self.notebook_client = NotebookServiceClient()
-
-    def load_config(self, config: WannaConfigModel):
         self.instances = config.notebooks
         self.wanna_project = config.wanna_project
+        self.notebook_client = NotebookServiceClient()
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -237,7 +235,7 @@ class NotebookService(BaseService):
             blob = upload_string_to_gcs(
                 script,
                 GCS_BUCKET_NAME,
-                f"notebooks/{notebook_instance.name}/startup_script.sh",
+                f"{self.wanna_project.name}/notebooks/{notebook_instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
         else:
@@ -339,7 +337,7 @@ class NotebookService(BaseService):
             build,
         )
         docker_service.push([(image, repository, "", build)], image_version)
-        return {"repository": repository, "version": str(image_version)}
+        return {"repository": repository, "version": image_version}
 
     def _validate_jupyterlab_state(
         self, instance_id: str, state: Instance.State
