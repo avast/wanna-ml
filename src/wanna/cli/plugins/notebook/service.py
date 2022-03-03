@@ -16,14 +16,14 @@ from waiting import wait
 from wanna.cli.docker.models import DockerBuild, DockerBuildType
 from wanna.cli.docker.service import DockerService
 from wanna.cli.models.notebook import NotebookModel
+from wanna.cli.models.wanna_config import WannaConfigModel
+from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils import templates
 from wanna.cli.utils.gcp.gcp import (
     upload_string_to_gcs,
     construct_vm_image_family_from_vm_image,
 )
 from wanna.cli.utils.spinners import Spinner
-from wanna.cli.models.wanna_config import WannaConfigModel
-from wanna.cli.plugins.base.service import BaseService
 
 GCS_BUCKET_NAME = "wanna-ml"  # TODO: read from env variable or settings
 
@@ -38,6 +38,7 @@ class NotebookService(BaseService):
 
     def load_config(self, config: WannaConfigModel):
         self.instances = config.notebooks
+        self.wanna_project = config.wanna_project
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """

@@ -1,5 +1,6 @@
-from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.models.tensorboard import TensorboardModel
+from wanna.cli.plugins.tensorboard.service import TensorboardService
+
 from tests.mocks import mocks
 
 

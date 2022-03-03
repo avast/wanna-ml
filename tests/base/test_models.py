@@ -1,9 +1,9 @@
-from wanna.cli.models.base_instance import BaseInstanceModel
-from pydantic.error_wrappers import ValidationError
-from tests.mocks import mocks
 import pytest
-
 from mock import patch
+from pydantic.error_wrappers import ValidationError
+from wanna.cli.models.base_instance import BaseInstanceModel
+
+from tests.mocks import mocks
 
 
 @patch(

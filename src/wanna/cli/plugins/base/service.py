@@ -1,5 +1,6 @@
-from typing import List, Type, Dict
 from abc import ABCMeta, abstractmethod
+from typing import List, Type
+
 import typer
 from wanna.cli.models.base_instance import BaseInstanceModel
 

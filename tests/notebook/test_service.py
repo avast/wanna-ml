@@ -1,6 +1,5 @@
-from wanna.cli.plugins.notebook.service import NotebookService
 from google.cloud.notebooks_v1.types import Instance
-from tests.mocks import mocks
+from mock import patch
 from wanna.cli.models.notebook import (
     NotebookModel,
     Network,
@@ -9,8 +8,9 @@ from wanna.cli.models.notebook import (
     NotebookDisk,
     BucketMount,
 )
-from mock import patch
-import pytest
+from wanna.cli.plugins.notebook.service import NotebookService
+
+from tests.mocks import mocks
 
 
 @patch(

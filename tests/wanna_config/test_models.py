@@ -1,6 +1,7 @@
-from wanna.cli.models.wanna_config import WannaConfigModel
-from tests.mocks import mocks
 from mock import patch
+from wanna.cli.models.wanna_config import WannaConfigModel
+
+from tests.mocks import mocks
 
 
 @patch(

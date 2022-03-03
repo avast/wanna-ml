@@ -1,5 +1,4 @@
 import re
-import subprocess
 from typing import List, Dict
 
 import google.auth

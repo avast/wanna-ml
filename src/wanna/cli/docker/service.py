@@ -10,7 +10,6 @@ from docker import DockerClient
 from docker.errors import DockerException
 from docker.models.images import Image
 from jinja2 import Environment
-
 from wanna.cli.docker.models import DockerBuild, DockerBuildType
 
 

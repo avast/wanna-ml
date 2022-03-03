@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Extra, validator, root_validator, EmailStr
 from typing import Optional
 
-
+from pydantic import BaseModel, Extra, validator, root_validator
 from wanna.cli.utils.gcp import validators
 from wanna.cli.utils.gcp.gcp import get_region_from_zone
 

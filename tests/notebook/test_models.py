@@ -1,3 +1,6 @@
+import pytest
+from mock import patch
+from pydantic.error_wrappers import ValidationError
 from wanna.cli.models.notebook import (
     Network,
     NotebookEnvironment,
@@ -5,10 +8,8 @@ from wanna.cli.models.notebook import (
     NotebookGPU,
     NotebookModel,
 )
-from pydantic.error_wrappers import ValidationError
+
 from tests.mocks import mocks
-import pytest
-from mock import patch
 
 
 @patch(

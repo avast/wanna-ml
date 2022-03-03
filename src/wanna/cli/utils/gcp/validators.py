@@ -1,8 +1,9 @@
 import logging
 import re
+
 from google.api_core import exceptions
-from google.cloud.storage import Client as StorageClient
 from google.cloud.notebooks_v1.types.instance import Instance
+from google.cloud.storage import Client as StorageClient
 from wanna.cli.utils.gcp.gcp import (
     get_available_compute_image_families,
     get_available_compute_machine_types,

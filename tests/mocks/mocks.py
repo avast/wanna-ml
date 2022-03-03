@@ -1,4 +1,5 @@
-from google.cloud.compute_v1.types import Image, ImageList
+from google.cloud.aiplatform_v1.types import Tensorboard
+from google.cloud.compute_v1.types import Image
 from google.cloud.compute_v1.types.compute import (
     MachineType,
     MachineTypeList,
@@ -7,9 +8,8 @@ from google.cloud.compute_v1.types.compute import (
     Region,
     RegionList,
 )
-from google.cloud.storage.bucket import Bucket
 from google.cloud.notebooks_v1.types import ListInstancesResponse, Instance
-from google.cloud.aiplatform_v1.types import Tensorboard
+from google.cloud.storage.bucket import Bucket
 
 
 class MockZonesClient:

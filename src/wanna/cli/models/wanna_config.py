@@ -1,9 +1,10 @@
-from pydantic import Extra, BaseModel, validator
 from typing import List, Optional
-from wanna.cli.models.wanna_project import WannaProjectModel
+
+from pydantic import Extra, BaseModel, validator
 from wanna.cli.models.gcp_settings import GCPSettingsModel
 from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.models.tensorboard import TensorboardModel
+from wanna.cli.models.wanna_project import WannaProjectModel
 from wanna.cli.utils.config_enricher import enrich_instance_with_gcp_settings
 
 

@@ -1,6 +1,7 @@
 from pathlib import Path
-from wanna.cli.utils import loaders
+
 from wanna.cli.models.wanna_config import WannaConfigModel
+from wanna.cli.utils import loaders
 from wanna.cli.utils.spinners import Spinner
 
 

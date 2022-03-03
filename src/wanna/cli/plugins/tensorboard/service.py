@@ -1,11 +1,12 @@
 import logging
 from typing import List, Union
-from wanna.cli.models.wanna_config import WannaConfigModel
+
 import typer
 from google.cloud import aiplatform
 from google.cloud.aiplatform.tensorboard.tensorboard_resource import Tensorboard
-from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.models.tensorboard import TensorboardModel
+from wanna.cli.models.wanna_config import WannaConfigModel
+from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils.spinners import Spinner
 
 logger = logging.getLogger("google.cloud")

@@ -1,5 +1,6 @@
-from jinja2 import Template
 from pathlib import Path
+
+from jinja2 import Template
 
 
 def render_template(source_path: Path, **kwargs) -> str:

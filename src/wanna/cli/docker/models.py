@@ -6,7 +6,6 @@ from enum import Enum, unique
 from typing import Dict, List, Optional, Union
 
 from pathvalidate._filepath import validate_filepath
-
 from wanna.cli.utils import text
 
 
