@@ -25,8 +25,6 @@ from wanna.cli.utils.gcp.gcp import (
 )
 from wanna.cli.utils.spinners import Spinner
 
-GCS_BUCKET_NAME = "wanna-ml"  # TODO: read from env variable or settings
-
 
 class NotebookService(BaseService):
     def __init__(self, config: WannaConfigModel):
@@ -36,6 +34,7 @@ class NotebookService(BaseService):
         )
         self.instances = config.notebooks
         self.wanna_project = config.wanna_project
+        self.bucket_name = config.gcp_settings.bucket
         self.notebook_client = NotebookServiceClient()
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
@@ -234,8 +233,8 @@ class NotebookService(BaseService):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                GCS_BUCKET_NAME,
-                f"{self.wanna_project.name}/notebooks/{notebook_instance.name}/startup_script.sh",
+                notebook_instance.bucket,
+                f"notebooks/{notebook_instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
         else:

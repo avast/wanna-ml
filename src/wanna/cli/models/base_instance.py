@@ -17,6 +17,7 @@ class BaseInstanceModel(BaseModel, extra=Extra.forbid, validate_assignment=True)
     labels: Optional[Dict[str, str]]
     description: Optional[str]
     service_account: Optional[EmailStr]
+    bucket: Optional[str]
 
     _project_id = validator("project_id", allow_reuse=True)(
         validators.validate_project_id

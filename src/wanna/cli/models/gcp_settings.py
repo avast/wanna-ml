@@ -10,6 +10,7 @@ class GCPSettingsModel(BaseModel, extra=Extra.forbid):
     zone: Optional[str]
     region: Optional[str]
     labels: Optional[str]
+    bucket: Optional[str]
     service_account: Optional[str]
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
