@@ -2,13 +2,13 @@ from pathlib import Path
 
 import typer
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.notebook.service import NotebookService
+from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
-class NotebookPlugin(BasePlugin):
+class TensorboardPlugin(BasePlugin):
     """
-    Main entrypoint for managing Workbench Notebooks on Vertex AI
+    Main entrypoint for managing Vertex AI Tensorboards
     """
 
     def __init__(self) -> None:
@@ -32,16 +32,16 @@ class NotebookPlugin(BasePlugin):
             "all",
             "--name",
             "-n",
-            help="Specify only one notebook from your wanna-ml yaml configuration to delete. "
-            "Choose 'all' to delete all notebooks.",
+            help="Specify only one tensorboard from your wanna-ml yaml configuration to delete. "
+            "Choose 'all' to delete all tensorboards.",
         ),
     ) -> None:
         """
-        Notebook delete command
+        Tensorboard delete command
         """
         config = load_config_from_yaml(file)
-        nb_service = NotebookService(config=config)
-        nb_service.delete(instance_name)
+        tb_service = TensorboardService(config=config)
+        tb_service.delete(instance_name)
 
     @staticmethod
     def create(
@@ -52,13 +52,13 @@ class NotebookPlugin(BasePlugin):
             "all",
             "--name",
             "-n",
-            help="Specify only one notebook from your wanna-ml yaml configuration to create. "
-            "Choose 'all' to create all notebooks.",
+            help="Specify only one tensorboard from your wanna-ml yaml configuration to create. "
+            "Choose 'all' to create all tensorboards.",
         ),
     ) -> None:
         """
-        Notebook create command
+        Tensorboard create command
         """
         config = load_config_from_yaml(file)
-        nb_service = NotebookService(config=config)
-        nb_service.create(instance_name)
+        tb_service = TensorboardService(config=config)
+        tb_service.create(instance_name)
