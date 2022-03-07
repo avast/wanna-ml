@@ -22,9 +22,7 @@ nav:
     - Home: 'index.md'
     - 'CLI': 
       - 'overview': 'cli/index.md'
-      - 'api': 'cli/api.md'
-      - 'commands':
-          - 'notebook': 'cli/commands/notebook.md'
+      - 'commands': 'cli/commands.md'
     - 'SDK': 'sdk.md'
 
 plugins:
@@ -33,7 +31,6 @@ plugins:
 
 markdown_extensions:
     - mkdocs-typer
-    - mkdocs_graphviz
+    - mkdocs-click
     - toc:
         permalink: "#"
-        

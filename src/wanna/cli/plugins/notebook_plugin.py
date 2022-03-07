@@ -62,3 +62,4 @@ class NotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file)
         nb_service = NotebookService(config=config)
         nb_service.create(instance_name)
+
