@@ -1,9 +1,9 @@
+from mock import patch
 from wanna.cli.models.tensorboard import TensorboardModel
-from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.models.wanna_config import WannaConfigModel
+from wanna.cli.plugins.tensorboard.service import TensorboardService
 
 from tests.mocks import mocks
-from mock import patch
 
 
 @patch(
@@ -11,23 +11,8 @@ from mock import patch
     mocks.MockRegionsClient,
 )
 class TestTensorboardService:
-    def __init__(self):
-        self.config = WannaConfigModel.parse_obj(
-            {
-                "wanna_project": {
-                    "name": "the-leaky-couldron",
-                    "version": "1.2.3",
-                    "authors": [
-                        "bellatrix.lestrange@avast.com",
-                        "fleaur.delacour@avast.com",
-                    ],
-                },
-                "gcp_settings": {"project_id": "gcp-project", "zone": "us-east1-a"},
-            }
-        )
-
     def test_find_tensorboard_by_display_name(self, mocker):
-        tb_service = TensorboardService(config=self.config)
+        tb_service = TensorboardService(config=get_config())
         mocker.patch.object(
             tb_service,
             "_list_running_instances",
@@ -43,3 +28,19 @@ class TestTensorboardService:
         )
         found = tb_service._find_tensorboard_by_display_name(instance=tb)
         assert found is None, ""
+
+
+def get_config():
+    return WannaConfigModel.parse_obj(
+        {
+            "wanna_project": {
+                "name": "the-leaky-couldron",
+                "version": "1.2.3",
+                "authors": [
+                    "bellatrix.lestrange@avast.com",
+                    "fleaur.delacour@avast.com",
+                ],
+            },
+            "gcp_settings": {"project_id": "gcp-project", "zone": "us-east1-a"},
+        }
+    )

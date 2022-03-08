@@ -9,6 +9,18 @@ gcp_settings:
   bucket: wanna-ml
   labels:
   service_account:
+    
+docker:
+  images:
+    - &custom_pip_image
+      build_type: notebook_ready_image
+      name: custom_pip_image
+      base_image: gcr.io/deeplearning-platform-release/base-cpu
+      requirements_txt: samples/notebook/requirements.txt
+
+    - &provided_image
+      build_type: provided_image
+      image_url: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
 
 notebooks:
   - name: my-notebook-example-1
@@ -20,13 +32,14 @@ notebooks:
     labels:
       notebook_usecase: testing
     environment:
-      vm_image:
-        framework: pytorch
-        version: 1-9-xla
+     # vm_image:
+     #   framework: pytorch
+     #   version: 1-9-xla
         #os: debian
       #container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
       #custom_container:
       #  requirements_file: requirements.txt
+      docker_image: *custom_pip_image
     #gpu:
     #  count: 1
     #  accelerator_type: NVIDIA_TESLA_V100
@@ -48,5 +61,4 @@ notebooks:
 
 tensorboards:
   - name: my-super-tensorboard
-    #region:
   - name: my-ugly-tensorboard

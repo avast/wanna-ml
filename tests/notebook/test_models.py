@@ -1,3 +1,5 @@
+import unittest
+
 import pytest
 from mock import patch
 from pydantic.error_wrappers import ValidationError
@@ -24,15 +26,15 @@ from tests.mocks import mocks
     "wanna.cli.utils.gcp.gcp.ZonesClient",
     mocks.MockZonesClient,
 )
-class TestNotebookModel:
-    def setup(self):
-        ...
-
+class TestNotebookModel(unittest.TestCase):
     def test_notebook_environment_only_container_is_set(self):
         try:
             model = NotebookEnvironment.parse_obj(
                 {
-                    "container_image": "docker.org/my-image",
+                    "docker_image": {
+                        "image_url": "docker.org/my-image",
+                        "build_type": "provided_image",
+                    }
                 }
             )
         except ValidationError:
