@@ -11,7 +11,7 @@ from google.cloud.notebooks_v1.types import (
 )
 from waiting import wait
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import ImageBuildType
+from wanna.cli.models.docker import ImageBuildType, DockerImageModel
 from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
@@ -34,6 +34,9 @@ class NotebookService(BaseService):
         self.bucket_name = config.gcp_settings.bucket
         self.notebook_client = NotebookServiceClient()
         self.config = config
+        self.docker_service = DockerService(
+            image_models=(config.docker.images if config.docker else [])
+        )
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -163,21 +166,19 @@ class NotebookService(BaseService):
             accelerator_config = None
             install_gpu_driver = False
         # Environment
-        if notebook_instance.environment.docker_image:
+        if notebook_instance.environment.docker_image_ref:
             vm_image = None
-            if (
-                notebook_instance.environment.docker_image.build_type
-                == ImageBuildType.provided_image
-            ):
-                container_image_tag = (
-                    notebook_instance.environment.docker_image.image_url
-                )
+            image_model = self.docker_service.find_image_model_by_name(
+                notebook_instance.environment.docker_image_ref
+            )
+            if image_model.build_type == ImageBuildType.provided_image:
+                container_image_tag = image_model.image_url
             else:
                 typer.echo(
                     "\n Building docker image. This may take a while, stretch your legs or get a \N{hot beverage}"
                 )
                 container_image_tag = self._build_and_push_docker_image(
-                    notebook_instance=notebook_instance,
+                    docker_image_model=image_model,
                 )
             container_image = ContainerImage(
                 repository=container_image_tag.partition(":")[0],
@@ -279,27 +280,19 @@ class NotebookService(BaseService):
         return startup_script
 
     def _build_and_push_docker_image(
-        self, notebook_instance: NotebookModel, registry: str = "eu.gcr.io"
+        self, docker_image_model: DockerImageModel, registry: str = "eu.gcr.io"
     ) -> str:
-        """
-        Builds and pushes the docker image.
-        Args:
-            notebook_instance: notebook instance model with specified container
-            registry: registry to push the docker image to
-
-        Returns:
-            tag: image tag (full URL to the image)
-        """
-        docker_image_model = notebook_instance.environment.docker_image
-        docker_service = DockerService()
-        tag = docker_service.construct_image_tag(
+        """"""
+        tag = self.docker_service.construct_image_tag(
             registry=registry,
-            project=notebook_instance.project_id,
+            project=self.config.gcp_settings.project_id,
             image_name=f"{self.wanna_project.name}/{docker_image_model.name}",
             version="0.1",
         )
-        image = docker_service.build_image(image_model=docker_image_model, tags=[tag])
-        docker_service.push_image(image)
+        image = self.docker_service.build_image(
+            image_model=docker_image_model, tags=[tag]
+        )
+        self.docker_service.push_image(image)
         return tag
 
     def _validate_jupyterlab_state(

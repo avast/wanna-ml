@@ -11,7 +11,6 @@ from pydantic import (
     root_validator,
 )
 from wanna.cli.models.base_instance import BaseInstanceModel
-from wanna.cli.models.docker import DockerImageModel
 from wanna.cli.utils.gcp import validators
 
 
@@ -40,7 +39,7 @@ class VMImage(BaseModel, extra=Extra.forbid):
 
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
     vm_image: Optional[VMImage]
-    docker_image: Optional[DockerImageModel]
+    docker_image_ref: Optional[str]
 
     _ = root_validator()(validators.validate_only_one_must_be_set)
 

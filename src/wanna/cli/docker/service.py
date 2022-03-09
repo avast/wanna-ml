@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 from python_on_whales import docker, Image
 from wanna.cli.models.docker import DockerImageModel, ImageBuildType
@@ -13,10 +13,12 @@ class DockerClientException(Exception):
 
 
 class DockerService:
-    def __init__(self):
+    def __init__(self, image_models: List[DockerImageModel]):
         assert self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine"
         )
+        self.image_models = image_models
+        self.image_store: Dict[str, Image] = {}
 
     @staticmethod
     def _is_docker_client_active() -> bool:
@@ -28,11 +30,58 @@ class DockerService:
         """
         return docker.info().id is not None
 
+    def find_image_model_by_name(self, image_name: str) -> DockerImageModel:
+        """
+        Finds a DockerImageModel with given image_name from self.image_models
+        Args:
+            image_name: name to find
+
+        Returns:
+            DockerImageModel
+        """
+        matched_image_models = [i for i in self.image_models if i.name == image_name]
+        if len(matched_image_models) == 0:
+            raise Exception(f"No docker image with name {image_name} found")
+        elif len(matched_image_models) > 1:
+            raise Exception(
+                f"Multiple docker images with name {image_name} found, please use unique names"
+            )
+        else:
+            return matched_image_models[0]
+
     def build_image(
         self,
         image_model: DockerImageModel,
         tags: List[str],
         work_dir: Path = Path("."),
+        **kwargs,
+    ) -> Image:
+        """
+        A wrapper around _build_image, that ensures no image is built more than once
+        (using self.image_store as a state)
+        Args:
+            image_model: image model to build
+            tags: image tags to add to the built docker image
+            work_dir: working directory
+            **kwargs:
+
+        Returns:
+
+        """
+        if image_model.name in self.image_store:
+            return self.image_store.get(image_model.name)
+        else:
+            image = self._build_image(
+                image_model=image_model, tags=tags, work_dir=work_dir, **kwargs
+            )
+            self.image_store.update({image_model.name: image})
+            return image
+
+    def _build_image(
+        self,
+        image_model: DockerImageModel,
+        tags: List[str],
+        work_dir: Path,
         **kwargs,
     ) -> Image:
         """
@@ -44,7 +93,7 @@ class DockerService:
             **kwargs: optional arguments to the python_on_whales image build
 
         Returns:
-
+            Image
         """
         build_dir = work_dir / Path("build") / image_model.name
         os.makedirs(build_dir, exist_ok=True)

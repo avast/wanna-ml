@@ -24,6 +24,7 @@ class TestDockerModel(unittest.TestCase):
                 "images": [
                     {
                         "build_type": "provided_image",
+                        "name": "slytherin",
                         "image_url": "eu.gcr.io/expecto/patronum:latest",
                     }
                 ]

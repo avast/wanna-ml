@@ -31,10 +31,7 @@ class TestNotebookModel(unittest.TestCase):
         try:
             model = NotebookEnvironment.parse_obj(
                 {
-                    "docker_image": {
-                        "image_url": "docker.org/my-image",
-                        "build_type": "provided_image",
-                    }
+                    "docker_image_ref": "ravenclaw",
                 }
             )
         except ValidationError:
@@ -46,7 +43,7 @@ class TestNotebookModel(unittest.TestCase):
         with pytest.raises(ValidationError) as e_info:
             model = NotebookEnvironment.parse_obj(
                 {
-                    "container_image": "docker.org/my-image",
+                    "docker_ref": "some-defined-docker-image",
                     "vm_image": {"framework": "tf", "version": "ent-2-3-cu110"},
                 }
             )

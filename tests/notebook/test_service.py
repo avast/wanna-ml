@@ -125,12 +125,7 @@ class TestNotebookService:
         nb_service = NotebookService(config=get_config())
         instance = get_base_notebook()
         instance.environment = NotebookEnvironment.parse_obj(
-            {
-                "docker_image": {
-                    "image_url": "eu.gcr.io/lumos:0.15",
-                    "build_type": "provided_image",
-                }
-            }
+            {"docker_image_ref": "lumos"}
         )
         request = nb_service._create_instance_request(instance)
         assert request.instance.container_image.repository == "eu.gcr.io/lumos"
@@ -216,5 +211,14 @@ def get_config():
                 ],
             },
             "gcp_settings": {"project_id": "gcp-project", "zone": "us-east1-a"},
+            "docker": {
+                "images": [
+                    {
+                        "image_url": "eu.gcr.io/lumos:0.15",
+                        "name": "lumos",
+                        "build_type": "provided_image",
+                    }
+                ]
+            },
         }
     )

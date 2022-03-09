@@ -20,6 +20,7 @@ class LocalBuildImageModel(BaseModel, extra=Extra.forbid, validate_assignment=Tr
 
 
 class ProvidedImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+    name: constr(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.provided_image]
     image_url: str
 

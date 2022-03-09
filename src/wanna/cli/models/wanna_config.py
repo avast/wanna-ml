@@ -22,3 +22,18 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     _tensorboards = validator(
         "tensorboards", pre=True, each_item=True, allow_reuse=True
     )(enrich_instance_with_gcp_settings)
+
+    @validator("notebooks", pre=True, each_item=True, allow_reuse=True)
+    def validate_docker_images_defined(cls, values_inst, values):
+        docker_image_ref = values_inst.get("environment", {}).get("docker_image_ref")
+        if docker_image_ref:
+            if not values.get("docker"):
+                raise ValueError(
+                    f"Docker image with name {docker_image_ref} is not defined"
+                )
+            defined_images = [i.name for i in values.get("docker").images]
+            if docker_image_ref not in defined_images:
+                raise ValueError(
+                    f"Docker image with name {docker_image_ref} is not defined"
+                )
+        return values_inst
