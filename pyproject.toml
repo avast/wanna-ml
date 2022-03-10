@@ -26,6 +26,8 @@ marshmallow-dataclass = { version = "^8.5.3", extras = ["enum", "union"]}
 pyyaml-include = "^1.2.post2"
 pytest-docker = "^0.10.3"
 cookiecutter = "^1.7.3"
+python-on-whales = "^0.36.1"
+pyserde = {extras = ["yaml"], version = "^0.6.0"}
 
 [tool.poetry.dev-dependencies]
 mkdocs-material = "^8.1.6"

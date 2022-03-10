@@ -5,8 +5,6 @@ import typer
 
 
 class BasePlugin(abc.ABC):
-    """Some doc"""
-
     def __init__(self) -> None:
         self.app = typer.Typer()
 

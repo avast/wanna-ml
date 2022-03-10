@@ -4,7 +4,7 @@ runner = PluginRunner()
 
 
 # required to get mkdocs to play nicely
-@runner.app.callback()
+# @runner.app.callback()
 def wanna():
     """
     Main entrypoint for wanna cli

@@ -1,0 +1,23 @@
+project_name: wanna-example
+
+gcp:
+  location: "europe-west4-a"
+  region: "europe-west4"
+  project_id: "us-burger-gcp-poc"
+  settings:
+    project: us-burger-gcp-poc
+    ai/region: europe-west4
+
+jobs:
+  - name: wanna-job-sample
+    docker:
+      context: .
+      dockerfile: ./job.Dockerfile
+    job:
+      scheduling: 
+        timeout: "10000" # seconds
+        restart_job_on_worker_restart: true
+      enable_web_access: true
+      base_output_directory: 
+        output_uri_prefix: "gs://some-bucket/"
+
