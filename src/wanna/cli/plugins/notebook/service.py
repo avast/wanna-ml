@@ -1,7 +1,5 @@
-from pathlib import Path
 from typing import List
 
-import docker
 import typer
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
@@ -11,10 +9,9 @@ from google.cloud.notebooks_v1.types import (
     VmImage,
     ContainerImage,
 )
-from jinja2 import Environment, PackageLoader, select_autoescape
 from waiting import wait
-from wanna.cli.docker.models import DockerBuild, DockerBuildType
 from wanna.cli.docker.service import DockerService
+from wanna.cli.models.docker import ImageBuildType, DockerImageModel
 from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
@@ -36,6 +33,10 @@ class NotebookService(BaseService):
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_settings.bucket
         self.notebook_client = NotebookServiceClient()
+        self.config = config
+        self.docker_service = DockerService(
+            image_models=(config.docker.images if config.docker else [])
+        )
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -165,28 +166,23 @@ class NotebookService(BaseService):
             accelerator_config = None
             install_gpu_driver = False
         # Environment
-        if notebook_instance.environment.container_image:
+        if notebook_instance.environment.docker_image_ref:
             vm_image = None
+            image_model = self.docker_service.find_image_model_by_name(
+                notebook_instance.environment.docker_image_ref
+            )
+            if image_model.build_type == ImageBuildType.provided_image:
+                container_image_tag = image_model.image_url
+            else:
+                typer.echo(
+                    "\n Building docker image. This may take a while, stretch your legs or get a \N{hot beverage}"
+                )
+                container_image_tag = self._build_and_push_docker_image(
+                    docker_image_model=image_model,
+                )
             container_image = ContainerImage(
-                repository=notebook_instance.environment.container_image.partition(":")[
-                    0
-                ],
-                tag=notebook_instance.environment.container_image.partition(":")[-1],
-            )
-        elif notebook_instance.environment.custom_container:
-            vm_image = None
-            typer.echo(
-                "\n Building docker image. This may take a while, stretch your legs or get a \N{hot beverage}"
-            )
-            container_image_info = self._build_and_push_docker_image(
-                image_name=f"{self.wanna_project.name}/{notebook_instance.name}",
-                image_version=self.wanna_project.version,
-                notebook_instance=notebook_instance,
-                docker_repository="eu.gcr.io/",
-            )
-            container_image = ContainerImage(
-                repository=container_image_info.get("repository"),
-                tag=container_image_info.get("version"),
+                repository=container_image_tag.partition(":")[0],
+                tag=container_image_tag.partition(":")[-1],
             )
         else:
             vm_image = VmImage(
@@ -284,59 +280,20 @@ class NotebookService(BaseService):
         return startup_script
 
     def _build_and_push_docker_image(
-        self,
-        image_name: str,
-        image_version: str,
-        notebook_instance: NotebookModel,
-        docker_repository: str,
-        build_args: dict = {},
-    ) -> dict:
-        """
-        Build and push a docker image.
-
-        Args:
-            image_name:
-            image_version:
-            notebook_instance:
-            docker_repository:
-            build_args:
-
-        Returns:
-
-        """
-        docker_client = docker.from_env()
-        jinja_env = Environment(
-            loader=PackageLoader("wanna", "cli/templates"),
-            autoescape=select_autoescape(["html", "xml"]),
+        self, docker_image_model: DockerImageModel, registry: str = "eu.gcr.io"
+    ) -> str:
+        """"""
+        tag = self.docker_service.construct_image_tag(
+            registry=registry,
+            project=self.config.gcp_settings.project_id,
+            image_name=f"{self.wanna_project.name}/{docker_image_model.name}",
+            version="0.1",
         )
-        workdir = Path(Path(self.wanna_config_path).parent.absolute())
-        build_dir = workdir / Path("build")
-        build_args = tuple()  # TODO: parse build args from wanna.yaml
-        docker_service = DockerService(
-            docker_client,
-            jinja_env,
-            build_dir,
-            workdir,
-            docker_repository,
-            build_args,
+        image = self.docker_service.build_image(
+            image_model=docker_image_model, tags=[tag]
         )
-        build = DockerBuild(
-            kind=DockerBuildType.GCPBaseImage,
-            base_image=notebook_instance.environment.custom_container.base_image,
-            requirements_txt=notebook_instance.environment.custom_container.requirements_file,
-        )
-        full_image_name = (
-            f"{notebook_instance.project_id}/vertex-ai-notebooks/{image_name}"
-        )
-        (image, repository, tag) = docker_service.build(
-            image_version,
-            workdir,
-            notebook_instance.name,
-            full_image_name,
-            build,
-        )
-        docker_service.push([(image, repository, "", build)], image_version)
-        return {"repository": repository, "version": image_version}
+        self.docker_service.push_image(image)
+        return tag
 
     def _validate_jupyterlab_state(
         self, instance_id: str, state: Instance.State

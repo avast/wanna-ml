@@ -1,9 +1,10 @@
+from typing import List
+
 from pydantic import (
     BaseModel,
     EmailStr,
     Extra,
 )
-from typing import List
 
 
 class WannaProjectModel(BaseModel, extra=Extra.forbid):

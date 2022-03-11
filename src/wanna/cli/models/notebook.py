@@ -14,16 +14,6 @@ from wanna.cli.models.base_instance import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
 
-class CustomContainer(BaseModel, extra=Extra.forbid):
-    base_image: str = (
-        "gcr.io/deeplearning-platform-release/base-cpu"  # TODO: change to avast mirror
-    )
-    requirements_file: Path
-    build_options: Optional[List[Dict]]
-
-    _ = root_validator()(validators.validate_requirements)
-
-
 class Network(BaseModel, extra=Extra.forbid):
     network_id: str
     subnet: Optional[str]
@@ -48,9 +38,8 @@ class VMImage(BaseModel, extra=Extra.forbid):
 
 
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
-    container_image: Optional[str]
     vm_image: Optional[VMImage]
-    custom_container: Optional[CustomContainer]
+    docker_image_ref: Optional[str]
 
     _ = root_validator()(validators.validate_only_one_must_be_set)
 

@@ -4,7 +4,7 @@
 FROM {{ base_image }}
 
 # Install pip requirements
-COPY {{ requirements_txt }} requirements.txt
+COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt --index-url "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple/" --extra-index-url "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/" --no-warn-script-location
 
 
