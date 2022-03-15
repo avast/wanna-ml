@@ -1,6 +1,6 @@
+import json
 import os
 from datetime import datetime
-import json
 
 # Env exported from wanna pipeline cli command
 PIPELINE_NAME_PREFIX = "WANNA_SKLEARN_SAMPLE"  #  snake_cased pipeline name in wanna config
@@ -19,7 +19,9 @@ PIPELINE_ROOT = f"{BUCKET}/pipeline_root/{MODEL_NAME}"
 MODEL_DISPLAY_NAME = f"{MODEL_NAME}-{VERSION}"
 
 # Custom GPU training config
-TRAIN_IMAGE_URI = os.environ.get(f"{PIPELINE_NAME_PREFIX}_TRAIN_DOCKER_URI", "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest") # Fail
+TRAIN_IMAGE_URI = os.environ.get(
+    f"{PIPELINE_NAME_PREFIX}_TRAIN_DOCKER_URI", "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
+)  # Fail
 # MACHINE_TYPE = "n1-standard-8"
 # REPLICA_COUNT = "1"
 # ACCELERATOR_TYPE = "NVIDIA_TESLA_T4"
@@ -27,11 +29,13 @@ TRAIN_IMAGE_URI = os.environ.get(f"{PIPELINE_NAME_PREFIX}_TRAIN_DOCKER_URI", "eu
 # NUM_WORKERS = 1
 
 # Custom Serving Config
-SERVE_IMAGE_URI = os.environ.get(f"{PIPELINE_NAME_PREFIX}_SERVE_DOCKER_URI", "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest") # Fail
+SERVE_IMAGE_URI = os.environ.get(
+    f"{PIPELINE_NAME_PREFIX}_SERVE_DOCKER_URI", "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
+)  # Fail
 SERVING_HEALTH_ROUTE = "/ping"
 SERVING_PREDICT_ROUTE = f"/predict"
-SERVING_CONTAINER_PORT= [{"containerPort": 7080}]
+SERVING_CONTAINER_PORT = [{"containerPort": 7080}]
 SERVING_MACHINE_TYPE = "n1-standard-4"
 SERVING_MIN_REPLICA_COUNT = 1
 SERVING_MAX_REPLICA_COUNT = 2
-SERVING_TRAFFIC_SPLIT='{"0": 100}'
+SERVING_TRAFFIC_SPLIT = '{"0": 100}'

@@ -109,14 +109,14 @@ def validate_only_one_must_be_set(cls, v):
         raise ValueError(f"Specify only one of {items_set}")
     return v
 
+
 def validate_cron_schedule(schedule: str):
 
     if schedule is not None and CronValidator.parse(schedule) is None:
-        raise ValueError(
-            f"Cron expression is invalid ({schedule})."
-        )
+        raise ValueError(f"Cron expression is invalid ({schedule}).")
     else:
         return schedule
+
 
 def validate_disk_type(disk_type):
     disk_type = disk_type.upper()

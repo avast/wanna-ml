@@ -2,16 +2,14 @@ import atexit
 import json
 import os
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import typer
 import yaml
-from caseconverter import snakecase, kebabcase
+from caseconverter import kebabcase, snakecase
 from google.cloud import aiplatform
 from google.cloud.aiplatform import pipeline_jobs
-from google.cloud.aiplatform.compat.types import (
-    pipeline_state_v1 as gca_pipeline_state_v1,
-)
+from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 
@@ -36,9 +34,7 @@ class PipelineService(BaseService):
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_settings.bucket
         self.config = config
-        self.docker_service = DockerService(
-            image_models=(config.docker.images if config.docker else [])
-        )
+        self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
         self.pipeline_store: Dict[str, dict] = {}
         self.workdir = workdir
         self.pipelines_dir = self.workdir / "build" / "pipelines"
@@ -72,11 +68,11 @@ class PipelineService(BaseService):
             "region": pipeline_instance.region,
             "pipeline_job_id": f"pipeline-{pipeline_instance.name}-{get_timestamp()}",
             "pipeline_root": f"{pipeline_instance.bucket}/pipeline-root/{kebabcase(pipeline_instance.name).lower()}",
-            "pipeline_labels": json.dumps(pipeline_instance.labels)
+            "pipeline_labels": json.dumps(pipeline_instance.labels),
         }
 
         # Export Pipeline wanna ENV params to be available during compilation
-        pipeline_name_prefix = snakecase(f'{pipeline_instance.name}').upper()
+        pipeline_name_prefix = snakecase(f"{pipeline_instance.name}").upper()
         for key, value in pipeline_env_params.items():
             env_name = snakecase(f"{pipeline_name_prefix}_{key.upper()}").upper()
             os.environ[env_name] = value
@@ -98,12 +94,16 @@ class PipelineService(BaseService):
 
         return pipeline_env_params, pipeline_compile_params
 
-    def _compile_one_instance(self, pipeline_instance: PipelineModel) -> Tuple[PipelineModel, Path, Dict[str, any], Dict[str, str]]:
+    def _compile_one_instance(
+        self, pipeline_instance: PipelineModel
+    ) -> Tuple[PipelineModel, Path, Dict[str, any], Dict[str, str]]:
 
         image_tags = None
         if pipeline_instance.docker_image_ref:
-            image_tags = [self._build_docker_image(docker_image_ref, self.registry, self.version) for docker_image_ref in
-                          pipeline_instance.docker_image_ref]
+            image_tags = [
+                self._build_docker_image(docker_image_ref, self.registry, self.version)
+                for docker_image_ref in pipeline_instance.docker_image_ref
+            ]
 
         with Spinner(text=f"Compiling pipeline {pipeline_instance.name}"):
             # Prep build dir
@@ -130,16 +130,25 @@ class PipelineService(BaseService):
                 "pipeline_instance": pipeline_instance,
                 "image_tags": image_tags,
                 "pipeline_parameters": pipeline_params,
-                "pipeline_env_params": pipeline_env_params
+                "pipeline_env_params": pipeline_env_params,
             }
 
             self.pipeline_store.update({f"{pipeline_instance.name}": compiled_pipeline_meta})
 
             return pipeline_instance, pipeline_json_spec_path, pipeline_params, pipeline_env_params
 
-    def run(self, instance_name: str, params: Optional[Path] = None, sync: bool = True, service_account: Optional[str] = None, network: Optional[str] = None):
+    def run(
+        self,
+        instance_name: str,
+        params: Optional[Path] = None,
+        sync: bool = True,
+        service_account: Optional[str] = None,
+        network: Optional[str] = None,
+    ):
 
-        for pipeline_instance, pipeline_json_spec_path, pipeline_params, pipeline_env_params in self.compile(instance_name):
+        for pipeline_instance, pipeline_json_spec_path, pipeline_params, pipeline_env_params in self.compile(
+            instance_name
+        ):
 
             with Spinner(text=f"Running pipeline {pipeline_instance.name}"):
                 aiplatform.init(project=pipeline_instance.project_id, location=pipeline_instance.region)
@@ -172,8 +181,10 @@ class PipelineService(BaseService):
                 @atexit.register
                 def stop_pipeline_job():
                     if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
-                        typer.echo(f"\N{cross mark} detected exit signal, "
-                                   f"shutting down running pipeline {pipeline_instance.name} at {pipeline_job._dashboard_uri()}.")
+                        typer.echo(
+                            f"\N{cross mark} detected exit signal, "
+                            f"shutting down running pipeline {pipeline_instance.name} at {pipeline_job._dashboard_uri()}."
+                        )
                         pipeline_job.cancel()
                         pipeline_job.wait()
 
@@ -186,9 +197,8 @@ class PipelineService(BaseService):
                     df_pipeline = aiplatform.get_pipeline_df(pipeline=pipeline_instance.name.replace("_", "-"))
                     typer.echo(f"{df_pipeline.info()}")
 
-
     def _build_docker_image(
-            self, docker_image_ref: str, registry: str, version: str
+        self, docker_image_ref: str, registry: str, version: str
     ) -> (BaseDockerImageModel, Image, str):
         with Spinner(text=f"Building docker image {docker_image_ref}"):
 
@@ -206,12 +216,14 @@ class PipelineService(BaseService):
                     versions=[version, "latest"],
                 )
 
-                image = self.docker_service.build_image(
-                    image_model=docker_image_model, tags=tags
-                )
+                image = self.docker_service.build_image(image_model=docker_image_model, tags=tags)
 
             typer.echo(f"\n\t Built image with tags {tags}")
-            return docker_image_model, image, tags[0],
+            return (
+                docker_image_model,
+                image,
+                tags[0],
+            )
 
     def _schedule_all_instance(self) -> None:
         pass
@@ -232,6 +244,6 @@ class PipelineService(BaseService):
         pass
 
     @staticmethod
-    def _read_pipeline_params(path: Path) -> Dict[str,any]:
+    def _read_pipeline_params(path: Path) -> Dict[str, any]:
         with open(path, "r") as f:
             return yaml.safe_load(f)
