@@ -10,8 +10,10 @@ class ImageBuildType(str, Enum):
     provided_image = "provided_image"
     notebook_ready_image = "notebook_ready_image"
 
+class BaseDockerImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+    name: Field(min_length=3, max_length=128)
 
-class LocalBuildImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class LocalBuildImageModel(BaseDockerImageModel):
     name: str = Field(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.local_build_image]
     build_args: Optional[Dict[str, str]]
@@ -19,13 +21,13 @@ class LocalBuildImageModel(BaseModel, extra=Extra.forbid, validate_assignment=Tr
     dockerfile: Path
 
 
-class ProvidedImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class ProvidedImageModel(BaseDockerImageModel):
     name: str = Field(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.provided_image]
     image_url: str
 
 
-class NotebookReadyImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class NotebookReadyImageModel(BaseDockerImageModel):
     name: str = Field(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.notebook_ready_image]
     build_args: Optional[Dict[str, str]]

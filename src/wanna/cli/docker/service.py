@@ -52,7 +52,7 @@ class DockerService:
         tags: List[str],
         work_dir: Path = Path("."),
         **kwargs,
-    ) -> Optional[Image]:
+   ) -> Optional[Image]:
         """
         A wrapper around _build_image, that ensures no image is built more than once
         (using self.image_store as a state)
@@ -93,6 +93,7 @@ class DockerService:
         """
         build_dir = work_dir / Path("build") / image_model.name
         os.makedirs(build_dir, exist_ok=True)
+
         if image_model.build_type == ImageBuildType.notebook_ready_image:
             template_path = Path("src/wanna/cli/templates/notebook_template.Dockerfile")
             shutil.copy2(
@@ -101,12 +102,16 @@ class DockerService:
             )
             file_path = self._jinja_render_dockerfile(image_model, template_path, build_dir=build_dir)
             context_dir = build_dir
+            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
         elif image_model.build_type == ImageBuildType.local_build_image:
             file_path = image_model.dockerfile
             context_dir = image_model.context_dir
+            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+        elif image_model.build_type == ImageBuildType.provided_image:
+            image = docker.pull(image_model.image_url, quiet=True)
         else:
             raise Exception("Invalid image model type.")
-        image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+
         return image
 
     @staticmethod
@@ -126,19 +131,22 @@ class DockerService:
         docker.image.remove(image, force=force, prune=prune)
 
     @staticmethod
-    def construct_image_tag(registry: str, project: str, image_name: str, version: str = "latest"):
+    def construct_image_tag(
+        registry: str, project: str, image_name: str, versions: List[str] = ["latest"]
+    ):
         """
         Construct full image tag.
         Args:
             registry:
             project:
             image_name:
-            version:
+            versions:
 
         Returns:
-            full image tag
+            List of full image tag
         """
-        return f"{registry}/{project}/{image_name}:{version}"
+
+        return [f"{registry}/{project}/{image_name}:{version}" for version in versions]
 
     @staticmethod
     def _jinja_render_dockerfile(

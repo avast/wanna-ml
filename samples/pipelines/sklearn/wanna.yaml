@@ -1,0 +1,34 @@
+wanna_project:
+  name: pipeline-sklearn-example-1
+  version: 1
+  authors: [joao.silva1@avast.com]
+
+gcp_settings:
+  project_id: us-burger-gcp-poc
+  zone: europe-west4-a
+  bucket: wanna-ml
+  labels:
+  service_account:
+
+docker:
+  images:
+    - build_type: local_build_image
+      name: train
+      context_dir: .
+      dockerfile: Dockerfile.train
+
+    - build_type: local_build_image
+      name: serve
+      context_dir: .
+      dockerfile: Dockerfile.serve
+
+    - build_type: provided_image
+      name: serve2
+      image_url: europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
+
+pipelines:
+  - name: wanna-sklearn-sample
+    bucket: gs://wanna-ml
+    pipeline_file: pipelines/pipeline.py
+    pipeline_params: params.yaml
+#    docker_image_ref: ["train", "serve"]

@@ -1,4 +1,3 @@
-
 FROM pytorch/torchserve:latest-cpu
 
 # install dependencies
