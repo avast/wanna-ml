@@ -18,7 +18,7 @@
 echo "Submitting Custom Job to Vertex AI to train PyTorch model"
 
 # BUCKET_NAME: Change to your bucket name
-BUCKET_NAME="[your-bucket-name]" # <-- CHANGE TO YOUR BUCKET NAME
+BUCKET_NAME="joao-gcp-tests" # <-- CHANGE TO YOUR BUCKET NAME
 
 # validate bucket name
 if [ "${BUCKET_NAME}" = "[your-bucket-name]" ]
@@ -37,7 +37,7 @@ JOB_NAME=${JOB_PREFIX}-$(date +%Y%m%d%H%M%S)-custom-job
 # REGION: select a region from https://cloud.google.com/vertex-ai/docs/general/locations#available_regions
 # or use the default '`us-central1`'. The region is where the job will be run.
 REGION="us-central1"
-
+europe-west4
 # JOB_DIR: Where to store prepared package and upload output model.
 JOB_DIR=gs://${BUCKET_NAME}/${JOB_PREFIX}/model/${JOB_NAME}
 

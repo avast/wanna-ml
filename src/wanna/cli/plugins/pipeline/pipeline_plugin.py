@@ -1,37 +1,52 @@
+import pathlib
+
 import typer
 
+from pathlib import Path
 from wanna.cli.plugins.base.base_plugin import BasePlugin
+from wanna.cli.plugins.pipeline.service import PipelineService
+from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
 class PipelinePlugin(BasePlugin):
     def __init__(self) -> None:
         super(PipelinePlugin, self).__init__()
-        self.secret = 14
         self.register_many(
             [
-                self.expose_context,
-                self.call_everything,
-                self.hello,
-                self.goodbye,
+                self.compile,
+                self.run
             ]
         )
 
-        # add some nesting with `sub-pipeline-command` command.
-        # self.app.add_typer(SubPipelinePlugin().app, name='sub-pipeline-command')
+    @staticmethod
+    def compile(ctx: typer.Context,
+                file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
+                instance_name: str = typer.Option(
+                    "all",
+                    "--name",
+                    "-n",
+                    help="Specify only one pipeline from your wanna-ml yaml configuration to compile. "
+                         "Choose 'all' to compile all pipelines.",
+                )) -> None:
+
+        config = load_config_from_yaml(file)
+        workdir = pathlib.Path(file).parent
+        pipeline_service = PipelineService(config=config, workdir=workdir)
+        pipeline_service.compile(instance_name)
 
     @staticmethod
-    def hello(name: str) -> None:
-        typer.echo(f"Hello Pipeline, {name}")
+    def run(ctx: typer.Context,
+            file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
+            params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
+            instance_name: str = typer.Option(
+                "all",
+                "--name",
+                "-n",
+                help="Specify only one pipeline from your wanna-ml yaml configuration to compile. "
+                     "Choose 'all' to compile all pipelines.",
+            )) -> None:
+        config = load_config_from_yaml(file)
+        workdir = pathlib.Path(file).parent
+        pipeline_service = PipelineService(config=config, workdir=workdir)
 
-    @staticmethod
-    def goodbye(name: str) -> None:
-        typer.echo(f"Goodbye Pipeline, {name}")
-
-    @staticmethod
-    def expose_context(ctx: typer.Context) -> None:
-        typer.echo(f"The command from context is: {ctx.command}")
-
-    def call_everything(self, ctx: typer.Context, name: str) -> None:
-        self.hello(name)
-        self.expose_context(ctx)
-        self.goodbye(name)
+        pipeline_service.run(instance_name, params=params)

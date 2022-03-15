@@ -1,0 +1,11 @@
+FROM europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
+
+WORKDIR /app
+
+ADD trainer /app/trainer
+
+RUN pip install pandas sklearn xgboost && \
+    pip install /app/trainer &&
+
+
+#CMD ["python", "-m", "wanna_sklearn_sample_trainer.train"]
