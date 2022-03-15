@@ -13,8 +13,7 @@ def make_prediction_request(project: str, bucket: str, endpoint: str, instances:
 
     from google.cloud import aiplatform
     from google.protobuf.json_format import Parse
-    from google_cloud_pipeline_components.proto.gcp_resources_pb2 import \
-        GcpResources
+    from google_cloud_pipeline_components.proto.gcp_resources_pb2 import GcpResources
 
     logging.getLogger().setLevel(logging.INFO)
     aiplatform.init(project=project, staging_bucket=bucket)

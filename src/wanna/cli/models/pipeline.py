@@ -1,19 +1,14 @@
-from typing import Optional, List, Dict, Union
 from pathlib import Path
-from pydantic import (
-    Extra,
-    constr,
-    validator,
-)
+from typing import Dict, List, Optional, Union
+
+from pydantic import Extra, constr, validator
 
 from wanna.cli.models.base_instance import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
 
 class PipelineModel(BaseInstanceModel, extra=Extra.forbid, validate_assignment=True):
-    name: constr(
-        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
-    )
+    name: constr(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     zone: str
     pipeline_file: str
     pipeline_function: Optional[str]

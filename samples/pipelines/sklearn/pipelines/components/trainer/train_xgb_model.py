@@ -1,10 +1,6 @@
 from typing import NamedTuple
 
-from kfp.v2.dsl import (Dataset,
-                        Input,
-                        Model,
-                        Output,
-                        component)
+from kfp.v2.dsl import Dataset, Input, Model, Output, component
 
 
 @component(
@@ -16,19 +12,17 @@ from kfp.v2.dsl import (Dataset,
     ],
 )
 def train_xgb_model_op(
-        dataset: Input[Dataset],
-        model_artifact: Output[Model]
+    dataset: Input[Dataset], model_artifact: Output[Model]
 ) -> NamedTuple("Outputs", [("train_score", float), ("model_artifact_path", str)]):
 
-    from xgboost import XGBClassifier
-    import pandas as pd
     from collections import namedtuple
+
+    import pandas as pd
+    from xgboost import XGBClassifier
 
     data = pd.read_csv(dataset.path)
 
-    model = XGBClassifier(
-        objective="binary:logistic"
-    )
+    model = XGBClassifier(objective="binary:logistic")
 
     model.fit(
         data.drop(columns=["target"]),
@@ -52,4 +46,7 @@ def train_xgb_model_op(
     # set output variables
     outputs = namedtuple("Outputs", ["train_score", "model_artifact_path"])
 
-    return outputs(float(score), model_path, )
+    return outputs(
+        float(score),
+        model_path,
+    )

@@ -1,31 +1,19 @@
 from typing import NamedTuple
 
-from kfp.v2.dsl import (Dataset,
-                        Input,
-                        Model,
-                        Output,
-                        Metrics,
-                        ClassificationMetrics,
-                        component)
+from kfp.v2.dsl import ClassificationMetrics, Dataset, Input, Metrics, Model, Output, component
 
 
 @component(
     base_image="python:3.9",
-    packages_to_install=[
-        "pandas",
-        "sklearn",
-        "xgboost"
-    ],
+    packages_to_install=["pandas", "sklearn", "xgboost"],
 )
 def eval_model_op(
-        test_set: Input[Dataset],
-        xgb_model: Input[Model],
-        metrics: Output[ClassificationMetrics],
-        smetrics: Output[Metrics]
+    test_set: Input[Dataset], xgb_model: Input[Model], metrics: Output[ClassificationMetrics], smetrics: Output[Metrics]
 ) -> NamedTuple("Outputs", [("test_score", float)]):
-    from xgboost import XGBClassifier
-    import pandas as pd
     from collections import namedtuple
+
+    import pandas as pd
+    from xgboost import XGBClassifier
 
     data = pd.read_csv(test_set.path)
     model = XGBClassifier()
@@ -37,20 +25,18 @@ def eval_model_op(
     )
 
     from sklearn.metrics import roc_curve
+
     y_scores = model.predict_proba(data.drop(columns=["target"]))[:, 1]
-    fpr, tpr, thresholds = roc_curve(
-        y_true=data.target.to_numpy(), y_score=y_scores, pos_label=True
-    )
+    fpr, tpr, thresholds = roc_curve(y_true=data.target.to_numpy(), y_score=y_scores, pos_label=True)
     metrics.log_roc_curve(fpr.tolist(), tpr.tolist(), thresholds.tolist())
 
     from sklearn.metrics import confusion_matrix
+
     y_pred = model.predict(data.drop(columns=["target"]))
 
     metrics.log_confusion_matrix(
         ["False", "True"],
-        confusion_matrix(
-            data.target, y_pred
-        ).tolist(),  # .tolist() to convert np array to list.
+        confusion_matrix(data.target, y_pred).tolist(),  # .tolist() to convert np array to list.
     )
 
     test_score = float(score)

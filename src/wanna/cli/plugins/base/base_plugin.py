@@ -16,4 +16,3 @@ class BasePlugin(abc.ABC):
     def register_many(self, funcs: List[Callable[..., None]]) -> None:
         for func in funcs:
             self.register_command(func)
-
