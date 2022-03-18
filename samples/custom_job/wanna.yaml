@@ -1,0 +1,23 @@
+wanna_project:
+  name: notebook-example-1
+  version: 1
+  authors: [michal.mrazek@avast.com]
+
+gcp_settings:
+  project_id: us-burger-gcp-poc
+  zone: europe-west4-a
+  bucket: wanna-ml
+
+training_custom_jobs:
+  - name: my-simple-job
+    region: europe-west4
+    worker_pool_specs:
+      master:
+        python_package_spec:
+          executor_image_uri: "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
+          package_uris: ["gs://wanna-ml/trainer-0.1.tar.gz"]
+          python_module: "trainer.task"
+          args: ['--epochs=100', '--steps=100', '--distribute=single']
+        gpu:
+          accelerator_type: NVIDIA_TESLA_V100
+          count: 1

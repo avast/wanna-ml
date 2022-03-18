@@ -1,6 +1,9 @@
-import typer
+from pathlib import Path
 
+import typer
 from wanna.cli.plugins.base.base_plugin import BasePlugin
+from wanna.cli.plugins.job.service import JobService
+from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
 class JobPlugin(BasePlugin):
@@ -9,9 +12,8 @@ class JobPlugin(BasePlugin):
         self.secret = "some value"
         self.register_many(
             [
-                self.expose_secret,
-                self.expose_context,
-                self.call_everything,
+                self.create,
+                self.stop,
             ]
         )
 
@@ -19,22 +21,35 @@ class JobPlugin(BasePlugin):
         # self.app.add_typer(SubJobPlugin().app, name='sub-job-command')
 
     @staticmethod
-    def hello(name: str) -> None:
-        typer.echo(f"Hello JobPlugin, {name}")
+    def create(
+        file: Path = typer.Option(
+            "wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"
+        ),
+        instance_name: str = typer.Option(
+            "all",
+            "--name",
+            "-n",
+            help="Specify only one job from your wanna-ml yaml configuration to create. "
+            "Choose 'all' to create all jobs.",
+        ),
+    ) -> None:
+        config = load_config_from_yaml(file)
+        job_service = JobService(config=config)
+        job_service.create(instance_name)
 
     @staticmethod
-    def goodbye(name: str) -> None:
-        typer.echo(f"Goodbye JobPlugin, {name}")
-
-    def expose_secret(self) -> None:
-        typer.echo(f"The secret is: {self.secret}")
-
-    @staticmethod
-    def expose_context(ctx: typer.Context) -> None:
-        typer.echo(f"The command from context is: {ctx.command}")
-
-    def call_everything(self, ctx: typer.Context, name: str) -> None:
-        self.hello(name)
-        self.expose_secret()
-        self.expose_context(ctx)
-        self.goodbye(name)
+    def stop(
+        file: Path = typer.Option(
+            "wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"
+        ),
+        instance_name: str = typer.Option(
+            "all",
+            "--name",
+            "-n",
+            help="Specify only one job from your wanna-ml yaml configuration to create. "
+            "Choose 'all' to create all jobs.",
+        ),
+    ) -> None:
+        config = load_config_from_yaml(file)
+        job_service = JobService(config=config)
+        job_service.stop(instance_name)

@@ -46,11 +46,19 @@ class NotebookService(BaseService):
             notebook_instance: notebook to delete
         """
 
-        with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
-            deleted = self.notebook_client.delete_instance(
-                name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
+        exists = self._instance_exists(notebook_instance)
+        if exists:
+            with Spinner(
+                text=f"Deleting {self.instance_type} {notebook_instance.name}"
+            ):
+                deleted = self.notebook_client.delete_instance(
+                    name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
+                )
+                deleted.result()
+        else:
+            typer.echo(
+                f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}"
             )
-            deleted.result()
 
     def _create_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
