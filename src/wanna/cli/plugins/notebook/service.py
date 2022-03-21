@@ -1,25 +1,19 @@
+from pathlib import Path
 from typing import List
 
 import typer
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
-from google.cloud.notebooks_v1.types import (
-    Instance,
-    CreateInstanceRequest,
-    VmImage,
-    ContainerImage,
-)
+from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage
 from waiting import wait
+
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import ImageBuildType, DockerImageModel
+from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils import templates
-from wanna.cli.utils.gcp.gcp import (
-    upload_string_to_gcs,
-    construct_vm_image_family_from_vm_image,
-)
+from wanna.cli.utils.gcp.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
 from wanna.cli.utils.spinners import Spinner
 
 
@@ -34,9 +28,7 @@ class NotebookService(BaseService):
         self.bucket_name = config.gcp_settings.bucket
         self.notebook_client = NotebookServiceClient()
         self.config = config
-        self.docker_service = DockerService(
-            image_models=(config.docker.images if config.docker else [])
-        )
+        self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -48,7 +40,8 @@ class NotebookService(BaseService):
 
         with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
             deleted = self.notebook_client.delete_instance(
-                name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
+                name=f"projects/{notebook_instance.project_id}/locations/"
+                f"{notebook_instance.zone}/instances/{notebook_instance.name}"
             )
             deleted.result()
 
@@ -67,31 +60,21 @@ class NotebookService(BaseService):
         """
         exists = self._instance_exists(notebook_instance)
         if exists:
-            typer.echo(
-                f"Instance {notebook_instance.name} already exists in location {notebook_instance.zone}"
-            )
-            should_recreate = typer.confirm(
-                "Are you sure you want to delete it and start a new?"
-            )
+            typer.echo(f"Instance {notebook_instance.name} already exists in location {notebook_instance.zone}")
+            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
             if should_recreate:
                 self._delete_one_instance(notebook_instance)
             else:
                 return
-        with Spinner(
-            text=f"Creating underlying compute engine instance for {notebook_instance.name}"
-        ):
-            instance_request = self._create_instance_request(
-                notebook_instance=notebook_instance
-            )
+        with Spinner(text=f"Creating underlying compute engine instance for {notebook_instance.name}"):
+            instance_request = self._create_instance_request(notebook_instance=notebook_instance)
             instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
                 instance.result().name
             )  # .result() waits for compute engine behind the notebook to start
         with Spinner(text="Starting JupyterLab"):
             wait(
-                lambda: self._validate_jupyterlab_state(
-                    instance_full_name, Instance.State.ACTIVE
-                ),
+                lambda: self._validate_jupyterlab_state(instance_full_name, Instance.State.ACTIVE),
                 timeout_seconds=450,
                 sleep_seconds=20,
                 waiting_for="Starting JupyterLab in your instance",
@@ -111,9 +94,7 @@ class NotebookService(BaseService):
             instance_names: List of the full names on notebook instances (this includes project_id, and zone)
 
         """
-        instances = self.notebook_client.list_instances(
-            parent=f"projects/{project_id}/locations/{location}"
-        )
+        instances = self.notebook_client.list_instances(parent=f"projects/{project_id}/locations/{location}")
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
@@ -127,13 +108,9 @@ class NotebookService(BaseService):
             True if exists, False if not
         """
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
-        return full_instance_name in self._list_running_instances(
-            instance.project_id, instance.zone
-        )
+        return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
 
-    def _create_instance_request(
-        self, notebook_instance: NotebookModel
-    ) -> CreateInstanceRequest:
+    def _create_instance_request(self, notebook_instance: NotebookModel) -> CreateInstanceRequest:
         """
         Transform the information about desired notebook from our NotebookModel model (based on yaml config)
         to the form suitable for GCP API.
@@ -150,7 +127,9 @@ class NotebookService(BaseService):
             subnet_name = notebook_instance.network.subnet
             full_network_name = f"projects/{notebook_instance.project_id}/global/networks/{network_name}"
             if subnet_name:
-                full_subnet_name = f"projects/{notebook_instance.project_id}/region/{notebook_instance.zone}/subnetworks/{subnet_name}"
+                full_subnet_name = (
+                    f"projects/{notebook_instance.project_id}/region/{notebook_instance.zone}/subnetworks/{subnet_name}"
+                )
             else:
                 full_subnet_name = None
         else:
@@ -168,9 +147,7 @@ class NotebookService(BaseService):
         # Environment
         if notebook_instance.environment.docker_image_ref:
             vm_image = None
-            image_model = self.docker_service.find_image_model_by_name(
-                notebook_instance.environment.docker_image_ref
-            )
+            image_model = self.docker_service.find_image_model_by_name(notebook_instance.environment.docker_image_ref)
             if image_model.build_type == ImageBuildType.provided_image:
                 container_image_tag = image_model.image_url
             else:
@@ -186,7 +163,7 @@ class NotebookService(BaseService):
             )
         else:
             vm_image = VmImage(
-                project=f"deeplearning-platform-release",
+                project="deeplearning-platform-release",
                 image_family=construct_vm_image_family_from_vm_image(
                     notebook_instance.environment.vm_image.framework,
                     notebook_instance.environment.vm_image.version,
@@ -195,30 +172,14 @@ class NotebookService(BaseService):
             )
             container_image = None
         # Disks
-        boot_disk_type = (
-            notebook_instance.boot_disk.disk_type
-            if notebook_instance.boot_disk
-            else None
-        )
-        boot_disk_size_gb = (
-            notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
-        )
-        data_disk_type = (
-            notebook_instance.data_disk.disk_type
-            if notebook_instance.data_disk
-            else None
-        )
-        data_disk_size_gb = (
-            notebook_instance.data_disk.size_gb if notebook_instance.data_disk else None
-        )
+        boot_disk_type = notebook_instance.boot_disk.disk_type if notebook_instance.boot_disk else None
+        boot_disk_size_gb = notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
+        data_disk_type = notebook_instance.data_disk.disk_type if notebook_instance.data_disk else None
+        data_disk_size_gb = notebook_instance.data_disk.size_gb if notebook_instance.data_disk else None
 
         # service account and instance owners
         service_account = notebook_instance.service_account
-        instance_owners = (
-            [notebook_instance.instance_owner]
-            if notebook_instance.instance_owner
-            else None
-        )
+        instance_owners = [notebook_instance.instance_owner] if notebook_instance.instance_owner else None
 
         # labels and tags
         tags = notebook_instance.tags
@@ -274,14 +235,12 @@ class NotebookService(BaseService):
         """
         bucket_mounts = nb_instance.bucket_mounts
         startup_script = templates.render_template(
-            "src/wanna/cli/templates/notebook_startup_script.sh.j2",
+            Path("src/wanna/cli/templates/notebook_startup_script.sh.j2"),
             bucket_mounts=bucket_mounts,
         )
         return startup_script
 
-    def _build_and_push_docker_image(
-        self, docker_image_model: DockerImageModel, registry: str = "eu.gcr.io"
-    ) -> str:
+    def _build_and_push_docker_image(self, docker_image_model: DockerImageModel, registry: str = "eu.gcr.io") -> str:
         """"""
         tag = self.docker_service.construct_image_tag(
             registry=registry,
@@ -289,15 +248,14 @@ class NotebookService(BaseService):
             image_name=f"{self.wanna_project.name}/{docker_image_model.name}",
             version="0.1",
         )
-        image = self.docker_service.build_image(
-            image_model=docker_image_model, tags=[tag]
-        )
-        self.docker_service.push_image(image)
-        return tag
+        image = self.docker_service.build_image(image_model=docker_image_model, tags=[tag])
+        if image:
+            self.docker_service.push_image(image)
+            return tag
+        else:
+            raise ValueError(f"Failed to build image {docker_image_model}")
 
-    def _validate_jupyterlab_state(
-        self, instance_id: str, state: Instance.State
-    ) -> bool:
+    def _validate_jupyterlab_state(self, instance_id: str, state: int) -> bool:
         """
         Validate if the given notebook instance is in given state.
 
@@ -311,9 +269,7 @@ class NotebookService(BaseService):
         try:
             instance_info = self.notebook_client.get_instance(name=instance_id)
         except exceptions.NotFound:
-            raise exceptions.NotFound(
-                f"Notebook {instance_id} was not found."
-            ) from None
+            raise exceptions.NotFound(f"Notebook {instance_id} was not found.") from None
         return instance_info.state == state
 
     def _get_jupyterlab_link(self, instance_id: str) -> str:

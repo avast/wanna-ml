@@ -71,9 +71,7 @@ def get_latest_version() -> Optional[Version]:
 
     parser.feed(resp.text)
 
-    versions = list(
-        filter(bool, (_get_version(package) for package in parser.packages))
-    )
+    versions = list(filter(bool, (_get_version(package) for package in parser.packages)))
 
     if not versions:
         return None
