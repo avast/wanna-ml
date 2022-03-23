@@ -1,10 +1,10 @@
-from typing import Dict
+from typing import Any, Dict
 
 from wanna.cli.models.gcp_settings import GCPSettingsModel
 from wanna.cli.models.wanna_project import WannaProjectModel
 
 
-def add_labels(instance_dict: Dict, new_labels: Dict[str, str]) -> Dict:
+def add_labels(instance_dict: Dict[str, Any], new_labels: Dict[str, str]) -> Dict[str, Any]:
     """
     Add new labels to the instance model.
     Args:
@@ -33,17 +33,14 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
         "wanna_project": wanna_project.name,
         "wanna_project_version": str(wanna_project.version).replace(".", "__"),
         "wanna_project_authors": "_".join(
-            [
-                author.partition("@")[0].replace(".", "-")
-                for author in wanna_project.authors
-            ]
+            [author.partition("@")[0].replace(".", "-") for author in wanna_project.authors]
         ),
     }
 
 
 def enrich_instance_info_with_gcp_settings_dict(
-    instance_dict: dict, gcp_settings: GCPSettingsModel
-) -> dict:
+    instance_dict: Dict[str, Any], gcp_settings: GCPSettingsModel
+) -> Dict[str, Any]:
     """
     The dictionary instance_dict is updated with values from gcp_settings. This allows you to set values such as
     project_id and zone only on the wanna-ml config level but also give you the freedom to set separately for each

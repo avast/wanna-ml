@@ -43,6 +43,7 @@ repos:
         language: python
         files: \.py
         args: [
+          "--enable-all-extensions",
           "--errors-only",
           "--max-line-length=120",
           "--generated-members=torch.*",
@@ -65,7 +66,7 @@ repos:
         verbose: false
       - id: pytest
         name: pytest
-        entry: pytest
+        entry: poetry run pytest
         language: python
         args: ["-W", "ignore", "-s"]
         always_run: true

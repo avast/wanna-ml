@@ -1,11 +1,7 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Extra,
-    validator,
-)
+from pydantic import BaseModel, EmailStr, Extra, validator
+
 from wanna.cli.utils.gcp import validators
 
 
@@ -19,8 +15,6 @@ class BaseInstanceModel(BaseModel, extra=Extra.forbid, validate_assignment=True)
     service_account: Optional[EmailStr]
     bucket: Optional[str]
 
-    _project_id = validator("project_id", allow_reuse=True)(
-        validators.validate_project_id
-    )
+    _project_id = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _zone = validator("zone", allow_reuse=True)(validators.validate_zone)
     _region = validator("region", allow_reuse=True)(validators.validate_region)

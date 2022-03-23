@@ -1,10 +1,10 @@
 import re
-from typing import List, Dict
+from typing import Any, Dict, List
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import storage
-from google.cloud.compute import MachineTypesClient, ZonesClient, RegionsClient
+from google.cloud import storage  # type: ignore
+from google.cloud.compute import MachineTypesClient, RegionsClient, ZonesClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
@@ -103,7 +103,7 @@ def convert_project_id_to_project_number(project_id: str) -> str:
     return project_number
 
 
-def parse_image_name_family(name) -> Dict:
+def parse_image_name_family(name: str) -> Dict[str, Any]:
     """
     Based on GCP Compute Engine VM Image name family (eg. tf2-2-7-cu113-notebooks-debian-10)
     return framework (eg. tf2), version (eg. 2-7-cu113), os (debian-10) information.
@@ -116,40 +116,37 @@ def parse_image_name_family(name) -> Dict:
 
     """
     framework = name.partition("-")[0]
-    version = re.search("(?<=-)(.*?)(?=-notebooks)", name).group()
+    match_version = re.search("(?<=-)(.*?)(?=-notebooks)", name)
+    assert match_version is not None  # TODO: improve result assert with message
+    version = match_version.group()
     os = None if name.endswith("notebooks") else name.split("-notebooks-")[-1]
     return {"framework": framework, "version": version, "os": os}
 
 
 def get_available_compute_image_families(
-    project: str, filter: str = None, family_must_contain: str = None
-) -> List[Dict]:
+    project: str, image_filter: str = None, family_must_contain: str = None
+) -> List[Dict[str, str]]:
     """
     List available Compute Engine VM image families.
 
     Args:
         project: VM Image project ID
-        filter: filter for the images https://googleapis.dev/python/compute/latest/compute_v1/types.html#google.cloud.compute_v1.types.ListImagesRequest.filter
+        image_filter: filter for the images https://googleapis.dev/python/compute/latest/compute_v1/types.html#google.cloud.compute_v1.types.ListImagesRequest.filter
         family_must_contain: additional string that must be a part of the image family name for easier filtering
                                 (eg. notebook to filter only the Vertex AI Workbench notebook-ready images)
 
     Returns:
         List of dicts from parse_image_name_family
-    """
-    list_images_request = ListImagesRequest(project=project, filter=filter)
+
+    """  # noqa: E501
+    list_images_request = ListImagesRequest(project=project, filter=image_filter)
     all_images = ImagesClient().list(list_images_request)
     if family_must_contain:
-        return [
-            parse_image_name_family(image.family)
-            for image in all_images
-            if family_must_contain in image.family
-        ]
+        return [parse_image_name_family(image.family) for image in all_images if family_must_contain in image.family]
     return [parse_image_name_family(image.family) for image in all_images]
 
 
-def construct_vm_image_family_from_vm_image(
-    framework: str, version: str, os: str
-) -> str:
+def construct_vm_image_family_from_vm_image(framework: str, version: str, os: str) -> str:
     """
     Construct name of the Compute Engine VM family with given framework(eg. pytorch),
     version(eg. 1-9-xla) and optional OS (eg. debian-10).
@@ -167,9 +164,7 @@ def construct_vm_image_family_from_vm_image(
     return f"{framework}-{version}-notebooks"
 
 
-def upload_file_to_gcs(
-    filename: str, bucket_name: str, blob_name: str
-) -> storage.blob.Blob:
+def upload_file_to_gcs(filename: str, bucket_name: str, blob_name: str) -> storage.blob.Blob:
     """
     Upload file to GCS bucket
 
@@ -188,9 +183,7 @@ def upload_file_to_gcs(
     return blob
 
 
-def upload_string_to_gcs(
-    data: str, bucket_name: str, blob_name: str
-) -> storage.blob.Blob:
+def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage.blob.Blob:
     """
     Upload a string to GCS bucket without saving it locally as a file.
     Args:

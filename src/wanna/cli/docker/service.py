@@ -1,9 +1,10 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List, Optional, no_type_check
 
-from python_on_whales import docker, Image
+from python_on_whales import Image, docker
+
 from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.utils.templates import render_template
 
@@ -14,9 +15,7 @@ class DockerClientException(Exception):
 
 class DockerService:
     def __init__(self, image_models: List[DockerImageModel]):
-        assert self._is_docker_client_active(), DockerClientException(
-            "You need running docker client on your machine"
-        )
+        assert self._is_docker_client_active(), DockerClientException("You need running docker client on your machine")
         self.image_models = image_models
         self.image_store: Dict[str, Image] = {}
 
@@ -43,9 +42,7 @@ class DockerService:
         if len(matched_image_models) == 0:
             raise Exception(f"No docker image with name {image_name} found")
         elif len(matched_image_models) > 1:
-            raise Exception(
-                f"Multiple docker images with name {image_name} found, please use unique names"
-            )
+            raise Exception(f"Multiple docker images with name {image_name} found, please use unique names")
         else:
             return matched_image_models[0]
 
@@ -55,7 +52,7 @@ class DockerService:
         tags: List[str],
         work_dir: Path = Path("."),
         **kwargs,
-    ) -> Image:
+    ) -> Optional[Image]:
         """
         A wrapper around _build_image, that ensures no image is built more than once
         (using self.image_store as a state)
@@ -71,19 +68,18 @@ class DockerService:
         if image_model.name in self.image_store:
             return self.image_store.get(image_model.name)
         else:
-            image = self._build_image(
-                image_model=image_model, tags=tags, work_dir=work_dir, **kwargs
-            )
+            image = self._build_image(image_model=image_model, tags=tags, work_dir=work_dir, **kwargs)
             self.image_store.update({image_model.name: image})
             return image
 
+    @no_type_check  # TODO: Fixme
     def _build_image(
         self,
         image_model: DockerImageModel,
         tags: List[str],
         work_dir: Path,
         **kwargs,
-    ) -> Image:
+    ) -> Image:  # noqa
         """
         Method to build docker image from DockerImageModel.
         Args:
@@ -103,9 +99,7 @@ class DockerService:
                 work_dir / image_model.requirements_txt,
                 build_dir / "requirements.txt",
             )
-            file_path = self._jinja_render_dockerfile(
-                image_model, template_path, build_dir=build_dir
-            )
+            file_path = self._jinja_render_dockerfile(image_model, template_path, build_dir=build_dir)
             context_dir = build_dir
         elif image_model.build_type == ImageBuildType.local_build_image:
             file_path = image_model.dockerfile
@@ -132,9 +126,7 @@ class DockerService:
         docker.image.remove(image, force=force, prune=prune)
 
     @staticmethod
-    def construct_image_tag(
-        registry: str, project: str, image_name: str, version: str = "latest"
-    ):
+    def construct_image_tag(registry: str, project: str, image_name: str, version: str = "latest"):
         """
         Construct full image tag.
         Args:

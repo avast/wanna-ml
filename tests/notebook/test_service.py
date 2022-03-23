@@ -1,17 +1,17 @@
 from google.cloud.notebooks_v1.types import Instance
 from mock import patch
+
+from tests.mocks import mocks
 from wanna.cli.models.notebook import (
-    NotebookModel,
-    Network,
-    NotebookGPU,
-    NotebookEnvironment,
-    NotebookDisk,
     BucketMount,
+    Network,
+    NotebookDisk,
+    NotebookEnvironment,
+    NotebookGPU,
+    NotebookModel,
 )
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.notebook.service import NotebookService
-
-from tests.mocks import mocks
 
 
 @patch(
@@ -41,38 +41,20 @@ class TestNotebookService:
 
     def test_list_running_instances(self):
         nb_service = NotebookService(config=get_config())
-        running_notebooks = nb_service._list_running_instances(
-            project_id=self.project_id, location=self.zone
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/nb1"
-            in running_notebooks
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu"
-            in running_notebooks
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/pytorch-notebook"
-            in running_notebooks
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra"
-            not in running_notebooks
-        )
+        running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.zone)
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/nb1" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/pytorch-notebook" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra" not in running_notebooks
 
     def test_instance_exists(self):
         nb_service = NotebookService(config=get_config())
         should_exist = nb_service._instance_exists(
-            instance=NotebookModel.parse_obj(
-                {"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"}
-            )
+            instance=NotebookModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"})
         )
         assert should_exist
         should_not_exist = nb_service._instance_exists(
-            instance=NotebookModel.parse_obj(
-                {"project_id": self.project_id, "zone": self.zone, "name": "confundo"}
-            )
+            instance=NotebookModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "confundo"})
         )
         assert not should_not_exist
 
@@ -94,29 +76,19 @@ class TestNotebookService:
         instance = get_base_notebook()
         instance.network = Network.parse_obj({"network_id": "little-hangleton"})
         request = nb_service._create_instance_request(instance)
-        assert (
-            request.instance.network
-            == f"projects/{self.project_id}/global/networks/little-hangleton"
-        )
+        assert request.instance.network == f"projects/{self.project_id}/global/networks/little-hangleton"
 
     def test_create_instance_request_network_subnet(self):
         nb_service = NotebookService(config=get_config())
         instance = get_base_notebook()
-        instance.network = Network.parse_obj(
-            {"network_id": "little-hangleton", "subnet": "the-riddle-house"}
-        )
+        instance.network = Network.parse_obj({"network_id": "little-hangleton", "subnet": "the-riddle-house"})
         request = nb_service._create_instance_request(instance)
-        assert (
-            request.instance.subnet
-            == f"projects/{self.project_id}/region/{self.zone}/subnetworks/the-riddle-house"
-        )
+        assert request.instance.subnet == f"projects/{self.project_id}/region/{self.zone}/subnetworks/the-riddle-house"
 
     def test_create_instance_request_gpu_config(self):
         nb_service = NotebookService(config=get_config())
         instance = get_base_notebook()
-        instance.gpu = NotebookGPU.parse_obj(
-            {"accelerator_type": "NVIDIA_TESLA_V100", "count": 4}
-        )
+        instance.gpu = NotebookGPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
         request = nb_service._create_instance_request(instance)
         assert request.instance.accelerator_config.type_.name == "NVIDIA_TESLA_V100"
         assert request.instance.accelerator_config.core_count == 4
@@ -124,9 +96,7 @@ class TestNotebookService:
     def test_create_instance_request_custom_container(self):
         nb_service = NotebookService(config=get_config())
         instance = get_base_notebook()
-        instance.environment = NotebookEnvironment.parse_obj(
-            {"docker_image_ref": "lumos"}
-        )
+        instance.environment = NotebookEnvironment.parse_obj({"docker_image_ref": "lumos"})
         request = nb_service._create_instance_request(instance)
         assert request.instance.container_image.repository == "eu.gcr.io/lumos"
         assert request.instance.container_image.tag == "0.15"
@@ -144,17 +114,12 @@ class TestNotebookService:
             }
         )
         request = nb_service._create_instance_request(instance)
-        assert (
-            request.instance.vm_image.image_family
-            == "tf2-ent-2-5-cu110-notebooks-debian-10"
-        )
+        assert request.instance.vm_image.image_family == "tf2-ent-2-5-cu110-notebooks-debian-10"
 
     def test_create_instance_request_boot_disk(self):
         nb_service = NotebookService(config=get_config())
         instance = get_base_notebook()
-        instance.boot_disk = NotebookDisk.parse_obj(
-            {"disk_type": "pd_ssd", "size_gb": 500}
-        )
+        instance.boot_disk = NotebookDisk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
         assert request.instance.boot_disk_type == Instance.DiskType.PD_SSD
         assert request.instance.boot_disk_size_gb == 500
@@ -162,9 +127,7 @@ class TestNotebookService:
     def test_create_instance_request_data_disk(self):
         nb_service = NotebookService(config=get_config())
         instance = get_base_notebook()
-        instance.data_disk = NotebookDisk.parse_obj(
-            {"disk_type": "pd_balanced", "size_gb": 750}
-        )
+        instance.data_disk = NotebookDisk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
         assert request.instance.data_disk_type == Instance.DiskType.PD_BALANCED
         assert request.instance.data_disk_size_gb == 750
@@ -182,10 +145,7 @@ class TestNotebookService:
             )
         ]
         startup_script = nb_service._prepare_startup_script(instance)
-        assert (
-            "gcsfuse --implicit-dirs --only-dir=/number-12 grimauld-place /mounts/gcp"
-            in startup_script
-        )
+        assert "gcsfuse --implicit-dirs --only-dir=/number-12 grimauld-place /mounts/gcp" in startup_script
 
 
 def get_base_notebook():

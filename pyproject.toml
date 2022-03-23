@@ -19,12 +19,11 @@ PyYAML = "^5.3.1"
 typer = "^0.4.0"
 docker = "^5.0.3"
 gitpython = "^3.1.26"
-python = "3.8"
+python = ">=3.8,<3.11" # google-cloud-bigquery requires this mess
 importlib-metadata = "^4.0"
 packaging = "^21.3"
 marshmallow-dataclass = { version = "^8.5.3", extras = ["enum", "union"]}
 pyyaml-include = "^1.2.post2"
-pytest-docker = "^0.10.3"
 cookiecutter = "^1.7.3"
 pydantic = "^1.9.0"
 google-api-core = "^2.5.0"
@@ -40,11 +39,14 @@ google-cloud-resource-manager = "^1.3.3"
 google-cloud-aiplatform = "^1.10.0"
 markupsafe = "2.0.0"
 jinja2 = "2.11.2"
-pylint-pydantic = "^0.1.4"
 emoji = "^1.6.3"
-mock = "^4.0.3"
+python-on-whales = "^0.39.0"
+
 
 [tool.poetry.dev-dependencies]
+pytest-docker = "^0.10.3"
+pylint-pydantic = "^0.1.4"
+mock = "^4.0.3"
 mkdocs-material = "^8.1.6"
 mkdocs-graphviz = "^1.4.4"
 black = "^21.12b0"
@@ -59,7 +61,21 @@ mkdocstrings = "^0.17.0"
 mkdocs-typer = "^0.0.2"
 pylint = "^2.12.2"
 mkdocs-click = "^0.5.0"
+types-pyyaml = "^6.0.5"
+types-requests = "^2.27.14"
+types-mock = "^4.0.12"
 
+[tool.mypy]
+follow_imports = "silent"
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+implicit_reexport = true
+ignore_missing_imports = true
+
+[tool.pylint.'MESSAGES CONTROL']
+extension-pkg-whitelist = "pydantic"
 
 [tool.poetry.scripts]
 wanna = "wanna.cli.__main__:main"
@@ -79,10 +95,8 @@ docs-deploy = "mkdocs gh-deploy"
 docs-serve = "mkdocs serve"
 build = "pre-commit run --all-files"
 pre_build = "pre-commit install"
-
-[mypy]
-ignore_missing_imports = "true"
-strict = "true"
+mypy = "mypy ./src"
+lint = "pylint ./src"
 
 [tool.black]
 extend-ignore = "E203"
