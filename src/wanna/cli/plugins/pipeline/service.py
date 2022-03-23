@@ -2,7 +2,7 @@ import atexit
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import typer
 import yaml
@@ -14,7 +14,7 @@ from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import BaseDockerImageModel, ImageBuildType
+from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.models.pipeline import PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
@@ -35,12 +35,12 @@ class PipelineService(BaseService):
         self.bucket_name = config.gcp_settings.bucket
         self.config = config
         self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
-        self.pipeline_store: Dict[str, dict] = {}
+        self.pipeline_store: Dict[str, Dict[str, Any]] = {}
         self.workdir = workdir
         self.pipelines_dir = self.workdir / "build" / "pipelines"
         os.makedirs(self.pipelines_dir, exist_ok=True)
 
-    def compile(self, instance_name: str) -> List[Tuple[PipelineModel, Path]]:
+    def compile(self, instance_name: str) -> List[Tuple[PipelineModel, Path, Dict[str, Any], Dict[str, str]]]:
         """
         Create an instance with name "name" based on wanna-ml config.
         Args:
@@ -96,7 +96,7 @@ class PipelineService(BaseService):
 
     def _compile_one_instance(
         self, pipeline_instance: PipelineModel
-    ) -> Tuple[PipelineModel, Path, Dict[str, any], Dict[str, str]]:
+    ) -> Tuple[PipelineModel, Path, Dict[str, Any], Dict[str, str]]:
 
         image_tags = None
         if pipeline_instance.docker_image_ref:
@@ -183,7 +183,8 @@ class PipelineService(BaseService):
                     if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
                         typer.echo(
                             f"\N{cross mark} detected exit signal, "
-                            f"shutting down running pipeline {pipeline_instance.name} at {pipeline_job._dashboard_uri()}."
+                            f"shutting down running pipeline {pipeline_instance.name}"
+                            f"at {pipeline_job._dashboard_uri()}."
                         )
                         pipeline_job.cancel()
                         pipeline_job.wait()
@@ -199,7 +200,7 @@ class PipelineService(BaseService):
 
     def _build_docker_image(
         self, docker_image_ref: str, registry: str, version: str
-    ) -> (BaseDockerImageModel, Image, str):
+    ) -> Tuple[DockerImageModel, Optional[Image], str]:
         with Spinner(text=f"Building docker image {docker_image_ref}"):
 
             docker_image_model = self.docker_service.find_image_model_by_name(docker_image_ref)
@@ -244,6 +245,6 @@ class PipelineService(BaseService):
         pass
 
     @staticmethod
-    def _read_pipeline_params(path: Path) -> Dict[str, any]:
+    def _read_pipeline_params(path: Path) -> Dict[str, Any]:
         with open(path, "r") as f:
             return yaml.safe_load(f)

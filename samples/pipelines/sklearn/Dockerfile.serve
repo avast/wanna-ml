@@ -1,3 +1,0 @@
-FROM europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
-
-ADD pipelines/

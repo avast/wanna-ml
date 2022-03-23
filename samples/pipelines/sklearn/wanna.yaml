@@ -15,12 +15,13 @@ docker:
     - build_type: local_build_image
       name: train
       context_dir: .
-      dockerfile: Dockerfile.train
+      dockerfile: Dockerfile
 
-    - build_type: local_build_image
-      name: serve
-      context_dir: .
-      dockerfile: Dockerfile.serve
+# TODO:
+#    - build_type: local_build_image
+#      name: serve
+#      context_dir: .
+#      dockerfile: Dockerfile.serve
 
     - build_type: provided_image
       name: serve2
@@ -29,6 +30,6 @@ docker:
 pipelines:
   - name: wanna-sklearn-sample
     bucket: gs://wanna-ml
-    pipeline_file: pipelines/pipeline.py
+    pipeline_file: wanna_simple/pipeline.py
     pipeline_params: params.yaml
-#    docker_image_ref: ["train", "serve"]
+#    docker_image_ref: ["train"]

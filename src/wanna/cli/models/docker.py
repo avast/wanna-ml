@@ -2,7 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Extra, constr
+from pydantic import BaseModel, Extra, Field
 
 
 class ImageBuildType(str, Enum):
@@ -12,11 +12,10 @@ class ImageBuildType(str, Enum):
 
 
 class BaseDockerImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
-    name: constr(min_length=3, max_length=128)
+    name: str = Field(min_length=3, max_length=128)
 
 
 class LocalBuildImageModel(BaseDockerImageModel):
-    name: constr(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.local_build_image]
     build_args: Optional[Dict[str, str]]
     context_dir: Path
@@ -24,13 +23,11 @@ class LocalBuildImageModel(BaseDockerImageModel):
 
 
 class ProvidedImageModel(BaseDockerImageModel):
-    name: constr(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.provided_image]
     image_url: str
 
 
 class NotebookReadyImageModel(BaseDockerImageModel):
-    name: constr(min_length=3, max_length=128)
     build_type: Literal[ImageBuildType.notebook_ready_image]
     build_args: Optional[Dict[str, str]]
     base_image: str = "gcr.io/deeplearning-platform-release/base-cpu"

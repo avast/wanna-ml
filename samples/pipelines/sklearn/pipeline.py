@@ -1,11 +1,14 @@
-import config as cfg
-from components.data.get_data import get_data_op
-from components.predictor import make_prediction_request
-from components.trainer.eval_model import eval_model_op
-from components.trainer.train_xgb_model import train_xgb_model_op
+# ignore: import-error
+# pylint: disable = no-value-for-parameter
+
+import wanna_simple.config as cfg
 from google_cloud_pipeline_components import aiplatform as aip_components
 from kfp.v2 import dsl
 from kfp.v2.dsl import component
+from wanna_simple.components.data.get_data import get_data_op
+from wanna_simple.components.predictor import make_prediction_request
+from wanna_simple.components.trainer.eval_model import eval_model_op
+from wanna_simple.components.trainer.train_xgb_model import train_xgb_model_op
 
 
 @component(
@@ -19,8 +22,7 @@ def slack_notification(slack_channel: str, status: str):
     logging.getLogger().setLevel(logging.INFO)
 
     webhook = "https://hooks.slack.com/services/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"
-
-    icon = "https://a.slack-edge.com/production-standard-emoji-assets/13.0/apple-medium/274c.png"
+    # icon = "https://a.slack-edge.com/production-standard-emoji-assets/13.0/apple-medium/274c.png"
 
     args = ["slack", "-w", webhook, "-c", slack_channel, f":white_check_mark: {status}"]
     result = subprocess.run(args, capture_output=True)
@@ -63,6 +65,7 @@ def wanna_sklearn_sample(eval_acc_threshold: float):
         # train model
         # ===================================================================
         # simple model training directly in component
+        # kfp.components.load_component_from_file()
         train_op = train_xgb_model_op(dataset_op.outputs["dataset_train"])
 
         # ===================================================================
