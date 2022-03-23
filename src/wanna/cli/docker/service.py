@@ -52,7 +52,7 @@ class DockerService:
         tags: List[str],
         work_dir: Path = Path("."),
         **kwargs,
-   ) -> Optional[Image]:
+    ) -> Optional[Image]:
         """
         A wrapper around _build_image, that ensures no image is built more than once
         (using self.image_store as a state)
@@ -131,9 +131,7 @@ class DockerService:
         docker.image.remove(image, force=force, prune=prune)
 
     @staticmethod
-    def construct_image_tag(
-        registry: str, project: str, image_name: str, versions: List[str] = ["latest"]
-    ):
+    def construct_image_tag(registry: str, project: str, image_name: str, versions: List[str] = ["latest"]):
         """
         Construct full image tag.
         Args:
