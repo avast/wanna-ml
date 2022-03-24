@@ -15,7 +15,7 @@ docker:
     - build_type: local_build_image
       name: train
       context_dir: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.train
 
 # TODO:
 #    - build_type: local_build_image
@@ -32,4 +32,4 @@ pipelines:
     bucket: gs://wanna-ml
     pipeline_file: wanna_simple/pipeline.py
     pipeline_params: params.yaml
-#    docker_image_ref: ["train"]
+    docker_image_ref: ["train"]

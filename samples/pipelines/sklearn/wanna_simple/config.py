@@ -18,10 +18,9 @@ MODEL_NAME = f"{PIPELINE_NAME.lower()}"  # type: ignore
 PIPELINE_ROOT = f"{BUCKET}/pipeline_root/{MODEL_NAME}"
 MODEL_DISPLAY_NAME = f"{MODEL_NAME}-{VERSION}"
 
-# Custom GPU training config
-TRAIN_IMAGE_URI = os.environ.get(
-    f"{PIPELINE_NAME_PREFIX}_TRAIN_DOCKER_URI", "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
-)  # Fail
+# custom training image
+TRAIN_IMAGE_URI = os.environ[f"TRAIN_DOCKER_URI"]  # Fail
+
 # MACHINE_TYPE = "n1-standard-8"
 # REPLICA_COUNT = "1"
 # ACCELERATOR_TYPE = "NVIDIA_TESLA_T4"
