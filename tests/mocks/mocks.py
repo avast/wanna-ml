@@ -1,14 +1,7 @@
 from google.cloud.aiplatform_v1.types import Tensorboard
 from google.cloud.compute_v1.types import Image
-from google.cloud.compute_v1.types.compute import (
-    MachineType,
-    MachineTypeList,
-    Zone,
-    ZoneList,
-    Region,
-    RegionList,
-)
-from google.cloud.notebooks_v1.types import ListInstancesResponse, Instance
+from google.cloud.compute_v1.types.compute import MachineType, MachineTypeList, Region, RegionList, Zone, ZoneList
+from google.cloud.notebooks_v1.types import Instance, ListInstancesResponse
 from google.cloud.storage.bucket import Bucket
 
 
@@ -44,9 +37,7 @@ class MockMachineTypesClient:
             "n2-standard-128",
             "n2d-standard-2",
         ]
-        return MachineTypeList(
-            items=[MachineType({"name": mtype}) for mtype in machine_type_names]
-        )
+        return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
 
 
 class MockNotebookServiceClient:
@@ -67,9 +58,7 @@ class MockNotebookServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(
-            instances=[i for i in self.instances if i.name.startswith(parent)]
-        )
+        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]

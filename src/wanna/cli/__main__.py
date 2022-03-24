@@ -5,6 +5,7 @@ from .plugins.runner import PluginRunner
 runner = PluginRunner()
 app = typer.Typer()
 
+
 # required to get mkdocs to play nicely
 @app.callback()
 def wanna():

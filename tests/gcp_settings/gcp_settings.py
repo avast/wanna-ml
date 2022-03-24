@@ -1,7 +1,7 @@
 from mock import patch
-from wanna.cli.models.gcp_settings import GCPSettingsModel
 
 from tests.mocks import mocks
+from wanna.cli.models.gcp_settings import GCPSettingsModel
 
 
 @patch(

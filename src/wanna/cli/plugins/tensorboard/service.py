@@ -1,9 +1,10 @@
 import logging
-from typing import List, Union
+from typing import List, Union, cast
 
 import typer
 from google.cloud import aiplatform
 from google.cloud.aiplatform.tensorboard.tensorboard_resource import Tensorboard
+
 from wanna.cli.models.tensorboard import TensorboardModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
@@ -30,14 +31,10 @@ class TensorboardService(BaseService):
         """
         tensorboard = self._find_tensorboard_by_display_name(instance)
         if not tensorboard:
-            typer.echo(
-                f"Tensorboard {instance.name} does not exist, nothing to delete."
-            )
+            typer.echo(f"Tensorboard {instance.name} does not exist, nothing to delete.")
         else:
             with Spinner(text=f"Deleting Tensorboard {instance.name}"):
-                aiplatform.Tensorboard(
-                    tensorboard_name=tensorboard.resource_name
-                ).delete()
+                aiplatform.Tensorboard(tensorboard_name=tensorboard.resource_name).delete()
 
     def _create_one_instance(self, instance: TensorboardModel) -> None:
         """
@@ -51,16 +48,15 @@ class TensorboardService(BaseService):
         """
         if self._instance_exists(instance):
             existing_instance = self._find_tensorboard_by_display_name(instance)
-            typer.echo(
-                f"Tensorboard {instance.name} already exists and is running at {existing_instance.resource_name}"
-            )
-            should_recreate = typer.confirm(
-                "Are you sure you want to delete it and start a new?"
-            )
-            if should_recreate:
-                self._delete_one_instance(instance)
-            else:
-                return
+            if existing_instance:
+                typer.echo(
+                    f"Tensorboard {instance.name} already exists and is running at {existing_instance.resource_name}"
+                )
+                should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
+                if should_recreate:
+                    self._delete_one_instance(instance)
+                else:
+                    return
         with Spinner(text=f"Creating Tensorboard {instance.name}"):
             aiplatform.Tensorboard.create(
                 display_name=instance.name,
@@ -69,12 +65,12 @@ class TensorboardService(BaseService):
                 project=instance.project_id,
                 location=instance.region,
             )
-        created = self._find_tensorboard_by_display_name(instance)
-        typer.echo(f"Tensorboard {instance.name} is running at {created.resource_name}")
 
-    def _find_tensorboard_by_display_name(
-        self, instance: TensorboardModel
-    ) -> Union[Tensorboard, None]:
+        created = self._find_tensorboard_by_display_name(instance)
+        if created:
+            typer.echo(f"Tensorboard {instance.name} is running at {created.resource_name}")
+
+    def _find_tensorboard_by_display_name(self, instance: TensorboardModel) -> Union[Tensorboard, None]:
         """
         Given pydantic tensorboard model, find the actual running tensorboard instance on GCP.
 
@@ -84,9 +80,7 @@ class TensorboardService(BaseService):
         Returns:
             Tensorboard or None if not found
         """
-        for running_tensorboard in self._list_running_instances(
-            instance.project_id, instance.region
-        ):
+        for running_tensorboard in self._list_running_instances(instance.project_id, instance.region):
             if running_tensorboard.display_name == instance.name:
                 return running_tensorboard
         return None
@@ -105,7 +99,7 @@ class TensorboardService(BaseService):
         return found is not None
 
     @staticmethod
-    def _list_running_instances(project_id: str, region: str) -> List[Tensorboard]:
+    def _list_running_instances(project_id: str, region: str) -> List["Tensorboard"]:
         """
         List all tensorboards with given project_id and region
 
@@ -117,5 +111,5 @@ class TensorboardService(BaseService):
             instances: List of the tensorboard instances
 
         """
-        instances = aiplatform.Tensorboard.list(project=project_id, location=region)
+        instances = cast(List[Tensorboard], aiplatform.Tensorboard.list(project=project_id, location=region))
         return instances

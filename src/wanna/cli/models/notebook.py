@@ -1,15 +1,8 @@
 from pathlib import Path
-from typing import Optional, Literal, List, Dict
+from typing import Dict, List, Literal, Optional
 
-from pydantic import (
-    BaseModel,
-    Extra,
-    constr,
-    conint,
-    validator,
-    EmailStr,
-    root_validator,
-)
+from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
+
 from wanna.cli.models.base_instance import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
@@ -34,7 +27,7 @@ class VMImage(BaseModel, extra=Extra.forbid):
     version: str
     os: Optional[str]
 
-    _ = root_validator()(validators.validate_vm_image)
+    # _ = root_validator()(validators.validate_vm_image)
 
 
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
@@ -46,7 +39,7 @@ class NotebookEnvironment(BaseModel, extra=Extra.forbid):
 
 class NotebookDisk(BaseModel, extra=Extra.forbid):
     disk_type: str
-    size_gb: conint(ge=100, le=65535)
+    size_gb: int = Field(ge=100, le=65535)
 
     _disk_type = validator("disk_type")(validators.validate_disk_type)
 
@@ -56,22 +49,16 @@ class NotebookGPU(BaseModel, extra=Extra.forbid):
     accelerator_type: str
     install_gpu_driver: bool = True
 
-    _accelerator_type = validator("accelerator_type")(
-        validators.validate_accelerator_type
-    )
+    _accelerator_type = validator("accelerator_type")(validators.validate_accelerator_type)
 
 
-class NotebookModel(BaseInstanceModel, extra=Extra.forbid, validate_assignment=True):
-    name: constr(
-        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
-    )
+class NotebookModel(BaseInstanceModel):
+    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     zone: str
     machine_type: str = "n1-standard-4"
-    environment: NotebookEnvironment = NotebookEnvironment(
-        vm_image=VMImage(framework="common", version="cpu")
-    )
+    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
     tags: Optional[List[str]]
-    metadata: Optional[List[Dict]]
+    metadata: Optional[List[Dict[str, str]]]
     service_account: Optional[EmailStr]
     instance_owner: Optional[EmailStr]
     gpu: Optional[NotebookGPU]

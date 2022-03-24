@@ -4,27 +4,26 @@ import re
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
+
 from wanna.cli.utils.gcp.gcp import (
     get_available_compute_image_families,
     get_available_compute_machine_types,
-    get_available_zones,
     get_available_regions,
+    get_available_zones,
 )
 
 
 def validate_zone(zone, values):
     available_zones = get_available_zones(project_id=values.get("project_id"))
-    if not zone in available_zones:
+    if zone not in available_zones:
         raise ValueError(f"Zone invalid ({zone}). must be on of: {available_zones}")
     return zone
 
 
 def validate_region(region, values):
     available_regions = get_available_regions(project_id=values.get("project_id"))
-    if not region in available_regions:
-        raise ValueError(
-            f"Region invalid ({region}). must be on of: {available_regions}"
-        )
+    if region not in available_regions:
+        raise ValueError(f"Region invalid ({region}). must be on of: {available_regions}")
     return region
 
 
@@ -32,28 +31,27 @@ def validate_machine_type(machine_type, values):
     available_machine_types = get_available_compute_machine_types(
         project_id=values.get("project_id"), zone=values.get("zone")
     )
-    if not machine_type in available_machine_types:
-        raise ValueError(
-            f"Machine type invalid ({machine_type}). must be on of: {available_machine_types}"
-        )
+    if machine_type not in available_machine_types:
+        raise ValueError(f"Machine type invalid ({machine_type}). must be on of: {available_machine_types}")
     return machine_type
 
 
 def validate_requirements(cls, v):
     if not any(v.values()):
         raise ValueError(
-            f"One of requirements.file (path to your requirements.txt) or requirements.package_list (list of pip packages to install) must be set if you want to install python packages with requirements block."
+            "One of requirements.file (path to your requirements.txt) or "
+            "requirements.package_list (list of pip packages to install) "
+            "must be set if you want to install python packages with requirements block."
         )
     return v
 
 
 def validate_network_name(network_name):
-    if not re.match(
-        "^(projects\/[a-z0-9-]+\/global\/networks\/[a-z][a-z0-9-]+)$", network_name
-    ):
+    if not re.match("^(projects\/[a-z0-9-]+\/global\/networks\/[a-z][a-z0-9-]+)$", network_name):
         if not re.match("^[a-z][a-z0-9-]+$", network_name):
             raise ValueError(
-                "Invalid format of network name. Either use the full name of VPC network 'projects/{project_id}/global/networks/{network_id}'"
+                "Invalid format of network name. Either use the full name of VPC network"
+                "'projects/{project_id}/global/networks/{network_id}'"
                 "or just '{network_id}'. In the second case, the project_id will be parsed from notebook settings."
             )
     return network_name
@@ -61,13 +59,11 @@ def validate_network_name(network_name):
 
 def validate_bucket_name(bucket_name):
     try:
-        bucket = StorageClient().get_bucket(bucket_name)
+        _ = StorageClient().get_bucket(bucket_name)
     except exceptions.NotFound:
         raise ValueError(f"Bucket with name {bucket_name} does not exist")
-    except exceptions.Forbidden as e:
-        logging.warning(
-            f"Your user does not have permission to access bucket {bucket_name}"
-        )
+    except exceptions.Forbidden:
+        logging.warning(f"Your user does not have permission to access bucket {bucket_name}")
     return bucket_name
 
 
@@ -77,21 +73,15 @@ def validate_vm_image(cls, v):
     os = v.get("os")
     available_image_families = get_available_compute_image_families(
         project="deeplearning-platform-release",
-        filter="(-deprecated:*)",
+        image_filter="(-deprecated:*)",
         family_must_contain="notebook",
     )
     available_frameworks = set(i.get("framework") for i in available_image_families)
-    if not framework in available_frameworks:
-        raise ValueError(
-            f"VM Image framework {framework} not available. Choose one of: {available_frameworks}"
-        )
+    if framework not in available_frameworks:
+        raise ValueError(f"VM Image framework {framework} not available. Choose one of: {available_frameworks}")
 
-    available_versions = set(
-        i.get("version")
-        for i in available_image_families
-        if i.get("framework") == framework
-    )
-    if not version in available_versions:
+    available_versions = set(i.get("version") for i in available_image_families if i.get("framework") == framework)
+    if version not in available_versions:
         raise ValueError(
             f"VM Image version {version} not available for {framework}. Choose one of: {available_versions}"
         )
@@ -102,7 +92,7 @@ def validate_vm_image(cls, v):
             for i in available_image_families
             if i.get("framework") == framework and i.get("version") == version
         )
-        if not os in available_os:
+        if os not in available_os:
             raise ValueError(
                 f"VM Image OS {os} not available for {framework} and version {version}. Choose one of: {available_os}"
             )
@@ -121,22 +111,21 @@ def validate_only_one_must_be_set(cls, v):
 
 def validate_disk_type(disk_type):
     disk_type = disk_type.upper()
-    if not disk_type in Instance.DiskType.__members__:
-        raise ValueError(
-            f"Disk type invalid ({type}). must be on of: {Instance.DiskType._member_names_}"
-        )
+    if disk_type not in Instance.DiskType.__members__:
+        raise ValueError(f"Disk type invalid ({type}). must be on of: {Instance.DiskType._member_names_}")
     return disk_type
 
 
-def validate_accelerator_type(accelerator_type):
-    if not accelerator_type in Instance.AcceleratorType.__members__:
+def validate_accelerator_type(accelerator_type: Instance.AcceleratorType) -> Instance.AcceleratorType:
+    if accelerator_type not in Instance.AcceleratorType.__members__:
         raise ValueError(
-            f"GPU accelerator type invalid ({accelerator_type}). must be on of: {Instance.AcceleratorType._member_names_}"
+            f"GPU accelerator type invalid ({accelerator_type})."
+            f"must be on of: {Instance.AcceleratorType._member_names_}"
         )
     return accelerator_type
 
 
-def validate_project_id(project_id):
+def validate_project_id(project_id: str) -> str:
     if not re.match("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", project_id):
         raise ValueError(
             "Invalid GCP project id. project_id: "

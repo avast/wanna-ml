@@ -1,11 +1,12 @@
-from abc import ABCMeta
+from abc import ABC, abstractmethod
 from typing import List, Type
 
 import typer
+
 from wanna.cli.models.base_instance import BaseInstanceModel
 
 
-class BaseService:
+class BaseService(ABC):
     """
     This is a base service and every other service (notebooks, jobs, pipelines,...)
     should build on top of this. It implements some basic function (create, delete)
@@ -21,7 +22,6 @@ class BaseService:
         instance_type: str,
         instance_model: Type[BaseInstanceModel],
     ):
-        __metaclass__ = ABCMeta
         self.instances: List[BaseInstanceModel] = []
         self.instance_type = instance_type
         self.InstanceModel = instance_model
@@ -97,13 +97,9 @@ class BaseService:
         if instance_name == "all":
             instances = self.instances
             if not instances:
-                typer.echo(
-                    f"No {self.instance_type} can be parsed from your wanna-ml yaml config."
-                )
+                typer.echo(f"No {self.instance_type} can be parsed from your wanna-ml yaml config.")
         else:
             instances = [nb for nb in self.instances if nb.name == instance_name]
         if not instances:
-            typer.echo(
-                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config."
-            )
+            typer.echo(f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.")
         return instances
