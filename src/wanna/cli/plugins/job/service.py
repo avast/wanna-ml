@@ -1,25 +1,24 @@
 from typing import List
 
 import typer
+from google.api_core.client_options import ClientOptions
 from google.cloud.aiplatform_v1.services.job_service import JobServiceClient
 from google.cloud.aiplatform_v1.types import (
+    ContainerSpec,
     CustomJob,
     CustomJobSpec,
-    WorkerPoolSpec,
-    PythonPackageSpec,
     GcsDestination,
-    Scheduling,
+    ListCustomJobsRequest,
     MachineSpec,
-    ContainerSpec,
+    PythonPackageSpec,
+    Scheduling,
+    WorkerPoolSpec,
 )
-from google.cloud.aiplatform_v1.types import ListCustomJobsRequest
 from google.cloud.aiplatform_v1.types.job_state import JobState
 from google.protobuf.duration_pb2 import Duration
 from waiting import wait
-from wanna.cli.models.training_custom_job import (
-    TrainingCustomJobModel,
-    WorkerPoolSpecModel,
-)
+
+from wanna.cli.models.training_custom_job import TrainingCustomJobModel, WorkerPoolSpecModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils.spinners import Spinner
@@ -36,9 +35,8 @@ class JobService(BaseService):
         self.bucket_name = config.gcp_settings.bucket
         self.config = config
         self.job_client = JobServiceClient(
-            client_options={"api_endpoint": f"{self.config.gcp_settings.region}-aiplatform.googleapis.com"}
+            client_options=ClientOptions(api_endpoint=f"{self.config.gcp_settings.region}-aiplatform.googleapis.com")
         )
-
 
     def _create_one_instance(self, instance: TrainingCustomJobModel):
         """
@@ -54,9 +52,7 @@ class JobService(BaseService):
             parent=f"projects/{instance.project_id}/locations/{instance.region}",
             custom_job=job,
         )
-        typer.echo(
-            f"Outputs will be saved to {job.job_spec.base_output_directory.output_uri_prefix}"
-        )
+        typer.echo(f"Outputs will be saved to {job.job_spec.base_output_directory.output_uri_prefix}")
         with Spinner(text="Initiating custom job"):
             wait(
                 lambda: self.job_client.get_custom_job(name=job_request.name).state
@@ -75,14 +71,10 @@ class JobService(BaseService):
         elif job_state == JobState.JOB_STATE_SUCCEEDED:
             typer.echo(f"Job {instance.name} succeeded.")
         else:
-            typer.echo(
-                f"Job {instance.name} initiating failed or took longer than usual, check logs {job_state.name}."
-            )
+            typer.echo(f"Job {instance.name} initiating failed or took longer than usual, check logs {job_state.name}.")
 
     @staticmethod
-    def _create_worker_pool_spec(
-            worker_pool: WorkerPoolSpecModel
-    ) -> WorkerPoolSpec:
+    def _create_worker_pool_spec(worker_pool: WorkerPoolSpecModel) -> WorkerPoolSpec:
         """
         Create GCP API friendly WorkerPoolSpec from WorkerPoolSpecModel.
         This creates one worker_pool (eg. master or reduction server etc.)
@@ -113,9 +105,7 @@ class JobService(BaseService):
             )
         machine_spec = MachineSpec(
             machine_type=worker_pool.machine_type,
-            accelerator_type=worker_pool.gpu.accelerator_type
-            if worker_pool.gpu
-            else None,
+            accelerator_type=worker_pool.gpu.accelerator_type if worker_pool.gpu else None,
             accelerator_count=worker_pool.gpu.count if worker_pool.gpu else None,
         )
 
@@ -131,9 +121,7 @@ class JobService(BaseService):
         )
         return worker_pool_spec
 
-    def _create_instance_request(
-        self, instance: TrainingCustomJobModel
-    ) -> CustomJobSpec:
+    def _create_instance_request(self, instance: TrainingCustomJobModel) -> CustomJobSpec:
         """
         Create a custom job that could be later directly sent to GCP API.
         Args:
@@ -174,9 +162,7 @@ class JobService(BaseService):
         )
 
     @staticmethod
-    def _create_list_jobs_filter_expr(
-            states: List[JobState], job_name: str = None
-    ) -> str:
+    def _create_list_jobs_filter_expr(states: List[JobState], job_name: str = None) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
         Args:
@@ -186,16 +172,12 @@ class JobService(BaseService):
         Returns:
             filter expression
         """
-        filter_expr = (
-            "(" + " OR ".join([f'state="{state.name}"' for state in states]) + ")"
-        )
+        filter_expr = "(" + " OR ".join([f'state="{state.name}"' for state in states]) + ")"
         if job_name:
             filter_expr = filter_expr + f' AND display_name="{job_name}"'
         return filter_expr
 
-    def _list_jobs(
-        self, project_id: str, region: str, states: List[JobState], job_name: str = None
-    ) -> List[CustomJob]:
+    def _list_jobs(self, project_id: str, region: str, states: List[JobState], job_name: str = None) -> List[CustomJob]:
         """
         List all custom jobs with given project_id, region with given states.
 
@@ -208,9 +190,7 @@ class JobService(BaseService):
         Returns:
             list of jobs
         """
-        filter_expr = self._create_list_jobs_filter_expr(
-            states=states, job_name=job_name
-        )
+        filter_expr = self._create_list_jobs_filter_expr(states=states, job_name=job_name)
         resp = self.job_client.list_custom_jobs(
             ListCustomJobsRequest(
                 parent=f"projects/{project_id}/locations/{region}",
@@ -231,7 +211,7 @@ class JobService(BaseService):
         active_jobs = self._list_jobs(
             project_id=instance.project_id,
             region=instance.region,
-            states=[JobState.JOB_STATE_RUNNING, JobState.JOB_STATE_PENDING],
+            states=[JobState.JOB_STATE_RUNNING, JobState.JOB_STATE_PENDING],  # type: ignore
             job_name=instance.name,
         )
         if active_jobs:

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import typer
+
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.job.service import JobService
 from wanna.cli.utils.config_loader import load_config_from_yaml
@@ -22,9 +23,7 @@ class JobPlugin(BasePlugin):
 
     @staticmethod
     def create(
-        file: Path = typer.Option(
-            "wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"
-        ),
+        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
         instance_name: str = typer.Option(
             "all",
             "--name",
@@ -39,9 +38,7 @@ class JobPlugin(BasePlugin):
 
     @staticmethod
     def stop(
-        file: Path = typer.Option(
-            "wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"
-        ),
+        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
         instance_name: str = typer.Option(
             "all",
             "--name",

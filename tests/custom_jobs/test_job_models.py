@@ -3,12 +3,9 @@ import unittest
 import pytest
 from mock import patch
 from pydantic.error_wrappers import ValidationError
-from wanna.cli.models.training_custom_job import (
-    WorkerPoolSpecModel,
-    TrainingCustomJobModel,
-)
 
 from tests.mocks import mocks
+from wanna.cli.models.training_custom_job import TrainingCustomJobModel, WorkerPoolSpecModel
 
 
 class TestWorkerPoolSpecModel(unittest.TestCase):
@@ -27,11 +24,11 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
         WorkerPoolSpecModel.parse_obj({"container_spec": {"image_uri": "a"}})
 
     def test_worker_pool_container_or_python_must_be_set(self):
-        with pytest.raises(ValidationError) as e_info:
+        with pytest.raises(ValidationError):
             WorkerPoolSpecModel.parse_obj({"machine_type": "n1-standard-4"})
 
     def test_worker_pool_not_both_container_or_python_can_be_set(self):
-        with pytest.raises(ValidationError) as e_info:
+        with pytest.raises(ValidationError):
             WorkerPoolSpecModel.parse_obj(
                 {
                     "python_package_spec": {
@@ -59,4 +56,4 @@ class TestTrainingCustomJobModel(unittest.TestCase):
                 "worker_pool_specs": {"master": {"container_spec": {"image_uri": "a"}}},
             }
         )
-        assert model.base_output_directory == f"/jobs/a/outputs"
+        assert model.base_output_directory == "/jobs/a/outputs"

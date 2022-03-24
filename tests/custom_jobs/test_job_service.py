@@ -1,10 +1,12 @@
+from typing import Any, Dict
+
 from google.cloud.aiplatform_v1.types.job_state import JobState
 from mock import patch
+
+from tests.mocks import mocks
 from wanna.cli.models.training_custom_job import TrainingCustomJobModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.job.service import JobService
-
-from tests.mocks import mocks
 
 
 @patch(
@@ -15,9 +17,7 @@ class TestJobService:
     def test_create_worker_pool_spec_python_package_spec(self):
         service = JobService(config=get_config())
         job_model = TrainingCustomJobModel.parse_obj(get_job_info())
-        worker_spec = service._create_worker_pool_spec(
-            job_model.worker_pool_specs.worker
-        )
+        worker_spec = service._create_worker_pool_spec(job_model.worker_pool_specs.worker)
 
         assert worker_spec.python_package_spec.executor_image_uri == "executor_image_a"
         assert worker_spec.python_package_spec.python_module == "python_module_1"
@@ -26,18 +26,14 @@ class TestJobService:
     def test_create_worker_pool_spec_machine_spec(self):
         service = JobService(config=get_config())
         job_model = TrainingCustomJobModel.parse_obj(get_job_info())
-        master_spec = service._create_worker_pool_spec(
-            job_model.worker_pool_specs.master
-        )
+        master_spec = service._create_worker_pool_spec(job_model.worker_pool_specs.master)
 
         assert master_spec.machine_spec.machine_type == "n1-standard-4"
 
     def test_create_worker_pool_spec_container_spec(self):
         service = JobService(config=get_config())
         job_model = TrainingCustomJobModel.parse_obj(get_job_info())
-        master_spec = service._create_worker_pool_spec(
-            job_model.worker_pool_specs.master
-        )
+        master_spec = service._create_worker_pool_spec(job_model.worker_pool_specs.master)
 
         assert master_spec.container_spec.image_uri == "container_a"
         assert master_spec.container_spec.command[0] == "run training"
@@ -54,25 +50,19 @@ class TestJobService:
         job_model = TrainingCustomJobModel.parse_obj(get_job_info())
         model_request = service._create_instance_request(job_model)
 
-        assert (
-            model_request.base_output_directory.output_uri_prefix
-            == "gs://my-bucket/my-model/outputs"
-        )
+        assert model_request.base_output_directory.output_uri_prefix == "gs://my-bucket/my-model/outputs"
 
     def test_create_instance_request_worker_pool_list(self):
         service = JobService(config=get_config())
         job_model = TrainingCustomJobModel.parse_obj(get_job_info())
         model_request = service._create_instance_request(job_model)
 
-        assert len(model_request.worker_pool_specs) == 4
-        assert (
-            model_request.worker_pool_specs[0].container_spec.image_uri == "container_a"
-        )
-        assert model_request.worker_pool_specs[1].replica_count == 8
-        assert model_request.worker_pool_specs[2].container_spec.args == [
-            "reduction==true"
-        ]
-        assert not model_request.worker_pool_specs[3]
+        worker_pool_specs = list(model_request.worker_pool_specs)
+        assert len(worker_pool_specs) == 4
+        assert worker_pool_specs[0].container_spec.image_uri == "container_a"
+        assert worker_pool_specs[1].replica_count == 8
+        assert worker_pool_specs[2].container_spec.args == ["reduction==true"]
+        assert not worker_pool_specs[3]
 
     def test_list_job_filter(self):
         service = JobService(config=get_config())
@@ -86,7 +76,8 @@ class TestJobService:
         )
         assert (
             filter_expr_complete
-            == '(state="JOB_STATE_PAUSED" OR state="JOB_STATE_RUNNING" OR state="JOB_STATE_FAILED") AND display_name="123"'
+            == '(state="JOB_STATE_PAUSED" OR state="JOB_STATE_RUNNING" OR state="JOB_STATE_FAILED") AND '
+            'display_name="123"'
         )
 
         filter_expr_no_job_name = service._create_list_jobs_filter_expr(
@@ -101,13 +92,11 @@ class TestJobService:
             == '(state="JOB_STATE_PAUSED" OR state="JOB_STATE_RUNNING" OR state="JOB_STATE_FAILED")'
         )
 
-        filter_expr_one_state = service._create_list_jobs_filter_expr(
-            states=[JobState.JOB_STATE_PAUSED]
-        )
+        filter_expr_one_state = service._create_list_jobs_filter_expr(states=[JobState.JOB_STATE_PAUSED])
         assert filter_expr_one_state == '(state="JOB_STATE_PAUSED")'
 
 
-def get_job_info() -> dict:
+def get_job_info() -> Dict[str, Any]:
     return {
         "name": "job_a",
         "region": "europe-west4",

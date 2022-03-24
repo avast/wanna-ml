@@ -116,7 +116,9 @@ def validate_disk_type(disk_type):
     return disk_type
 
 
-def validate_accelerator_type(accelerator_type: Instance.AcceleratorType) -> Instance.AcceleratorType:
+def validate_accelerator_type(
+    accelerator_type: Instance.AcceleratorType,
+) -> Instance.AcceleratorType:
     if accelerator_type not in Instance.AcceleratorType.__members__:
         raise ValueError(
             f"GPU accelerator type invalid ({accelerator_type})."

@@ -40,11 +40,10 @@ class NotebookService(BaseService):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            with Spinner(
-                text=f"Deleting {self.instance_type} {notebook_instance.name}"
-            ):
+            with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
                 deleted = self.notebook_client.delete_instance(
-                    name=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}/instances/{notebook_instance.name}"
+                    name=f"projects/{notebook_instance.project_id}/locations/"
+                    f"{notebook_instance.zone}/instances/{notebook_instance.name}"
                 )
                 deleted.result()
         else:

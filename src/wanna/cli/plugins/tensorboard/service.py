@@ -111,5 +111,8 @@ class TensorboardService(BaseService):
             instances: List of the tensorboard instances
 
         """
-        instances = cast(List[Tensorboard], aiplatform.Tensorboard.list(project=project_id, location=region))
+        instances = cast(
+            List[Tensorboard],
+            aiplatform.Tensorboard.list(project=project_id, location=region),
+        )
         return instances

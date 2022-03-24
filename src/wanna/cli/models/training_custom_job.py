@@ -1,6 +1,7 @@
-from typing import Literal, List, Optional, Dict
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Extra, conint, root_validator
+from pydantic import BaseModel, Extra, Field, root_validator
+
 from wanna.cli.models.base_instance import BaseInstanceModel
 
 
@@ -30,19 +31,15 @@ class WorkerPoolSpecModel(BaseModel, extra=Extra.forbid):
     machine_type: str = "n1-standard-4"
     gpu: Optional[JobGPUModel]
     boot_disk_type: Literal["pd-ssd", "pd-standard"] = "pd-ssd"
-    boot_disk_size_gb: conint(ge=100, le=65535) = 100
+    boot_disk_size_gb: int = Field(ge=100, le=65535, default=100)
     replica_count: int = 1
 
     @root_validator
-    def one_from_python_or_container_spec_must_be_set(cls, values):
+    def one_from_python_or_container_spec_must_be_set(cls, values):  # pylint: disable=no-self-argument,no-self-use
         if values.get("python_package_spec") and values.get("container_spec"):
-            raise ValueError(
-                "Only one of python_package_spec or container_spec can be set"
-            )
+            raise ValueError("Only one of python_package_spec or container_spec can be set")
         if not values.get("python_package_spec") and not values.get("container_spec"):
-            raise ValueError(
-                "At least one of python_package_spec or container_spec must be set"
-            )
+            raise ValueError("At least one of python_package_spec or container_spec must be set")
         return values
 
 
@@ -53,9 +50,7 @@ class WorkerPoolSpecsModel(BaseModel, extra=Extra.forbid):
     evaluator: Optional[WorkerPoolSpecModel]
 
 
-class TrainingCustomJobModel(
-    BaseInstanceModel, extra=Extra.forbid, validate_assignment=True
-):
+class TrainingCustomJobModel(BaseInstanceModel):
     name: str
     region: str
     timeout_seconds: int = 60 * 60 * 24  # 24 hours
@@ -66,7 +61,9 @@ class TrainingCustomJobModel(
     base_output_directory: Optional[str]
 
     @root_validator(pre=False)
-    def _set_base_output_directory_if_not_provided(cls, values: dict) -> dict:
+    def _set_base_output_directory_if_not_provided(  # pylint: disable=no-self-argument,no-self-use
+        cls, values: Dict[str, Any]
+    ) -> Dict[str, Any]:
         if not values.get("base_output_directory"):
             values["base_output_directory"] = f"/jobs/{values.get('name')}/outputs"
         return values
