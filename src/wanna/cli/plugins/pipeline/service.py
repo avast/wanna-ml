@@ -15,7 +15,7 @@ from python_on_whales import Image
 
 from wanna.cli.docker.service import DockerService
 from wanna.cli.models.docker import DockerImageModel, ImageBuildType
-from wanna.cli.models.pipeline import PipelineModel
+from wanna.cli.models.pipeline import PipelineMeta, PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils.spinners import Spinner
@@ -40,7 +40,7 @@ class PipelineService(BaseService):
         self.pipelines_dir = self.workdir / "build" / "pipelines"
         os.makedirs(self.pipelines_dir, exist_ok=True)
 
-    def compile(self, instance_name: str) -> List[Tuple[PipelineModel, Path, Dict[str, Any], Dict[str, str]]]:
+    def compile(self, instance_name: str) -> List[PipelineMeta]:
         """
         Create an instance with name "name" based on wanna-ml config.
         Args:
@@ -55,10 +55,9 @@ class PipelineService(BaseService):
 
         return compiled
 
-    def _export_pipeline_params(self, pipeline_instance: PipelineModel):
-
-        # Get pipeline computed values
-        pipeline = self.pipeline_store.get(pipeline_instance.name, None)
+    def _export_pipeline_params(
+        self, pipeline_instance: PipelineModel, images: List[Tuple[DockerImageModel, Optional[Image], str]]
+    ):
 
         # Prepare env params to be exported
         pipeline_env_params = {
@@ -77,11 +76,9 @@ class PipelineService(BaseService):
             env_name = snakecase(f"{pipeline_name_prefix}_{key.upper()}").upper()
             os.environ[env_name] = value
 
-        if pipeline:
-            image_tags = pipeline.get("image_tags", [])
-            for (docker_image_model, _, tag) in image_tags:
-                env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI").lower()
-                os.environ[env_name] = tag
+        for (docker_image_model, _, tag) in images:
+            env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI").upper()
+            os.environ[env_name] = tag
 
         # Collect pipeline compile params from wanna config
         if pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, Path):
@@ -94,11 +91,9 @@ class PipelineService(BaseService):
 
         return pipeline_env_params, pipeline_compile_params
 
-    def _compile_one_instance(
-        self, pipeline_instance: PipelineModel
-    ) -> Tuple[PipelineModel, Path, Dict[str, Any], Dict[str, str]]:
+    def _compile_one_instance(self, pipeline_instance: PipelineModel) -> PipelineMeta:
 
-        image_tags = None
+        image_tags = []
         if pipeline_instance.docker_image_ref:
             image_tags = [
                 self._build_docker_image(docker_image_ref, self.registry, self.version)
@@ -112,7 +107,7 @@ class PipelineService(BaseService):
             pipeline_json_spec_path = (self.pipeline_dir / "pipeline_spec.json").resolve()
 
             # Collect kubeflow pipeline params for compilation
-            pipeline_env_params, pipeline_params = self._export_pipeline_params(pipeline_instance)
+            pipeline_env_params, pipeline_params = self._export_pipeline_params(pipeline_instance, image_tags)
 
             # Compile kubeflow V2 Pipeline
             compile_pyfile(
@@ -135,7 +130,13 @@ class PipelineService(BaseService):
 
             self.pipeline_store.update({f"{pipeline_instance.name}": compiled_pipeline_meta})
 
-            return pipeline_instance, pipeline_json_spec_path, pipeline_params, pipeline_env_params
+            return PipelineMeta(
+                json_spec_path=pipeline_json_spec_path,
+                config=pipeline_instance,
+                images=image_tags,
+                parameter_values=pipeline_params,
+                compile_env_params=pipeline_env_params,
+            )
 
     def run(
         self,
@@ -146,33 +147,35 @@ class PipelineService(BaseService):
         network: Optional[str] = None,
     ):
 
-        for pipeline_instance, pipeline_json_spec_path, pipeline_params, pipeline_env_params in self.compile(
-            instance_name
-        ):
+        for pipeline_meta in self.compile(instance_name):
 
-            with Spinner(text=f"Running pipeline {pipeline_instance.name}"):
-                aiplatform.init(project=pipeline_instance.project_id, location=pipeline_instance.region)
+            with Spinner(text=f"Running pipeline {pipeline_meta.config.name}"):
+                aiplatform.init(project=pipeline_meta.config.project_id, location=pipeline_meta.config.region)
 
-                # define pipeline parameters
-                pipeline_job_id = pipeline_env_params.get("pipeline_job_id")
-                pipeline_root = pipeline_env_params.get("pipeline_root")
-                override_params = PipelineService._read_pipeline_params(params) if params else {}
+                # Publish Containers
+                for (_, image, _) in pipeline_meta.images:
+                    self.docker_service.push_image(image)
+
+                # fetch compiled params
+                pipeline_job_id = pipeline_meta.compile_env_params.get("pipeline_job_id")
+                pipeline_root = pipeline_meta.compile_env_params.get("pipeline_root")
 
                 # Apply override with cli provided params file
-                pipeline_params = {**pipeline_params, **override_params}
+                override_params = self._read_pipeline_params(params) if params else {}
+                pipeline_params = {**pipeline_meta.parameter_values, **override_params}
 
-                # define pipeline job
+                # Define Vertex AI Pipeline job
                 pipeline_job = pipeline_jobs.PipelineJob(
-                    display_name=pipeline_instance.name,
+                    display_name=pipeline_meta.config.name,
                     job_id=pipeline_job_id,
-                    template_path=str(pipeline_json_spec_path),
+                    template_path=str(pipeline_meta.json_spec_path),
                     pipeline_root=pipeline_root,
                     parameter_values=pipeline_params,
                     enable_caching=True,
-                    labels=pipeline_instance.labels,
+                    labels=pipeline_meta.config.labels,
                 )
 
-                service_account = service_account or pipeline_instance.service_account
+                service_account = service_account or pipeline_meta.config.service_account
 
                 # TODO: Get Network full name by name - projects/12345/global/networks/myVPC.
                 # network = network or pipeline_instance.network_id
@@ -183,7 +186,7 @@ class PipelineService(BaseService):
                     if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
                         typer.echo(
                             f"\N{cross mark} detected exit signal, "
-                            f"shutting down running pipeline {pipeline_instance.name}"
+                            f"shutting down running pipeline {pipeline_meta.config.name}"
                             f"at {pipeline_job._dashboard_uri()}."
                         )
                         pipeline_job.cancel()
@@ -195,7 +198,7 @@ class PipelineService(BaseService):
                 if sync:
                     typer.echo(f"\n\tpipeline dashboard at {pipeline_job._dashboard_uri()}.")
                     pipeline_job.wait()
-                    df_pipeline = aiplatform.get_pipeline_df(pipeline=pipeline_instance.name.replace("_", "-"))
+                    df_pipeline = aiplatform.get_pipeline_df(pipeline=pipeline_meta.config.name.replace("_", "-"))
                     typer.echo(f"{df_pipeline.info()}")
 
     def _build_docker_image(
@@ -216,7 +219,6 @@ class PipelineService(BaseService):
                     image_name=image_name,
                     versions=[version, "latest"],
                 )
-
                 image = self.docker_service.build_image(image_model=docker_image_model, tags=tags)
 
             typer.echo(f"\n\t Built image with tags {tags}")

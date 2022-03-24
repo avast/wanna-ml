@@ -1,9 +1,11 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pydantic import Field, validator
+from pydantic import BaseModel, Field, validator
+from python_on_whales import Image
 
 from wanna.cli.models.base_instance import BaseInstanceModel
+from wanna.cli.models.docker import DockerImageModel
 from wanna.cli.utils.gcp import validators
 
 
@@ -20,3 +22,11 @@ class PipelineModel(BaseInstanceModel):
 
     # Validators
     _schedule = validator("schedule")(validators.validate_cron_schedule)
+
+
+class PipelineMeta(BaseModel, arbitrary_types_allowed=True):
+    json_spec_path: Path
+    config: PipelineModel
+    images: List[Tuple[DockerImageModel, Optional[Image], str]]
+    parameter_values: Dict[str, Any]
+    compile_env_params: Dict[str, str]

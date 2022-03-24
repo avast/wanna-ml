@@ -1,9 +1,10 @@
 from typing import NamedTuple
 
+import wanna_simple.config as cfg
 from kfp.v2.dsl import Dataset, Input, Model, Output, component
 
 @component(
-    base_image="python:3.9",
+    base_image=cfg.TRAIN_IMAGE_URI,
     packages_to_install=[
         "pandas",
         "sklearn",

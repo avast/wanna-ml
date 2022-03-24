@@ -47,5 +47,4 @@ class PipelinePlugin(BasePlugin):
         config = load_config_from_yaml(file)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir)
-
         pipeline_service.run(instance_name, params=params)
