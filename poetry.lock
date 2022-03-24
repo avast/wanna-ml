@@ -2872,19 +2872,6 @@ url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple
 reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
 
 [[package]]
-name = "types-protobuf"
-version = "3.19.15"
-description = "Typing stubs for protobuf"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[package.source]
-type = "legacy"
-url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
-reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
-
-[[package]]
 name = "types-pyyaml"
 version = "6.0.5"
 description = "Typing stubs for PyYAML"
@@ -3115,7 +3102,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11" # google-cloud-bigquery requires this mess
-content-hash = "2ff288562295c46abf5b0213408e09ab71a4d0a481cf5701113b810e0258808a"
+content-hash = "13d01603482fd51df140527e96a19639ccc2a18d8f6de1e595902ee711e4071e"
 
 [metadata.files]
 absl-py = [
@@ -4236,10 +4223,6 @@ typer = [
 types-mock = [
     {file = "types-mock-4.0.12.tar.gz", hash = "sha256:f8b1dbe128dc2d5aa038876a8b497dfd1a9405210a5eb3dc4b4757c2e254627c"},
     {file = "types_mock-4.0.12-py3-none-any.whl", hash = "sha256:81f98e66bddde1b2a8d96c15c084d5d3ed96cf6137bca9ba8aabc6b6865b9ca7"},
-]
-types-protobuf = [
-    {file = "types-protobuf-3.19.15.tar.gz", hash = "sha256:d371d0a5b32e78c2d684329a5d4491d385e6eadcab497b37c41172ded328c5d9"},
-    {file = "types_protobuf-3.19.15-py3-none-any.whl", hash = "sha256:4673a4e56495886590c36cd87f2d855299a699a598eacb2e27d82b57eb4afb05"},
 ]
 types-pyyaml = [
     {file = "types-PyYAML-6.0.5.tar.gz", hash = "sha256:464e050914f3d1d83a8c038e1cf46da5cb96b7cd02eaa096bcaa03675edd8a2e"},

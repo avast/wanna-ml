@@ -1,9 +1,6 @@
-from collections import namedtuple
+from typing import NamedTuple
 
 from kfp.v2.dsl import Dataset, Input, Model, Output, component
-
-TrainOutputs = namedtuple("TrainOutputs", ["train_score", "model_artifact_path"])
-
 
 @component(
     base_image="python:3.9",
@@ -13,10 +10,15 @@ TrainOutputs = namedtuple("TrainOutputs", ["train_score", "model_artifact_path"]
         "xgboost",
     ],
 )
-def train_xgb_model_op(dataset: Input[Dataset], model_artifact: Output[Model]) -> TrainOutputs:
+def train_xgb_model_op(dataset: Input[Dataset], model_artifact: Output[Model]) -> NamedTuple("outputs",
+                                                                                             [
+                                                                                                 ("train_score", float),
+                                                                                                 ("model_artifact_path", str)
+                                                                                             ]):
 
     import pandas as pd
     from xgboost import XGBClassifier
+    from collections import namedtuple
 
     data = pd.read_csv(dataset.path)
 
@@ -39,10 +41,7 @@ def train_xgb_model_op(dataset: Input[Dataset], model_artifact: Output[Model]) -
     model_artifact.path = model_path
     model.save_model(model_artifact.path)
 
-    # After save make model
+    # After save make model path match GCS counter part
     model_path = str(model_artifact.path).replace("/gcs/", "gs://").replace("model.bst", "")
-
-    return TrainOutputs(
-        train_score=float(score),
-        model_artifact_path=model_path,
-    )
+    outputs = namedtuple("outputs", ["train_score", "model_artifact_path"])
+    return outputs(train_score=float(score), model_artifact_path=model_path)

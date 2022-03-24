@@ -1,9 +1,6 @@
-from collections import namedtuple
+from typing import NamedTuple
 
 from kfp.v2.dsl import ClassificationMetrics, Dataset, Input, Metrics, Model, Output, component
-
-EvalOutputs = namedtuple("EvalOutputs", ["test_score"])
-
 
 @component(
     base_image="python:3.9",
@@ -11,10 +8,14 @@ EvalOutputs = namedtuple("EvalOutputs", ["test_score"])
 )
 def eval_model_op(
     test_set: Input[Dataset], xgb_model: Input[Model], metrics: Output[ClassificationMetrics], smetrics: Output[Metrics]
-) -> EvalOutputs:
+) ->  NamedTuple("outputs",
+                 [
+                     ("test_score", float),
+                 ]):
     import pandas as pd
     from sklearn.metrics import confusion_matrix, roc_curve
     from xgboost import XGBClassifier
+    from collections import namedtuple
 
     test_set = pd.read_csv(test_set.path)
     model = XGBClassifier()
@@ -38,4 +39,5 @@ def eval_model_op(
     test_score = float(score)
     xgb_model.metadata["test_score"] = test_score
     smetrics.log_metric("score", test_score)
-    return EvalOutputs(test_score=test_score)
+    outputs = namedtuple("outputs", ["test_score"])
+    return outputs(test_score=test_score)
