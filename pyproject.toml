@@ -70,16 +70,19 @@ xgboost = "^1.5.2"
 types-pyyaml = "^6.0.5"
 types-requests = "^2.27.14"
 types-mock = "^4.0.12"
-types-protobuf = "^3.19.15"
 tensorboardx = "^2.5"
 
 [tool.mypy]
 follow_imports = "silent"
+strict = true
 strict_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 disallow_any_generics = true
 implicit_reexport = true
+ignore_missing_imports = true
+
+[tool.'mypy-google.*']
 ignore_missing_imports = true
 
 [tool.pylint.'MESSAGES CONTROL']

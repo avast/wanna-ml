@@ -10,13 +10,13 @@ class PluginRunner:
     def __init__(self) -> None:
         self.app = typer.Typer()
 
-        my_typers = [
+        typers = [
             ("pipeline", PipelinePlugin()),
             ("job", JobPlugin()),
             ("notebook", NotebookPlugin()),
             ("tensorboard", TensorboardPlugin()),
         ]
-        for name, subcommand in my_typers:
+        for name, subcommand in typers:
             self.app.add_typer(subcommand.app, name=name)
 
     def run(self) -> None:
