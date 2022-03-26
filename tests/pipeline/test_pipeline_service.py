@@ -6,14 +6,24 @@ from pathlib import Path
 import pandas as pd
 from google.cloud import aiplatform
 from google.cloud.aiplatform import pipeline_jobs
+from mock import patch
 from mock.mock import MagicMock
 
+from tests.mocks import mocks
 from wanna.cli.docker.service import DockerService
 from wanna.cli.models.docker import ImageBuildType, LocalBuildImageModel
 from wanna.cli.plugins.pipeline.service import PipelineService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
+@patch(
+    "wanna.cli.utils.gcp.gcp.ZonesClient",
+    mocks.MockZonesClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.gcp.RegionsClient",
+    mocks.MockRegionsClient,
+)
 class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
@@ -21,6 +31,8 @@ class TestPipelineService(unittest.TestCase):
     pipeline_build_dir = sample_pipeline_dir / "build"
 
     def setup(self) -> None:
+        self.project_id = "gcp-project"
+        self.zone = "us-east1-a"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
 
