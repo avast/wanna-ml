@@ -13,3 +13,11 @@ def load_yaml(stream: TextIO, context_dir: Path, **extras: Any) -> Dict[Any, Any
     yaml_dict = yaml.load(stream, Loader=yaml.FullLoader) or {}
     yaml_dict.update(extras)
     return yaml_dict
+
+
+def load_yaml_path(path: Path, context_dir: Path, **extras: Any) -> Dict[Any, Any]:
+    """
+    Convert a Path into a yaml dict
+    """
+    with open(path, "r") as f:
+        return load_yaml(f, context_dir, **extras)

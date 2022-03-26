@@ -30,6 +30,6 @@ docker:
 pipelines:
   - name: wanna-sklearn-sample
     bucket: gs://wanna-ml
-    pipeline_file: wanna_simple/pipeline.py
+    pipeline_file: pipeline.py
     pipeline_params: params.yaml
     docker_image_ref: ["train"]
