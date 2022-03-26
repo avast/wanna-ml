@@ -1,9 +1,7 @@
-import typer
-
 from .plugins.runner import PluginRunner
 
 runner = PluginRunner()
-app = typer.Typer()
+app = runner.app
 
 
 # required to get mkdocs to play nicely

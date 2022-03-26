@@ -2,14 +2,13 @@ import atexit
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import typer
-import yaml
 from caseconverter import kebabcase, snakecase
 from google.cloud import aiplatform
-from google.cloud.aiplatform import pipeline_jobs
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
+from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 
@@ -18,8 +17,22 @@ from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.models.pipeline import PipelineMeta, PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
+from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
+
+
+def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob) -> None:
+    @atexit.register
+    def stop_pipeline_job():
+        if pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
+            typer.echo(
+                f"\N{cross mark} detected exit signal, "
+                f"shutting down running pipeline {pipeline_Name}"
+                f"at {pipeline_job._dashboard_uri()}."
+            )
+            pipeline_job.cancel()
+            pipeline_job.wait()
 
 
 class PipelineService(BaseService):
@@ -37,23 +50,8 @@ class PipelineService(BaseService):
         self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
         self.pipeline_store: Dict[str, Dict[str, Any]] = {}
         self.workdir = workdir
-        self.pipelines_dir = self.workdir / "build" / "pipelines"
-        os.makedirs(self.pipelines_dir, exist_ok=True)
-
-    def compile(self, instance_name: str) -> List[PipelineMeta]:
-        """
-        Create an instance with name "name" based on wanna-ml config.
-        Args:
-            instance_name: The name of the only instance from wanna-ml config that should be created.
-                  Set to "all" to create everything from wanna-ml yaml configuration.
-        """
-        instances = self._filter_instances_by_name(instance_name)
-
-        compiled = []
-        for instance in instances:
-            compiled.append(self._compile_one_instance(instance))
-
-        return compiled
+        self.pipelines_build_dir = self.workdir / "build" / "pipelines"
+        os.makedirs(self.pipelines_build_dir, exist_ok=True)
 
     def _export_pipeline_params(
         self, pipeline_instance: PipelineModel, images: List[Tuple[DockerImageModel, Optional[Image], str]]
@@ -83,7 +81,7 @@ class PipelineService(BaseService):
         # Collect pipeline compile params from wanna config
         if pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, Path):
             pipeline_params_path = (self.workdir / pipeline_instance.pipeline_params).resolve()
-            pipeline_compile_params = PipelineService._read_pipeline_params(pipeline_params_path)
+            pipeline_compile_params = load_yaml_path(pipeline_params_path, self.workdir)
         elif pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, dict):
             pipeline_compile_params = pipeline_instance.pipeline_params
         else:
@@ -102,7 +100,7 @@ class PipelineService(BaseService):
 
         with Spinner(text=f"Compiling pipeline {pipeline_instance.name}"):
             # Prep build dir
-            self.pipeline_dir = self.pipelines_dir / pipeline_instance.name
+            self.pipeline_dir = self.pipelines_build_dir / pipeline_instance.name
             os.makedirs(self.pipeline_dir, exist_ok=True)
             pipeline_json_spec_path = (self.pipeline_dir / "pipeline_spec.json").resolve()
 
@@ -111,7 +109,7 @@ class PipelineService(BaseService):
 
             # Compile kubeflow V2 Pipeline
             compile_pyfile(
-                pyfile=pipeline_instance.pipeline_file,
+                pyfile=str(self.workdir / pipeline_instance.pipeline_file),
                 function_name=pipeline_instance.pipeline_function,
                 pipeline_parameters=pipeline_params,
                 package_path=str(pipeline_json_spec_path),
@@ -138,16 +136,32 @@ class PipelineService(BaseService):
                 compile_env_params=pipeline_env_params,
             )
 
+    def compile(self, instance_name: str) -> List[PipelineMeta]:
+        """
+        Create an instance with name "name" based on wanna-ml config.
+        Args:
+            instance_name: The name of the only instance from wanna-ml config that should be created.
+                  Set to "all" to create everything from wanna-ml yaml configuration.
+        """
+        instances = self._filter_instances_by_name(instance_name)
+
+        compiled = []
+        for instance in instances:
+            compiled.append(self._compile_one_instance(instance))
+
+        return compiled
+
     def run(
         self,
-        instance_name: str,
-        params: Optional[Path] = None,
+        pipelines: List[PipelineMeta],
+        extra_params_path: Optional[Path] = None,
         sync: bool = True,
         service_account: Optional[str] = None,
         network: Optional[str] = None,
-    ):
+        exit_callback: Callable[[str, PipelineJob], None] = _at_pipeline_exit,
+    ) -> None:
 
-        for pipeline_meta in self.compile(instance_name):
+        for pipeline_meta in pipelines:
 
             with Spinner(text=f"Running pipeline {pipeline_meta.config.name}"):
                 aiplatform.init(project=pipeline_meta.config.project_id, location=pipeline_meta.config.region)
@@ -161,11 +175,11 @@ class PipelineService(BaseService):
                 pipeline_root = pipeline_meta.compile_env_params.get("pipeline_root")
 
                 # Apply override with cli provided params file
-                override_params = self._read_pipeline_params(params) if params else {}
+                override_params = load_yaml_path(extra_params_path, self.workdir) if extra_params_path else {}
                 pipeline_params = {**pipeline_meta.parameter_values, **override_params}
 
                 # Define Vertex AI Pipeline job
-                pipeline_job = pipeline_jobs.PipelineJob(
+                pipeline_job = PipelineJob(
                     display_name=pipeline_meta.config.name,
                     job_id=pipeline_job_id,
                     template_path=str(pipeline_meta.json_spec_path),
@@ -181,16 +195,7 @@ class PipelineService(BaseService):
                 # network = network or pipeline_instance.network_id
 
                 # Cancel pipeline if wanna process exits
-                @atexit.register
-                def stop_pipeline_job():
-                    if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
-                        typer.echo(
-                            f"\N{cross mark} detected exit signal, "
-                            f"shutting down running pipeline {pipeline_meta.config.name}"
-                            f"at {pipeline_job._dashboard_uri()}."
-                        )
-                        pipeline_job.cancel()
-                        pipeline_job.wait()
+                exit_callback(pipeline_meta.config.name, pipeline_job)
 
                 # submit pipeline job for execution
                 pipeline_job.submit(service_account=service_account, network=network)
@@ -228,12 +233,6 @@ class PipelineService(BaseService):
                 tags[0],
             )
 
-    def _schedule_all_instance(self) -> None:
-        pass
-
-    def _compile_all_instances(self) -> None:
-        pass
-
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         pass
 
@@ -245,8 +244,3 @@ class PipelineService(BaseService):
 
     def _instance_exists(self, instance: PipelineModel) -> bool:
         pass
-
-    @staticmethod
-    def _read_pipeline_params(path: Path) -> Dict[str, Any]:
-        with open(path, "r") as f:
-            return yaml.safe_load(f)

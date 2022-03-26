@@ -9,6 +9,13 @@ from wanna.cli.models.docker import DockerImageModel
 from wanna.cli.utils.gcp import validators
 
 
+class PipelineScheduleModel(BaseModel):
+    schedule: Optional[str]
+
+    # Validators
+    _schedule = validator("schedule")(validators.validate_cron_schedule)
+
+
 class PipelineModel(BaseInstanceModel):
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     zone: str
@@ -18,10 +25,7 @@ class PipelineModel(BaseInstanceModel):
     tags: Optional[List[str]]
     metadata: Optional[List[Dict[str, Any]]]
     docker_image_ref: Optional[List[str]]
-    schedule: Optional[str]
-
-    # Validators
-    _schedule = validator("schedule")(validators.validate_cron_schedule)
+    schedule: Optional[PipelineScheduleModel]
 
 
 class PipelineMeta(BaseModel, arbitrary_types_allowed=True):

@@ -21,7 +21,7 @@ def slack_notification(slack_channel: str, status: str):
 
     logging.getLogger().setLevel(logging.INFO)
 
-    webhook = "https://hooks.slack.com/services/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"
+    webhook = "fillme-from-gcp-secrets"
     # icon = "https://a.slack-edge.com/production-standard-emoji-assets/13.0/apple-medium/274c.png"
 
     args = ["slack", "-w", webhook, "-c", slack_channel, f":white_check_mark: {status}"]
@@ -37,6 +37,7 @@ def slack_notification(slack_channel: str, status: str):
 @dsl.pipeline(
     # A name for the pipeline. Use to determine the pipeline Context.
     name=cfg.PIPELINE_NAME,
+    pipeline_root=cfg.PIPELINE_ROOT
 )
 def wanna_sklearn_sample(eval_acc_threshold: float):
 
