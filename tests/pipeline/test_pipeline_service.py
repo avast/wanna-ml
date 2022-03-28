@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 from google.cloud import aiplatform
-from google.cloud.aiplatform import pipeline_jobs
+from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from mock import patch
 from mock.mock import MagicMock
 
@@ -79,9 +79,9 @@ class TestPipelineService(unittest.TestCase):
         DockerService.push_image = MagicMock(return_value=None)
 
         # Mock GCP calls
-        pipeline_jobs.PipelineJob.submit = MagicMock(return_value=None)
-        pipeline_jobs.PipelineJob.wait = MagicMock(return_value=None)
-        pipeline_jobs.PipelineJob._dashboard_uri = MagicMock(return_value=None)
+        PipelineJob.submit = MagicMock(return_value=None)
+        PipelineJob.wait = MagicMock(return_value=None)
+        PipelineJob._dashboard_uri = MagicMock(return_value=None)
         aiplatform.get_pipeline_df = MagicMock(return_value=pd.DataFrame(columns=["name"]))
 
         # Get compile result metadata
@@ -125,8 +125,10 @@ class TestPipelineService(unittest.TestCase):
         pipeline_service.run(pipelines, sync=True, exit_callback=lambda x, y: None)
 
         # Test GCP services were called and with correct args
-        pipeline_jobs.PipelineJob.submit.assert_called_once()
-        pipeline_jobs.PipelineJob.wait.assert_called_once()
+        # pipeline_jobs.PipelineJob.assert_called_once()
+        PipelineJob.submit.assert_called_once()
+        PipelineJob.wait.assert_called_once()
+        PipelineJob._dashboard_uri.assert_called_once()
+
         aiplatform.get_pipeline_df.assert_called_once()
-        pipeline_jobs.PipelineJob._dashboard_uri.assert_called_once()
         aiplatform.get_pipeline_df.assert_called_with(pipeline="wanna-sklearn-sample")

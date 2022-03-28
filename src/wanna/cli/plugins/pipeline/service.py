@@ -164,7 +164,7 @@ class PipelineService(BaseService):
         for pipeline_meta in pipelines:
 
             with Spinner(text=f"Running pipeline {pipeline_meta.config.name}"):
-                aiplatform.init(project=pipeline_meta.config.project_id, location=pipeline_meta.config.region)
+                # aiplatform.init(project=pipeline_meta.config.project_id, location=pipeline_meta.config.region)
 
                 # Publish Containers
                 for (_, image, _) in pipeline_meta.images:
@@ -187,6 +187,8 @@ class PipelineService(BaseService):
                     parameter_values=pipeline_params,
                     enable_caching=True,
                     labels=pipeline_meta.config.labels,
+                    project=pipeline_meta.config.project_id,
+                    location=pipeline_meta.config.region,
                 )
 
                 service_account = service_account or pipeline_meta.config.service_account
