@@ -36,7 +36,7 @@ class TensorboardService(BaseService):
             with Spinner(text=f"Deleting Tensorboard {instance.name}"):
                 aiplatform.Tensorboard(tensorboard_name=tensorboard.resource_name).delete()
 
-    def _create_one_instance(self, instance: TensorboardModel) -> None:
+    def _create_one_instance(self, instance: TensorboardModel, **kwargs) -> None:
         """
         Creates one Tensorboard instance based on pydantic model.
 

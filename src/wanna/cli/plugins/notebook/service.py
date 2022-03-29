@@ -51,7 +51,7 @@ class NotebookService(BaseService):
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}"
             )
 
-    def _create_one_instance(self, notebook_instance: NotebookModel) -> None:
+    def _create_one_instance(self, instance: NotebookModel, **kwargs) -> None:
         """
         Create a notebook instance based on information in NotebookModel class.
         1. Check if the notebook already exists
@@ -61,22 +61,22 @@ class NotebookService(BaseService):
         5. Get and print the link to JupyterLab
 
         Args:
-            notebook_instance: notebook to be created
+            instance: notebook to be created
 
         """
-        exists = self._instance_exists(notebook_instance)
+        exists = self._instance_exists(instance)
         if exists:
-            typer.echo(f"Instance {notebook_instance.name} already exists in location {notebook_instance.zone}")
+            typer.echo(f"Instance {instance.name} already exists in location {instance.zone}")
             should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
             if should_recreate:
-                self._delete_one_instance(notebook_instance)
+                self._delete_one_instance(instance)
             else:
                 return
-        with Spinner(text=f"Creating underlying compute engine instance for {notebook_instance.name}"):
-            instance_request = self._create_instance_request(notebook_instance=notebook_instance)
-            instance = self.notebook_client.create_instance(instance_request)
+        with Spinner(text=f"Creating underlying compute engine instance for {instance.name}"):
+            instance_request = self._create_instance_request(notebook_instance=instance)
+            nb_instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
-                instance.result().name
+                nb_instance.result().name
             )  # .result() waits for compute engine behind the notebook to start
         with Spinner(text="Starting JupyterLab"):
             wait(

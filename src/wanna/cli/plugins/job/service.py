@@ -1,24 +1,11 @@
-from typing import List
+from typing import List, Union
 
 import typer
-from google.api_core.client_options import ClientOptions
-from google.cloud.aiplatform_v1.services.job_service import JobServiceClient
-from google.cloud.aiplatform_v1.types import (
-    ContainerSpec,
-    CustomJob,
-    CustomJobSpec,
-    GcsDestination,
-    ListCustomJobsRequest,
-    MachineSpec,
-    PythonPackageSpec,
-    Scheduling,
-    WorkerPoolSpec,
-)
-from google.cloud.aiplatform_v1.types.job_state import JobState
-from google.protobuf.duration_pb2 import Duration
-from waiting import wait
+from google.cloud import aiplatform
+from google.cloud.aiplatform import CustomContainerTrainingJob, CustomPythonPackageTrainingJob, CustomTrainingJob
+from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 
-from wanna.cli.models.training_custom_job import TrainingCustomJobModel, WorkerPoolSpecModel
+from wanna.cli.models.training_custom_job import TrainingCustomJobModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils.spinners import Spinner
@@ -34,11 +21,13 @@ class JobService(BaseService):
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_settings.bucket
         self.config = config
-        self.job_client = JobServiceClient(
-            client_options=ClientOptions(api_endpoint=f"{self.config.gcp_settings.region}-aiplatform.googleapis.com")
+        self.aiplatform = aiplatform
+        self.aiplatform.init(
+            project=self.config.gcp_settings.project_id,
+            location=self.config.gcp_settings.region,
         )
 
-    def _create_one_instance(self, instance: TrainingCustomJobModel):
+    def _create_one_instance(self, instance: TrainingCustomJobModel, **kwargs):
         """
         Create one custom job based on TrainingCustomJobModel.
         The function also waits until the job is initiated (no longer pending)
@@ -46,123 +35,68 @@ class JobService(BaseService):
         Args:
             instance: custom job model to create
         """
-        job_spec = self._create_instance_request(instance)
-        job = CustomJob(display_name=instance.name, job_spec=job_spec)
-        job_request = self.job_client.create_custom_job(
-            parent=f"projects/{instance.project_id}/locations/{instance.region}",
-            custom_job=job,
-        )
-        typer.echo(f"Outputs will be saved to {job.job_spec.base_output_directory.output_uri_prefix}")
+        sync = kwargs.get("sync")
+        job = self._create_training_job_spec(instance)
+        typer.echo(f"Outputs will be saved to {instance.base_output_directory}")
         with Spinner(text="Initiating custom job"):
-            wait(
-                lambda: self.job_client.get_custom_job(name=job_request.name).state
-                in [
-                    JobState.JOB_STATE_FAILED,
-                    JobState.JOB_STATE_SUCCEEDED,
-                    JobState.JOB_STATE_RUNNING,
-                ],
-                timeout_seconds=600,
-                sleep_seconds=10,
-                waiting_for="Initiating Custom Training Job",
+            job.run(
+                machine_type=instance.worker.machine_type,
+                accelerator_type=instance.worker.gpu.accelerator_type,
+                accelerator_count=instance.worker.gpu.count,
+                args=instance.worker.args,
+                base_output_dir=instance.base_output_directory,
+                service_account=instance.service_account,
+                network=instance.network,
+                environment_variables=instance.worker.env,
+                replica_count=instance.worker.replica_count,
+                boot_disk_type=instance.worker.boot_disk_type,
+                boot_disk_size_gb=instance.worker.boot_disk_size_gb,
+                reduction_server_replica_count=instance.reduction_server.replica_count
+                if instance.reduction_server
+                else 0,
+                reduction_server_machine_type=instance.reduction_server.machine_type
+                if instance.reduction_server
+                else None,
+                reduction_server_container_uri=instance.reduction_server.container_uri
+                if instance.reduction_server
+                else None,
+                timeout=instance.timeout_seconds,
+                enable_web_access=instance.enable_web_access,
+                tensorboard=None,
+                sync=False,
             )
-        job_state = self.job_client.get_custom_job(name=job_request.name).state
-        if job_state == JobState.JOB_STATE_RUNNING:
-            typer.echo(f"Job {instance.name} is running.")
-        elif job_state == JobState.JOB_STATE_SUCCEEDED:
-            typer.echo(f"Job {instance.name} succeeded.")
+        if sync:
+            with Spinner(text=f"Running custom job {instance.name}"):
+                job.wait()
         else:
-            typer.echo(f"Job {instance.name} initiating failed or took longer than usual, check logs {job_state.name}.")
+            with Spinner(text=f"Creating resources for job {instance.name}"):
+                job.wait_for_resource_creation()
 
     @staticmethod
-    def _create_worker_pool_spec(worker_pool: WorkerPoolSpecModel) -> WorkerPoolSpec:
-        """
-        Create GCP API friendly WorkerPoolSpec from WorkerPoolSpecModel.
-        This creates one worker_pool (eg. master or reduction server etc.)
-        and should be called for each role/task.
-
-        Args:
-            worker_pool: worker pool spec model
-
-        Returns:
-            GCP API friendly worker pool spec
-        """
-        if worker_pool.python_package_spec:
-            python_package_spec = PythonPackageSpec(
-                executor_image_uri=worker_pool.python_package_spec.executor_image_uri,
-                package_uris=worker_pool.python_package_spec.package_uris,
-                python_module=worker_pool.python_package_spec.python_module,
-                args=worker_pool.python_package_spec.args,
-                env=worker_pool.python_package_spec.env,
+    def _create_training_job_spec(
+        job_model: TrainingCustomJobModel,
+    ) -> Union[CustomContainerTrainingJob, CustomPythonPackageTrainingJob]:
+        """"""
+        if job_model.worker.python_package:
+            return CustomPythonPackageTrainingJob(
+                display_name=job_model.name,
+                python_package_gcs_uri=job_model.worker.python_package.package_gcs_uri,
+                python_module_name=job_model.worker.python_package.module_name,
+                container_uri=job_model.worker.python_package.executor_image_uri,
+                labels=job_model.labels,
+                staging_bucket=job_model.bucket,
             )
-            container_spec = None
         else:
-            python_package_spec = None
-            container_spec = ContainerSpec(
-                image_uri=worker_pool.container_spec.image_uri,
-                command=worker_pool.container_spec.command,
-                args=worker_pool.container_spec.args,
-                env=worker_pool.container_spec.env,
+            return CustomContainerTrainingJob(
+                display_name=job_model.name,
+                container_uri=job_model.worker.container.image_uri,
+                command=job_model.worker.container.command,
+                labels=job_model.labels,
+                staging_bucket=job_model.bucket,
             )
-        machine_spec = MachineSpec(
-            machine_type=worker_pool.machine_type,
-            accelerator_type=worker_pool.gpu.accelerator_type if worker_pool.gpu else None,
-            accelerator_count=worker_pool.gpu.count if worker_pool.gpu else None,
-        )
-
-        worker_pool_spec = WorkerPoolSpec(
-            python_package_spec=python_package_spec,
-            container_spec=container_spec,
-            machine_spec=machine_spec,
-            disk_spec={
-                "boot_disk_type": worker_pool.boot_disk_type,
-                "boot_disk_size_gb": worker_pool.boot_disk_size_gb,
-            },
-            replica_count=worker_pool.replica_count,
-        )
-        return worker_pool_spec
-
-    def _create_instance_request(self, instance: TrainingCustomJobModel) -> CustomJobSpec:
-        """
-        Create a custom job that could be later directly sent to GCP API.
-        Args:
-            instance: custom job model
-
-        Returns:
-            GCP API friendly custom job spec
-        """
-        master = self._create_worker_pool_spec(instance.worker_pool_specs.master)
-        worker = (
-            self._create_worker_pool_spec(instance.worker_pool_specs.worker)
-            if instance.worker_pool_specs.worker
-            else WorkerPoolSpec()
-        )
-        reduction_server = (
-            self._create_worker_pool_spec(instance.worker_pool_specs.reduction_server)
-            if instance.worker_pool_specs.reduction_server
-            else WorkerPoolSpec()
-        )
-        evaluator = (
-            self._create_worker_pool_spec(instance.worker_pool_specs.evaluator)
-            if instance.worker_pool_specs.evaluator
-            else WorkerPoolSpec()
-        )
-
-        base_output_directory = GcsDestination(
-            output_uri_prefix=f"gs://{instance.bucket}{instance.base_output_directory}"
-        )
-        scheduling = Scheduling(timeout=Duration(seconds=instance.timeout_seconds))
-        return CustomJobSpec(
-            worker_pool_specs=[master, worker, reduction_server, evaluator],
-            network=instance.network,
-            tensorboard=None,  # TODO: add tensorboard support
-            service_account=instance.service_account,
-            scheduling=scheduling,
-            base_output_directory=base_output_directory,
-            enable_web_access=instance.enable_web_access,
-        )
 
     @staticmethod
-    def _create_list_jobs_filter_expr(states: List[JobState], job_name: str = None) -> str:
+    def _create_list_jobs_filter_expr(states: List[PipelineState], job_name: str = None) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
         Args:
@@ -177,7 +111,7 @@ class JobService(BaseService):
             filter_expr = filter_expr + f' AND display_name="{job_name}"'
         return filter_expr
 
-    def _list_jobs(self, project_id: str, region: str, states: List[JobState], job_name: str = None) -> List[CustomJob]:
+    def _list_jobs(self, states: List[PipelineState], job_name: str = None) -> List[CustomTrainingJob]:
         """
         List all custom jobs with given project_id, region with given states.
 
@@ -191,13 +125,8 @@ class JobService(BaseService):
             list of jobs
         """
         filter_expr = self._create_list_jobs_filter_expr(states=states, job_name=job_name)
-        resp = self.job_client.list_custom_jobs(
-            ListCustomJobsRequest(
-                parent=f"projects/{project_id}/locations/{region}",
-                filter=filter_expr,
-            )
-        )
-        return [job for job in resp.custom_jobs]
+        jobs = self.aiplatform.CustomTrainingJob.list(filter=filter_expr)
+        return jobs  # type: ignore
 
     def _stop_one_instance(self, instance: TrainingCustomJobModel) -> None:
         """
@@ -209,9 +138,7 @@ class JobService(BaseService):
             instance: custom job model
         """
         active_jobs = self._list_jobs(
-            project_id=instance.project_id,
-            region=instance.region,
-            states=[JobState.JOB_STATE_RUNNING, JobState.JOB_STATE_PENDING],  # type: ignore
+            states=[PipelineState.PIPELINE_STATE_RUNNING, PipelineState.PIPELINE_STATE_PENDING],  # type: ignore
             job_name=instance.name,
         )
         if active_jobs:
@@ -221,6 +148,6 @@ class JobService(BaseService):
                 )
                 if should_cancel:
                     with Spinner(text=f"Canceling job {job.display_name}"):
-                        self.job_client.cancel_custom_job(name=job.name)
+                        job.cancel()
         else:
             typer.echo(f"No running or pending job with name {instance.name}")

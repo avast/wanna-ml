@@ -26,7 +26,7 @@ class BaseService(ABC):
         self.instance_type = instance_type
         self.InstanceModel = instance_model
 
-    def create(self, instance_name: str) -> None:
+    def create(self, instance_name: str, **kwargs) -> None:
         """
         Create an instance with name "name" based on wanna-ml config.
 
@@ -37,7 +37,7 @@ class BaseService(ABC):
         instances = self._filter_instances_by_name(instance_name)
 
         for instance in instances:
-            self._create_one_instance(instance)
+            self._create_one_instance(instance, **kwargs)
 
     def delete(self, instance_name: str) -> None:
         """
@@ -71,7 +71,7 @@ class BaseService(ABC):
         """
         ...
 
-    def _create_one_instance(self, instance: BaseInstanceModel) -> None:
+    def _create_one_instance(self, instance: BaseInstanceModel, **kwargs) -> None:
         """
         Abstract class. Should create one instance based on one model (eg. create one notebook).
         """

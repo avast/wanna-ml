@@ -11,13 +11,22 @@ gcp_settings:
 training_custom_jobs:
   - name: my-simple-job
     region: europe-west4
-    worker_pool_specs:
-      master:
-        python_package_spec:
-          executor_image_uri: "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
-          package_uris: ["gs://wanna-ml/trainer-0.1.tar.gz"]
-          python_module: "trainer.task"
-          args: ['--epochs=100', '--steps=100', '--distribute=single']
-        gpu:
+    worker:
+      python_package:
+        executor_image_uri: "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
+        package_gcs_uri: "gs://wanna-ml/trainer-0.1.tar.gz"
+        module_name: "trainer.task"
+      args: ['--epochs=100', '--steps=100', '--distribute=single']
+      gpu:
           accelerator_type: NVIDIA_TESLA_V100
           count: 1
+  - name: job-with-containers
+    region: europe-west4
+    worker:
+      container:
+        image_uri: "gcr.io/google-containers/debian-base:1.0.0"
+        command: "echo 'Test'"
+      gpu:
+        accelerator_type: NVIDIA_TESLA_V100
+        count: 1
+

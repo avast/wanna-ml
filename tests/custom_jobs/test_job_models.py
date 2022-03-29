@@ -5,36 +5,36 @@ from mock import patch
 from pydantic.error_wrappers import ValidationError
 
 from tests.mocks import mocks
-from wanna.cli.models.training_custom_job import TrainingCustomJobModel, WorkerPoolSpecModel
+from wanna.cli.models.training_custom_job import TrainingCustomJobModel, WorkerPoolModel
 
 
 class TestWorkerPoolSpecModel(unittest.TestCase):
     def test_worker_pool_only_python_is_enough(self):
-        WorkerPoolSpecModel.parse_obj(
+        WorkerPoolModel.parse_obj(
             {
-                "python_package_spec": {
+                "python_package": {
                     "executor_image_uri": "a",
-                    "package_uris": ["a", "b"],
-                    "python_module": "c",
+                    "package_gcs_uri": "a",
+                    "module_name": "c",
                 }
             }
         )
 
     def test_worker_pool_only_container_is_enough(self):
-        WorkerPoolSpecModel.parse_obj({"container_spec": {"image_uri": "a"}})
+        WorkerPoolModel.parse_obj({"container": {"image_uri": "a"}})
 
     def test_worker_pool_container_or_python_must_be_set(self):
         with pytest.raises(ValidationError):
-            WorkerPoolSpecModel.parse_obj({"machine_type": "n1-standard-4"})
+            WorkerPoolModel.parse_obj({"machine_type": "n1-standard-4"})
 
     def test_worker_pool_not_both_container_or_python_can_be_set(self):
         with pytest.raises(ValidationError):
-            WorkerPoolSpecModel.parse_obj(
+            WorkerPoolModel.parse_obj(
                 {
-                    "python_package_spec": {
+                    "python_package": {
                         "executor_image_uri": "a",
-                        "package_uris": ["a", "b"],
-                        "python_module": "c",
+                        "package_gcs_uri": "a",
+                        "module_name": "c",
                     },
                     "container_spec": {"image_uri": "a"},
                 }
@@ -53,7 +53,7 @@ class TestTrainingCustomJobModel(unittest.TestCase):
                 "region": "europe-west4",
                 "bucket": "my-bucket",
                 "project_id": "gcp-project",
-                "worker_pool_specs": {"master": {"container_spec": {"image_uri": "a"}}},
+                "worker": {"container": {"image_uri": "a"}},
             }
         )
-        assert model.base_output_directory == "/jobs/a/outputs"
+        assert model.base_output_directory == "gs://my-bucket/jobs/a/outputs"

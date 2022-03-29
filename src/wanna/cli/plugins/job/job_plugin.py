@@ -31,10 +31,11 @@ class JobPlugin(BasePlugin):
             help="Specify only one job from your wanna-ml yaml configuration to create. "
             "Choose 'all' to create all jobs.",
         ),
+        sync: bool = True,
     ) -> None:
         config = load_config_from_yaml(file)
         job_service = JobService(config=config)
-        job_service.create(instance_name)
+        job_service.create(instance_name, sync=sync)
 
     @staticmethod
     def stop(
