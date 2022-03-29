@@ -140,7 +140,7 @@ class TestPipelineService(unittest.TestCase):
 
         # Run pipeline on Vertex AI(Mocked GCP Calls)
         # Passing dummy callback as pipeline_job.state can't be mocked
-        pipeline_service.run(pipelines, sync=True, exit_callback=lambda x, y, z: None)
+        pipeline_service.run(pipelines, sync=True, exit_callback=lambda x, y, z, i: None)
 
         # Test GCP services were called and with correct args
         # pipeline_jobs.PipelineJob.assert_called_once()

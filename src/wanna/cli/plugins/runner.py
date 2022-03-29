@@ -18,6 +18,3 @@ class PluginRunner:
         ]
         for name, subcommand in typers:
             self.app.add_typer(subcommand.app, name=name)
-
-    def run(self) -> None:
-        self.app()

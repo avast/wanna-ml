@@ -22,12 +22,12 @@ from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
 
 
-def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob, sync: bool) -> None:
+def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:
     @atexit.register
     def stop_pipeline_job():
         if sync and pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
-            typer.echo(
-                f"\N{cross mark} detected exit signal, "
+            spinner.fail(
+                f"detected exit signal, "
                 f"shutting down running pipeline {pipeline_Name} "
                 f"at {pipeline_job._dashboard_uri()}."
             )
@@ -158,7 +158,7 @@ class PipelineService(BaseService):
         sync: bool = True,
         service_account: Optional[str] = None,
         network: Optional[str] = None,
-        exit_callback: Callable[[str, PipelineJob, bool], None] = _at_pipeline_exit,
+        exit_callback: Callable[[str, PipelineJob, bool, Spinner], None] = _at_pipeline_exit,
     ) -> None:
 
         for pipeline_meta in pipelines:
@@ -201,7 +201,7 @@ class PipelineService(BaseService):
                 )
 
                 # Cancel pipeline if wanna process exits
-                exit_callback(pipeline_meta.config.name, pipeline_job, sync)
+                exit_callback(pipeline_meta.config.name, pipeline_job, sync, s)
 
                 # submit pipeline job for execution
                 pipeline_job.submit(service_account=service_account, network=network)
