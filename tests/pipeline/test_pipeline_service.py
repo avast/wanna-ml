@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 import pandas as pd
+from google import auth
 from google.cloud import aiplatform
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from mock import patch
@@ -79,6 +80,12 @@ class TestPipelineService(unittest.TestCase):
         DockerService.push_image = MagicMock(return_value=None)
 
         # Mock GCP calls
+        auth.default = MagicMock(
+            return_value=(
+                None,
+                None,
+            )
+        )
         PipelineJob.submit = MagicMock(return_value=None)
         PipelineJob.wait = MagicMock(return_value=None)
         PipelineJob._dashboard_uri = MagicMock(return_value=None)
