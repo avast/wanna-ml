@@ -36,6 +36,7 @@ class PipelinePlugin(BasePlugin):
         ctx: typer.Context,
         file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
         params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
+        sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
         instance_name: str = typer.Option(
             "all",
             "--name",
@@ -48,4 +49,4 @@ class PipelinePlugin(BasePlugin):
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir)
         pipelines = pipeline_service.compile(instance_name)
-        pipeline_service.run(pipelines, extra_params_path=params)
+        pipeline_service.run(pipelines, extra_params_path=params, sync=sync)

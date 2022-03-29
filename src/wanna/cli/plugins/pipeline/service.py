@@ -22,13 +22,13 @@ from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
 
 
-def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob) -> None:
+def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob, sync: bool) -> None:
     @atexit.register
     def stop_pipeline_job():
-        if pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
+        if sync and pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
             typer.echo(
                 f"\N{cross mark} detected exit signal, "
-                f"shutting down running pipeline {pipeline_Name}"
+                f"shutting down running pipeline {pipeline_Name} "
                 f"at {pipeline_job._dashboard_uri()}."
             )
             pipeline_job.cancel()
@@ -158,17 +158,22 @@ class PipelineService(BaseService):
         sync: bool = True,
         service_account: Optional[str] = None,
         network: Optional[str] = None,
-        exit_callback: Callable[[str, PipelineJob], None] = _at_pipeline_exit,
+        exit_callback: Callable[[str, PipelineJob, bool], None] = _at_pipeline_exit,
     ) -> None:
 
         for pipeline_meta in pipelines:
 
-            with Spinner(text=f"Running pipeline {pipeline_meta.config.name}"):
-                # aiplatform.init(project=pipeline_meta.config.project_id, location=pipeline_meta.config.region)
+            if sync:
+                mode = "sync mode"
+            else:
+                mode = "fire-forget mode"
+
+            with Spinner(text=f"Running pipeline {pipeline_meta.config.name} in {mode}") as s:
 
                 # Publish Containers
-                for (_, image, _) in pipeline_meta.images:
-                    self.docker_service.push_image(image)
+                for (model, image, _) in pipeline_meta.images:
+                    if model.build_type != ImageBuildType.provided_image:
+                        self.docker_service.push_image(image, quiet=True)
 
                 # fetch compiled params
                 pipeline_job_id = pipeline_meta.compile_env_params.get("pipeline_job_id")
@@ -177,6 +182,10 @@ class PipelineService(BaseService):
                 # Apply override with cli provided params file
                 override_params = load_yaml_path(extra_params_path, self.workdir) if extra_params_path else {}
                 pipeline_params = {**pipeline_meta.parameter_values, **override_params}
+
+                service_account = service_account or pipeline_meta.config.service_account
+
+                # TODO: Get Network full name by name - projects/12345/global/networks/myVPC.
 
                 # Define Vertex AI Pipeline job
                 pipeline_job = PipelineJob(
@@ -191,22 +200,17 @@ class PipelineService(BaseService):
                     location=pipeline_meta.config.region,
                 )
 
-                service_account = service_account or pipeline_meta.config.service_account
-
-                # TODO: Get Network full name by name - projects/12345/global/networks/myVPC.
-                # network = network or pipeline_instance.network_id
-
                 # Cancel pipeline if wanna process exits
-                exit_callback(pipeline_meta.config.name, pipeline_job)
+                exit_callback(pipeline_meta.config.name, pipeline_job, sync)
 
                 # submit pipeline job for execution
                 pipeline_job.submit(service_account=service_account, network=network)
 
                 if sync:
-                    typer.echo(f"\n\tpipeline dashboard at {pipeline_job._dashboard_uri()}.")
+                    s.info(f"\n\tpipeline dashboard at {pipeline_job._dashboard_uri()}.")
                     pipeline_job.wait()
                     df_pipeline = aiplatform.get_pipeline_df(pipeline=pipeline_meta.config.name.replace("_", "-"))
-                    typer.echo(f"{df_pipeline.info()}")
+                    s.info(f"{df_pipeline.info()}")
 
     def _build_docker_image(
         self, docker_image_ref: str, registry: str, version: str

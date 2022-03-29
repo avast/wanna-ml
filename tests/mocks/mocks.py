@@ -7,7 +7,7 @@ from google.cloud.storage.bucket import Bucket
 
 class MockZonesClient:
     def list(self, project: str):
-        zone_names = ["europe-west4-a", "us-east1-a"]
+        zone_names = ["europe-west4-a", "us-east1-a", "europe-west1-b"]
         return ZoneList(items=[Zone({"name": name}) for name in zone_names])
 
 

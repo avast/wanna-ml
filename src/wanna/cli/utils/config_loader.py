@@ -14,7 +14,7 @@ def load_config_from_yaml(wanna_config_path: Path) -> WannaConfigModel:
         wanna_config_path: path to the wanna-ml yaml file
     """
 
-    with Spinner(text="Reading and validating yaml config"):
+    with Spinner(text="Reading and validating wanna yaml config"):
         with open(wanna_config_path) as file:
             # Load workflow file
             wanna_dict = loaders.load_yaml(file, Path("."))

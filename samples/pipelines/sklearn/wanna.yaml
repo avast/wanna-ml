@@ -5,7 +5,7 @@ wanna_project:
 
 gcp_settings:
   project_id: us-burger-gcp-poc
-  zone: europe-west4-a
+  zone: europe-west1-b
   bucket: wanna-ml
   labels:
   service_account:
@@ -23,6 +23,8 @@ docker:
 
 pipelines:
   - name: wanna-sklearn-sample
+    schedule:
+      schedule: 2 * * * *
     bucket: gs://wanna-ml
     pipeline_file: pipeline.py
     pipeline_params: params.yaml

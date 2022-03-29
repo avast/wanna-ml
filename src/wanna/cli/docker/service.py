@@ -117,13 +117,13 @@ class DockerService:
         return image
 
     @staticmethod
-    def push_image(image: Image) -> None:
+    def push_image(image: Image, quiet: bool = False) -> None:
         """
         Push a docker image to the registry (image must have tags)
         Args:
             image: image to push
         """
-        docker.image.push(image.repo_tags)
+        docker.image.push(image.repo_tags, quiet)
 
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:

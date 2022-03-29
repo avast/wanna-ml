@@ -69,7 +69,7 @@ class TestPipelineService(unittest.TestCase):
             "project_id": "us-burger-gcp-poc",
             "pipeline_name": "wanna-sklearn-sample",
             "bucket": "gs://wanna-ml",
-            "region": "europe-west4",
+            "region": "europe-west1",
             # "pipeline_job_id": f"pipeline-wanna-sklearn-sample}-{get_timestamp()}", # TODO: make get_timestamp factory
             "pipeline_root": "gs://wanna-ml/pipeline-root/wanna-sklearn-sample",
             "pipeline_labels": """{"wanna_project": "pipeline-sklearn-example-1", "wanna_project_version": "1", """
@@ -140,7 +140,7 @@ class TestPipelineService(unittest.TestCase):
 
         # Run pipeline on Vertex AI(Mocked GCP Calls)
         # Passing dummy callback as pipeline_job.state can't be mocked
-        pipeline_service.run(pipelines, sync=True, exit_callback=lambda x, y: None)
+        pipeline_service.run(pipelines, sync=True, exit_callback=lambda x, y, z: None)
 
         # Test GCP services were called and with correct args
         # pipeline_jobs.PipelineJob.assert_called_once()
