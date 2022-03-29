@@ -12,7 +12,7 @@ from mock.mock import MagicMock
 
 from tests.mocks import mocks
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import ImageBuildType, LocalBuildImageModel
+from wanna.cli.models.docker import ImageBuildType, LocalBuildImageModel, ProvidedImageModel
 from wanna.cli.plugins.pipeline.service import PipelineService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -41,23 +41,28 @@ class TestPipelineService(unittest.TestCase):
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
 
     def test_run_pipeline(self):
-
         # Setup Service
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml")
         pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
 
         # Setup expected data/fixtures
-        expected_docker_image_model = LocalBuildImageModel(
+        expected_train_docker_image_model = LocalBuildImageModel(
             name="train",
             build_type=ImageBuildType.local_build_image,
             build_args=None,
-            context_dir=self.sample_pipeline_dir,
-            dockerfile=self.sample_pipeline_dir / "Dockerfile.train",
+            context_dir=".",
+            dockerfile="Dockerfile.train",
         )
-        expected_docker_tags = [
+        expected_train_docker_tags = [
             "eu.gcr.io/us-burger-gcp-poc/pipeline-sklearn-example-1/train:test",
             "eu.gcr.io/us-burger-gcp-poc/pipeline-sklearn-example-1/train:latest",
         ]
+        expected_serve_docker_image_model = ProvidedImageModel(
+            name="serve",
+            build_type=ImageBuildType.provided_image,
+            image_url="europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest",
+        )
+        expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
 
         # Check expected metadata
         expected_compile_env_params = {
@@ -71,11 +76,14 @@ class TestPipelineService(unittest.TestCase):
             """"wanna_project_authors": "joao-silva1"}""",
         }
         expected_parameter_values = {"eval_acc_threshold": 0.87}
-        expected_images = [(expected_docker_image_model, expected_docker_tags[0])]
+        expected_images = [
+            (expected_train_docker_image_model, expected_train_docker_tags[0]),
+            (expected_serve_docker_image_model, expected_serve_docker_tags[0]),
+        ]
         expected_json_spec_path = self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline_spec.json"
 
         # Mock Docker IO
-        DockerService.find_image_model_by_name = MagicMock(return_value=expected_docker_image_model)
+        DockerService._find_image_model_by_ref = MagicMock(return_value=expected_train_docker_image_model)
         DockerService.build_image = MagicMock(return_value=None)
         DockerService.push_image = MagicMock(return_value=None)
 
@@ -95,8 +103,10 @@ class TestPipelineService(unittest.TestCase):
         pipelines = pipeline_service.compile("wanna-sklearn-sample")
         pipeline_meta = pipelines[0]
 
-        DockerService.build_image.assert_called_once()
-        DockerService.build_image.assert_called_with(image_model=expected_docker_image_model, tags=expected_docker_tags)
+        # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
+        #                                              tags=expected_train_docker_tags)
+        DockerService.build_image.assert_called_with(image_model=expected_serve_docker_image_model, tags=[])
+
         del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory
 
         self.assertEqual(pipeline_meta.config, config.pipelines[0])
@@ -123,6 +133,7 @@ class TestPipelineService(unittest.TestCase):
         self.assertTrue(os.environ.get("WANNA_SKLEARN_SAMPLE_BUCKET"))
         self.assertTrue(os.environ.get("WANNA_SKLEARN_SAMPLE_PIPELINE_LABELS"))
         self.assertTrue(os.environ.get("TRAIN_DOCKER_URI"))
+        self.assertTrue(os.environ.get("SERVE_DOCKER_URI"))
 
         # Check Kubeflow V2 pipelines json spec was created and exists
         self.assertTrue(expected_json_spec_path.exists())

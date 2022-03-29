@@ -15,7 +15,9 @@ class DockerClientException(Exception):
 
 class DockerService:
     def __init__(self, image_models: List[DockerImageModel]):
-        assert self._is_docker_client_active(), DockerClientException("You need running docker client on your machine")
+        assert self._is_docker_client_active(), DockerClientException(
+            "You need running docker client on your machine to use WANNA cli"
+        )
         self.image_models = image_models
         self.image_store: Dict[str, Image] = {}
 
@@ -38,11 +40,11 @@ class DockerService:
         Returns:
             DockerImageModel
         """
-        matched_image_models = [i for i in self.image_models if i.name == image_name]
+        matched_image_models = list(filter(lambda i: i.name.strip() == image_name.strip(), self.image_models))
         if len(matched_image_models) == 0:
-            raise Exception(f"No docker image with name {image_name} found")
+            raise ValueError(f"No docker image with name {image_name} found")
         elif len(matched_image_models) > 1:
-            raise Exception(f"Multiple docker images with name {image_name} found, please use unique names")
+            raise ValueError(f"Multiple docker images with name {image_name} found, please use unique names")
         else:
             return matched_image_models[0]
 

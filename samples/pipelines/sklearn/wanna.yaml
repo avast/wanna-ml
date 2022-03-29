@@ -17,14 +17,8 @@ docker:
       context_dir: .
       dockerfile: Dockerfile.train
 
-# TODO:
-#    - build_type: local_build_image
-#      name: serve
-#      context_dir: .
-#      dockerfile: Dockerfile.serve
-
     - build_type: provided_image
-      name: serve2
+      name: serve
       image_url: europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
 
 pipelines:
@@ -32,4 +26,4 @@ pipelines:
     bucket: gs://wanna-ml
     pipeline_file: pipeline.py
     pipeline_params: params.yaml
-    docker_image_ref: ["train"]
+    docker_image_ref: ["train", "serve"]

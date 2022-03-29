@@ -21,19 +21,10 @@ MODEL_DISPLAY_NAME = f"{MODEL_NAME}-{VERSION}"
 # custom training image
 TRAIN_IMAGE_URI = os.environ[f"TRAIN_DOCKER_URI"]  # Fail
 
-# MACHINE_TYPE = "n1-standard-8"
-# REPLICA_COUNT = "1"
-# ACCELERATOR_TYPE = "NVIDIA_TESLA_T4"
-# ACCELERATOR_COUNT = "1"
-# NUM_WORKERS = 1
-
 # Custom Serving Config
-SERVE_IMAGE_URI = os.environ.get(
-    f"{PIPELINE_NAME_PREFIX}_SERVE_DOCKER_URI", "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
-)  # Fail
-SERVING_HEALTH_ROUTE = "/ping"
-SERVING_PREDICT_ROUTE = "/predict"
-SERVING_CONTAINER_PORT = [{"containerPort": 7080}]
+# "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
+SERVE_IMAGE_URI = os.environ[f"SERVE_DOCKER_URI"]  # Yes, fail during compilation
+
 SERVING_MACHINE_TYPE = "n1-standard-4"
 SERVING_MIN_REPLICA_COUNT = 1
 SERVING_MAX_REPLICA_COUNT = 2
