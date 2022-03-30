@@ -245,7 +245,7 @@ class PipelineService(BaseService):
     def _delete_one_instance(self, instance: PipelineModel) -> None:
         pass
 
-    def _create_one_instance(self, instance: PipelineModel) -> None:
+    def _create_one_instance(self, instance: PipelineModel, **kwargs) -> None:
         pass
 
     def _instance_exists(self, instance: PipelineModel) -> bool:

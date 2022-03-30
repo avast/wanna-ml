@@ -1,0 +1,67 @@
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Extra, Field, root_validator
+
+from wanna.cli.models.base_instance import BaseInstanceModel
+
+
+class JobGPUModel(BaseModel, extra=Extra.forbid):
+    count: Literal[1, 2, 4, 8] = 1
+    accelerator_type: str
+
+
+class PythonPackageModel(BaseModel, extra=Extra.forbid):
+    executor_image_uri: str
+    package_gcs_uri: str
+    module_name: str
+
+
+class ContainerModel(BaseModel, extra=Extra.forbid):
+    image_uri: str
+    command: Optional[str]
+
+
+class WorkerPoolModel(BaseModel, extra=Extra.forbid):
+    python_package: Optional[PythonPackageModel]
+    container: Optional[ContainerModel]
+    args: Optional[List[str]]
+    env: Optional[List[Dict[str, str]]]
+    machine_type: str = "n1-standard-4"
+    gpu: Optional[JobGPUModel]
+    boot_disk_type: Literal["pd-ssd", "pd-standard"] = "pd-ssd"
+    boot_disk_size_gb: int = Field(ge=100, le=65535, default=100)
+    replica_count: int = 1
+
+    @root_validator
+    def one_from_python_or_container_spec_must_be_set(cls, values):  # pylint: disable=no-self-argument,no-self-use
+        if values.get("python_package") and values.get("container"):
+            raise ValueError("Only one of python_package or container can be set")
+        if not values.get("python_package") and not values.get("container"):
+            raise ValueError("At least one of python_package or container must be set")
+        return values
+
+
+class ReductionServerModel(BaseModel, extra=Extra.forbid):
+    replica_count: int
+    machine_type: str
+    container_uri: str
+
+
+class TrainingCustomJobModel(BaseInstanceModel):
+    name: str
+    region: str
+    worker: WorkerPoolModel
+    reduction_server: Optional[ReductionServerModel]
+    enable_web_access: bool = False
+    network: Optional[str]
+    bucket: str
+    base_output_directory: Optional[str]
+    timeout_seconds: int = 60 * 60 * 24  # 24 hours
+
+    @root_validator(pre=False)
+    def _set_base_output_directory_if_not_provided(  # pylint: disable=no-self-argument,no-self-use
+        cls, values: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        if not values.get("base_output_directory"):
+            values["base_output_directory"] = f"gs://{values.get('bucket')}/jobs/{values.get('name')}/outputs"
+        return values

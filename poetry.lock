@@ -34,7 +34,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "astroid"
 version = "2.9.3"
 description = "An abstract syntax tree for Python with inference support."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6.2"
 
@@ -1186,7 +1186,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "isort"
 version = "5.10.1"
 description = "A Python utility / library to sort Python imports."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6.1,<4.0"
 
@@ -1378,7 +1378,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "lazy-object-proxy"
 version = "1.7.1"
 description = "A fast and thorough lazy object proxy."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -1504,7 +1504,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "mccabe"
 version = "0.6.1"
 description = "McCabe checker, plugin for flake8"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1888,7 +1888,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "platformdirs"
 version = "2.5.1"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -2159,7 +2159,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "pylint"
 version = "2.12.2"
 description = "python code static checker"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6.2"
 
@@ -2171,6 +2171,22 @@ mccabe = ">=0.6,<0.7"
 platformdirs = ">=2.2.0"
 toml = ">=0.9.2"
 typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""}
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
+name = "pylint-enums"
+version = "0.0.5"
+description = "A Pylint plugin that checks for a specific implementation of Enum subclasses."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pylint = "*"
 
 [package.source]
 type = "legacy"
@@ -2776,7 +2792,7 @@ reference = "avast-repo" # This name will be used in the configuration to retrie
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -3102,7 +3118,8 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11" # google-cloud-bigquery requires this mess
-content-hash = "13d01603482fd51df140527e96a19639ccc2a18d8f6de1e595902ee711e4071e"
+content-hash = "476f7f308c9da3ef24857c86c1de976ff92403a64f25ea190ce8772f1f122818"
+
 
 [metadata.files]
 absl-py = [
@@ -3944,6 +3961,10 @@ pyjwt = [
 pylint = [
     {file = "pylint-2.12.2-py3-none-any.whl", hash = "sha256:daabda3f7ed9d1c60f52d563b1b854632fd90035bcf01443e234d3dc794e3b74"},
     {file = "pylint-2.12.2.tar.gz", hash = "sha256:9d945a73640e1fec07ee34b42f5669b770c759acd536ec7b16d7e4b87a9c9ff9"},
+]
+pylint-enums = [
+    {file = "pylint_enums-0.0.5-py3-none-any.whl", hash = "sha256:8515f438f1ea1778b37bd6293e2528b4d1f49dfcab97201d6317e3134b65c493"},
+    {file = "pylint_enums-0.0.5.tar.gz", hash = "sha256:20a98d810629dd02663088d10821db45490ee83f26e3ebdfc5f4e90a06b44738"},
 ]
 pylint-pydantic = [
     {file = "pylint_pydantic-0.1.4-py3-none-any.whl", hash = "sha256:d42d9e95255b2f70f82a674cec159f417263363c7da0e28998964d83d7330c72"},

@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import List, Type
 
 import typer
@@ -26,7 +26,7 @@ class BaseService(ABC):
         self.instance_type = instance_type
         self.InstanceModel = instance_model
 
-    def create(self, instance_name: str) -> None:
+    def create(self, instance_name: str, **kwargs) -> None:
         """
         Create an instance with name "name" based on wanna-ml config.
 
@@ -37,7 +37,7 @@ class BaseService(ABC):
         instances = self._filter_instances_by_name(instance_name)
 
         for instance in instances:
-            self._create_one_instance(instance)
+            self._create_one_instance(instance, **kwargs)
 
     def delete(self, instance_name: str) -> None:
         """
@@ -50,36 +50,36 @@ class BaseService(ABC):
         instances = self._filter_instances_by_name(instance_name)
 
         for instance in instances:
-            exists = self._instance_exists(instance)
-            if exists:
-                self._delete_one_instance(instance)
-            else:
-                typer.echo(f"{self.instance_type} with name {instance.name} was not found in zone {instance.zone}")
+            self._delete_one_instance(instance)
 
-    @abstractmethod
+    def stop(self, instance_name: str) -> None:
+        """
+        Stop an instance with name "name" based on wanna-ml config.
+
+        Args:
+            instance_name: The name of the only instance from wanna-ml config that should be stopped.
+                  Set to "all" to delete everything from wanna-ml yaml configuration for this resource.
+        """
+        instances = self._filter_instances_by_name(instance_name)
+
+        for instance in instances:
+            self._stop_one_instance(instance)
+
     def _delete_one_instance(self, instance: BaseInstanceModel) -> None:
         """
         Abstract class. Should delete one instance based on one model (eg. delete one notebook).
         """
         ...
 
-    @abstractmethod
-    def _create_one_instance(self, instance: BaseInstanceModel) -> None:
+    def _create_one_instance(self, instance: BaseInstanceModel, **kwargs) -> None:
         """
         Abstract class. Should create one instance based on one model (eg. create one notebook).
         """
         ...
 
-    @abstractmethod
-    def _instance_exists(self, instance: BaseInstanceModel) -> bool:
+    def _stop_one_instance(self, instance: BaseInstanceModel) -> None:
         """
-        Abstract method to find it this instance already exists on GCP.
-
-        Args:
-            instance: instance to verify if it already exists
-
-        Returns:
-            True if found on GCP, False otherwise
+        Abstract class. Should stop one instance based on one model (eg. stop one job).
         """
         ...
 
