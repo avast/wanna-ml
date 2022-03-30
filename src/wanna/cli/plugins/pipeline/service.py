@@ -1,7 +1,6 @@
 import atexit
 import json
 import os
-import sys
 import zipfile
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -94,24 +93,24 @@ class PipelineService(BaseService):
                 pipeline_dir_path = self.pipelines_build_dir / f"{manifest.pipeline_name}"
                 pipeline_dir = str(pipeline_dir_path)
                 pipeline_json_spec_path = str(pipeline_dir_path / "pipeline_spec.json")
+
                 deployment_bucket = f"{manifest.pipeline_root}/deployment/release/{version}"
 
-                if not local:
-                    target_manifest = str(manifest_path).replace(pipeline_dir, deployment_bucket)
-                    target_json_spec_path = pipeline_json_spec_path.replace(pipeline_dir, deployment_bucket)
-                    manifest.json_spec_path = target_json_spec_path
+                if local:
+                    os.makedirs(deployment_bucket, exist_ok=True)
 
-                    s.info(f"Uploading wanna running manifest to {target_manifest}")
-                    with open(target_manifest, "w") as f:
-                        f.write(manifest.json())
+                target_manifest = str(manifest_path).replace(pipeline_dir, deployment_bucket)
+                target_json_spec_path = pipeline_json_spec_path.replace(pipeline_dir, deployment_bucket)
+                manifest.json_spec_path = target_json_spec_path
 
-                    s.info(f"Uploading vertex ai pipeline spec to {target_json_spec_path}")
-                    with open(pipeline_json_spec_path, "r") as fin:
-                        with open(target_json_spec_path, "w") as fout:
-                            fout.write(fin.read())
-                else:
-                    target_manifest = str(manifest_path)
-                    target_json_spec_path = str(pipeline_json_spec_path)
+                s.info(f"Uploading wanna running manifest to {target_manifest}")
+                with open(target_manifest, "w") as f:
+                    f.write(manifest.json())
+
+                s.info(f"Uploading vertex ai pipeline spec to {target_json_spec_path}")
+                with open(pipeline_json_spec_path, "r") as fin:
+                    with open(target_json_spec_path, "w") as fout:
+                        fout.write(fin.read())
 
                 results.append(
                     (
@@ -122,7 +121,7 @@ class PipelineService(BaseService):
 
         return results
 
-    def deploy(self, instance_name: str, version: str, env: str):
+    def deploy(self, instance_name: str, version: str, env: str, local: bool = False):
 
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
@@ -134,15 +133,19 @@ class PipelineService(BaseService):
                 function = self._upsert_cloud_function(
                     parent=parent, manifest=manifest, pipeline_root=pipeline_root, env=env, version=version, spinner=s
                 )
-                self._upsert_cloud_scheduler(
-                    function=function,
-                    parent=parent,
-                    manifest=manifest,
-                    pipeline_root=pipeline_root,
-                    env=env,
-                    version=version,
-                    spinner=s,
-                )
+
+                if manifest.schedule:
+                    self._upsert_cloud_scheduler(
+                        function=function,
+                        parent=parent,
+                        manifest=manifest,
+                        pipeline_root=pipeline_root,
+                        env=env,
+                        version=version,
+                        spinner=s,
+                    )
+                else:
+                    s.warn("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
 
     @staticmethod
     def run(
@@ -211,7 +214,7 @@ class PipelineService(BaseService):
             "bucket": pipeline_instance.bucket,
             "region": pipeline_instance.region,
             "pipeline_job_id": f"pipeline-{pipeline_instance.name}-{get_timestamp()}",
-            "pipeline_root": f"{pipeline_instance.bucket}/pipeline-root/{kebabcase(pipeline_instance.name).lower()}",
+            "pipeline_root": self._make_pipeline_root(pipeline_instance.bucket, pipeline_instance.name),
             "pipeline_labels": json.dumps(pipeline_instance.labels),
         }
 
@@ -293,6 +296,7 @@ class PipelineService(BaseService):
                 location=pipeline_meta.config.region,
                 service_account=pipeline_meta.config.service_account,
                 pipeline_root=pipeline_env_params.get("pipeline_root"),
+                schedule=pipeline_meta.config.schedule,
             )
 
             manifest_path = pipeline_dir / "wanna_manifest.json"
@@ -303,41 +307,42 @@ class PipelineService(BaseService):
                 manifest_path,
             )
 
+    def _is_gcs_path(self, path: str):
+        return path.startswith("gs://")
+
     def _upsert_cloud_function(
         self, parent: str, manifest: PipelineDeployment, pipeline_root: str, version: str, env: str, spinner: Spinner
     ) -> Tuple[str, str]:
 
         spinner.info(f"Deploying {manifest.pipeline_name} cloud function with version {version} to env {env}")
-        templates_dir = Path(os.path.dirname(sys.modules["wanna.cli"].__file__)) / "templates"  # type: ignore
         pipeline_functions_dir = self.pipelines_build_dir / manifest.pipeline_name / "functions"
         os.makedirs(pipeline_functions_dir, exist_ok=True)
         local_functions_package = pipeline_functions_dir / "package.zip"
-        functions_gcs_path = f"{pipeline_root}/deployment/release/{version}/functions/package.zip"
+        functions_gcs_path_dir = f"{pipeline_root}/deployment/release/{version}/functions"
+        functions_gcs_path = f"{functions_gcs_path_dir}/package.zip"
         function_name = f"{parent}/functions/{manifest.pipeline_name}-{env}"
-        cf = CloudFunctionsServiceClient()
-        cf.call_function()
 
         cloud_function = templates.render_template(
-            Path(f"{templates_dir}/scheduler_cloud_function.py"),
+            Path("scheduler_cloud_function.py"),
             manifest=dict(manifest),
             labels=json.dumps(manifest.labels, separators=(",", ":")),
         )
 
         requirements = templates.render_template(
-            Path(f"{templates_dir}/scheduler_cloud_function_requirements.txt"), manifest=dict(manifest)
+            Path("scheduler_cloud_function_requirements.txt"), manifest=dict(manifest)
         )
 
         with zipfile.ZipFile(local_functions_package, "w") as z:
             z.writestr("main.py", cloud_function)
             z.writestr("requirements.txt", requirements)
 
-        with open(local_functions_package, "rb") as f:
-            with open(functions_gcs_path, "wb") as fout:
-                fout.write(f.read())
+        if not self._is_gcs_path(functions_gcs_path_dir):
+            os.makedirs(functions_gcs_path_dir, exist_ok=True)
+
+        self._sync_cloud_function_package(str(local_functions_package), functions_gcs_path)
 
         cf = CloudFunctionsServiceClient()
-
-        function_url = "https://{manifest.project}-{manifest.location}.cloudfunctions.net/{function_name}-v1"
+        function_url = f"https://{manifest.project}-{manifest.location}.cloudfunctions.net/{function_name}-v1"
         function = {
             "name": function_name,
             "description": f"wanna {manifest.pipeline_name} function for {env} pipeline",
@@ -366,6 +371,11 @@ class PipelineService(BaseService):
                 function_name,
                 function_url,
             )
+
+    def _sync_cloud_function_package(self, local_functions_package: str, functions_gcs_path: str):
+        with open(local_functions_package, "rb") as f:
+            with open(functions_gcs_path, "wb") as fout:
+                fout.write(f.read())
 
     def _upsert_cloud_scheduler(
         self,
@@ -399,8 +409,8 @@ class PipelineService(BaseService):
             "name": job_name,
             "description": f"wanna {manifest.pipeline_name} scheduler for  {env} pipeline",
             "http_target": http_target,
-            "schedule": "22 * * * *",  # TODO get from deployment spec
-            "time_zone": "Etc/UTC",  # TODO get from deployment spec
+            "schedule": manifest.schedule.cron,
+            "time_zone": manifest.schedule.timezone,
         }
 
         try:
@@ -410,9 +420,8 @@ class PipelineService(BaseService):
             client.update_job({"job": job})
         except NotFound:
             # Does not exist let's create it
-            request = scheduler_v1.CreateJobRequest({"parent": parent, "job": job})
             spinner.info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
-            client.create_job(request=request)
+            client.create_job({"parent": parent, "job": job})
 
     def _make_pipeline_root(self, bucket: str, pipeline_name: str):
         return f"{bucket}/pipeline-root/{kebabcase(pipeline_name).lower()}"
@@ -426,7 +435,9 @@ class PipelineService(BaseService):
 
             if docker_image_model.build_type == ImageBuildType.provided_image:
                 tags = [docker_image_model.image_url]
-                image = self.docker_service.build_image(image_model=docker_image_model, tags=[], progress=False)
+                image = self.docker_service.build_image(
+                    image_model=docker_image_model, tags=[], work_dir=self.workdir, progress=False
+                )
             else:
                 image_name = f"{self.wanna_project.name}/{docker_image_model.name}"
                 tags = self.docker_service.construct_image_tag(
@@ -435,7 +446,9 @@ class PipelineService(BaseService):
                     image_name=image_name,
                     versions=[version, "latest"],
                 )
-                image = self.docker_service.build_image(image_model=docker_image_model, tags=tags, progress=False)
+                image = self.docker_service.build_image(
+                    image_model=docker_image_model, tags=tags, work_dir=self.workdir, progress=False
+                )
 
             s.info(f"Built image with tags {tags}")
             return (

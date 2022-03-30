@@ -24,7 +24,7 @@ docker:
 pipelines:
   - name: wanna-sklearn-sample
     schedule:
-      schedule: 2 * * * *
+      cron: 2 * * * *
     bucket: gs://wanna-ml
     pipeline_file: pipeline.py
     pipeline_params: params.yaml

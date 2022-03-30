@@ -5,8 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 from google import auth
-from google.cloud import aiplatform
+from google.cloud import aiplatform, scheduler_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
+from google.cloud.functions_v1.services.cloud_functions_service import CloudFunctionsServiceClient
 from mock import patch
 from mock.mock import MagicMock
 
@@ -38,7 +39,7 @@ class TestPipelineService(unittest.TestCase):
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
 
     def tearDown(self) -> None:
-        shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
+        pass
 
     def test_run_pipeline(self):
         # Setup Service
@@ -63,6 +64,8 @@ class TestPipelineService(unittest.TestCase):
             image_url="europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest",
         )
         expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
+        exppected_pipeline_root = str(self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline-root")
+        os.makedirs(exppected_pipeline_root, exist_ok=True)
 
         # Check expected metadata
         expected_compile_env_params = {
@@ -70,8 +73,7 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_name": "wanna-sklearn-sample",
             "bucket": "gs://wanna-ml",
             "region": "europe-west1",
-            # "pipeline_job_id": f"pipeline-wanna-sklearn-sample}-{get_timestamp()}", # TODO: make get_timestamp factory
-            "pipeline_root": "gs://wanna-ml/pipeline-root/wanna-sklearn-sample",
+            "pipeline_root": exppected_pipeline_root,
             "pipeline_labels": """{"wanna_project": "pipeline-sklearn-example-1", "wanna_project_version": "1", """
             """"wanna_project_authors": "joao-silva1"}""",
         }
@@ -82,10 +84,12 @@ class TestPipelineService(unittest.TestCase):
         ]
         expected_json_spec_path = self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline_spec.json"
 
+        # Mock PipelineService
+        PipelineService._make_pipeline_root = MagicMock(return_value=exppected_pipeline_root)
+
         # Mock Docker IO
         DockerService._find_image_model_by_ref = MagicMock(return_value=expected_train_docker_image_model)
         DockerService.build_image = MagicMock(return_value=None)
-        DockerService.push_image = MagicMock(return_value=None)
 
         # Mock GCP calls
         auth.default = MagicMock(
@@ -99,6 +103,7 @@ class TestPipelineService(unittest.TestCase):
         PipelineJob._dashboard_uri = MagicMock(return_value=None)
         aiplatform.get_pipeline_df = MagicMock(return_value=pd.DataFrame(columns=["name"]))
 
+        # === Build ===
         # Get compile result metadata
         pipelines = pipeline_service.build("wanna-sklearn-sample")
         (pipeline_meta, manifest_path) = pipelines[0]
@@ -106,7 +111,7 @@ class TestPipelineService(unittest.TestCase):
         # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
         #                                              tags=expected_train_docker_tags)
         DockerService.build_image.assert_called_with(
-            image_model=expected_serve_docker_image_model, tags=[], progress=False, work_dir=self.sample_pipeline_dir
+            image_model=expected_serve_docker_image_model, tags=[], work_dir=self.sample_pipeline_dir, progress=False
         )
 
         del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory
@@ -140,6 +145,7 @@ class TestPipelineService(unittest.TestCase):
         # Check Kubeflow V2 pipelines json spec was created and exists
         self.assertTrue(expected_json_spec_path.exists())
 
+        # === Run ===
         # Run pipeline on Vertex AI(Mocked GCP Calls)
         # Passing dummy callback as pipeline_job.state can't be mocked
         PipelineService.run([str(manifest_path)], sync=True, exit_callback=lambda x, y, z, i: None)
@@ -152,3 +158,82 @@ class TestPipelineService(unittest.TestCase):
 
         aiplatform.get_pipeline_df.assert_called_once()
         aiplatform.get_pipeline_df.assert_called_with(pipeline="wanna-sklearn-sample")
+
+        # === Push ===
+        DockerService.push_image = MagicMock(return_value=None)
+        pushed = pipeline_service.push(pipelines, version="dev", local=True)
+        DockerService.push_image.assert_called_once()
+
+        release_path = (
+            self.pipeline_build_dir
+            / "pipelines"
+            / "wanna-sklearn-sample"
+            / "pipeline-root"
+            / "deployment"
+            / "release"
+            / "dev"
+        )
+        expected_manifest_json_path = str(release_path / "wanna_manifest.json")
+        expected_pipeline_spec_path = str(release_path / "pipeline_spec.json")
+        expected_push_result = [
+            (
+                expected_manifest_json_path,
+                expected_pipeline_spec_path,
+            )
+        ]
+
+        self.assertEqual(pushed, expected_push_result)
+        self.assertTrue(os.path.exists(expected_pipeline_spec_path))
+        self.assertTrue(os.path.exists(expected_manifest_json_path))
+
+        # === Deploy ===
+        parent = "projects/us-burger-gcp-poc/locations/europe-west1"
+        local_cloud_functions_package = f"{release_path}/functions/package.zip"
+        copied_cloud_functions_package = local_cloud_functions_package
+
+        expected_function_name = "wanna-sklearn-sample-local"
+        expected_function_name_resoure = f"{parent}/functions/{expected_function_name}"
+        expected_function_url = (
+            f"https://us-burger-gcp-poc-europe-west1.cloudfunctions.net/{parent}/functions/{expected_function_name}-v1"
+        )
+        expected_function = {
+            "name": expected_function_name_resoure,
+            "description": "wanna wanna-sklearn-sample function for local pipeline",
+            "source_archive_url": copied_cloud_functions_package,
+            "entry_point": "process_request",
+            "runtime": "python39",
+            "https_trigger": {
+                "url": expected_function_url,
+            },
+            "labels": {
+                "wanna_project": "pipeline-sklearn-example-1",
+                "wanna_project_version": "1",
+                "wanna_project_authors": "joao-silva1",
+            },
+        }
+
+        # Set Mocks
+        CloudFunctionsServiceClient.get_function = MagicMock()
+        CloudFunctionsServiceClient.update_function = MagicMock()
+        scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
+        scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
+
+        # Deploy the thing
+        pipeline_service.deploy("all", version="dev", env="local")
+
+        # Check cloud functions packaged was copied to pipeline-root
+        self.assertTrue(os.path.exists(local_cloud_functions_package))
+
+        # Check cloudfunctions sdk methos were called with expected function params
+        CloudFunctionsServiceClient.get_function.assert_called_with(
+            {"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}
+        )
+        CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
+
+        # Assert Cloud Scheduler calls
+        expected_job_name = expected_function_name
+        job_name = f"{parent}/jobs/{expected_job_name}"
+        scheduler_v1.CloudSchedulerClient.get_job.assert_called_once()
+        scheduler_v1.CloudSchedulerClient.update_job.assert_called_once()
+        scheduler_v1.CloudSchedulerClient.get_job.assert_called_with({"name": job_name})
+        # scheduler_v1.CloudSchedulerClient.update_job.assert_called_with({})

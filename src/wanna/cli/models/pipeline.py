@@ -10,10 +10,11 @@ from wanna.cli.utils.gcp import validators
 
 
 class PipelineScheduleModel(BaseModel):
-    schedule: Optional[str]
+    cron: str
+    timezone: str = "Etc/UTC"
 
     # Validators
-    _schedule = validator("schedule")(validators.validate_cron_schedule)
+    _schedule = validator("cron")(validators.validate_cron_schedule)
 
 
 class PipelineModel(BaseInstanceModel):
@@ -46,3 +47,4 @@ class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
     project: Optional[str]
     location: Optional[str]
     service_account: Optional[str]
+    schedule: Optional[PipelineScheduleModel]

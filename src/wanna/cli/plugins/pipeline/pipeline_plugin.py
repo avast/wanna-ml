@@ -91,8 +91,8 @@ class PipelinePlugin(BasePlugin):
             "all",
             "--name",
             "-n",
-            help="Specify only one pipeline from your wanna-ml yaml configuration to compile. "
-            "Choose 'all' to push all pipelines.",
+            help="Specify only one pipeline from your wanna-ml yaml configuration to run."
+            "Choose 'all' to run all pipelines sequentially.",
         ),
     ) -> None:
         if file:

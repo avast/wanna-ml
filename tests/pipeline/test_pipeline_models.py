@@ -11,7 +11,7 @@ class TestPipelineModel(unittest.TestCase):
         with pytest.raises(ValidationError):
             _ = PipelineScheduleModel.parse_obj(
                 {
-                    "schedule": "bad cron schedule",
+                    "cron": "bad cron schedule",
                 }
             )
 
@@ -19,7 +19,7 @@ class TestPipelineModel(unittest.TestCase):
         try:
             _ = PipelineScheduleModel.parse_obj(
                 {
-                    "schedule": "0 3 * * *",
+                    "cron": "0 3 * * *",
                 }
             )
         except ValidationError:
