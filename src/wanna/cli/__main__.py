@@ -1,4 +1,10 @@
+import logging
+
 from .plugins.runner import PluginRunner
+
+logging.getLogger("smart_open").setLevel(logging.ERROR)
+logging.getLogger("google").setLevel(logging.ERROR)
+logging.getLogger("kfp").setLevel(logging.ERROR)
 
 runner = PluginRunner()
 app = runner.app

@@ -100,13 +100,13 @@ class TestPipelineService(unittest.TestCase):
         aiplatform.get_pipeline_df = MagicMock(return_value=pd.DataFrame(columns=["name"]))
 
         # Get compile result metadata
-        pipelines = pipeline_service.compile("wanna-sklearn-sample")
-        pipeline_meta = pipelines[0]
+        pipelines = pipeline_service.build("wanna-sklearn-sample")
+        (pipeline_meta, manifest_path) = pipelines[0]
 
         # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
         #                                              tags=expected_train_docker_tags)
         DockerService.build_image.assert_called_with(
-            image_model=expected_serve_docker_image_model, tags=[], work_dir=self.sample_pipeline_dir
+            image_model=expected_serve_docker_image_model, tags=[], progress=False, work_dir=self.sample_pipeline_dir
         )
 
         del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory
@@ -142,7 +142,7 @@ class TestPipelineService(unittest.TestCase):
 
         # Run pipeline on Vertex AI(Mocked GCP Calls)
         # Passing dummy callback as pipeline_job.state can't be mocked
-        pipeline_service.run(pipelines, sync=True, exit_callback=lambda x, y, z, i: None)
+        PipelineService.run([str(manifest_path)], sync=True, exit_callback=lambda x, y, z, i: None)
 
         # Test GCP services were called and with correct args
         # pipeline_jobs.PipelineJob.assert_called_once()

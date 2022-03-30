@@ -5,6 +5,28 @@
 
 WANNA manage ML on Vertex AI :-)
 
+## ML Pipelines
+
+```bash
+
+# Parses wanna, builds containers, compiles kubeflow pipeline
+wanna pipeline build
+
+# Parses wanna, builds & push containers, compiles and packages kubeflow pipeline, 
+# prepares wanna-manifest.json to deploy and run pipelines
+wanna pipeline push --version x.y.z
+
+# deploys cloud scheduler and cloud function to run pipeline from wanna-manifest.json
+wanna pipeline deploy --env local --version x.y.z
+
+# runs Vertex AI Pipeline based on a wanna-manifest.json
+wanna pipeline run --maniest gs://path/to/wanna-manifest.json
+
+# runs Vertex AI Pipeline based on wanna.yaml
+wanna pipeline run --file path/to/wanna.yaml
+
+```
+
 ### Development
 
 ### Environment setup

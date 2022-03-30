@@ -1,10 +1,11 @@
 # ignore: import-error
 # pylint: disable = no-value-for-parameter
 
-import wanna_simple.config as cfg
 from google_cloud_pipeline_components import aiplatform as aip_components
 from kfp.v2 import dsl
 from kfp.v2.dsl import component
+
+import wanna_simple.config as cfg
 from wanna_simple.components.data.get_data import get_data_op
 from wanna_simple.components.predictor import make_prediction_request
 from wanna_simple.components.trainer.eval_model import eval_model_op
@@ -21,10 +22,10 @@ def slack_notification(slack_channel: str, status: str):
 
     logging.getLogger().setLevel(logging.INFO)
 
-    webhook = "fillme-from-gcp-secrets"
+    # webhook = "fillme-from-gcp-secrets"
     # icon = "https://a.slack-edge.com/production-standard-emoji-assets/13.0/apple-medium/274c.png"
-
-    args = ["slack", "-w", webhook, "-c", slack_channel, f":white_check_mark: {status}"]
+    # args = ["slack", "-w", webhook, "-c", slack_channel, f":white_check_mark: {status}"]
+    args = ["echo", "1"]
     result = subprocess.run(args, capture_output=True)
 
     if result.returncode > 0:
