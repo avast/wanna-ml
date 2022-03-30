@@ -252,7 +252,7 @@ class NotebookService(BaseService):
             registry=registry,
             project=self.config.gcp_settings.project_id,
             image_name=f"{self.wanna_project.name}/{docker_image_model.name}",
-            version="0.1",
+            versions=["0.1"],
         )
         image = self.docker_service.build_image(image_model=docker_image_model, tags=[tag])
         if image:
