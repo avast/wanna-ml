@@ -17,15 +17,13 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     docker: Optional[DockerModel]
     notebooks: Optional[List[NotebookModel]]
     tensorboards: Optional[List[TensorboardModel]]
-    training_custom_jobs: Optional[List[TrainingCustomJobModel]]
+    jobs: Optional[List[TrainingCustomJobModel]]
 
     _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
     _tensorboards = validator("tensorboards", pre=True, each_item=True, allow_reuse=True)(
         enrich_instance_with_gcp_settings
     )
-    _training_custom_jobs = validator("training_custom_jobs", pre=True, each_item=True, allow_reuse=True)(
-        enrich_instance_with_gcp_settings
-    )
+    _jobs = validator("jobs", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
 
     @validator("notebooks", pre=True, each_item=True, allow_reuse=True)
     def validate_docker_images_defined(cls, values_inst, values):  # pylint: disable=no-self-argument,no-self-use

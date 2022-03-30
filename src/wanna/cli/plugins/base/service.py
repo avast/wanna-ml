@@ -58,7 +58,7 @@ class BaseService(ABC):
 
         Args:
             instance_name: The name of the only instance from wanna-ml config that should be stopped.
-                  Set to "all" to create everything from wanna-ml yaml configuration.
+                  Set to "all" to delete everything from wanna-ml yaml configuration for this resource.
         """
         instances = self._filter_instances_by_name(instance_name)
 

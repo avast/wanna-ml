@@ -18,7 +18,6 @@ class JobPlugin(BasePlugin):
             ]
         )
 
-        # add some nesting with `sub-job-command` command.
         # self.app.add_typer(SubJobPlugin().app, name='sub-job-command')
 
     @staticmethod

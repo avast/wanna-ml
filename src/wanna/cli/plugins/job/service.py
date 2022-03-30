@@ -17,7 +17,7 @@ class JobService(BaseService):
             instance_type="job",
             instance_model=TrainingCustomJobModel,
         )
-        self.instances = config.training_custom_jobs
+        self.instances = config.jobs
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_settings.bucket
         self.config = config

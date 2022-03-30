@@ -8,9 +8,9 @@ gcp_settings:
   zone: europe-west4-a
   bucket: wanna-ml
 
-training_custom_jobs:
+jobs:
   - name: my-simple-job
-    region: europe-west4
+    region: europe-west1
     worker:
       python_package:
         executor_image_uri: "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
@@ -21,7 +21,7 @@ training_custom_jobs:
           accelerator_type: NVIDIA_TESLA_V100
           count: 1
   - name: job-with-containers
-    region: europe-west4
+    region: europe-west1
     worker:
       container:
         image_uri: "gcr.io/google-containers/debian-base:1.0.0"
