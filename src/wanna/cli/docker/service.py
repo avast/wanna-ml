@@ -15,7 +15,9 @@ class DockerClientException(Exception):
 
 class DockerService:
     def __init__(self, image_models: List[DockerImageModel]):
-        assert self._is_docker_client_active(), DockerClientException("You need running docker client on your machine")
+        assert self._is_docker_client_active(), DockerClientException(
+            "You need running docker client on your machine to use WANNA cli"
+        )
         self.image_models = image_models
         self.image_store: Dict[str, Image] = {}
 
@@ -38,11 +40,11 @@ class DockerService:
         Returns:
             DockerImageModel
         """
-        matched_image_models = [i for i in self.image_models if i.name == image_name]
+        matched_image_models = list(filter(lambda i: i.name.strip() == image_name.strip(), self.image_models))
         if len(matched_image_models) == 0:
-            raise Exception(f"No docker image with name {image_name} found")
+            raise ValueError(f"No docker image with name {image_name} found")
         elif len(matched_image_models) > 1:
-            raise Exception(f"Multiple docker images with name {image_name} found, please use unique names")
+            raise ValueError(f"Multiple docker images with name {image_name} found, please use unique names")
         else:
             return matched_image_models[0]
 
@@ -93,6 +95,7 @@ class DockerService:
         """
         build_dir = work_dir / Path("build") / image_model.name
         os.makedirs(build_dir, exist_ok=True)
+
         if image_model.build_type == ImageBuildType.notebook_ready_image:
             template_path = Path("src/wanna/cli/templates/notebook_template.Dockerfile")
             shutil.copy2(
@@ -101,22 +104,26 @@ class DockerService:
             )
             file_path = self._jinja_render_dockerfile(image_model, template_path, build_dir=build_dir)
             context_dir = build_dir
+            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
         elif image_model.build_type == ImageBuildType.local_build_image:
             file_path = image_model.dockerfile
             context_dir = image_model.context_dir
+            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+        elif image_model.build_type == ImageBuildType.provided_image:
+            image = docker.pull(image_model.image_url, quiet=True)
         else:
             raise Exception("Invalid image model type.")
-        image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+
         return image
 
     @staticmethod
-    def push_image(image: Image) -> None:
+    def push_image(image: Image, quiet: bool = False) -> None:
         """
         Push a docker image to the registry (image must have tags)
         Args:
             image: image to push
         """
-        docker.image.push(image.repo_tags)
+        docker.image.push(image.repo_tags, quiet)
 
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:
@@ -126,19 +133,20 @@ class DockerService:
         docker.image.remove(image, force=force, prune=prune)
 
     @staticmethod
-    def construct_image_tag(registry: str, project: str, image_name: str, version: str = "latest"):
+    def construct_image_tag(registry: str, project: str, image_name: str, versions: List[str] = ["latest"]):
         """
         Construct full image tag.
         Args:
             registry:
             project:
             image_name:
-            version:
+            versions:
 
         Returns:
-            full image tag
+            List of full image tag
         """
-        return f"{registry}/{project}/{image_name}:{version}"
+
+        return [f"{registry}/{project}/{image_name}:{version}" for version in versions]
 
     @staticmethod
     def _jinja_render_dockerfile(

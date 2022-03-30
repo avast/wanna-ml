@@ -11,22 +11,23 @@ class ImageBuildType(str, Enum):
     notebook_ready_image = "notebook_ready_image"
 
 
-class LocalBuildImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class BaseDockerImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     name: str = Field(min_length=3, max_length=128)
+
+
+class LocalBuildImageModel(BaseDockerImageModel):
     build_type: Literal[ImageBuildType.local_build_image]
     build_args: Optional[Dict[str, str]]
     context_dir: Path
     dockerfile: Path
 
 
-class ProvidedImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
-    name: str = Field(min_length=3, max_length=128)
+class ProvidedImageModel(BaseDockerImageModel):
     build_type: Literal[ImageBuildType.provided_image]
     image_url: str
 
 
-class NotebookReadyImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
-    name: str = Field(min_length=3, max_length=128)
+class NotebookReadyImageModel(BaseDockerImageModel):
     build_type: Literal[ImageBuildType.notebook_ready_image]
     build_args: Optional[Dict[str, str]]
     base_image: str = "gcr.io/deeplearning-platform-release/base-cpu"

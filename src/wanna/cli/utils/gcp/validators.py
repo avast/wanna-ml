@@ -1,6 +1,7 @@
 import logging
 import re
 
+from cron_validator import CronValidator
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
@@ -107,6 +108,14 @@ def validate_only_one_must_be_set(cls, v):
     elif len(items_set) > 1:
         raise ValueError(f"Specify only one of {items_set}")
     return v
+
+
+def validate_cron_schedule(schedule: str):
+
+    if schedule is not None and CronValidator.parse(schedule) is None:
+        raise ValueError(f"Cron expression is invalid ({schedule}).")
+    else:
+        return schedule
 
 
 def validate_disk_type(disk_type):
