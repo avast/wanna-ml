@@ -124,8 +124,8 @@ class JobService(BaseService):
                 with Spinner(text=f"Running custom job {instance.name} in sync mode") as s:
                     s.info(
                         f"Job Dashboard in "
-                        f"https://console.cloud.google.com/vertex-ai/locations/{instance.region}/training/{job_id}?project={instance.project_id}"
-                    )  # noqa
+                        f"https://console.cloud.google.com/vertex-ai/locations/{instance.region}/training/{job_id}?project={instance.project_id}"  # noqa
+                    )
                     custom_job.wait()
             else:
                 with Spinner(text=f"Running custom job {instance.name} in asyn sync mode") as s:

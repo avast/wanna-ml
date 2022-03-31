@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Extra, Field, root_validator
+from pydantic import BaseModel, Extra, Field, root_validator, validator
 
 from wanna.cli.models.base_instance import BaseInstanceModel
 
@@ -77,6 +77,20 @@ class BaseCustomJobModel(BaseInstanceModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-custom-job
 class CustomJobModel(BaseCustomJobModel):
     workers: List[WorkerPoolModel]
+
+    @validator("workers", pre=False)
+    def _worker_pool_must_have_same_spec(  # pylint: disable=no-self-argument,no-self-use
+        cls, workers: List[WorkerPoolModel]
+    ) -> List[WorkerPoolModel]:
+        if workers:
+            python_packages = list(filter(lambda w: w.python_package is not None, workers))
+            containers = list(filter(lambda w: w.container is not None, workers))
+            if len(python_packages) > 0 and len(containers) > 0:
+                raise ValueError(
+                    "CustomJobs must be of the same spec. " "Either just based on python_package or container"
+                )
+
+        return workers
 
 
 # https://cloud.google.com/vertex-ai/docs/training/create-training-pipeline

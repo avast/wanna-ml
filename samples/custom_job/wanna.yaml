@@ -49,11 +49,6 @@ jobs:
       - container:
           image_uri: "gcr.io/google-containers/debian-base:1.0.0"
           command: ["echo", "'Test'"]
-#      - python_package:
-#          executor_image_uri: "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
-#          package_gcs_uri: "gs://wanna-ml/trainer-0.1.tar.gz"
-#          module_name: "trainer.task"
-#        args: [ '--epochs=100', '--steps=100', '--distribute=single' ]
   #      gpu:
   #        accelerator_type: NVIDIA_TESLA_K80
   #        count: 1
