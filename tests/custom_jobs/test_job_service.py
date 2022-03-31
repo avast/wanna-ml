@@ -52,7 +52,7 @@ class TestJobService:
         worker_spec = service._create_training_job_spec(job_model)
 
         assert worker_spec.__dict__.get("_container_uri") == "gcr.io/google-containers/debian-base:1.0.0"
-        assert worker_spec.__dict__.get("_command") == "echo 'Test'"
+        assert worker_spec.__dict__.get("_command") == ["echo", "'Test'"]
 
     def test_list_job_filter(self):
         auth.default = MagicMock(

@@ -18,7 +18,7 @@ class PythonPackageModel(BaseModel, extra=Extra.forbid):
 
 class ContainerModel(BaseModel, extra=Extra.forbid):
     image_uri: str
-    command: Optional[str]
+    command: Optional[List[str]]
 
 
 class WorkerPoolModel(BaseModel, extra=Extra.forbid):
@@ -47,11 +47,9 @@ class ReductionServerModel(BaseModel, extra=Extra.forbid):
     container_uri: str
 
 
-class TrainingCustomJobModel(BaseInstanceModel):
+class BaseCustomJobModel(BaseInstanceModel):
     name: str
     region: str
-    worker: WorkerPoolModel
-    reduction_server: Optional[ReductionServerModel]
     enable_web_access: bool = False
     network: Optional[str]
     bucket: str
@@ -74,3 +72,14 @@ class TrainingCustomJobModel(BaseInstanceModel):
         if values.get("tensorboard_ref") and not values.get("service_account"):
             raise ValueError("service_account must be set when using tensorboard in jobs")
         return values
+
+
+# https://cloud.google.com/vertex-ai/docs/training/create-custom-job
+class CustomJobModel(BaseCustomJobModel):
+    workers: List[WorkerPoolModel]
+
+
+# https://cloud.google.com/vertex-ai/docs/training/create-training-pipeline
+class TrainingCustomJobModel(BaseCustomJobModel):
+    worker: WorkerPoolModel
+    reduction_server: Optional[ReductionServerModel]
