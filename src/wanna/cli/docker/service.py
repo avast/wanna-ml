@@ -52,7 +52,7 @@ class DockerService:
         self,
         image_model: DockerImageModel,
         tags: List[str],
-        work_dir: Path = Path("."),
+        work_dir: Path,
         **kwargs,
     ) -> Optional[Image]:
         """
@@ -97,18 +97,18 @@ class DockerService:
         os.makedirs(build_dir, exist_ok=True)
 
         if image_model.build_type == ImageBuildType.notebook_ready_image:
-            template_path = Path("src/wanna/cli/templates/notebook_template.Dockerfile")
+            template_path = Path("notebook_template.Dockerfile")
             shutil.copy2(
                 work_dir / image_model.requirements_txt,
                 build_dir / "requirements.txt",
             )
             file_path = self._jinja_render_dockerfile(image_model, template_path, build_dir=build_dir)
             context_dir = build_dir
-            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+            image = docker.build(context_dir, file=file_path, tags=tags, progress=False, **kwargs)
         elif image_model.build_type == ImageBuildType.local_build_image:
-            file_path = image_model.dockerfile
-            context_dir = image_model.context_dir
-            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+            file_path = work_dir / image_model.dockerfile
+            context_dir =  work_dir / image_model.context_dir
+            image = docker.build(context_dir, file=file_path, tags=tags, progress=False, **kwargs)
         elif image_model.build_type == ImageBuildType.provided_image:
             image = docker.pull(image_model.image_url, quiet=True)
         else:

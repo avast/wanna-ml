@@ -1,6 +1,8 @@
 from pathlib import Path
+from typing import Optional
 
 import typer
+import pathlib
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.notebook.service import NotebookService
@@ -45,6 +47,7 @@ class NotebookPlugin(BasePlugin):
     @staticmethod
     def create(
         file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
+        owner: Optional[str] = typer.Option(None,"--owner", "-o", help=""),
         instance_name: str = typer.Option(
             "all",
             "--name",
@@ -57,5 +60,6 @@ class NotebookPlugin(BasePlugin):
         Notebook create command
         """
         config = load_config_from_yaml(file)
-        nb_service = NotebookService(config=config)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = NotebookService(config=config, workdir=workdir, owner=owner)
         nb_service.create(instance_name)
