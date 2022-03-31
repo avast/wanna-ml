@@ -8,6 +8,9 @@ gcp_settings:
   zone: europe-west4-a
   bucket: wanna-ml
 
+tensorboards:
+  - name: my-nice-tensorboard
+
 jobs:
   - name: my-simple-job
     region: europe-west1
@@ -20,6 +23,8 @@ jobs:
       gpu:
           accelerator_type: NVIDIA_TESLA_V100
           count: 1
+    tensorboard_ref: my-nice-tensorboard
+    service_account: 966197297054-compute@developer.gserviceaccount.com
   - name: job-with-containers
     region: europe-west1
     worker:

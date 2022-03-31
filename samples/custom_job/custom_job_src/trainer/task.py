@@ -97,17 +97,15 @@ with strategy.scope():
 
 
 # Import TensorBoard
-# from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import TensorBoard
 
 # Define Tensorboard as a Keras callback
-# tensorboard = TensorBoard(
-#  log_dir=os.getenv("AIP_TENSORBOARD_LOG_DIR"),
-#  histogram_freq=1,
-#  write_images=True
-# )
-# keras_callbacks = [
-#  tensorboard
-# ]
+tensorboard = TensorBoard(
+ log_dir=os.getenv("AIP_TENSORBOARD_LOG_DIR"),
+ histogram_freq=1,
+ write_images=True
+)
+keras_callbacks = [tensorboard]
 
-model.fit(x=train_dataset, epochs=args.epochs, steps_per_epoch=args.steps)  # , callbacks=keras_callbacks)
+model.fit(x=train_dataset, epochs=args.epochs, steps_per_epoch=args.steps, callbacks=keras_callbacks)
 model.save(MODEL_DIR)

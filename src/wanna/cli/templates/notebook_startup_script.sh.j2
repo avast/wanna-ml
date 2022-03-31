@@ -1,6 +1,10 @@
 #!/bin/bash
 
 {% for bucket_mount in bucket_mounts %}
-sudo su -c "mkdir -p {{ bucket_mount["local_path"] }}" -s /bin/sh jupyter
-sudo su -c "gcsfuse --implicit-dirs {{ ('--only-dir=' ~ bucket_mount["bucket_dir"]) if bucket_mount["bucket_dir"] }} {{ bucket_mount["bucket_name"] }} {{ bucket_mount["local_path"] }}" -s /bin/sh jupyter
+sudo su -c "mkdir -p {{ bucket_mount["local_path"] }}"
+sudo su -c "gcsfuse --implicit-dirs {{ ('--only-dir=' ~ bucket_mount["bucket_dir"]) if bucket_mount["bucket_dir"] }} {{ bucket_mount["bucket_name"] }} {{ bucket_mount["local_path"] }}"
 {% endfor %}
+
+{% if tensorboard_resource_name is not none %}
+export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}
+{% endif %}

@@ -56,6 +56,7 @@ class TrainingCustomJobModel(BaseInstanceModel):
     network: Optional[str]
     bucket: str
     base_output_directory: Optional[str]
+    tensorboard_ref: Optional[str]
     timeout_seconds: int = 60 * 60 * 24  # 24 hours
 
     @root_validator(pre=False)
@@ -64,4 +65,12 @@ class TrainingCustomJobModel(BaseInstanceModel):
     ) -> Dict[str, Any]:
         if not values.get("base_output_directory"):
             values["base_output_directory"] = f"gs://{values.get('bucket')}/jobs/{values.get('name')}/outputs"
+        return values
+
+    @root_validator(pre=False)
+    def _service_account_must_be_set_when_using_tensorboard(  # pylint: disable=no-self-argument,no-self-use
+        cls, values: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        if values.get("tensorboard_ref") and not values.get("service_account"):
+            raise ValueError("service_account must be set when using tensorboard in jobs")
         return values
