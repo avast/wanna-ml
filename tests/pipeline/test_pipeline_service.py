@@ -105,7 +105,9 @@ class TestPipelineService(unittest.TestCase):
 
         # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
         #                                              tags=expected_train_docker_tags)
-        DockerService.build_image.assert_called_with(image_model=expected_serve_docker_image_model, tags=[])
+        DockerService.build_image.assert_called_with(
+            image_model=expected_serve_docker_image_model, tags=[], work_dir=self.sample_pipeline_dir
+        )
 
         del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory
 

@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import typer
 from caseconverter import kebabcase, snakecase
 from google.cloud import aiplatform
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
@@ -215,13 +214,13 @@ class PipelineService(BaseService):
     def _build_docker_image(
         self, docker_image_ref: str, registry: str, version: str
     ) -> Tuple[DockerImageModel, Optional[Image], str]:
-        with Spinner(text=f"Building docker image {docker_image_ref}"):
+        with Spinner(text=f"Building docker image {docker_image_ref}") as s:
 
             docker_image_model = self.docker_service.find_image_model_by_name(docker_image_ref)
 
             if docker_image_model.build_type == ImageBuildType.provided_image:
                 tags = [docker_image_model.image_url]
-                image = self.docker_service.build_image(image_model=docker_image_model, tags=[])
+                image = self.docker_service.build_image(image_model=docker_image_model, work_dir=self.workdir, tags=[])
             else:
                 image_name = f"{self.wanna_project.name}/{docker_image_model.name}"
                 tags = self.docker_service.construct_image_tag(
@@ -230,9 +229,11 @@ class PipelineService(BaseService):
                     image_name=image_name,
                     versions=[version, "latest"],
                 )
-                image = self.docker_service.build_image(image_model=docker_image_model, tags=tags)
+                image = self.docker_service.build_image(
+                    image_model=docker_image_model, work_dir=self.workdir, tags=tags
+                )
 
-            typer.echo(f"\n\t Built image with tags {tags}")
+            s.info(f"Built image with tags {tags}")
             return (
                 docker_image_model,
                 image,

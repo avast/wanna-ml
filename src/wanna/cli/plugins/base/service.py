@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Type, Optional
+from typing import List, Type
 
 import typer
 

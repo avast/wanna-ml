@@ -107,7 +107,7 @@ class DockerService:
             image = docker.build(context_dir, file=file_path, tags=tags, progress=False, **kwargs)
         elif image_model.build_type == ImageBuildType.local_build_image:
             file_path = work_dir / image_model.dockerfile
-            context_dir =  work_dir / image_model.context_dir
+            context_dir = work_dir / image_model.context_dir
             image = docker.build(context_dir, file=file_path, tags=tags, progress=False, **kwargs)
         elif image_model.build_type == ImageBuildType.provided_image:
             image = docker.pull(image_model.image_url, quiet=True)
