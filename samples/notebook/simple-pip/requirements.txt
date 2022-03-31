@@ -1,0 +1,3 @@
+mypy
+google-cloud-notebooks
+# mlops-common # Currently takes way to long for pip install, mlops-common issue

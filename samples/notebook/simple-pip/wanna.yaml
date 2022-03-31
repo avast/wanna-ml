@@ -1,11 +1,11 @@
 wanna_project:
-  name: notebook-example-1
+  name: wanna-notebook-sample
   version: 1
   authors: [michal.mrazek@avast.com]
 
 gcp_settings:
   project_id: us-burger-gcp-poc
-  zone: europe-west4-a
+  zone: europe-west1-b
   bucket: wanna-ml
   labels:
   service_account:
@@ -15,29 +15,26 @@ docker:
     - build_type: notebook_ready_image
       name: custom_pip_image
       base_image: gcr.io/deeplearning-platform-release/base-cpu
-      requirements_txt: samples/notebook/requirements.txt
+      requirements_txt: requirements.txt
 
     - build_type: provided_image
       name: provided_image
       image_url: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
 
 notebooks:
-  - name: my-notebook-example-1
+  - name: wanna-notebook-trial
     #project_id: us-burger-gcp-poc
     #zone: europe-west4-b
     service_account:
     instance_owner:
     machine_type: n1-standard-4
     labels:
-      notebook_usecase: testing
+      notebook_usecase: wanna-notebook-sample-simple-pip
     environment:
      # vm_image:
      #   framework: pytorch
      #   version: 1-9-xla
         #os: debian
-      #container_image: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
-      #custom_container:
-      #  requirements_file: requirements.txt
       docker_image_ref: custom_pip_image
     #gpu:
     #  count: 1
@@ -56,7 +53,6 @@ notebooks:
     #network:
     #  network_id:
     #  subnet:
-  - name: my-notebook-example-2
 
 tensorboards:
   - name: my-super-tensorboard

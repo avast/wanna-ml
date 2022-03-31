@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import typer
 from google.api_core import exceptions
@@ -18,7 +18,7 @@ from wanna.cli.utils.spinners import Spinner
 
 
 class NotebookService(BaseService):
-    def __init__(self, config: WannaConfigModel):
+    def __init__(self, config: WannaConfigModel, workdir: Path, owner: Optional[str] = None):
         super().__init__(
             instance_type="notebook",
             instance_model=NotebookModel,
@@ -29,6 +29,8 @@ class NotebookService(BaseService):
         self.notebook_client = NotebookServiceClient()
         self.config = config
         self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
+        self.workdir = workdir
+        self.owner = owner
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -185,7 +187,8 @@ class NotebookService(BaseService):
 
         # service account and instance owners
         service_account = notebook_instance.service_account
-        instance_owners = [notebook_instance.instance_owner] if notebook_instance.instance_owner else None
+        instance_owner = self.owner or notebook_instance.instance_owner
+        instance_owners = [instance_owner] if instance_owner else None
 
         # labels and tags
         tags = notebook_instance.tags
@@ -241,23 +244,23 @@ class NotebookService(BaseService):
         """
         bucket_mounts = nb_instance.bucket_mounts
         startup_script = templates.render_template(
-            Path("src/wanna/cli/templates/notebook_startup_script.sh.j2"),
+            Path("notebook_startup_script.sh.j2"),
             bucket_mounts=bucket_mounts,
         )
         return startup_script
 
     def _build_and_push_docker_image(self, docker_image_model: DockerImageModel, registry: str = "eu.gcr.io") -> str:
         """"""
-        tag = self.docker_service.construct_image_tag(
+        tags = self.docker_service.construct_image_tag(
             registry=registry,
             project=self.config.gcp_settings.project_id,
             image_name=f"{self.wanna_project.name}/{docker_image_model.name}",
             versions=["0.1"],
         )
-        image = self.docker_service.build_image(image_model=docker_image_model, tags=[tag])
+        image = self.docker_service.build_image(image_model=docker_image_model, tags=tags, work_dir=self.workdir)
         if image:
             self.docker_service.push_image(image)
-            return tag
+            return tags[0]
         else:
             raise ValueError(f"Failed to build image {docker_image_model}")
 
@@ -288,4 +291,4 @@ class NotebookService(BaseService):
             proxy_uri: link to jupyterlab
         """
         instance_info = self.notebook_client.get_instance({"name": instance_id})
-        return instance_info.proxy_uri
+        return f"https://{instance_info.proxy_uri}"

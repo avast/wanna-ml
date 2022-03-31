@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from google.cloud.notebooks_v1.types import Instance
 from mock import patch
 
@@ -40,7 +42,7 @@ class TestNotebookService:
         self.zone = "us-east1-a"
 
     def test_list_running_instances(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.zone)
         assert f"projects/{self.project_id}/locations/{self.zone}/instances/nb1" in running_notebooks
         assert f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu" in running_notebooks
@@ -48,7 +50,7 @@ class TestNotebookService:
         assert f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra" not in running_notebooks
 
     def test_instance_exists(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         should_exist = nb_service._instance_exists(
             instance=NotebookModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"})
         )
@@ -59,7 +61,7 @@ class TestNotebookService:
         assert not should_not_exist
 
     def test_validate_jupyterlab_state(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         state_1 = nb_service._validate_jupyterlab_state(
             instance_id=f"projects/{self.project_id}/locations/{self.zone}/instances/nb1",
             state=Instance.State.ACTIVE,
@@ -72,21 +74,21 @@ class TestNotebookService:
         assert not state_1
 
     def test_create_instance_request_network_short_name(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.network = Network.parse_obj({"network_id": "little-hangleton"})
         request = nb_service._create_instance_request(instance)
         assert request.instance.network == f"projects/{self.project_id}/global/networks/little-hangleton"
 
     def test_create_instance_request_network_subnet(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.network = Network.parse_obj({"network_id": "little-hangleton", "subnet": "the-riddle-house"})
         request = nb_service._create_instance_request(instance)
         assert request.instance.subnet == f"projects/{self.project_id}/region/{self.zone}/subnetworks/the-riddle-house"
 
     def test_create_instance_request_gpu_config(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.gpu = NotebookGPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
         request = nb_service._create_instance_request(instance)
@@ -94,7 +96,7 @@ class TestNotebookService:
         assert request.instance.accelerator_config.core_count == 4
 
     def test_create_instance_request_custom_container(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.environment = NotebookEnvironment.parse_obj({"docker_image_ref": "lumos"})
         request = nb_service._create_instance_request(instance)
@@ -102,7 +104,7 @@ class TestNotebookService:
         assert request.instance.container_image.tag == "0.15"
 
     def test_create_instance_request_vm_image(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.environment = NotebookEnvironment.parse_obj(
             {
@@ -117,7 +119,7 @@ class TestNotebookService:
         assert request.instance.vm_image.image_family == "tf2-ent-2-5-cu110-notebooks-debian-10"
 
     def test_create_instance_request_boot_disk(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.boot_disk = NotebookDisk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
@@ -125,7 +127,7 @@ class TestNotebookService:
         assert request.instance.boot_disk_size_gb == 500
 
     def test_create_instance_request_data_disk(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.data_disk = NotebookDisk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
@@ -133,7 +135,7 @@ class TestNotebookService:
         assert request.instance.data_disk_size_gb == 750
 
     def test_prepare_startup_script(self):
-        nb_service = NotebookService(config=get_config())
+        nb_service = NotebookService(config=get_config(), workdir=Path("."))
         instance = get_base_notebook()
         instance.bucket_mounts = [
             BucketMount.parse_obj(
