@@ -50,6 +50,7 @@ notebooks:
       - bucket_name: us-burger-gcp-poc-mooncloud
         bucket_dir: data
         local_path: /home/jupyter/mounted/gcs
+    tensorboard_ref: my-super-tensorboard
     #network:
     #  network_id:
     #  subnet:

@@ -8,6 +8,7 @@ from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from wanna.cli.models.training_custom_job import TrainingCustomJobModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
+from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.spinners import Spinner
 
 
@@ -26,6 +27,7 @@ class JobService(BaseService):
             project=self.config.gcp_settings.project_id,
             location=self.config.gcp_settings.region,
         )
+        self.tensorboard_service = TensorboardService(config=config)
 
     def _create_one_instance(self, instance: TrainingCustomJobModel, **kwargs):
         """
@@ -62,7 +64,11 @@ class JobService(BaseService):
                 else None,
                 timeout=instance.timeout_seconds,
                 enable_web_access=instance.enable_web_access,
-                tensorboard=None,
+                tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                    instance.tensorboard_ref
+                )
+                if instance.tensorboard_ref
+                else None,
                 sync=False,
             )
         if sync:

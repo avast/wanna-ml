@@ -12,6 +12,7 @@ from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
+from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils import templates
 from wanna.cli.utils.gcp.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
 from wanna.cli.utils.spinners import Spinner
@@ -31,6 +32,7 @@ class NotebookService(BaseService):
         self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
         self.workdir = workdir
         self.owner = owner
+        self.tensorboard_service = TensorboardService(config=config)
 
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
@@ -195,7 +197,7 @@ class NotebookService(BaseService):
         labels = notebook_instance.labels if notebook_instance.labels else {}
 
         # post startup script
-        if notebook_instance.bucket_mounts:
+        if notebook_instance.bucket_mounts or notebook_instance.tensorboard_ref:
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
@@ -243,9 +245,16 @@ class NotebookService(BaseService):
             startup_script
         """
         bucket_mounts = nb_instance.bucket_mounts
+        if nb_instance.tensorboard_ref:
+            tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                nb_instance.tensorboard_ref
+            )
+        else:
+            tensorboard_resource_name = None
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
             bucket_mounts=bucket_mounts,
+            tensorboard_resource_name=tensorboard_resource_name,
         )
         return startup_script
 
