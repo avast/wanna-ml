@@ -15,6 +15,7 @@ from tests.mocks import mocks
 from wanna.cli.docker.service import DockerService
 from wanna.cli.models.docker import ImageBuildType, LocalBuildImageModel, ProvidedImageModel
 from wanna.cli.plugins.pipeline.service import PipelineService
+from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
@@ -76,6 +77,7 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_root": exppected_pipeline_root,
             "pipeline_labels": """{"wanna_project": "pipeline-sklearn-example-1", "wanna_project_version": "1", """
             """"wanna_project_authors": "joao-silva1"}""",
+            "tensorboard": "projects/123456789/locations/europe-west4/tensorboards/123456789",
         }
         expected_parameter_values = {"eval_acc_threshold": 0.87}
         expected_images = [
@@ -86,6 +88,9 @@ class TestPipelineService(unittest.TestCase):
 
         # Mock PipelineService
         PipelineService._make_pipeline_root = MagicMock(return_value=exppected_pipeline_root)
+        TensorboardService.get_or_create_tensorboard_instance_by_name = MagicMock(
+            return_value="projects/123456789/locations/europe-west4/tensorboards/123456789"
+        )
 
         # Mock Docker IO
         DockerService._find_image_model_by_ref = MagicMock(return_value=expected_train_docker_image_model)
