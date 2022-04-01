@@ -101,8 +101,8 @@ class PipelinePlugin(BasePlugin):
             pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
             pipelines = pipeline_service.build(instance_name)
             manifests = pipeline_service.push(pipelines, version, local=True)
-            manifests = [str(wanna_manifest) for wanna_manifest, _ in manifests]
-            PipelineService.run(manifests, extra_params_path=params, sync=sync)
+            manifest_paths = [str(wanna_manifest) for wanna_manifest, _ in manifests]
+            PipelineService.run(manifest_paths, extra_params_path=params, sync=sync)
         elif manifest:
             PipelineService.run([manifest], extra_params_path=params, sync=sync)
         else:
