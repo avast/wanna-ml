@@ -45,6 +45,8 @@ google-cloud-pipeline-components = "^1.0.1"
 cron-validator = "^1.0.5"
 case-converter = "^1.0.2"
 google-cloud-functions = "^1.5.2"
+smart-open = {extras = ["gcs"], version = "^5.2.1"}
+google-cloud-scheduler = "^2.6.2"
 treelib = "^1.6.1"
 
 [tool.poetry.dev-dependencies]

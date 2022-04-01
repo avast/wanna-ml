@@ -10,10 +10,11 @@ from wanna.cli.utils.gcp import validators
 
 
 class PipelineScheduleModel(BaseModel):
-    schedule: Optional[str]
+    cron: str
+    timezone: str = "Etc/UTC"
 
     # Validators
-    _schedule = validator("schedule")(validators.validate_cron_schedule)
+    _schedule = validator("cron")(validators.validate_cron_schedule)
 
 
 class PipelineModel(BaseInstanceModel):
@@ -34,3 +35,16 @@ class PipelineMeta(BaseModel, arbitrary_types_allowed=True):
     images: List[Tuple[DockerImageModel, Optional[Image], str]]
     parameter_values: Dict[str, Any]
     compile_env_params: Dict[str, str]
+
+
+class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
+    pipeline_name: str
+    pipeline_root: str
+    json_spec_path: str
+    parameter_values: Dict[str, Any] = {}
+    labels: Dict[str, str] = {}
+    enable_caching: bool = True
+    project: Optional[str]
+    location: Optional[str]
+    service_account: Optional[str]
+    schedule: Optional[PipelineScheduleModel]

@@ -5,12 +5,33 @@
 
 WANNA manage ML on Vertex AI :-)
 
+## ML Pipelines
+
+```bash
+# Parses wanna, builds containers, compiles kubeflow pipeline
+wanna pipeline build
+
+# Parses wanna, builds & push containers, compiles and packages kubeflow pipeline, 
+# prepares wanna-manifest.json to deploy and run pipelines
+wanna pipeline push --version x.y.z
+
+# deploys cloud scheduler and cloud function to run pipeline from wanna-manifest.json
+wanna pipeline deploy --env local --version x.y.z
+
+# runs Vertex AI Pipeline based on a wanna-manifest.json
+wanna pipeline run --maniest gs://path/version/x.z/wanna-manifest.json --params path/to/params.yaml
+
+# runs Vertex AI Pipeline based on wanna.yaml
+wanna pipeline run --file path/to/wanna.yaml --sync --params path/to/params.yaml
+```
+
 ### Development
 
 ### Environment setup
 ```bash
 
-pip install poetry
+# create a wanna work environment
+conda create -n wanna python=3.8 poetry nomkl 
 
 # Install project dependencies (including dev dependencies) and load our cli  into a Python virtual environment managed by Poetry 
 poetry install
@@ -24,7 +45,7 @@ poetry run pytest
 # Install precommit hooks for code quality checks
 poetry run pre-commit install
 
-# Check all is good in paradise
+# Check all is good in paradise - pylint, isort, mypy, 
 poetry run task build
 
 # Activate poetry venv for commiting work
