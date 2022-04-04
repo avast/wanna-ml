@@ -21,6 +21,7 @@ from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.models.pipeline import PipelineDeployment, PipelineMeta, PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
+from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils import templates
 from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
@@ -56,6 +57,7 @@ class PipelineService(BaseService):
         self.pipeline_store: Dict[str, Dict[str, Any]] = {}
         self.workdir = workdir
         self.pipelines_build_dir = self.workdir / "build" / "pipelines"
+        self.tensorboard_service = TensorboardService(config=config)
         os.makedirs(self.pipelines_build_dir, exist_ok=True)
 
     def build(self, instance_name: str) -> List[Tuple[PipelineMeta, Path]]:
@@ -217,6 +219,12 @@ class PipelineService(BaseService):
             "pipeline_root": self._make_pipeline_root(pipeline_instance.bucket, pipeline_instance.name),
             "pipeline_labels": json.dumps(pipeline_instance.labels),
         }
+
+        if pipeline_instance.tensorboard_ref:
+
+            pipeline_env_params["tensorboard"] = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                pipeline_instance.tensorboard_ref
+            )
 
         # Export Pipeline wanna ENV params to be available during compilation
         pipeline_name_prefix = snakecase(f"{pipeline_instance.name}").upper()

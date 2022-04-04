@@ -27,6 +27,7 @@ class PipelineModel(BaseInstanceModel):
     metadata: Optional[List[Dict[str, Any]]]
     docker_image_ref: Optional[List[str]]
     schedule: Optional[PipelineScheduleModel]
+    tensorboard_ref: Optional[str]
 
 
 class PipelineMeta(BaseModel, arbitrary_types_allowed=True):

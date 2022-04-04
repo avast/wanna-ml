@@ -10,6 +10,9 @@ gcp_settings:
   labels:
   service_account:
 
+tensorboards:
+  - name: wanna-sample-pipeline-board
+
 docker:
   images:
     - build_type: local_build_image
@@ -29,3 +32,4 @@ pipelines:
     pipeline_file: pipeline.py
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]
+    tensorboard_ref: wanna-sample-pipeline-board
