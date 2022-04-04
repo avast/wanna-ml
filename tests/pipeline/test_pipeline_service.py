@@ -41,11 +41,12 @@ class TestPipelineService(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    def test_run_pipeline(self):
+    @patch("wanna.cli.docker.service.docker")
+    def test_run_pipeline(self, docker_mock):
         # Setup Service
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml")
         pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
-
+        print(pipeline_service.docker_service.image_store)
         # Setup expected data/fixtures
         expected_train_docker_image_model = LocalBuildImageModel(
             name="train",
@@ -55,8 +56,8 @@ class TestPipelineService(unittest.TestCase):
             dockerfile="Dockerfile.train",
         )
         expected_train_docker_tags = [
-            "eu.gcr.io/us-burger-gcp-poc/pipeline-sklearn-example-1/train:test",
-            "eu.gcr.io/us-burger-gcp-poc/pipeline-sklearn-example-1/train:latest",
+            "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:test",
+            "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
         expected_serve_docker_image_model = ProvidedImageModel(
             name="serve",
@@ -88,8 +89,9 @@ class TestPipelineService(unittest.TestCase):
         PipelineService._make_pipeline_root = MagicMock(return_value=exppected_pipeline_root)
 
         # Mock Docker IO
-        DockerService._find_image_model_by_ref = MagicMock(return_value=expected_train_docker_image_model)
-        DockerService.build_image = MagicMock(return_value=None)
+        DockerService._find_image_model_by_name = MagicMock(return_value=expected_train_docker_image_model)
+        docker_mock.build = MagicMock(return_value=None)
+        docker_mock.pull = MagicMock(return_value=None)
 
         # Mock GCP calls
         auth.default = MagicMock(
@@ -110,8 +112,10 @@ class TestPipelineService(unittest.TestCase):
 
         # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
         #                                              tags=expected_train_docker_tags)
-        DockerService.build_image.assert_called_with(
-            image_model=expected_serve_docker_image_model, tags=[], work_dir=self.sample_pipeline_dir, progress=False
+        docker_mock.build.assert_called_with(
+            self.sample_pipeline_dir,
+            file=self.sample_pipeline_dir / expected_train_docker_image_model.dockerfile,
+            tags=expected_train_docker_tags,
         )
 
         del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory

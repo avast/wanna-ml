@@ -2,6 +2,7 @@ from pathlib import Path
 
 from google.cloud.notebooks_v1.types import Instance
 from mock import patch
+from mock.mock import MagicMock
 
 from tests.mocks import mocks
 from wanna.cli.models.notebook import (
@@ -97,10 +98,13 @@ class TestNotebookService:
 
     def test_create_instance_request_custom_container(self):
         nb_service = NotebookService(config=get_config(), workdir=Path("."))
+        config = get_config()
         instance = get_base_notebook()
+        nb_service.docker_service.build_image = MagicMock(return_value=(None, None, config.docker.images[0].image_url))
+        nb_service.docker_service.push_image = MagicMock(return_value=None)
         instance.environment = NotebookEnvironment.parse_obj({"docker_image_ref": "lumos"})
         request = nb_service._create_instance_request(instance)
-        assert request.instance.container_image.repository == "eu.gcr.io/lumos"
+        assert request.instance.container_image.repository == "europe-west1-docker.pkg.dev/lumos"
         assert request.instance.container_image.tag == "0.15"
 
     def test_create_instance_request_vm_image(self):
@@ -176,7 +180,7 @@ def get_config():
             "docker": {
                 "images": [
                     {
-                        "image_url": "eu.gcr.io/lumos:0.15",
+                        "image_url": "europe-west1-docker.pkg.dev/lumos:0.15",
                         "name": "lumos",
                         "build_type": "provided_image",
                     }

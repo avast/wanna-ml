@@ -1,3 +1,4 @@
+import pathlib
 from pathlib import Path
 
 import typer
@@ -33,7 +34,8 @@ class JobPlugin(BasePlugin):
         sync: bool = True,
     ) -> None:
         config = load_config_from_yaml(file)
-        job_service = JobService(config=config)
+        workdir = pathlib.Path(file).parent.resolve()
+        job_service = JobService(config=config, workdir=workdir)
         job_service.create(instance_name, sync=sync)
 
     @staticmethod
@@ -48,5 +50,6 @@ class JobPlugin(BasePlugin):
         ),
     ) -> None:
         config = load_config_from_yaml(file)
-        job_service = JobService(config=config)
+        workdir = pathlib.Path(file).parent.resolve()
+        job_service = JobService(config=config, workdir=workdir)
         job_service.stop(instance_name)

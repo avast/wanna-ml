@@ -41,22 +41,27 @@ def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob, sync: bool,
 
 
 class PipelineService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, registry: str = "eu.gcr.io", version: str = "dev"):
+    def __init__(self, config: WannaConfigModel, workdir: Path, registry: str = None, version: str = "dev"):
         super().__init__(
             instance_type="pipeline",
             instance_model=PipelineModel,
         )
-        self.registry = registry
-        self.version = version
         self.instances = config.pipelines
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_settings.bucket
         self.config = config
-        self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
         self.pipeline_store: Dict[str, Dict[str, Any]] = {}
         self.workdir = workdir
         self.pipelines_build_dir = self.workdir / "build" / "pipelines"
         os.makedirs(self.pipelines_build_dir, exist_ok=True)
+        self.docker_service = DockerService(
+            image_models=(config.docker.images if config.docker else []),
+            registry=registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            version=version,
+            work_dir=workdir,
+            wanna_project_name=self.wanna_project.name,
+            project_id=self.config.gcp_settings.project_id,
+        )
 
     def build(self, instance_name: str) -> List[Tuple[PipelineMeta, Path]]:
         """
@@ -243,10 +248,14 @@ class PipelineService(BaseService):
 
         image_tags = []
         if pipeline_instance.docker_image_ref:
-            image_tags = [
-                self._build_docker_image(docker_image_ref, self.registry, self.version)
-                for docker_image_ref in pipeline_instance.docker_image_ref
-            ]
+            with Spinner(text="Building docker images"):
+                print(pipeline_instance.docker_image_ref)
+                image_tags = [
+                    self.docker_service.build_image(
+                        docker_image_ref=docker_image_ref,
+                    )
+                    for docker_image_ref in pipeline_instance.docker_image_ref
+                ]
 
         with Spinner(text=f"Compiling pipeline {pipeline_instance.name}"):
             # Prep build dir
@@ -425,37 +434,6 @@ class PipelineService(BaseService):
 
     def _make_pipeline_root(self, bucket: str, pipeline_name: str):
         return f"{bucket}/pipeline-root/{kebabcase(pipeline_name).lower()}"
-
-    def _build_docker_image(
-        self, docker_image_ref: str, registry: str, version: str
-    ) -> Tuple[DockerImageModel, Optional[Image], str]:
-        with Spinner(text=f"Building docker image {docker_image_ref}") as s:
-
-            docker_image_model = self.docker_service.find_image_model_by_name(docker_image_ref)
-
-            if docker_image_model.build_type == ImageBuildType.provided_image:
-                tags = [docker_image_model.image_url]
-                image = self.docker_service.build_image(
-                    image_model=docker_image_model, tags=[], work_dir=self.workdir, progress=False
-                )
-            else:
-                image_name = f"{self.wanna_project.name}/{docker_image_model.name}"
-                tags = self.docker_service.construct_image_tag(
-                    registry=registry,
-                    project=self.config.gcp_settings.project_id,
-                    image_name=image_name,
-                    versions=[version, "latest"],
-                )
-                image = self.docker_service.build_image(
-                    image_model=docker_image_model, tags=tags, work_dir=self.workdir, progress=False
-                )
-
-            s.info(f"Built image with tags {tags}")
-            return (
-                docker_image_model,
-                image,
-                tags[0],
-            )
 
     @staticmethod
     def write_manifest(manifest: PipelineDeployment, path: Path) -> None:

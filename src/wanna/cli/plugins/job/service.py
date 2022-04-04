@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Union
 
 import typer
@@ -12,6 +13,7 @@ from google.cloud.aiplatform.gapic import WorkerPoolSpec
 from google.cloud.aiplatform_v1.types import ContainerSpec, DiskSpec, MachineSpec, PythonPackageSpec
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 
+from wanna.cli.docker.service import DockerService
 from wanna.cli.models.training_custom_job import CustomJobModel, TrainingCustomJobModel, WorkerPoolModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
@@ -20,7 +22,7 @@ from wanna.cli.utils.spinners import Spinner
 
 
 class JobService(BaseService):
-    def __init__(self, config: WannaConfigModel):
+    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev", registry: str = None):
         super().__init__(
             instance_type="job",
             instance_model=TrainingCustomJobModel,
@@ -35,6 +37,14 @@ class JobService(BaseService):
             location=self.config.gcp_settings.region,
         )
         self.tensorboard_service = TensorboardService(config=config)
+        self.docker_service = DockerService(
+            image_models=(config.docker.images if config.docker else []),
+            registry=registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            version=version,
+            work_dir=workdir,
+            wanna_project_name=self.wanna_project.name,
+            project_id=self.config.gcp_settings.project_id,
+        )
 
     def _create_one_instance(self, instance: Union[CustomJobModel, TrainingCustomJobModel], **kwargs):
         """
@@ -47,9 +57,8 @@ class JobService(BaseService):
         sync = kwargs.get("sync")
 
         if isinstance(instance, TrainingCustomJobModel):
-            training_job = self._create_training_job_spec(instance)
             with Spinner(text=f"Initiating {instance.name} custom job") as s:
-
+                training_job = self._create_training_job_spec(instance)
                 s.info(f"Outputs will be saved to {instance.base_output_directory}")
                 training_job.run(
                     machine_type=instance.worker.machine_type,
@@ -134,25 +143,31 @@ class JobService(BaseService):
                         f"https://console.cloud.google.com/vertex-ai/locations/{instance.region}/training/{job_id}?project={instance.project_id}"  # noqa
                     )
 
-    @staticmethod
     def _create_training_job_spec(
+        self,
         job_model: TrainingCustomJobModel,
     ) -> Union[CustomContainerTrainingJob, CustomPythonPackageTrainingJob]:
         """"""
 
         if job_model.worker.python_package:
+            container = self.docker_service.build_image(
+                docker_image_ref=job_model.worker.python_package.executor_docker_image_ref
+            )
+            tag = container[2]
             return CustomPythonPackageTrainingJob(
                 display_name=job_model.name,
                 python_package_gcs_uri=job_model.worker.python_package.package_gcs_uri,
                 python_module_name=job_model.worker.python_package.module_name,
-                container_uri=job_model.worker.python_package.executor_image_uri,
+                container_uri=tag,
                 labels=job_model.labels,
                 staging_bucket=job_model.bucket,
             )
         else:
+            container = self.docker_service.build_image(docker_image_ref=job_model.worker.container.docker_image_ref)
+            tag = container[2]
             return CustomContainerTrainingJob(
                 display_name=job_model.name,
-                container_uri=job_model.worker.container.image_uri,
+                container_uri=tag,
                 command=job_model.worker.container.command,
                 labels=job_model.labels,
                 staging_bucket=job_model.bucket,
@@ -161,7 +176,7 @@ class JobService(BaseService):
     def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> WorkerPoolSpec:
         return WorkerPoolSpec(
             container_spec=ContainerSpec(
-                image_uri=worker_pool_model.container.image_uri,
+                image_uri=self.docker_service.build_image(worker_pool_model.container.docker_image_ref)[2],
                 command=worker_pool_model.container.command,
                 args=worker_pool_model.args,
                 env=worker_pool_model.args,
@@ -169,7 +184,9 @@ class JobService(BaseService):
             if worker_pool_model.container
             else None,
             python_package_spec=PythonPackageSpec(
-                executor_image_uri=worker_pool_model.python_package.executor_image_uri,
+                executor_image_uri=self.docker_service.build_image(
+                    worker_pool_model.python_package.executor_docker_image_ref
+                )[2],
                 package_uris=[worker_pool_model.python_package.package_gcs_uri],
                 python_module=worker_pool_model.python_package.module_name,
             )

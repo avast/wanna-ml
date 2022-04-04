@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from google import auth
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from mock import MagicMock, patch
@@ -24,7 +26,8 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
     mocks.MockZonesClient,
 )
 class TestJobService:
-    def test_create_training_job_spec_python_package_spec(self):
+    @patch("wanna.cli.docker.service.docker")
+    def test_create_training_job_spec_python_package_spec(self, docker_mock):
         auth.default = MagicMock(
             return_value=(
                 None,
@@ -32,14 +35,18 @@ class TestJobService:
             )
         )
         config = load_config_from_yaml("samples/custom_job/wanna.yaml")
-        service = JobService(config=config)
+        service = JobService(config=config, workdir=Path("."))
         job_model = service.instances[0]
+        # Mock Docker IO
+        docker_mock.build = MagicMock(return_value=None)
+        docker_mock.pull = MagicMock(return_value=None)
         worker_spec = service._create_training_job_spec(job_model)
 
         assert worker_spec.__dict__.get("_container_uri") == "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
         assert worker_spec.__dict__.get("_python_module") == "trainer.task"
 
-    def test_create_worker_pool_spec_container_spec(self):
+    @patch("wanna.cli.docker.service.docker")
+    def test_create_worker_pool_spec_container_spec(self, docker_mock):
         auth.default = MagicMock(
             return_value=(
                 None,
@@ -47,8 +54,11 @@ class TestJobService:
             )
         )
         config = load_config_from_yaml("samples/custom_job/wanna.yaml")
-        service = JobService(config=config)
+        service = JobService(config=config, workdir=Path("."))
         job_model = service.instances[1]
+        # Mock Docker IO
+        docker_mock.build = MagicMock(return_value=None)
+        docker_mock.pull = MagicMock(return_value=None)
         worker_spec = service._create_training_job_spec(job_model)
 
         assert worker_spec.__dict__.get("_container_uri") == "gcr.io/google-containers/debian-base:1.0.0"
@@ -62,7 +72,7 @@ class TestJobService:
             )
         )
         config = load_config_from_yaml("samples/custom_job/wanna.yaml")
-        service = JobService(config=config)
+        service = JobService(config=config, workdir=Path("."))
         filter_expr_complete = service._create_list_jobs_filter_expr(
             states=[
                 PipelineState.PIPELINE_STATE_PAUSED,
