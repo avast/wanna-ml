@@ -11,13 +11,13 @@ class JobGPUModel(BaseModel, extra=Extra.forbid):
 
 
 class PythonPackageModel(BaseModel, extra=Extra.forbid):
-    executor_image_uri: str
+    docker_image_ref: str
     package_gcs_uri: str
     module_name: str
 
 
 class ContainerModel(BaseModel, extra=Extra.forbid):
-    image_uri: str
+    docker_image_ref: str
     command: Optional[List[str]]
 
 

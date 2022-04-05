@@ -14,7 +14,8 @@ class TestDockerModel(unittest.TestCase):
                         "context_dir": "/a/b",
                         "dockerfile": "/a/b/dockerfile",
                     }
-                ]
+                ],
+                "repository": "wanna-samples",
             }
         )
 
@@ -27,7 +28,8 @@ class TestDockerModel(unittest.TestCase):
                         "name": "slytherin",
                         "image_url": "eu.gcr.io/expecto/patronum:latest",
                     }
-                ]
+                ],
+                "repository": "wanna-samples",
             }
         )
 
@@ -40,6 +42,7 @@ class TestDockerModel(unittest.TestCase):
                         "build_type": "notebook_ready_image",
                         "requirements_txt": "/a/b/requirements.txt",
                     }
-                ]
+                ],
+                "repository": "wanna-samples",
             }
         )

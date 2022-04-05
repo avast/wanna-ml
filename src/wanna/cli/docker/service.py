@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, no_type_check
+from typing import Dict, List, Optional, Tuple
 
 from python_on_whales import Image, docker
 
@@ -14,12 +14,27 @@ class DockerClientException(Exception):
 
 
 class DockerService:
-    def __init__(self, image_models: List[DockerImageModel]):
+    def __init__(
+        self,
+        image_models: List[DockerImageModel],
+        registry: str,
+        version: str,
+        work_dir: Path,
+        wanna_project_name: str,
+        project_id: str,
+        repository: str,
+    ):
         assert self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli"
         )
         self.image_models = image_models
-        self.image_store: Dict[str, Image] = {}
+        self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
+        self.registry = registry
+        self.repository = repository
+        self.version = version
+        self.work_dir = work_dir
+        self.wanna_project_name = wanna_project_name
+        self.project_id = project_id
 
     @staticmethod
     def _is_docker_client_active() -> bool:
@@ -50,71 +65,75 @@ class DockerService:
 
     def build_image(
         self,
-        image_model: DockerImageModel,
-        tags: List[str],
-        work_dir: Path,
+        docker_image_ref: str,
         **kwargs,
-    ) -> Optional[Image]:
+    ) -> Tuple[DockerImageModel, Optional[Image], str]:
         """
-        A wrapper around _build_image, that ensures no image is built more than once
-        (using self.image_store as a state)
-        Args:
-            image_model: image model to build
-            tags: image tags to add to the built docker image
-            work_dir: working directory
-            **kwargs:
-
-        Returns:
-
+        A wrapper around _build_image that checks if the docker image has been already build
+        and cached in image_store.
         """
-        if image_model.name in self.image_store:
-            return self.image_store.get(image_model.name)
+        if docker_image_ref in self.image_store:
+            image = self.image_store.get(docker_image_ref)
+            return image  # type: ignore
         else:
-            image = self._build_image(image_model=image_model, tags=tags, work_dir=work_dir, **kwargs)
-            self.image_store.update({image_model.name: image})
+            image = self._build_image(
+                docker_image_ref=docker_image_ref,
+                **kwargs,
+            )
+            self.image_store.update({docker_image_ref: image})
             return image
 
-    @no_type_check  # TODO: Fixme
     def _build_image(
         self,
-        image_model: DockerImageModel,
-        tags: List[str],
-        work_dir: Path,
+        docker_image_ref: str,
         **kwargs,
-    ) -> Image:  # noqa
-        """
-        Method to build docker image from DockerImageModel.
-        Args:
-            image_model: DockerImageModel with complete information about the docker image
-            tags: tags for the image
-            work_dir: working directory
-            **kwargs: optional arguments to the python_on_whales image build
+    ) -> Tuple[DockerImageModel, Optional[Image], str]:
+        """ """
+        docker_image_model = self.find_image_model_by_name(docker_image_ref)
 
-        Returns:
-            Image
-        """
-        build_dir = work_dir / Path("build") / image_model.name
+        build_dir = self.work_dir / Path("build") / docker_image_model.name
         os.makedirs(build_dir, exist_ok=True)
 
-        if image_model.build_type == ImageBuildType.notebook_ready_image:
+        if docker_image_model.build_type == ImageBuildType.notebook_ready_image:
+            image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
+            tags = self.construct_image_tag(
+                registry=self.registry,
+                project=self.project_id,
+                repository=self.repository,
+                image_name=image_name,
+                versions=[self.version, "latest"],
+            )
             template_path = Path("notebook_template.Dockerfile")
             shutil.copy2(
-                work_dir / image_model.requirements_txt,
+                self.work_dir / docker_image_model.requirements_txt,
                 build_dir / "requirements.txt",
             )
-            file_path = self._jinja_render_dockerfile(image_model, template_path, build_dir=build_dir)
+            file_path = self._jinja_render_dockerfile(docker_image_model, template_path, build_dir=build_dir)
             context_dir = build_dir
             image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
-        elif image_model.build_type == ImageBuildType.local_build_image:
-            file_path = work_dir / image_model.dockerfile
-            context_dir = work_dir / image_model.context_dir
+        elif docker_image_model.build_type == ImageBuildType.local_build_image:
+            image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
+            tags = self.construct_image_tag(
+                registry=self.registry,
+                project=self.project_id,
+                repository=self.repository,
+                image_name=image_name,
+                versions=[self.version, "latest"],
+            )
+            file_path = self.work_dir / docker_image_model.dockerfile
+            context_dir = self.work_dir / docker_image_model.context_dir
             image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
-        elif image_model.build_type == ImageBuildType.provided_image:
-            image = docker.pull(image_model.image_url, quiet=True)
+        elif docker_image_model.build_type == ImageBuildType.provided_image:
+            image = docker.pull(docker_image_model.image_url, quiet=True)  # type: ignore
+            tags = [docker_image_model.image_url]
         else:
             raise Exception("Invalid image model type.")
 
-        return image
+        return (  # type: ignore
+            docker_image_model,
+            image,
+            tags[0],
+        )
 
     @staticmethod
     def push_image(image: Image, quiet: bool = False) -> None:
@@ -133,12 +152,15 @@ class DockerService:
         docker.image.remove(image, force=force, prune=prune)
 
     @staticmethod
-    def construct_image_tag(registry: str, project: str, image_name: str, versions: List[str] = ["latest"]):
+    def construct_image_tag(
+        registry: str, project: str, repository: str, image_name: str, versions: List[str] = ["latest"]
+    ):
         """
         Construct full image tag.
         Args:
             registry:
             project:
+            repository:
             image_name:
             versions:
 
@@ -146,7 +168,7 @@ class DockerService:
             List of full image tag
         """
 
-        return [f"{registry}/{project}/{image_name}:{version}" for version in versions]
+        return [f"{registry}/{project}/{repository}/{image_name}:{version}" for version in versions]
 
     @staticmethod
     def _jinja_render_dockerfile(

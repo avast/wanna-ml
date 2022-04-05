@@ -8,7 +8,6 @@ from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceReques
 from waiting import wait
 
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import DockerImageModel, ImageBuildType
 from wanna.cli.models.notebook import NotebookModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
@@ -19,18 +18,33 @@ from wanna.cli.utils.spinners import Spinner
 
 
 class NotebookService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, owner: Optional[str] = None):
+    def __init__(
+        self,
+        config: WannaConfigModel,
+        workdir: Path,
+        owner: Optional[str] = None,
+        version: str = "dev",
+    ):
         super().__init__(
             instance_type="notebook",
             instance_model=NotebookModel,
         )
+        self.version = version
         self.instances = config.notebooks
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_settings.bucket
         self.notebook_client = NotebookServiceClient()
         self.config = config
-        self.docker_service = DockerService(image_models=(config.docker.images if config.docker else []))
-        self.workdir = workdir
+        self.docker_service = DockerService(
+            image_models=(config.docker.images if config.docker else []),
+            registry=config.docker.registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            repository=config.docker.repository,
+            version=version,
+            work_dir=workdir,
+            wanna_project_name=self.wanna_project.name,
+            project_id=self.config.gcp_settings.project_id,
+        )
+
         self.owner = owner
         self.tensorboard_service = TensorboardService(config=config)
 
@@ -157,19 +171,14 @@ class NotebookService(BaseService):
         # Environment
         if notebook_instance.environment.docker_image_ref:
             vm_image = None
-            image_model = self.docker_service.find_image_model_by_name(notebook_instance.environment.docker_image_ref)
-            if image_model.build_type == ImageBuildType.provided_image:
-                container_image_tag = image_model.image_url
-            else:
-                typer.echo(
-                    "\n Building docker image. This may take a while, stretch your legs or get a \N{hot beverage}"
-                )
-                container_image_tag = self._build_and_push_docker_image(
-                    docker_image_model=image_model,
-                )
+            image_tag = self.docker_service.build_image(docker_image_ref=notebook_instance.environment.docker_image_ref)
+            if image_tag[1]:
+                self.docker_service.push_image(image_tag[1])
+            repository = image_tag[2].partition(":")[0]
+            tag = image_tag[2].partition(":")[-1]
             container_image = ContainerImage(
-                repository=container_image_tag.partition(":")[0],
-                tag=container_image_tag.partition(":")[-1],
+                repository=repository,
+                tag=tag,
             )
         else:
             vm_image = VmImage(
@@ -257,21 +266,6 @@ class NotebookService(BaseService):
             tensorboard_resource_name=tensorboard_resource_name,
         )
         return startup_script
-
-    def _build_and_push_docker_image(self, docker_image_model: DockerImageModel, registry: str = "eu.gcr.io") -> str:
-        """"""
-        tags = self.docker_service.construct_image_tag(
-            registry=registry,
-            project=self.config.gcp_settings.project_id,
-            image_name=f"{self.wanna_project.name}/{docker_image_model.name}",
-            versions=["0.1"],
-        )
-        image = self.docker_service.build_image(image_model=docker_image_model, tags=tags, work_dir=self.workdir)
-        if image:
-            self.docker_service.push_image(image)
-            return tags[0]
-        else:
-            raise ValueError(f"Failed to build image {docker_image_model}")
 
     def _validate_jupyterlab_state(self, instance_id: str, state: int) -> bool:
         """

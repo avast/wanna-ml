@@ -13,7 +13,7 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
         WorkerPoolModel.parse_obj(
             {
                 "python_package": {
-                    "executor_image_uri": "a",
+                    "docker_image_ref": "a",
                     "package_gcs_uri": "a",
                     "module_name": "c",
                 }
@@ -21,7 +21,7 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
         )
 
     def test_worker_pool_only_container_is_enough(self):
-        WorkerPoolModel.parse_obj({"container": {"image_uri": "a"}})
+        WorkerPoolModel.parse_obj({"container": {"docker_image_ref": "a"}})
 
     def test_worker_pool_container_or_python_must_be_set(self):
         with pytest.raises(ValidationError):
@@ -32,11 +32,11 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
             WorkerPoolModel.parse_obj(
                 {
                     "python_package": {
-                        "executor_image_uri": "a",
+                        "docker_image_ref": "a",
                         "package_gcs_uri": "a",
                         "module_name": "c",
                     },
-                    "container_spec": {"image_uri": "a"},
+                    "container_spec": {"docker_image_ref": "a"},
                 }
             )
 
@@ -53,7 +53,7 @@ class TestTrainingCustomJobModel(unittest.TestCase):
                 "region": "europe-west4",
                 "bucket": "my-bucket",
                 "project_id": "gcp-project",
-                "worker": {"container": {"image_uri": "a"}},
+                "worker": {"container": {"docker_image_ref": "a"}},
             }
         )
         assert model.base_output_directory == "gs://my-bucket/jobs/a/outputs"
