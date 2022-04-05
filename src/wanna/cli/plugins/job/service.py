@@ -22,7 +22,7 @@ from wanna.cli.utils.spinners import Spinner
 
 
 class JobService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev", registry: str = None):
+    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev"):
         super().__init__(
             instance_type="job",
             instance_model=TrainingCustomJobModel,
@@ -39,7 +39,8 @@ class JobService(BaseService):
         self.tensorboard_service = TensorboardService(config=config)
         self.docker_service = DockerService(
             image_models=(config.docker.images if config.docker else []),
-            registry=registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            registry=config.docker.registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            repository=config.docker.repository,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,
@@ -151,7 +152,7 @@ class JobService(BaseService):
 
         if job_model.worker.python_package:
             container = self.docker_service.build_image(
-                docker_image_ref=job_model.worker.python_package.executor_docker_image_ref
+                docker_image_ref=job_model.worker.python_package.docker_image_ref
             )
             tag = container[2]
             return CustomPythonPackageTrainingJob(
@@ -184,9 +185,9 @@ class JobService(BaseService):
             if worker_pool_model.container
             else None,
             python_package_spec=PythonPackageSpec(
-                executor_image_uri=self.docker_service.build_image(
-                    worker_pool_model.python_package.executor_docker_image_ref
-                )[2],
+                executor_image_uri=self.docker_service.build_image(worker_pool_model.python_package.docker_image_ref)[
+                    2
+                ],
                 package_uris=[worker_pool_model.python_package.package_gcs_uri],
                 python_module=worker_pool_model.python_package.module_name,
             )

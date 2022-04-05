@@ -16,6 +16,7 @@ docker:
       name: custom-notebook-container
       context_dir: .
       dockerfile: Dockerfile.notebook
+  repository: wanna-samples
 
 notebooks:
   - name: wanna-notebook-custom-container

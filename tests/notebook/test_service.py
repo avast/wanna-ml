@@ -184,7 +184,8 @@ def get_config():
                         "name": "lumos",
                         "build_type": "provided_image",
                     }
-                ]
+                ],
+                "repository": "wanna-samples",
             },
         }
     )

@@ -11,7 +11,7 @@ class JobGPUModel(BaseModel, extra=Extra.forbid):
 
 
 class PythonPackageModel(BaseModel, extra=Extra.forbid):
-    executor_docker_image_ref: str
+    docker_image_ref: str
     package_gcs_uri: str
     module_name: str
 

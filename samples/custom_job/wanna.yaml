@@ -19,13 +19,14 @@ docker:
     - build_type: provided_image
       name: debian
       image_url: gcr.io/google-containers/debian-base:1.0.0
+  repository: wanna-samples
 
 jobs:
   - name: custom-training-job-with-python-package
     region: europe-west1
     worker:
       python_package:
-        executor_docker_image_ref: tensorflow
+        docker_image_ref: tensorflow
         package_gcs_uri: "gs://wanna-ml/trainer-0.1.tar.gz"
         module_name: "trainer.task"
       args: ['--epochs=100', '--steps=100', '--distribute=single']
@@ -41,3 +42,19 @@ jobs:
       container:
         docker_image_ref: debian
         command: ["echo", "'Test'"]
+
+  - name: custom-job-with-containers
+    region: europe-west1
+    workers:
+      - container:
+          docker_image_ref: debian
+          command: ["echo", "'Test'"]
+#        gpu:
+#          accelerator_type: NVIDIA_TESLA_K80
+#          count: 1
+      - container:
+          docker_image_ref: debian
+          command: ["echo", "'Test'"]
+  #      gpu:
+  #        accelerator_type: NVIDIA_TESLA_K80
+  #        count: 1

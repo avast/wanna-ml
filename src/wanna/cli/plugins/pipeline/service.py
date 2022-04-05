@@ -41,7 +41,7 @@ def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob, sync: bool,
 
 
 class PipelineService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, registry: str = None, version: str = "dev"):
+    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev"):
         super().__init__(
             instance_type="pipeline",
             instance_model=PipelineModel,
@@ -56,7 +56,8 @@ class PipelineService(BaseService):
         os.makedirs(self.pipelines_build_dir, exist_ok=True)
         self.docker_service = DockerService(
             image_models=(config.docker.images if config.docker else []),
-            registry=registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            registry=config.docker.registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            repository=config.docker.repository,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,

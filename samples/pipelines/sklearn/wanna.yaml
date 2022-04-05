@@ -20,6 +20,7 @@ docker:
     - build_type: provided_image
       name: serve
       image_url: europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
+  repository: wanna-samples
 
 pipelines:
   - name: wanna-sklearn-sample

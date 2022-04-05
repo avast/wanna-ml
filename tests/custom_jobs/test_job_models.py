@@ -13,7 +13,7 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
         WorkerPoolModel.parse_obj(
             {
                 "python_package": {
-                    "executor_docker_image_ref": "a",
+                    "docker_image_ref": "a",
                     "package_gcs_uri": "a",
                     "module_name": "c",
                 }
@@ -32,7 +32,7 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
             WorkerPoolModel.parse_obj(
                 {
                     "python_package": {
-                        "executor_docker_image_ref": "a",
+                        "docker_image_ref": "a",
                         "package_gcs_uri": "a",
                         "module_name": "c",
                     },

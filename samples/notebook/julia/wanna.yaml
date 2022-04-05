@@ -14,6 +14,7 @@ docker:
       name: custom-notebook-container-julia
       context_dir: .
       dockerfile: Dockerfile.notebook
+  repository: wanna-samples
 
 notebooks:
   - name: wanna-notebook-julia

@@ -22,7 +22,7 @@ class DockerService:
         work_dir: Path,
         wanna_project_name: str,
         project_id: str,
-        repository: str = "wanna-samples",
+        repository: str,
     ):
         assert self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli"

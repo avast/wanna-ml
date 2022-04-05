@@ -24,7 +24,6 @@ class NotebookService(BaseService):
         workdir: Path,
         owner: Optional[str] = None,
         version: str = "dev",
-        registry: str = None,
     ):
         super().__init__(
             instance_type="notebook",
@@ -38,7 +37,8 @@ class NotebookService(BaseService):
         self.config = config
         self.docker_service = DockerService(
             image_models=(config.docker.images if config.docker else []),
-            registry=registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            registry=config.docker.registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
+            repository=config.docker.repository,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,

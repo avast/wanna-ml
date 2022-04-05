@@ -39,3 +39,5 @@ DockerImageModel = Union[LocalBuildImageModel, ProvidedImageModel, NotebookReady
 
 class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     images: List[DockerImageModel]
+    repository: str
+    registry: Optional[str]
