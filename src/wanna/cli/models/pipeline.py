@@ -12,6 +12,7 @@ from wanna.cli.utils.gcp import validators
 class PipelineScheduleModel(BaseModel):
     cron: str
     timezone: str = "Etc/UTC"
+    service_account: Optional[str]
 
     # Validators
     _schedule = validator("cron")(validators.validate_cron_schedule)

@@ -17,13 +17,18 @@ theme:
     hljs_languages:
         - yaml
         - python
+        - bash
 
 nav:
-    - Home: 'index.md'
-    - 'CLI': 
-      - 'overview': 'cli/index.md'
-      - 'commands': 'cli/commands.md'
-    - 'SDK': 'sdk.md'
+    - Overview: 'index.md'
+    - Installation: 'installation.md'
+    - Tutorial:
+        - 'WANNA Project': 'tutorial/project.md'
+        - 'WANNA Profile': 'tutorial/profiles.md'
+        - 'WANNA Notebook': 'tutorial/notebook.md'
+        - 'WANNA Job': 'tutorial/job.md'
+        - 'WANNA Pipeline': 'tutorial/pipeline.md'
+    - Plugins: 'cli/commands.md'
 
 plugins:
 - search
