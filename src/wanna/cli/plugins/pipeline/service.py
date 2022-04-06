@@ -258,7 +258,6 @@ class PipelineService(BaseService):
         image_tags = []
         if pipeline_instance.docker_image_ref:
             with Spinner(text="Building docker images"):
-                print(pipeline_instance.docker_image_ref)
                 image_tags = [
                     self.docker_service.build_image(
                         docker_image_ref=docker_image_ref,

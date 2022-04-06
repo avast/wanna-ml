@@ -10,7 +10,7 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
 
 class JobPlugin(BasePlugin):
     def __init__(self) -> None:
-        super(JobPlugin, self).__init__()
+        super().__init__()
         self.secret = "some value"
         self.register_many(
             [

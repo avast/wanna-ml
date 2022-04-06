@@ -11,7 +11,7 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
 
 class PipelinePlugin(BasePlugin):
     def __init__(self) -> None:
-        super(PipelinePlugin, self).__init__()
+        super().__init__()
         self.register_many(
             [
                 self.build,
