@@ -36,6 +36,7 @@ class MockMachineTypesClient:
             "n2-highmem-96",
             "n2-standard-128",
             "n2d-standard-2",
+            "n1-standard-4",
         ]
         return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
 

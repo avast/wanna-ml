@@ -1,30 +1,62 @@
-site_name: WANNA 
+site_name: WANNA ML
+repo_url: https://git.int.avast.com/bds/wanna-ml/
+repo_name: bds/wanna-ml
+edit_uri: edit/master/docs/
 theme:
   name: material
   palette:
-    scheme: slate
-    primary: deep orange
-    accent: indigo
-    features:
-      - navigation.instant
-      - navigation.tracking
-      - navigation.tabs
-      - navigation.tabs.sticky
-      - navigation.sections
-      - navigation.expand
-      - navigation.indexes
-    highlightjs: true
-    hljs_languages:
-        - yaml
-        - python
-        - bash
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+        #    primary: indigo
+        #    accent: indigo
+        features:
+          - navigation.instant
+          - navigation.tracking
+          - navigation.tabs
+          - navigation.tabs.sticky
+          - navigation.sections
+          - navigation.expand
+          - navigation.indexes
+          - navigation.top
+          - toc.follow
+          - toc.integrate
+        highlightjs: true
+        hljs_languages:
+          - yaml
+          - python
+          - bash
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  #    primary: indigo
+  #    accent: indigo
+      features:
+        - navigation.instant
+        - navigation.tracking
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - navigation.sections
+        - navigation.expand
+        - navigation.indexes
+        - navigation.top
+        - toc.follow
+        - toc.integrate
+      highlightjs: true
+      hljs_languages:
+          - yaml
+          - python
+          - bash
 
 nav:
     - Overview: 'index.md'
     - Installation: 'installation.md'
     - Tutorial:
+        - 'Get Started': 'tutorial/index.md'
         - 'WANNA Project': 'tutorial/project.md'
-        - 'WANNA Profile': 'tutorial/profiles.md'
+        - 'WANNA Profile': 'tutorial/profile.md'
         - 'WANNA Notebook': 'tutorial/notebook.md'
         - 'WANNA Job': 'tutorial/job.md'
         - 'WANNA Pipeline': 'tutorial/pipeline.md'

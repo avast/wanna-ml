@@ -26,12 +26,12 @@ docker:
   repository: wanna-samples
 
 notebooks:
-  - name: wanna-sklearn-sample-notebook.md
+  - name: wanna-sklearn-sample-notebook
 #    service_account:
     instance_owner: joao.silva1@avast.com
     machine_type: n1-standard-4
     labels:
-      notebook_usecase: wanna-notebook.md-sklearn-sample
+      notebook_usecase: wanna-notebook-sklearn-sample
     environment:
       docker_image_ref: train
     boot_disk:

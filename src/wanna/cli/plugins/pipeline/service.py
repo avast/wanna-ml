@@ -425,7 +425,7 @@ class PipelineService(BaseService):
                 "service_account_email": manifest.schedule.service_account or manifest.service_account,
                 # required scope https://developers.google.com/identity/protocols/oauth2/scopes#cloudfunctions
                 # "scope": "https://www.googleapis.com/auth/cloud-platform"
-            }
+            },
         }
 
         job = {
@@ -434,7 +434,7 @@ class PipelineService(BaseService):
             "http_target": http_target,
             "schedule": manifest.schedule.cron,
             "time_zone": manifest.schedule.timezone,
-            #TODO: "retry_config"
+            # TODO: "retry_config"
             # "attempt_deadline"
         }
 

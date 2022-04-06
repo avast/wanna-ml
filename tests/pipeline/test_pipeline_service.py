@@ -27,6 +27,18 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
     "wanna.cli.utils.gcp.gcp.RegionsClient",
     mocks.MockRegionsClient,
 )
+@patch(
+    "wanna.cli.utils.gcp.gcp.ImagesClient",
+    mocks.MockImagesClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.gcp.MachineTypesClient",
+    mocks.MockMachineTypesClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.validators.StorageClient",
+    mocks.MockStorageClient,
+)
 class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
@@ -202,9 +214,7 @@ class TestPipelineService(unittest.TestCase):
 
         expected_function_name = "wanna-sklearn-sample-local"
         expected_function_name_resoure = f"{parent}/functions/{expected_function_name}"
-        expected_function_url = (
-            f"https://us-burger-gcp-poc-europe-west1.cloudfunctions.net/{parent}/functions/{expected_function_name}-v1"
-        )
+        expected_function_url = "https://us-burger-gcp-poc-europe-west1.cloudfunctions.net/wanna-sklearn-sample-local"
         expected_function = {
             "name": expected_function_name_resoure,
             "description": "wanna wanna-sklearn-sample function for local pipeline",
@@ -214,6 +224,7 @@ class TestPipelineService(unittest.TestCase):
             "https_trigger": {
                 "url": expected_function_url,
             },
+            "service_account_email": "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com",
             "labels": {
                 "wanna_project": "pipeline-sklearn-example-1",
                 "wanna_project_version": "1",

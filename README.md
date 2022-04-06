@@ -5,14 +5,15 @@
 
 WANNA manage ML on Vertex AI :-)
 
-[Check out the full online documentation](https://git.int.avast.com/pages/bds/wanna-ml/)
+[Check out the full online documentation](https://git.int.avast.com/pages/bds/wanna-ml/) and follow to tutorial for concepts and example introduction.
 
 Slack channel: [#t-mlops-developers](https://avast.slack.com/messages/t-mlops-developers/)
 
 CML page for the project is [here](https://cml.avast.com/display/BDS/Cloud+ML+-+WANNA).
 
-Installation for users
-Please refer to this section of the documentation.
+## Installation for users
+
+[Please refer to this section of the documentation](https://git.int.avast.com/pages/bds/wanna-ml/installation/).
 
 
 ## WANNA ML Pipelines
@@ -67,11 +68,11 @@ It also allows for deletion of notebooks with user confirmation
 ### Usage
 
 ```bash
-wanna notebook.md create --file samples/notebook.md/julia/wanna.yaml -n wanna-notebook.md-julia
+wanna notebook create --file samples/notebook/julia/wanna.yaml -n wanna-notebook-julia
 
-wanna notebook.md create --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook.md
+wanna notebook create --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook
 
-wanna notebook.md delete --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook.md
+wanna notebook delete --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook
 ```
 
 ## WANNA Jobs

@@ -6,4 +6,4 @@ authors:
 date: 2022-04-06
 ---
 
-# WANNA Pipelines
+# WANNA Pipeline
