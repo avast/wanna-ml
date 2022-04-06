@@ -5,15 +5,15 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
-import click
 import requests
+import typer
 from packaging import version
 
 from .. import __version__
 
 logger = logging.getLogger(__name__)
 
-ARTIFACTORY_URL = f"https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/{__package__}/"
+ARTIFACTORY_URL = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/wanna-ml/"
 VERSION_CHECK_FILE = "last_version_check"
 UPDATE_MESSAGE = (
     "If you used `pipx` to install Schnitzel CLI, use the following command:\n\n"
@@ -107,27 +107,27 @@ def do_check_version(app_path: Path, interval: timedelta = timedelta(hours=24)) 
         return True
 
 
-def perform_check(ctx: click.Context, terminate: bool = True) -> None:
+def perform_check(terminate: bool = True) -> None:
     """Perform the check and interact with the user.
     This function can be used as an option callback, or directly. If `eager` is
     True, the function will terminate the CLI execution."""
 
     latest_version = get_latest_version()
     if latest_version and version.Version(__version__) < latest_version:
-        click.secho(
+        typer.secho(
             f"Installed version is {__version__}, the latest version is {latest_version}",
             fg="red",
         )
-        click.secho(
+        typer.secho(
             UPDATE_MESSAGE,
             fg="yellow",
         )
-        if terminate or click.confirm(
+        if terminate or typer.confirm(
             "Would you like to install update now? (wanna will be terminated)",
             default=False,
         ):
-            ctx.exit()
+            typer.Exit()
     else:
-        click.secho("Your wanna cli is up to date", fg="green")
+        typer.secho("Your wanna cli is up to date", fg="green")
         if terminate:
-            ctx.exit()
+            typer.Exit()
