@@ -6,7 +6,7 @@ from google.cloud import aiplatform
 PROJECT_ID = "{{manifest.project}}"
 REGION = "{{manifest.location}}"
 PIPELINE_ROOT = "{{manifest.pipeline_root}}"
-PIPELINE_LABELS = json.loads("{{labels}}")
+PIPELINE_LABELS = json.loads("""{{labels}}""")
 
 
 def process_request(request):

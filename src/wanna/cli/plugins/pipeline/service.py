@@ -337,7 +337,8 @@ class PipelineService(BaseService):
         local_functions_package = pipeline_functions_dir / "package.zip"
         functions_gcs_path_dir = f"{pipeline_root}/deployment/release/{version}/functions"
         functions_gcs_path = f"{functions_gcs_path_dir}/package.zip"
-        function_name = f"{parent}/functions/{manifest.pipeline_name}-{env}"
+        function_name = f"{manifest.pipeline_name}-{env}"
+        function_path = f"{parent}/functions/{function_name}"
 
         cloud_function = templates.render_template(
             Path("scheduler_cloud_function.py"),
@@ -359,33 +360,33 @@ class PipelineService(BaseService):
         self._sync_cloud_function_package(str(local_functions_package), functions_gcs_path)
 
         cf = CloudFunctionsServiceClient()
-        function_url = f"https://{manifest.project}-{manifest.location}.cloudfunctions.net/{function_name}-v1"
+        function_url = f"https://{manifest.project}-{manifest.location}.cloudfunctions.net/{function_name}"
         function = {
-            "name": function_name,
+            "name": function_path,
             "description": f"wanna {manifest.pipeline_name} function for {env} pipeline",
             "source_archive_url": functions_gcs_path,
             "entry_point": "process_request",
             "runtime": "python39",
             "https_trigger": {
-                "url": f"https://{manifest.project}-{manifest.location}.cloudfunctions.net/{function_name}-v1",
+                "url": function_url,
             },
-            # TODO: timeout
-            # TODO: service_account_email
+            "service_account_email": manifest.schedule.service_account or manifest.service_account,
             "labels": manifest.labels,
+            # TODO: timeout
             # TODO: environment_variables
         }
 
         try:
-            cf.get_function({"name": function_name})
+            cf.get_function({"name": function_path})
             cf.update_function({"function": function}).result()
             return (
-                function_name,
+                function_path,
                 function_url,
             )
         except NotFound:
             cf.create_function({"location": manifest.location, "function": function}).result()
             return (
-                function_name,
+                function_path,
                 function_url,
             )
 
@@ -420,6 +421,11 @@ class PipelineService(BaseService):
                 "User-Agent": "Google-Cloud-Scheduler",
                 "Wanna-Pipeline-Version": version,
             },
+            "oidc_token": {
+                "service_account_email": manifest.schedule.service_account or manifest.service_account,
+                # required scope https://developers.google.com/identity/protocols/oauth2/scopes#cloudfunctions
+                # "scope": "https://www.googleapis.com/auth/cloud-platform"
+            },
         }
 
         job = {
@@ -428,6 +434,8 @@ class PipelineService(BaseService):
             "http_target": http_target,
             "schedule": manifest.schedule.cron,
             "time_zone": manifest.schedule.timezone,
+            # TODO: "retry_config"
+            # "attempt_deadline"
         }
 
         try:
