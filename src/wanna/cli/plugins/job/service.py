@@ -56,8 +56,8 @@ class JobService(BaseService):
         sync = kwargs.get("sync")
 
         if isinstance(instance, TrainingCustomJobModel):
+            training_job = self._create_training_job_spec(instance)
             with Spinner(text=f"Initiating {instance.name} custom job") as s:
-                training_job = self._create_training_job_spec(instance)
                 s.info(f"Outputs will be saved to {instance.base_output_directory}")
                 training_job.run(
                     machine_type=instance.worker.machine_type,

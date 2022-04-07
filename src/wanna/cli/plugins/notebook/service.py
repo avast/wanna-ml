@@ -88,8 +88,8 @@ class NotebookService(BaseService):
                 self._delete_one_instance(instance)
             else:
                 return
+        instance_request = self._create_instance_request(notebook_instance=instance)
         with Spinner(text=f"Creating underlying compute engine instance for {instance.name}"):
-            instance_request = self._create_instance_request(notebook_instance=instance)
             nb_instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
                 nb_instance.result().name
