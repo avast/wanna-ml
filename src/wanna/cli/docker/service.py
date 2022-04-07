@@ -232,8 +232,8 @@ class DockerService:
             image: image to push
         """
         if not self.cloud_build:
-            Spinner(text=f"Pushing docker image {image.repo_tags}")
-            docker.image.push(image.repo_tags, quiet)
+            with Spinner(text=f"Pushing docker image {image.repo_tags}"):
+                docker.image.push(image.repo_tags, quiet)
 
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:

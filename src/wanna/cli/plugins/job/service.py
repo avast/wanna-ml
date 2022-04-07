@@ -57,12 +57,14 @@ class JobService(BaseService):
 
         if isinstance(instance, TrainingCustomJobModel):
             training_job = self._create_training_job_spec(instance)
-            with Spinner(text=f"Initiating {instance.name} custom job") as s:
-                s.info(f"Outputs will be saved to {instance.base_output_directory}")
+            Spinner().info(f"Outputs will be saved to {instance.base_output_directory}")
+            with Spinner(text=f"Initiating {instance.name} custom job"):
                 training_job.run(
                     machine_type=instance.worker.machine_type,
-                    accelerator_type=instance.worker.gpu.accelerator_type,
-                    accelerator_count=instance.worker.gpu.count,
+                    accelerator_type=instance.worker.gpu.accelerator_type
+                    if instance.worker.gpu
+                    else "ACCELERATOR_TYPE_UNSPECIFIED",
+                    accelerator_count=instance.worker.gpu.count if instance.worker.gpu else 0,
                     args=instance.worker.args,
                     base_output_dir=instance.base_output_directory,
                     service_account=instance.service_account,
