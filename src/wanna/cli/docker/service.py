@@ -1,11 +1,17 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
+from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
+from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, StorageSource
 from python_on_whales import Image, docker
 
-from wanna.cli.models.docker import DockerImageModel, ImageBuildType
+from wanna.cli.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
+from wanna.cli.models.gcp_settings import GCPSettingsModel
+from wanna.cli.utils import loaders
+from wanna.cli.utils.gcp.gcp import make_tarfile, upload_file_to_gcs
+from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.templates import render_template
 
 
@@ -16,25 +22,46 @@ class DockerClientException(Exception):
 class DockerService:
     def __init__(
         self,
-        image_models: List[DockerImageModel],
-        registry: str,
+        docker_model: DockerModel,
+        gcp_settings: GCPSettingsModel,
         version: str,
         work_dir: Path,
         wanna_project_name: str,
-        project_id: str,
-        repository: str,
     ):
         assert self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli"
         )
-        self.image_models = image_models
+        self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
-        self.registry = registry
-        self.repository = repository
+        self.registry = docker_model.registry or f"{gcp_settings.region}-docker.pkg.dev"
+        self.repository = docker_model.repository
         self.version = version
         self.work_dir = work_dir
         self.wanna_project_name = wanna_project_name
-        self.project_id = project_id
+        self.project_id = gcp_settings.project_id
+        self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
+        self.build_config = self._read_build_config(self.docker_build_config_path)
+        self.cloud_build = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", docker_model.cloud_build)
+        self.bucket = gcp_settings.bucket
+
+    def _read_build_config(self, config_path: Union[Path, str]) -> Union[DockerBuildConfigModel, None]:
+        """
+        Reads the DockerBuildConfig from local file.
+        If the file does not exist, return None.
+
+        Args:
+            config_path:
+
+        Returns:
+            DockerBuildConfigMode
+        """
+        if os.path.isfile(config_path):
+            with open(config_path) as file:
+                # Load workflow file
+                build_config_dict = loaders.load_yaml(file, self.work_dir)
+            build_config = DockerBuildConfigModel.parse_obj(build_config_dict)
+            return build_config
+        return None
 
     @staticmethod
     def _is_docker_client_active() -> bool:
@@ -45,6 +72,29 @@ class DockerService:
             True if docker client found, False otherwise
         """
         return docker.info().id is not None
+
+    def _build_image(
+        self, context_dir, file_path: Path, tags: List[str], docker_image_ref: str, **build_args
+    ) -> Union[Image, None]:
+        if self.cloud_build:
+            with Spinner(text="Building docker image in GCP Cloud build"):
+                self._build_image_on_gcp_cloud_build(
+                    context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
+                )
+            return None
+        else:
+            with Spinner(text="Building docker image locally"):
+                image = docker.build(context_dir, file=file_path, tags=tags, **build_args)
+            return image  # type: ignore
+
+    def _pull_image(self, image_url: str) -> Union[Image, None]:
+        if self.cloud_build:
+            # TODO: verify that images exists remotely but dont pull them to local
+            return None
+        else:
+            with Spinner(text="Pulling image locally"):
+                image = docker.pull(image_url, quiet=True)
+            return image  # type: ignore
 
     def find_image_model_by_name(self, image_name: str) -> DockerImageModel:
         """
@@ -63,36 +113,43 @@ class DockerService:
         else:
             return matched_image_models[0]
 
-    def build_image(
+    def get_image(
         self,
         docker_image_ref: str,
-        **kwargs,
     ) -> Tuple[DockerImageModel, Optional[Image], str]:
         """
-        A wrapper around _build_image that checks if the docker image has been already build
+        A wrapper around _get_image that checks if the docker image has been already build / pulled
         and cached in image_store.
         """
         if docker_image_ref in self.image_store:
             image = self.image_store.get(docker_image_ref)
             return image  # type: ignore
         else:
-            image = self._build_image(
+            image = self._get_image(
                 docker_image_ref=docker_image_ref,
-                **kwargs,
             )
             self.image_store.update({docker_image_ref: image})
             return image
 
-    def _build_image(
+    def _get_image(
         self,
         docker_image_ref: str,
-        **kwargs,
     ) -> Tuple[DockerImageModel, Optional[Image], str]:
-        """ """
+        """
+        Given the docker_image_ref, this function prepares the image for you.
+        Depending on the build_type, it either build the docker image or
+        if you work with provided_image type, it will pull the image to verify the url.
+        Args:
+            docker_image_ref:
+
+        Returns:
+
+        """
         docker_image_model = self.find_image_model_by_name(docker_image_ref)
 
         build_dir = self.work_dir / Path("build") / docker_image_model.name
         os.makedirs(build_dir, exist_ok=True)
+        build_args = self.build_config.dict() if self.build_config else {}
 
         if docker_image_model.build_type == ImageBuildType.notebook_ready_image:
             image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
@@ -110,7 +167,9 @@ class DockerService:
             )
             file_path = self._jinja_render_dockerfile(docker_image_model, template_path, build_dir=build_dir)
             context_dir = build_dir
-            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+            image = self._build_image(
+                context_dir, file_path=file_path, tags=tags, docker_image_ref=docker_image_ref, **build_args
+            )
         elif docker_image_model.build_type == ImageBuildType.local_build_image:
             image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
@@ -122,27 +181,59 @@ class DockerService:
             )
             file_path = self.work_dir / docker_image_model.dockerfile
             context_dir = self.work_dir / docker_image_model.context_dir
-            image = docker.build(context_dir, file=file_path, tags=tags, **kwargs)
+            image = self._build_image(
+                context_dir, file_path=file_path, tags=tags, docker_image_ref=docker_image_ref, **build_args
+            )
         elif docker_image_model.build_type == ImageBuildType.provided_image:
-            image = docker.pull(docker_image_model.image_url, quiet=True)  # type: ignore
+            image = self._pull_image(docker_image_model.image_url)
             tags = [docker_image_model.image_url]
         else:
             raise Exception("Invalid image model type.")
 
-        return (  # type: ignore
+        return (
             docker_image_model,
             image,
             tags[0],
         )
 
-    @staticmethod
-    def push_image(image: Image, quiet: bool = False) -> None:
+    def _build_image_on_gcp_cloud_build(
+        self, context_dir: Path, file_path: Path, tags: List[str], docker_image_ref: str
+    ) -> None:
+        """
+        Build a docker container in GCP Cloud Build and push the images to registry.
+        Folder context_dir is tarred, uploaded to GCS and then used to building.
+
+        Args:
+            context_dir: directory with all necessary files for docker image build
+            file_path: path to Dockerfile
+            tags:
+        """
+        dockerfile = os.path.relpath(file_path, context_dir)
+        tar_filename = self.work_dir / f"build/docker/{docker_image_ref}.tar.gz"
+        make_tarfile(context_dir, tar_filename)
+        blob_name = os.path.relpath(tar_filename, self.work_dir)
+        blob = upload_file_to_gcs(filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name)
+        tags_args = " ".join([f"-t {t}" for t in tags]).split()
+        steps = BuildStep(name="gcr.io/cloud-builders/docker", args=["build", ".", "-f", dockerfile] + tags_args)
+        build = Build(
+            source=Source(storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)),
+            steps=[steps],
+            images=tags,
+        )
+        client = CloudBuildClient()
+        res = client.create_build(project_id=self.project_id, build=build)
+        res.result()
+
+    def push_image(self, image: Image, quiet: bool = False) -> None:
         """
         Push a docker image to the registry (image must have tags)
+        If you are in the cloud_build mode, nothing is pushed, images already live in cloud.
         Args:
             image: image to push
         """
-        docker.image.push(image.repo_tags, quiet)
+        if not self.cloud_build:
+            Spinner(text=f"Pushing docker image {image.repo_tags}")
+            docker.image.push(image.repo_tags, quiet)
 
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:

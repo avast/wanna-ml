@@ -1,0 +1,4 @@
+#build_args:
+#  PY_VERSION: 3.7.8
+network: host
+ssh: github=~/.ssh/id_rsa

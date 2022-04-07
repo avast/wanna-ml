@@ -100,8 +100,8 @@ class TestNotebookService:
         nb_service = NotebookService(config=get_config(), workdir=Path("."))
         config = get_config()
         instance = get_base_notebook()
-        nb_service.docker_service.build_image = MagicMock(return_value=(None, None, config.docker.images[0].image_url))
-        nb_service.docker_service.push_image = MagicMock(return_value=None)
+        nb_service.docker_service._build_image = MagicMock(return_value=(None, None, config.docker.images[0].image_url))
+        nb_service.docker_service._pull_image = MagicMock(return_value=None)
         instance.environment = NotebookEnvironment.parse_obj({"docker_image_ref": "lumos"})
         request = nb_service._create_instance_request(instance)
         assert request.instance.container_image.repository == "europe-west1-docker.pkg.dev/lumos"

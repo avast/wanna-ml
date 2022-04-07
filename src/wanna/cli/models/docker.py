@@ -5,6 +5,17 @@ from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Extra, Field
 
 
+class DockerBuildConfigModel(BaseModel, extra=Extra.forbid):
+    # Docu for more info: https://gabrieldemarmiesse.github.io/python-on-whales/sub-commands/buildx/#build
+    build_args: Dict[str, str] = {}
+    labels: Dict[str, str] = {}
+    network: Optional[str]
+    platforms: Optional[List[str]]
+    secrets: Union[str, List[str]] = []
+    ssh: Optional[str]
+    target: Optional[str]
+
+
 class ImageBuildType(str, Enum):
     local_build_image = "local_build_image"
     provided_image = "provided_image"
@@ -41,3 +52,4 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     images: List[DockerImageModel]
     repository: str
     registry: Optional[str]
+    cloud_build: bool = False

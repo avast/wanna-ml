@@ -1,4 +1,7 @@
+import os
 import re
+import tarfile
+from pathlib import Path
 from typing import Any, Dict, List
 
 import google.auth
@@ -164,7 +167,20 @@ def construct_vm_image_family_from_vm_image(framework: str, version: str, os: st
     return f"{framework}-{version}-notebooks"
 
 
-def upload_file_to_gcs(filename: str, bucket_name: str, blob_name: str) -> storage.blob.Blob:
+def make_tarfile(source_dir: Path, output_filename: Path):
+    """
+    TAR a given folder and save the result to output_filename.
+
+    Args:
+        source_dir:
+        output_filename:
+    """
+    os.makedirs(output_filename.parent.absolute(), exist_ok=True)
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=".")
+
+
+def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> storage.blob.Blob:
     """
     Upload file to GCS bucket
 
