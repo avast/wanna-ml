@@ -36,13 +36,11 @@ class NotebookService(BaseService):
         self.notebook_client = NotebookServiceClient()
         self.config = config
         self.docker_service = DockerService(
-            image_models=(config.docker.images if config.docker else []),
-            registry=config.docker.registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
-            repository=config.docker.repository,
+            docker_model=config.docker,
+            gcp_settings=config.gcp_settings,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,
-            project_id=self.config.gcp_settings.project_id,
         )
 
         self.owner = owner
@@ -171,7 +169,7 @@ class NotebookService(BaseService):
         # Environment
         if notebook_instance.environment.docker_image_ref:
             vm_image = None
-            image_tag = self.docker_service.build_image(docker_image_ref=notebook_instance.environment.docker_image_ref)
+            image_tag = self.docker_service.get_image(docker_image_ref=notebook_instance.environment.docker_image_ref)
             if image_tag[1]:
                 self.docker_service.push_image(image_tag[1])
             repository = image_tag[2].partition(":")[0]

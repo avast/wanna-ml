@@ -57,13 +57,11 @@ class PipelineService(BaseService):
         self.tensorboard_service = TensorboardService(config=config)
         os.makedirs(self.pipelines_build_dir, exist_ok=True)
         self.docker_service = DockerService(
-            image_models=(config.docker.images if config.docker else []),
-            registry=config.docker.registry or f"{self.config.gcp_settings.region}-docker.pkg.dev",
-            repository=config.docker.repository,
+            docker_model=config.docker,
+            gcp_settings=config.gcp_settings,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,
-            project_id=self.config.gcp_settings.project_id,
         )
 
     def build(self, instance_name: str) -> List[Tuple[PipelineMeta, Path]]:
@@ -259,7 +257,7 @@ class PipelineService(BaseService):
         if pipeline_instance.docker_image_ref:
             with Spinner(text="Building docker images"):
                 image_tags = [
-                    self.docker_service.build_image(
+                    self.docker_service.get_image(
                         docker_image_ref=docker_image_ref,
                     )
                     for docker_image_ref in pipeline_instance.docker_image_ref

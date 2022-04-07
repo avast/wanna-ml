@@ -1,11 +1,17 @@
 FROM gcr.io/deeplearning-platform-release/base-cpu:latest
 
-RUN sudo apt-get update -y && sudo apt-get install -y julia
+RUN sudo apt-get update -y && sudo apt-get install -y julia ssh
 
 # julia -e 'using Pkg; Pkg.add("IJulia");' # This fails on mac M1, so we run it directly in cloud
 
 # deeplearning images automatically run /init.sh at the startup if this file exists
 COPY init.sh /init.sh
 RUN chmod +x /init.sh
+
+RUN mkdir -m 700 /root/.ssh; \
+  touch -m 600 /root/.ssh/known_hosts; \
+  ssh-keyscan git.int.avast.com > /root/.ssh/known_hosts
+
+RUN --mount=type=ssh,id=github git clone git@git.int.avast.com:skunk/ReportDownloader.jl.git
 
 

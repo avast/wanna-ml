@@ -15,6 +15,7 @@ docker:
       context_dir: .
       dockerfile: Dockerfile.notebook
   repository: wanna-samples
+  cloud_build: true
 
 notebooks:
   - name: wanna-notebook-julia
