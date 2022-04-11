@@ -5,6 +5,7 @@ from typing import Optional
 import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
+from wanna.cli.plugins.base.common_options import file_option, instance_name_option, profile_option
 from wanna.cli.plugins.notebook.service import NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -23,44 +24,31 @@ class NotebookPlugin(BasePlugin):
             ]
         )
 
-        # add some nesting with `sub-notebook-command` command.
-        # self.app.add_typer(SubNotebookPlugin().app, name='sub-notebook-command')
-
     @staticmethod
     def delete(
-        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
-        instance_name: str = typer.Option(
-            "all",
-            "--name",
-            "-n",
-            help="Specify only one notebook from your wanna-ml yaml configuration to delete. "
-            "Choose 'all' to delete all notebooks.",
-        ),
+        file: Path = file_option,
+        profile_name: str = profile_option,
+        instance_name: str = instance_name_option("notebook", "delete"),
     ) -> None:
         """
         Notebook delete command
         """
-        config = load_config_from_yaml(file)
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = NotebookService(config=config, workdir=workdir)
         nb_service.delete(instance_name)
 
     @staticmethod
     def create(
-        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
+        file: Path = file_option,
+        profile_name: str = profile_option,
+        instance_name: str = instance_name_option("notebook", "create"),
         owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
-        instance_name: str = typer.Option(
-            "all",
-            "--name",
-            "-n",
-            help="Specify only one notebook from your wanna-ml yaml configuration to create. "
-            "Choose 'all' to create all notebooks.",
-        ),
     ) -> None:
         """
         Notebook create command
         """
-        config = load_config_from_yaml(file)
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = NotebookService(config=config, workdir=workdir, owner=owner)
         nb_service.create(instance_name)

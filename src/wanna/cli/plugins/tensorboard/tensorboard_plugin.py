@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
+from wanna.cli.plugins.base.common_options import file_option, instance_name_option, profile_option
 from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -27,43 +28,34 @@ class TensorboardPlugin(BasePlugin):
 
     @staticmethod
     def delete(
-        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
-        instance_name: str = typer.Option(
-            "all",
-            "--name",
-            "-n",
-            help="Specify only one tensorboard from your wanna-ml yaml configuration to delete. "
-            "Choose 'all' to delete all tensorboards.",
-        ),
+        file: Path = file_option,
+        profile_name: str = profile_option,
+        instance_name: str = instance_name_option("tensorboard", "delete"),
     ) -> None:
         """
         Tensorboard delete command
         """
-        config = load_config_from_yaml(file)
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)
         tb_service.delete(instance_name)
 
     @staticmethod
     def create(
-        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
-        instance_name: str = typer.Option(
-            "all",
-            "--name",
-            "-n",
-            help="Specify only one tensorboard from your wanna-ml yaml configuration to create. "
-            "Choose 'all' to create all tensorboards.",
-        ),
+        file: Path = file_option,
+        profile_name: str = profile_option,
+        instance_name: str = instance_name_option("tensorboard", "create"),
     ) -> None:
         """
         Tensorboard create command
         """
-        config = load_config_from_yaml(file)
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)
         tb_service.create(instance_name)
 
     @staticmethod
     def list(
-        file: Path = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration"),
+        file: Path = file_option,
+        profile_name: str = profile_option,
         region: str = typer.Option(None, "--region", help="Overwrites the region from wanna-ml yaml configuration"),
         filter_expr: str = typer.Option(None, "--filter", help="GCP filter expression for tensorboard instances"),
         show_url: bool = typer.Option(True, "--url/--no-url", help="Weather to show URL link to experiments"),
@@ -71,8 +63,8 @@ class TensorboardPlugin(BasePlugin):
         """
         Tensorboard create command
         """
-        config = load_config_from_yaml(file)
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)
         tb_service.list_tensorboards_in_tree(
-            region=region or config.gcp_settings.region, filter_expr=filter_expr, show_url=show_url
+            region=region or config.gcp_profile.region, filter_expr=filter_expr, show_url=show_url
         )

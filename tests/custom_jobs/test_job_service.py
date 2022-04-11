@@ -34,7 +34,7 @@ class TestJobService:
                 None,
             )
         )
-        config = load_config_from_yaml("samples/custom_job/wanna.yaml")
+        config = load_config_from_yaml("samples/custom_job/wanna.yaml", "default")
         service = JobService(config=config, workdir=Path("."))
         job_model = service.instances[0]
         # Mock Docker IO
@@ -53,7 +53,7 @@ class TestJobService:
                 None,
             )
         )
-        config = load_config_from_yaml("samples/custom_job/wanna.yaml")
+        config = load_config_from_yaml("samples/custom_job/wanna.yaml", "default")
         service = JobService(config=config, workdir=Path("."))
         job_model = service.instances[1]
         # Mock Docker IO
@@ -71,7 +71,7 @@ class TestJobService:
                 None,
             )
         )
-        config = load_config_from_yaml("samples/custom_job/wanna.yaml")
+        config = load_config_from_yaml("samples/custom_job/wanna.yaml", "default")
         service = JobService(config=config, workdir=Path("."))
         filter_expr_complete = service._create_list_jobs_filter_expr(
             states=[

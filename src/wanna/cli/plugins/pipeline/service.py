@@ -49,7 +49,7 @@ class PipelineService(BaseService):
         )
         self.instances = config.pipelines
         self.wanna_project = config.wanna_project
-        self.bucket_name = config.gcp_settings.bucket
+        self.bucket_name = config.gcp_profile.bucket
         self.config = config
         self.pipeline_store: Dict[str, Dict[str, Any]] = {}
         self.workdir = workdir
@@ -58,7 +58,7 @@ class PipelineService(BaseService):
         os.makedirs(self.pipelines_build_dir, exist_ok=True)
         self.docker_service = DockerService(
             docker_model=config.docker,
-            gcp_settings=config.gcp_settings,
+            gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,

@@ -37,6 +37,6 @@ def get_config():
                     "fleaur.delacour@avast.com",
                 ],
             },
-            "gcp_settings": {"project_id": "gcp-project", "zone": "us-east1-a"},
+            "gcp_profile": {"profile_name": "default", "project_id": "gcp-project", "zone": "us-east1-a"},
         }
     )

@@ -29,17 +29,17 @@ class JobService(BaseService):
         )
         self.instances = config.jobs
         self.wanna_project = config.wanna_project
-        self.bucket_name = config.gcp_settings.bucket
+        self.bucket_name = config.gcp_profile.bucket
         self.config = config
         self.aiplatform = aiplatform
         self.aiplatform.init(
-            project=self.config.gcp_settings.project_id,
-            location=self.config.gcp_settings.region,
+            project=self.config.gcp_profile.project_id,
+            location=self.config.gcp_profile.region,
         )
         self.tensorboard_service = TensorboardService(config=config)
         self.docker_service = DockerService(
             docker_model=config.docker,
-            gcp_settings=config.gcp_settings,
+            gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,

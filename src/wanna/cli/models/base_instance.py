@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, Extra, validator
 from wanna.cli.utils.gcp import validators
 
 
-class BaseInstanceModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class BaseInstanceModel(BaseModel, extra=Extra.ignore, validate_assignment=True):
     name: str
     project_id: str
     zone: Optional[str]

@@ -57,7 +57,7 @@ class TestPipelineService(unittest.TestCase):
     @patch("wanna.cli.docker.service.docker")
     def test_run_pipeline(self, docker_mock):
         # Setup Service
-        config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml")
+        config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
         pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
         print(pipeline_service.docker_service.image_store)
         # Setup expected data/fixtures

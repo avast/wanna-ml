@@ -6,7 +6,8 @@ from wanna.cli.utils.gcp import validators
 from wanna.cli.utils.gcp.gcp import get_region_from_zone
 
 
-class GCPSettingsModel(BaseModel, extra=Extra.forbid):
+class GCPProfileModel(BaseModel, extra=Extra.forbid):
+    profile_name: str
     project_id: str
     zone: Optional[str]
     region: Optional[str]
