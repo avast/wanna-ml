@@ -3,10 +3,11 @@ wanna_project:
   version: 1
   authors: [michal.mrazek@avast.com]
 
-gcp_settings:
-  project_id: us-burger-gcp-poc
-  zone: europe-west1-b
-  bucket: wanna-ml
+gcp_profiles:
+  - profile_name: default
+    project_id: us-burger-gcp-poc
+    zone: europe-west1-b
+    bucket: wanna-ml
 
 docker:
   images:

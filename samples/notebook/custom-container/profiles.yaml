@@ -1,0 +1,5 @@
+gcp_profiles:
+  - profile_name: prod
+    project_id: us-burger-gcp-poc
+    zone: europe-west1-b
+    bucket: wanna-ml-prod

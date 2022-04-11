@@ -3,12 +3,13 @@ wanna_project:
   version: 1
   authors: [joao.silva1@avast.com]
 
-gcp_settings:
-  project_id: us-burger-gcp-poc
-  zone: europe-west1-b
-  bucket: wanna-ml
-  labels:
-  service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+gcp_profiles:
+  - profile_name: default
+    project_id: us-burger-gcp-poc
+    zone: europe-west1-b
+    bucket: wanna-ml
+    labels:
+    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
 
 tensorboards:
   - name: wanna-sample-pipeline-board

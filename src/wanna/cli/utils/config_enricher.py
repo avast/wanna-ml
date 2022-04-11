@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from wanna.cli.models.gcp_settings import GCPSettingsModel
+from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.models.wanna_project import WannaProjectModel
 
 
@@ -39,7 +39,7 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
 
 
 def enrich_instance_info_with_gcp_settings_dict(
-    instance_dict: Dict[str, Any], gcp_settings: GCPSettingsModel
+    instance_dict: Dict[str, Any], gcp_profile: GCPProfileModel
 ) -> Dict[str, Any]:
     """
     The dictionary instance_dict is updated with values from gcp_settings. This allows you to set values such as
@@ -54,7 +54,7 @@ def enrich_instance_info_with_gcp_settings_dict(
         dict: enriched with general gcp_settings if those information was not set on instance level
 
     """
-    gcp_settings_dict = gcp_settings.dict().copy()
+    gcp_settings_dict = gcp_profile.dict().copy()
     gcp_settings_dict = {k: v for k, v in gcp_settings_dict.items() if v is not None}
     instance_info = gcp_settings_dict
     instance_info.update(instance_dict)
@@ -77,7 +77,7 @@ def enrich_instance_with_gcp_settings(cls, values_inst, values):
         values_inst: values representing one instance enriched with information from wanna_project and gcp_settings
     """
     values_inst = enrich_instance_info_with_gcp_settings_dict(
-        instance_dict=values_inst, gcp_settings=values.get("gcp_settings")
+        instance_dict=values_inst, gcp_profile=values.get("gcp_profile")
     )
     labels = generate_default_labels(wanna_project=values.get("wanna_project"))
     values_inst = add_labels(instance_dict=values_inst, new_labels=labels)

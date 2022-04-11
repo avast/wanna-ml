@@ -8,7 +8,7 @@ from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, 
 from python_on_whales import Image, docker
 
 from wanna.cli.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
-from wanna.cli.models.gcp_settings import GCPSettingsModel
+from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.utils import loaders
 from wanna.cli.utils.gcp.gcp import make_tarfile, upload_file_to_gcs
 from wanna.cli.utils.spinners import Spinner
@@ -23,7 +23,7 @@ class DockerService:
     def __init__(
         self,
         docker_model: DockerModel,
-        gcp_settings: GCPSettingsModel,
+        gcp_profile: GCPProfileModel,
         version: str,
         work_dir: Path,
         wanna_project_name: str,
@@ -33,16 +33,16 @@ class DockerService:
         )
         self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
-        self.registry = docker_model.registry or f"{gcp_settings.region}-docker.pkg.dev"
+        self.registry = docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
         self.repository = docker_model.repository
         self.version = version
         self.work_dir = work_dir
         self.wanna_project_name = wanna_project_name
-        self.project_id = gcp_settings.project_id
+        self.project_id = gcp_profile.project_id
         self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
         self.build_config = self._read_build_config(self.docker_build_config_path)
         self.cloud_build = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", docker_model.cloud_build)
-        self.bucket = gcp_settings.bucket
+        self.bucket = gcp_profile.bucket
 
     def _read_build_config(self, config_path: Union[Path, str]) -> Union[DockerBuildConfigModel, None]:
         """
