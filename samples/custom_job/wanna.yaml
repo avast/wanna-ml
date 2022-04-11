@@ -20,6 +20,7 @@ docker:
       name: debian
       image_url: gcr.io/google-containers/debian-base:1.0.0
   repository: wanna-samples
+  cloud_build: true
 
 jobs:
   - name: custom-training-job-with-python-package
