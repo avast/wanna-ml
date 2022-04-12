@@ -1,9 +1,14 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
+from enum import Enum
 
 from pydantic import BaseModel, Extra, Field, root_validator, validator
 
 from wanna.cli.models.base_instance import BaseInstanceModel
-
+from google.cloud.aiplatform import (
+    CustomContainerTrainingJob,
+    CustomJob,
+    CustomPythonPackageTrainingJob,
+)
 
 class JobGPUModel(BaseModel, extra=Extra.forbid):
     count: Literal[1, 2, 4, 8] = 1
@@ -97,3 +102,55 @@ class CustomJobModel(BaseCustomJobModel):
 class TrainingCustomJobModel(BaseCustomJobModel):
     worker: WorkerPoolModel
     reduction_server: Optional[ReductionServerModel]
+
+
+class CustomJobType(Enum):
+    CustomContainerTrainingJob = "CustomContainerTrainingJob"
+    CustomPythonPackageTrainingJob = "CustomPythonPackageTrainingJob"
+    CustomJob = "CustomJob"
+
+
+class CustomJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
+    job_type: CustomJobType
+    config: CustomJobModel
+    payload: Dict[str, Any]
+    image_refs: List[str] = []
+
+
+class CustomPythonPackageTrainingJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
+    job_type: CustomJobType
+    config: TrainingCustomJobModel
+    payload: Dict[str, Any]
+    image_refs: List[str] = []
+
+
+class CustomContainerTrainingJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
+    job_type: CustomJobType
+    config: TrainingCustomJobModel
+    payload: Dict[str, Any]
+    image_refs: List[str] = []
+
+
+JobManifest = Union[CustomJobManifest, CustomPythonPackageTrainingJobManifest, CustomContainerTrainingJobManifest]
+
+
+    # @validator(pre=False)
+    # def _config_and_payload_match_type(  # pylint: disable=no-self-argument,no-self-use
+    #         cls, values
+    # ):
+    #     job_type = values.get("job_type")
+    #     if job_type and job_type is CustomJobType.CustomJob:
+    #         if isinstance(TrainingCustomJobModel, values.get("config")):
+    #             raise ValueError(f"TrainingCustomJobModel Config does not match {job_type}")
+    #         if isinstance(CustomContainerTrainingJob, values.get("payload")) \
+    #                 or isinstance(CustomPythonPackageTrainingJob, values.get("payload")):
+    #             raise ValueError(f"payload does not match CustomContainerTrainingJob or "
+    #                              f"CustomPythonPackageTrainingJob as per declared  job_type {job_type}")
+    #     elif job_type and job_type is CustomJobType.TrainingCustomJob:
+    #         if isinstance(CustomJobModel, values.get("config")):
+    #             raise ValueError(f"config of type CustomJobModel does not match {job_type}")
+    #         elif isinstance(CustomJob, values.get("payload")):
+    #             raise ValueError(f"payload does not match CustomJob as per declared job_type {job_type}")
+    #
+    #     return values
+

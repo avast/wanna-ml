@@ -40,7 +40,7 @@ class TestJobService:
         # Mock Docker IO
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
-        worker_spec = service._create_training_job_spec(job_model)
+        worker_spec = service._create_training_job_manifest(job_model)
 
         assert worker_spec.__dict__.get("_container_uri") == "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
         assert worker_spec.__dict__.get("_python_module") == "trainer.task"
@@ -59,7 +59,7 @@ class TestJobService:
         # Mock Docker IO
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
-        worker_spec = service._create_training_job_spec(job_model)
+        worker_spec = service._create_training_job_manifest(job_model)
 
         assert worker_spec.__dict__.get("_container_uri") == "gcr.io/google-containers/debian-base:1.0.0"
         assert worker_spec.__dict__.get("_command") == ["echo", "'Test'"]

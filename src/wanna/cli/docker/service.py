@@ -235,6 +235,16 @@ class DockerService:
             with Spinner(text=f"Pushing docker image {image.repo_tags}"):
                 docker.image.push(image.repo_tags, quiet)
 
+    def push_image_ref(self, image_ref: str, quiet: bool = False) -> None:
+        """
+        Push a docker image ref to the registry (image must have tags)
+        Args:
+            image_ref: image_ref to push
+        """
+        model , image, _ = self.docker_service.get_image(docker_image_ref)
+        if image and model.build_type != ImageBuildType.provided_image:
+            self.docker_service.push_image(image)
+
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:
         """

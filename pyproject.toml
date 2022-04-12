@@ -1,5 +1,5 @@
 [tool.poetry]
-authors = ["Joao Da Silva <joao.silva1@avast.com>"]
+authors = ["Joao Da Silva <joao.silva1@avast.com>", "Michal Mrazek <michal.mrazek@avast.com>"]
 description = "CLI tool for managing ML projects on Vertex AI"
 name = "wanna-ml"
 version = "0.0.0"
