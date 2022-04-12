@@ -112,27 +112,29 @@ class CustomJobType(Enum):
 
 class CustomJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
     job_type: CustomJobType
-    config: CustomJobModel
-    payload: Dict[str, Any]
+    job_config: CustomJobModel
+    job_payload: Dict[str, Any]
     image_refs: List[str] = []
+    tensorboard: Optional[str]
 
 
 class CustomPythonPackageTrainingJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
     job_type: CustomJobType
-    config: TrainingCustomJobModel
-    payload: Dict[str, Any]
+    job_config: TrainingCustomJobModel
+    job_payload: Dict[str, Any]
     image_refs: List[str] = []
+    tensorboard: Optional[str]
 
 
 class CustomContainerTrainingJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
     job_type: CustomJobType
-    config: TrainingCustomJobModel
-    payload: Dict[str, Any]
+    job_config: TrainingCustomJobModel
+    job_payload: Dict[str, Any]
     image_refs: List[str] = []
+    tensorboard: Optional[str]
 
 
 JobManifest = Union[CustomJobManifest, CustomPythonPackageTrainingJobManifest, CustomContainerTrainingJobManifest]
-
 
     # @validator(pre=False)
     # def _config_and_payload_match_type(  # pylint: disable=no-self-argument,no-self-use

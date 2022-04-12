@@ -1,7 +1,7 @@
 import os
 import pathlib
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.models.wanna_config import WannaConfigModel
@@ -9,7 +9,7 @@ from wanna.cli.utils import loaders
 from wanna.cli.utils.spinners import Spinner
 
 
-def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfileModel:
+def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any], file_path: Optional[Path] = None) -> GCPProfileModel:
     """
     This functions goes through wanna-ml config and optionally through a file
     $WANNA_GCP_PROFILE_PATH, reads all gcp profiles and returns the one
@@ -18,14 +18,15 @@ def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfil
     Args:
         profile_name: name of the GCP profile
         wanna_dict: wanna-ml configuration as a dictionary
-
+        file_path: potential fallback to WANNA_GCP_PROFILE_PATH branch
     Returns:
         GCPProfileModel
+
     """
     profiles = wanna_dict.get("gcp_profiles", {})
     profiles = {p.get("profile_name"): p for p in profiles}
 
-    extra_profiles_path = os.getenv("WANNA_GCP_PROFILE_PATH")
+    extra_profiles_path = os.getenv("WANNA_GCP_PROFILE_PATH") or file_path
     if extra_profiles_path and os.path.isfile(extra_profiles_path):
         extra_profiles = loaders.load_yaml_path(
             Path(extra_profiles_path), Path(extra_profiles_path).parent.absolute()
@@ -62,5 +63,7 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
         profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
         wanna_dict.update({"gcp_profile": profile_model})
         wanna_config = WannaConfigModel.parse_obj(wanna_dict)
-    Spinner().info(f"GCP profile '{profile_model.profile_name}' will be used.\n" f"Profile details: {profile_model}")
+    Spinner().info(f"GCP profile '{profile_model.profile_name}' will be used.")
+    Spinner().info(f"Profile details: {profile_model}")
+
     return wanna_config

@@ -5,7 +5,7 @@ from typing import Optional
 import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import file_option, instance_name_option, profile_option
+from wanna.cli.plugins.base.common_options import wanna_file_option, instance_name_option, profile_option
 from wanna.cli.plugins.pipeline.service import PipelineService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -26,7 +26,7 @@ class PipelinePlugin(BasePlugin):
     def build(
         ctx: typer.Context,
         version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
-        file: Path = file_option,
+        file: Path = wanna_file_option,
         profile_name: str = profile_option,
         instance_name: str = instance_name_option("pipeline", "compile"),
     ) -> None:
@@ -39,7 +39,7 @@ class PipelinePlugin(BasePlugin):
     def push(
         ctx: typer.Context,
         version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
-        file: Path = file_option,
+        file: Path = wanna_file_option,
         profile_name: str = profile_option,
         instance_name: str = instance_name_option("pipeline", "push"),
     ) -> None:
@@ -54,7 +54,7 @@ class PipelinePlugin(BasePlugin):
         ctx: typer.Context,
         version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
         env: str = typer.Option("local", "--env", "-e", help="Pipeline env"),
-        file: Path = file_option,
+        file: Path = wanna_file_option,
         profile_name: str = profile_option,
         instance_name: str = instance_name_option("pipeline", "deploy"),
     ) -> None:
@@ -72,7 +72,7 @@ class PipelinePlugin(BasePlugin):
         ),
         params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
-        file: Path = file_option,
+        file: Path = wanna_file_option,
         profile_name: str = profile_option,
         instance_name: str = instance_name_option("pipeline", "run"),
     ) -> None:

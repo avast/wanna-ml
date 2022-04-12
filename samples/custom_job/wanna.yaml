@@ -8,6 +8,7 @@ gcp_profiles:
     project_id: us-burger-gcp-poc
     zone: europe-west1-b
     bucket: wanna-ml-west1
+    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
 
 tensorboards:
   - name: wanna-sample-dashboard
@@ -32,10 +33,11 @@ jobs:
         package_gcs_uri: "gs://wanna-ml/trainer-0.1.tar.gz"
         module_name: "trainer.task"
       args: ['--epochs=100', '--steps=100', '--distribute=single']
+      machine_type: "n1-standard-8"
       gpu:
-          accelerator_type: NVIDIA_TESLA_V100
+          accelerator_type: NVIDIA_TESLA_K80
           count: 1
-    tensorboard_ref: my-nice-tensorboard
+    tensorboard_ref: wanna-sample-dashboard
     service_account: 966197297054-compute@developer.gserviceaccount.com
 
   - name: custom-training-job-with-containers

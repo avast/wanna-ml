@@ -241,9 +241,9 @@ class DockerService:
         Args:
             image_ref: image_ref to push
         """
-        model , image, _ = self.docker_service.get_image(docker_image_ref)
+        model , image, _ = self.get_image(image_ref)
         if image and model.build_type != ImageBuildType.provided_image:
-            self.docker_service.push_image(image)
+            self.push_image(image)
 
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:
