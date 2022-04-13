@@ -78,6 +78,19 @@ Apart from setting your computing environment, tensorboard and bucket mounts, we
 - `data_disk` - Data disk configuration to attach to this instance.
 - `network` - The name of the VPC that this instance is in.
 
+
+### Roles and permissions
+Permission and suggested roles (applying the principle of least privilege) required for notebook manipulation:
+
+| WANNA action  | Permissions | Suggested Roles  |
+| -----------   | ----------- | ------ |
+| create  | See [full list](https://cloud.google.com/vertex-ai/docs/workbench/user-managed/iam)      | `roles/notebooks.runner`, `roles/notebooks.admin`     |
+| delete  | see [full list](https://cloud.google.com/vertex-ai/docs/workbench/user-managed/iam)       | `roles/notebooks.admin`       |
+
+For accessing the JupyterLab web interface, you must grant the user access to the service account used by the notebooks instance. 
+If instance owner is set, only this user can access the web interface.
+
+[Full list of available roles and permission.](https://cloud.google.com/vertex-ai/docs/workbench/user-managed/iam)
 ### Example
 ```
 notebooks:

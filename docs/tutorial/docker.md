@@ -112,3 +112,24 @@ docker section takes following paremeters:
 - `base_image` - (optional) base notebook docker image, you can check available images [here](https://cloud.google.com/deep-learning-vm/docs/images)
   when not set, it defaults to standard base CPU notebook.
 - `requirements_txt` - Path to the `requirements.txt` file
+
+
+### Roles and permissions
+Permission and suggested roles (applying the principle of least privilege) required for docker images manipulation:
+
+| WANNA action  | Permissions | Suggested Roles  |
+| -----------   | ----------- | ------ |
+| build in Cloud Build  | `cloudbuild.builds.create` and [more](https://cloud.google.com/build/docs/iam-roles-permissions)       | ` roles/cloudbuild.builds.builder`     |
+| push  | `artifactregistry.repositories.uploadArtifacts`, `artifactregistry.tags.create`, `artifactregistry.tags.update`      | `roles/artifactregistry.writer`       |
+
+For building the docker images locally, you will need the permission for push to GCP as described above and running local Docker daemon.
+You also have to authenticate docker with GCP, detailed documentation is [here](https://cloud.google.com/artifact-registry/docs/docker/authentication).
+But generally you should be fine with running:
+
+```bash
+gcloud auth login
+
+gcloud auth configure-docker europe-west1-docker.pkg.dev # Add more comma-separated repository hostnames if you wish
+```
+
+[Full list of available roles and permission.](https://cloud.google.com/build/docs/iam-roles-permissions)

@@ -64,3 +64,15 @@ Check the job samples for complete example.
 With notebooks, you will need `tb-gcp-uploader` as specified [here](https://cloud.google.com/vertex-ai/docs/experiments/tensorboard-overview).
 We also export the link to the tensorboard directory as `AIP_TENSORBOARD_LOG_DIR`. But you will
 need to handle the log export yourself. 
+
+### Roles and permissions
+Permission and suggested roles (applying the principle of least privilege) required for tensorboard manipulation:
+
+| WANNA action  | Permissions | Suggested Roles  |
+| -----------   | ----------- | ------ |
+| create  | `aiplatform.tensorboards.create` ,`aiplatform.tensorboards.list`       | `roles/aiplatform.user`     |
+| delete  | `aiplatform.tensorboards.delete` ,`aiplatform.tensorboards.list`        | `roles/aiplatform.user`       |
+| list    | `aiplatform.tensorboards.list`, `aiplatform.tensorboardExperiments.*`, `aiplatform.tensorboardRuns.*`        | `roles/aiplatform.viewer` , `roles/aiplatform.user`      |
+| access the dashboard    | `aiplatform.tensorboards.recordAccess` | `roles/aiplatform.tensorboardWebAppUser`  |
+
+[Full list of available roles and permission.](https://cloud.google.com/vertex-ai/docs/general/access-control)
