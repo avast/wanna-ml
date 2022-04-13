@@ -31,7 +31,7 @@ class NotebookPlugin(BasePlugin):
         instance_name: str = instance_name_option("notebook", "delete"),
     ) -> None:
         """
-        Notebook delete command
+        Delete a User-Managed Workbench Notebook.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
@@ -46,7 +46,12 @@ class NotebookPlugin(BasePlugin):
         owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
     ) -> None:
         """
-        Notebook create command
+        Create a User-Managed Workbench Notebook.
+
+        If there already is a notebook with same name in the same location and project,
+        you will be prompt if you want to delete the existing and start a new.
+
+        When the notebook instance is created, you will be given a URL link to the JupyterLab.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()

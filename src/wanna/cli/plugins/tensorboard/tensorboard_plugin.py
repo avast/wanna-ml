@@ -33,7 +33,7 @@ class TensorboardPlugin(BasePlugin):
         instance_name: str = instance_name_option("tensorboard", "delete"),
     ) -> None:
         """
-        Tensorboard delete command
+        Delete Tensorboard Instance in GCP Vertex AI Experiments.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)
@@ -46,7 +46,12 @@ class TensorboardPlugin(BasePlugin):
         instance_name: str = instance_name_option("tensorboard", "create"),
     ) -> None:
         """
-        Tensorboard create command
+        Create Tensorboard Instance in GCP Vertex AI Experiments.
+
+        If there already is a tensorboard with same name in the same location and project,
+        you will be prompt if you want to delete the existing and start a new.
+
+        When the tensorboard instance is created, you will be given a full resource name.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)
@@ -57,11 +62,23 @@ class TensorboardPlugin(BasePlugin):
         file: Path = file_option,
         profile_name: str = profile_option,
         region: str = typer.Option(None, "--region", help="Overwrites the region from wanna-ml yaml configuration"),
-        filter_expr: str = typer.Option(None, "--filter", help="GCP filter expression for tensorboard instances"),
+        filter_expr: str = typer.Option(
+            None,
+            "--filter",
+            help="GCP filter expression for tensorboard instances. "
+            "Read more on GCP filters on "
+            "https://cloud.google.com/sdk/gcloud/reference/topic/filters \n"
+            "Example: display_name=my-tensorboard. \n"
+            "Example: labels.wanna_project:* - to show all tensorboard created by wanna-ml.\n"
+            "Example: labels.wanna_project:sushi-ssl.",
+        ),
         show_url: bool = typer.Option(True, "--url/--no-url", help="Weather to show URL link to experiments"),
     ) -> None:
         """
-        Tensorboard create command
+        List Tensorboard Instances in GCP Vertex AI Experiments.
+
+        We also show Tensorboard Experiments and Tensorboard Runs for each Instances
+        in the tree format.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)

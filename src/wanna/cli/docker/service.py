@@ -28,9 +28,6 @@ class DockerService:
         work_dir: Path,
         wanna_project_name: str,
     ):
-        assert self._is_docker_client_active(), DockerClientException(
-            "You need running docker client on your machine to use WANNA cli"
-        )
         self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
         self.registry = docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
@@ -43,6 +40,9 @@ class DockerService:
         self.build_config = self._read_build_config(self.docker_build_config_path)
         self.cloud_build = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", docker_model.cloud_build)
         self.bucket = gcp_profile.bucket
+        assert self.cloud_build or self._is_docker_client_active(), DockerClientException(
+            "You need running docker client on your machine to use WANNA cli with local docker build"
+        )
 
     def _read_build_config(self, config_path: Union[Path, str]) -> Union[DockerBuildConfigModel, None]:
         """

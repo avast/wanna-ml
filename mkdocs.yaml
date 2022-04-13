@@ -57,6 +57,8 @@ nav:
         - 'Get Started': 'tutorial/index.md'
         - 'WANNA Project': 'tutorial/project.md'
         - 'WANNA Profile': 'tutorial/profile.md'
+        - 'WANNA Docker': 'tutorial/docker.md'
+        - 'WANNA Tensorboard': 'tutorial/tensorboard.md'
         - 'WANNA Notebook': 'tutorial/notebook.md'
         - 'WANNA Job': 'tutorial/job.md'
         - 'WANNA Pipeline': 'tutorial/pipeline.md'

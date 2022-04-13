@@ -143,6 +143,9 @@ class TestNotebookService:
 
     def test_prepare_startup_script(self):
         config = load_config_from_yaml("samples/notebook/julia/wanna.yaml", "default")
+        # to allow the test execution even without local docker daemon running
+        # which is not needed in this test
+        config.docker.cloud_build = True
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
