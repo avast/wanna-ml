@@ -265,12 +265,11 @@ class JobService(BaseService):
 
         return pushed_manifests
 
-    @staticmethod
-    def deploy(
-        manifests: List[str],
-        sync: bool = True,
-    ) -> None:
-        raise NotImplementedError
+    def deploy(self, instance_name: str, env: str):
+        instances = self._filter_instances_by_name(instance_name)
+        for job in instances:
+            with Spinner(text=f"Deploying {job.name} version {self.version} to env {env}") as s:
+                s.warn("TODO: Nothing to see here")
 
     @staticmethod
     def run(
