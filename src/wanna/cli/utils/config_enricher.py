@@ -48,7 +48,7 @@ def enrich_instance_info_with_gcp_settings_dict(
 
     Args:
         instance_dict: dict with values from wanna-ml config from one instance (one job, one notebook)
-        gcp_settings: GCPSettings model
+        gcp_profile: GCPSettings model
 
     Returns:
         dict: enriched with general gcp_settings if those information was not set on instance level
@@ -59,6 +59,22 @@ def enrich_instance_info_with_gcp_settings_dict(
     instance_info = gcp_settings_dict
     instance_info.update(instance_dict)
     return instance_info
+
+
+def enrich_gcp_profile_with_wanna_default_labels(cls, values_inst, values):
+    """
+    Enrich gcp_profile with wanna default project labels
+
+    Args:
+        cls: pydantic class
+        values_inst: values representing gcp_profile
+        values: values for the whole pydantic object, loaded so far
+    Returns:
+        values_inst: updated gcp_profile
+    """
+    labels = generate_default_labels(wanna_project=values.get("wanna_project"))
+    values_inst.labels = {**values_inst.labels, **labels}
+    return values_inst
 
 
 def enrich_instance_with_gcp_settings(cls, values_inst, values):

@@ -5,7 +5,7 @@ from typing import Optional
 import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import wanna_file_option, instance_name_option, profile_option
+from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
 from wanna.cli.plugins.pipeline.service import PipelineService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -24,10 +24,9 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def build(
-        ctx: typer.Context,
         version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "compile"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
@@ -37,10 +36,9 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def push(
-        ctx: typer.Context,
         version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "push"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
@@ -51,11 +49,10 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def deploy(
-        ctx: typer.Context,
         version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
         env: str = typer.Option("local", "--env", "-e", help="Pipeline env"),
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "deploy"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
@@ -65,7 +62,6 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def run(
-        ctx: typer.Context,
         version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
         manifest: Optional[str] = typer.Option(
             None, "--manifest", "-m", help="Path to the wanna-manifest.json configuration"
@@ -73,7 +69,7 @@ class PipelinePlugin(BasePlugin):
         params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "run"),
     ) -> None:
         if file:

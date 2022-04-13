@@ -147,7 +147,7 @@ class TensorboardService(BaseService):
         tb_model = self._find_tensorboard_model_by_name(tb_name=tensorboard_name)
         tb_existing = self._find_existing_tensorboard_by_model(instance=tb_model)
         if not tb_existing:
-            typer.echo(f"Tensorboard with name {tb_model.name} in {tb_model.region} not found, let us create it.")
+            typer.echo(f"Tensorboard with name {tb_model.name} in {tb_model.region} not found, creating it.")
             self._create_one_instance(tb_model)
             tb_existing = self._find_existing_tensorboard_by_model(instance=tb_model)
             if not tb_existing:

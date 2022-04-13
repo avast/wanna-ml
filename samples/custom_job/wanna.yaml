@@ -9,6 +9,8 @@ gcp_profiles:
     zone: europe-west1-b
     bucket: wanna-ml-west1
     service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+    labels:
+      some-default: label
 
 tensorboards:
   - name: wanna-sample-dashboard
@@ -57,8 +59,9 @@ jobs:
 #          accelerator_type: NVIDIA_TESLA_K80
 #          count: 1
       - container:
-          docker_image_ref: debian
+          docker_image_ref: tensorflow
           command: ["echo", "'Test'"]
-  #      gpu:
-  #        accelerator_type: NVIDIA_TESLA_K80
-  #        count: 1
+        machine_type: "n1-standard-8"
+        gpu:
+          accelerator_type: NVIDIA_TESLA_K80
+          count: 1

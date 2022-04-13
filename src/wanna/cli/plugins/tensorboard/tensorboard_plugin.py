@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import wanna_file_option, instance_name_option, profile_option
+from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
 from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -29,7 +29,7 @@ class TensorboardPlugin(BasePlugin):
     @staticmethod
     def delete(
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("tensorboard", "delete"),
     ) -> None:
         """
@@ -42,7 +42,7 @@ class TensorboardPlugin(BasePlugin):
     @staticmethod
     def create(
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("tensorboard", "create"),
     ) -> None:
         """
@@ -55,7 +55,7 @@ class TensorboardPlugin(BasePlugin):
     @staticmethod
     def list(
         file: Path = wanna_file_option,
-        profile_name: str = profile_option,
+        profile_name: str = profile_name_option,
         region: str = typer.Option(None, "--region", help="Overwrites the region from wanna-ml yaml configuration"),
         filter_expr: str = typer.Option(None, "--filter", help="GCP filter expression for tensorboard instances"),
         show_url: bool = typer.Option(True, "--url/--no-url", help="Weather to show URL link to experiments"),

@@ -1,6 +1,6 @@
 import typer
 
-profile_option = typer.Option(
+profile_name_option = typer.Option(
     "default",
     "--profile",
     "-p",
@@ -10,7 +10,9 @@ profile_option = typer.Option(
     "(optionally) from WANNA_GCP_PROFILE_PATH",
 )
 
-wanna_file_option = typer.Option("wanna.yaml", "--file", "-f", help="Path to the wanna-ml yaml configuration")
+wanna_file_option = typer.Option(
+    "wanna.yaml", "--file", "-f", envvar="WANNA_FILE", help="Path to the wanna-ml yaml configuration"
+)
 
 
 def instance_name_option(instance_type: str, operation: str):

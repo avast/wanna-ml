@@ -241,7 +241,7 @@ class DockerService:
         Args:
             image_ref: image_ref to push
         """
-        model , image, _ = self.get_image(image_ref)
+        model, image, _ = self.get_image(image_ref)
         if image and model.build_type != ImageBuildType.provided_image:
             self.push_image(image)
 
