@@ -3,12 +3,14 @@ title: WANNA Docker
 summary: How to use wanna docker service
 authors:
     - Joao Da Silva
+    - Michal Mrázek
 date: 2022-04-06
 ---
 
 # WANNA Docker
 Multiple resources created by WANNA rely on Docker containers. We make it easy for you to
-build your images either locally or using GCP Cloud Build.
+build your images either locally or using GCP Cloud Build. However, the GCP Cloud Build will
+not be allowed to use in production.
 
 
 ### Types of docker images
@@ -48,8 +50,10 @@ By default, all docker images are build locally on your machine and then pushed 
 For faster testing lifecycle you can build images directly using GCP Cloud Build. 
 Only needed change is to set `cloud_build: true` in `docker` section of WANNA yaml config
 or set `WANNA_DOCKER_BUILD_IN_CLOUD=true` (env variable takes precedence).
+
 Building in cloud is generally faster as the docker images are automatically already in registry
-and there is no need to push the images over the network.
+and there is no need to push the images over the network. That makes it suitable for fast testing. 
+However, building images in cloud is not allowed for production.
 
 ### Build configuration
 When building locally, we offer you a way to set additional build parameters. These parameters

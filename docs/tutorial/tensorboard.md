@@ -3,6 +3,7 @@ title: WANNA Tensorboard
 summary: How to use wanna tensorboard command
 authors:
     - Joao Da Silva
+    - Michal Mrázek
 date: 2022-04-06
 ---
 
