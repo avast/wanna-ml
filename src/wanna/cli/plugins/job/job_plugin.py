@@ -69,19 +69,6 @@ class JobPlugin(BasePlugin):
         JobService.run([manifest], sync=sync)
 
     @staticmethod
-    def deploy(
-        version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
-        env: str = typer.Option("local", "--env", "-e", help="Pipeline env"),
-        file: Path = wanna_file_option,
-        profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("pipeline", "deploy"),
-    ) -> None:
-        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
-        workdir = pathlib.Path(file).parent.resolve()
-        job_service = JobService(config=config, workdir=workdir, version=version)
-        job_service.deploy(instance_name, env)
-
-    @staticmethod
     def stop(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,

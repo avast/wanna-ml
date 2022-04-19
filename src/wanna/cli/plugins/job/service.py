@@ -36,14 +36,45 @@ from wanna.cli.utils.spinners import Spinner
 
 
 def _make_gcs_manifest_path(bucket: str, job_name: str) -> str:
+    """
+    Creates a gcp path where job manifest will be published to
+
+    Args:
+        bucket (str): Bucket where manifest should be saved to
+        job_name (str): the job that to be pushed
+
+    Returns:
+        str: gs:// constructed path
+    """
     return f"gs://{bucket}/jobs/{kebabcase(job_name).lower()}"
 
 
 def _make_local_manifest_path(build_dir: Path, job_name: str) -> Path:
+    """
+    Creates a path based on wanna local build dir
+
+    Args:
+        build_dir (Path): wanna build dir where to save manifest
+        job_name (str): the job that should be saved
+
+    Returns:
+        Path: where built manifest should be saved
+    """
+
     return build_dir / f"jobs/{kebabcase(job_name).lower()}"
 
 
 def _read_job_manifest(manifest_path: Path) -> JobManifest:
+    """
+    Reads a job manifest file
+
+    Args:
+        manifest_path (Path): Manifest path to be loaded
+
+    Returns:
+        JobManifest: Parsed and loaded JobManifest
+    """
+
     with open(manifest_path, "r") as fin:
         json_dict = json.loads(fin.read())
         try:
@@ -66,7 +97,9 @@ def _read_job_manifest(manifest_path: Path) -> JobManifest:
 def _remove_nones(d):
     """
     Delete keys with the value ``None`` or `null` in a dictionary, recursively.
+
     """
+
     for key, value in list(d.items()):
         if value is None:
             del d[key]
@@ -82,7 +115,18 @@ def _remove_nones(d):
     return d
 
 
-def _write_job_manifest(build_dir: Path, manifest: JobManifest) -> Path:
+def _write_local_job_manifest(build_dir: Path, manifest: JobManifest) -> Path:
+    """
+    Writes a JobManifest to a local path
+
+    Args:
+        build_dir (Path): wanna build dir where to save manifest
+        manifest (JobManifest): the job manifest that should be saved locally
+
+    Returns:
+        Path: Path where built manifest was saved to
+    """
+
     local_manifest_dir = _make_local_manifest_path(build_dir, manifest.job_config.name)
     local_manifest_path = local_manifest_dir / "job-manifest.json"
     os.makedirs(local_manifest_dir, exist_ok=True)
@@ -105,7 +149,15 @@ def _write_job_manifest(build_dir: Path, manifest: JobManifest) -> Path:
     return local_manifest_path
 
 
-def _run_custom_job(manifest: CustomJobManifest, sync: bool):
+def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
+    """
+    Runs a Vertex AI custom job based on the provided manifest
+
+    Args:
+        manifest (CustomJobManifest): The Job manifest to be executed
+        sync (bool): Allows to run the job in async vs sync mode
+
+    """
     custom_job = CustomJob(**manifest.job_payload)
     custom_job.run(
         timeout=manifest.job_config.timeout_seconds,
@@ -134,9 +186,25 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool):
 
 def _run_training_job(
     manifest: Union[CustomContainerTrainingJobManifest, CustomPythonPackageTrainingJobManifest],
-    training_job: Union[CustomContainerTrainingJob, CustomPythonPackageTrainingJob],
     sync: bool,
 ):
+    """
+    Runs a Vertex AI training custom job based on the provided manifest
+    Args:
+        manifest: The training Job manifest to be executed
+        sync: Allows to run the job in async vs sync mode
+    """
+
+    if manifest.job_type is CustomJobType.CustomContainerTrainingJob:
+        training_job = CustomContainerTrainingJob(**manifest.job_payload)
+    elif manifest.job_type is CustomJobType.CustomPythonPackageTrainingJob:
+        training_job = CustomPythonPackageTrainingJob(**manifest.job_payload)  # type: ignore
+    else:
+        raise ValueError(
+            f"Job type must be {CustomJobType.CustomContainerTrainingJob} or "
+            f"{CustomJobType.CustomContainerTrainingJob}"
+        )
+
     with Spinner(text=f"Initiating {manifest.job_config.name} custom job") as s:
         s.info(f"Outputs will be saved to {manifest.job_config.base_output_directory}")
         training_job.run(
@@ -197,6 +265,13 @@ def _run_training_job(
 
 class JobService(BaseService):
     def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev"):
+        """
+        Service to build, push, deploy and run Vertex AI custom jobs
+        Args:
+            config (WannaConfigModel): Loaded wanna.yaml
+            workdir (Path): Where wanna will conduct it's work
+            version (str): Which version of the jobs are working with
+        """
         super().__init__(
             instance_type="job",
             instance_model=TrainingCustomJobModel,
@@ -223,11 +298,21 @@ class JobService(BaseService):
         self.version = version
 
     def build(self, instance_name: str) -> List[Tuple[Path, JobManifest]]:
+        """
+        Based on wanna config and setup it creates a JobManifest that
+        can later be pushed, deployed or run
+        Args:
+            instance_name: the give job(s) that will be built
+                "all" means it will build all jobs
+
+        Returns:
+            Job Manifests and associated local paths where those were built
+        """
         instances = self._filter_instances_by_name(instance_name)
         built_instances = []
         for instance in instances:
             job_manifest = self._build_manifest(instance)
-            manifest_path = _write_job_manifest(self.build_dir, job_manifest)
+            manifest_path = _write_local_job_manifest(self.build_dir, job_manifest)
             result = (
                 manifest_path,
                 job_manifest,
@@ -237,6 +322,17 @@ class JobService(BaseService):
         return built_instances
 
     def push(self, manifests: List[Tuple[Path, JobManifest]], local: bool = False) -> List[str]:
+        """
+        Completes the build process buy pushing docker images and pushing manifest files to
+        GCS for future execution
+        Args:
+            manifests: Job Manifests and associated local paths where those were built
+            local: allows to publish the manifests locally for inspection and tests
+
+        Returns:
+            paths to gs:// paths where the manifests were pushed
+        """
+
         pushed_manifests = []
         for manifest_path, manifest in manifests:
             loaded_manifest = _read_job_manifest(manifest_path)
@@ -265,37 +361,36 @@ class JobService(BaseService):
 
         return pushed_manifests
 
-    def deploy(self, instance_name: str, env: str):
-        instances = self._filter_instances_by_name(instance_name)
-        for job in instances:
-            with Spinner(text=f"Deploying {job.name} version {self.version} to env {env}") as s:
-                s.warn("TODO: Nothing to see here")
-
     @staticmethod
     def run(
         manifests: List[str],
         sync: bool = True,
     ) -> None:
+        """
+        Run a Vertex AI Custom Job(s) with a given JobManifest
+        Args:
+            manifests (List[str]): WANNA JobManifests to be executed
+            sync (bool): Allows to run the job in async vs sync mode
 
+        """
         for manifest_path in manifests:
             manifest = _read_job_manifest(Path(manifest_path))
 
             aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
 
-            if manifest.job_type is CustomJobType.CustomContainerTrainingJob:
-                _run_training_job(manifest, CustomContainerTrainingJob(**manifest.job_payload), sync)
-            elif manifest.job_type is CustomJobType.CustomPythonPackageTrainingJob:
-                _run_training_job(manifest, CustomPythonPackageTrainingJob(**manifest.job_payload), sync)
-            else:
+            if manifest.job_type is CustomJobType.CustomJob:
                 _run_custom_job(manifest, sync)
+            else:
+                _run_training_job(manifest, sync)
 
     def _build_manifest(self, instance: Union[CustomJobModel, TrainingCustomJobModel]) -> JobManifest:
         """
-        Create one custom job based on TrainingCustomJobModel.
-        The function also waits until the job is initiated (no longer pending)
+        Creates a JobManifest that can later be pushed, deployed or run
 
         Args:
             instance: custom job model to create
+        Returns:
+            Job Manifest for execution
         """
         if isinstance(instance, TrainingCustomJobModel):
             return self._create_training_job_manifest(instance)
@@ -316,6 +411,8 @@ class JobService(BaseService):
                     "staging_bucket": instance.bucket,
                 },
                 image_refs=set(image_refs),
+                # TODO, create TFBoard at runtime and allow for runtime gcp_profile switch
+                # during `run` calls, this means changing TensorboardService init
                 tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                     instance.tensorboard_ref
                 )
@@ -327,7 +424,14 @@ class JobService(BaseService):
         self,
         job_model: TrainingCustomJobModel,
     ) -> Union[CustomPythonPackageTrainingJobManifest, CustomContainerTrainingJobManifest]:
-        """"""
+        """
+        Creates a Training Job Manifest that can later be pushed, deployed or run
+
+        Args:
+            job_model: Parsed TrainingCustomJobModel from wanna.yaml
+        Returns:
+            Custom Python on Custom Container training job Manifests
+        """
 
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
@@ -375,6 +479,15 @@ class JobService(BaseService):
 
     def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> Tuple[str, WorkerPoolSpec]:
         # TODO: this can be doggy
+        """
+        Converts the friendlier WANNA WorkerPoolModel to aiplatform sdk equivalent
+        Args:
+            worker_pool_model: Wanna user specified pool details
+
+        Returns:
+            The wanna container image_ref to be pushed
+            and the aiplatform sdk worker pool spec
+        """
         image_ref = (
             worker_pool_model.container.docker_image_ref
             if worker_pool_model.container
