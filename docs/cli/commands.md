@@ -8,7 +8,7 @@ date: 2022-02-01
 
 # CLI Reference
 
-This page provides documentation for wanna command line tool.
+This page provides documentation for wanna command-line tool.
 
 ::: mkdocs-typer
     :module: wanna.cli.__main__

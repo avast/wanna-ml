@@ -12,7 +12,7 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
 
 class NotebookPlugin(BasePlugin):
     """
-    Main entrypoint for managing Workbench Notebooks on Vertex AI
+    Main entry point for managing Workbench Notebooks on Vertex AI
     """
 
     def __init__(self) -> None:
@@ -48,10 +48,10 @@ class NotebookPlugin(BasePlugin):
         """
         Create a User-Managed Workbench Notebook.
 
-        If there already is a notebook with same name in the same location and project,
-        you will be prompt if you want to delete the existing and start a new.
+        If there already is a notebook with the same name in the same location and project,
+        you will be prompt if you want to delete the existing one and start a new one.
 
-        When the notebook instance is created, you will be given a URL link to the JupyterLab.
+        When the notebook instance is created, you will be given a URL link to JupyterLab.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
