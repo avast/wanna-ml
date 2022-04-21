@@ -28,13 +28,13 @@ from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
 
 
-def _at_pipeline_exit(pipeline_Name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:
+def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:
     @atexit.register
     def stop_pipeline_job():
         if sync and pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
             spinner.fail(
                 f"detected exit signal, "
-                f"shutting down running pipeline {pipeline_Name} "
+                f"shutting down running pipeline {pipeline_name} "
                 f"at {pipeline_job._dashboard_uri()}."
             )
             pipeline_job.cancel()
@@ -126,7 +126,7 @@ class PipelineService(BaseService):
 
         return results
 
-    def deploy(self, instance_name: str, version: str, env: str, local: bool = False):
+    def deploy(self, instance_name: str, version: str, env: str):
 
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
@@ -166,6 +166,8 @@ class PipelineService(BaseService):
 
             manifest = PipelineService.read_manifest(str(manifest_path))
 
+            aiplatform.init(location=manifest.location, project=manifest.project)
+
             mode = "sync mode" if sync else "fire-forget mode"
 
             with Spinner(text=f"Running pipeline {manifest.pipeline_name} in {mode}") as s:
@@ -202,6 +204,7 @@ class PipelineService(BaseService):
                 if sync:
                     s.info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
                     pipeline_job.wait()
+
                     df_pipeline = aiplatform.get_pipeline_df(pipeline=manifest.pipeline_name.replace("_", "-"))
                     with pd.option_context(
                         "display.max_rows", None, "display.max_columns", None
@@ -320,7 +323,8 @@ class PipelineService(BaseService):
                 manifest_path,
             )
 
-    def _is_gcs_path(self, path: str):
+    @staticmethod
+    def _is_gcs_path(path: str):
         return path.startswith("gs://")
 
     def _upsert_cloud_function(
@@ -386,13 +390,14 @@ class PipelineService(BaseService):
                 function_url,
             )
 
-    def _sync_cloud_function_package(self, local_functions_package: str, functions_gcs_path: str):
+    @staticmethod
+    def _sync_cloud_function_package(local_functions_package: str, functions_gcs_path: str):
         with open(local_functions_package, "rb") as f:
             with open(functions_gcs_path, "wb") as fout:
                 fout.write(f.read())
 
+    @staticmethod
     def _upsert_cloud_scheduler(
-        self,
         function: Tuple[str, str],
         parent: str,
         manifest: PipelineDeployment,
@@ -444,7 +449,8 @@ class PipelineService(BaseService):
             spinner.info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
             client.create_job({"parent": parent, "job": job})
 
-    def _make_pipeline_root(self, bucket: str, pipeline_name: str):
+    @staticmethod
+    def _make_pipeline_root(bucket: str, pipeline_name: str):
         return f"{bucket}/pipeline-root/{kebabcase(pipeline_name).lower()}"
 
     @staticmethod

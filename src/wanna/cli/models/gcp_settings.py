@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Extra, root_validator, validator
 
@@ -11,7 +11,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     project_id: str
     zone: Optional[str]
     region: Optional[str]
-    labels: Optional[str]
+    labels: Optional[Dict[str, str]]
     bucket: Optional[str]
     service_account: Optional[str]
 

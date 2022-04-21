@@ -1,0 +1,9 @@
+gcp_profiles:
+
+  - profile_name: stage-europe-west3
+    project_id: us-burger-gcp-poc
+    zone: europe-west3-b
+    bucket: wanna-ml
+    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+    labels:
+      gcp-profile: stage-europe-west3

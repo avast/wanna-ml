@@ -14,13 +14,12 @@ def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfil
     This functions goes through wanna-ml config and optionally through a file
     $WANNA_GCP_PROFILE_PATH, reads all gcp profiles and returns the one
     with "profile_name" name
-
     Args:
         profile_name: name of the GCP profile
         wanna_dict: wanna-ml configuration as a dictionary
-
     Returns:
         GCPProfileModel
+
     """
     profiles = wanna_dict.get("gcp_profiles", {})
     profiles = {p.get("profile_name"): p for p in profiles}
@@ -50,9 +49,11 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
     Args:
         wanna_config_path: path to the wanna-ml yaml file
         gcp_profile_name: name of the GCP profile
+        profiles_file_path: optionally passed through cli
 
     Returns:
         WannaConfigModel
+
     """
 
     with Spinner(text="Reading and validating wanna yaml config"):
@@ -61,6 +62,9 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
             wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
         profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
         wanna_dict.update({"gcp_profile": profile_model})
+        del wanna_dict["gcp_profiles"]
         wanna_config = WannaConfigModel.parse_obj(wanna_dict)
-    Spinner().info(f"GCP profile '{profile_model.profile_name}' will be used.\n" f"Profile details: {profile_model}")
+    Spinner().info(f"GCP profile '{profile_model.profile_name}' will be used.")
+    Spinner().info(f"Profile details: {profile_model}")
+
     return wanna_config

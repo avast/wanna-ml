@@ -12,7 +12,7 @@ from wanna.cli.models.wanna_project import WannaProjectModel
 from wanna.cli.utils.config_enricher import enrich_instance_with_gcp_settings
 
 
-class WannaConfigModel(BaseModel, extra=Extra.ignore, validate_assignment=True):
+class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     wanna_project: WannaProjectModel
     gcp_profile: GCPProfileModel
     docker: Optional[DockerModel]
@@ -27,6 +27,9 @@ class WannaConfigModel(BaseModel, extra=Extra.ignore, validate_assignment=True):
     )
     _jobs = validator("jobs", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
     _pipelines = validator("pipelines", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
+
+    # TODO:
+    # _gcp_profile = validator("gcp_profile", pre=True, allow_reuse=True)(enrich_gcp_profile_with_wanna_default_labels)
 
     @validator("notebooks", pre=True, each_item=True, allow_reuse=True)
     def validate_docker_images_defined(cls, values_inst, values):  # pylint: disable=no-self-argument,no-self-use

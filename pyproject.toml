@@ -1,5 +1,5 @@
 [tool.poetry]
-authors = ["Joao Da Silva <joao.silva1@avast.com>"]
+authors = ["Joao Da Silva <joao.silva1@avast.com>", "Michal Mrazek <michal.mrazek@avast.com>"]
 description = "CLI tool for managing ML projects on Vertex AI"
 name = "wanna-ml"
 version = "0.0.0"
@@ -73,6 +73,7 @@ types-mock = "^4.0.12"
 types-pyyaml = "^6.0.5"
 types-requests = "^2.27.14"
 xgboost = "^1.5.2"
+types-protobuf = "^3.19.17"
 
 [tool.mypy]
 follow_imports = "silent"

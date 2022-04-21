@@ -5,7 +5,7 @@ from typing import Optional
 import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import file_option, instance_name_option, profile_option
+from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
 from wanna.cli.plugins.notebook.service import NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -26,8 +26,8 @@ class NotebookPlugin(BasePlugin):
 
     @staticmethod
     def delete(
-        file: Path = file_option,
-        profile_name: str = profile_option,
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("notebook", "delete"),
     ) -> None:
         """
@@ -40,8 +40,8 @@ class NotebookPlugin(BasePlugin):
 
     @staticmethod
     def create(
-        file: Path = file_option,
-        profile_name: str = profile_option,
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("notebook", "create"),
         owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
     ) -> None:
