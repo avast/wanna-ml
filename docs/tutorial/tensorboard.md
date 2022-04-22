@@ -8,15 +8,15 @@ date: 2022-04-06
 ---
 
 # WANNA Tensorboard
-Many GCP services can work directly with tensorboards. For thar reason we offer you
-a simple solution how to include them in your resources.
+Many GCP services can work directly with Tensorboards. For that reason we offer you
+a simple solution on how to include them in your resources.
 
 Tensorboards can either be used as a separate resource with `wanna tensorboard create/list/delete`
 or you can use them similarly to docker images as a dependency of other resources with `tensorboard_ref` key. In the second case,
-tensorboards are automatically created when needed and used when already existing.
+Tensorboards are automatically created when needed and used when already existing.
 
 ### Tensorboard parameters
-Tensorboards take only two paremeters:
+Tensorboards take only two parameters:
 
 - `name` - name of the tensorboard, not to confuse with resource name (name=`my-tensorboard`,
   resource name=`projects/{project}/locations/{location}/tensorboards/{tensorboard_id}/`)
@@ -43,9 +43,9 @@ jobs:
 ```
 
 #### Integration with other services
-Integration with tensorboard depends on the resource, but for example Custom Jobs
+Integration with tensorboard depends on the resource. For example Custom Jobs
 pass the path to the tensorboard in env var `AIP_TENSORBOARD_LOG_DIR`.
-When using keras for training, the integration in your code could look like this:
+When using Keras for training, the integration in your code could look like this:
 
 ```python
 from tensorflow.keras.callbacks import TensorBoard
@@ -60,7 +60,7 @@ keras_callbacks = [tensorboard]
 
 model.fit(x=train_dataset, epochs=args.epochs, steps_per_epoch=args.steps, callbacks=keras_callbacks)
 ```
-Check the job samples for complete example.
+Check the job samples for a complete example.
 
 With notebooks, you will need `tb-gcp-uploader` as specified [here](https://cloud.google.com/vertex-ai/docs/experiments/tensorboard-overview).
 We also export the link to the tensorboard directory as `AIP_TENSORBOARD_LOG_DIR`. But you will

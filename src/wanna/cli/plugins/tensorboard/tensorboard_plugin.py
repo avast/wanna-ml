@@ -10,7 +10,7 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
 
 class TensorboardPlugin(BasePlugin):
     """
-    Main entrypoint for managing Vertex AI Tensorboards
+    Main entry point for managing Vertex AI Tensorboards
     """
 
     def __init__(self) -> None:
@@ -48,8 +48,8 @@ class TensorboardPlugin(BasePlugin):
         """
         Create Tensorboard Instance in GCP Vertex AI Experiments.
 
-        If there already is a tensorboard with same name in the same location and project,
-        you will be prompt if you want to delete the existing and start a new.
+        If there already is a tensorboard with the same name in the same location and project,
+        you will be prompt if you want to delete the existing one and start a new one.
 
         When the tensorboard instance is created, you will be given a full resource name.
         """
@@ -77,7 +77,7 @@ class TensorboardPlugin(BasePlugin):
         """
         List Tensorboard Instances in GCP Vertex AI Experiments.
 
-        We also show Tensorboard Experiments and Tensorboard Runs for each Instances
+        We also show Tensorboard Experiments and Tensorboard Runs for each Instance
         in the tree format.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)

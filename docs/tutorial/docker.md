@@ -16,16 +16,16 @@ not be allowed to use in production.
 ### Types of docker images
 We currently support three types of docker images:
 
-- `provided_image` - you supply a link to docker image in the registry. Wo don't build anything,
+- `provided_image` - you supply a link to the docker image in the registry. We don't build anything,
   just redirect this link to GCP.
-- `local_build_image` - you supply a Dockerfile with context directory and additional information.
-  We build the image for you on your machine or in cloud.
+- `local_build_image` - you supply a Dockerfile with a context directory and additional information.
+  We build the image for you on your machine or in the cloud.
 - `notebook_ready_image` - you supply a list of pip requirements to install in your Jupyter Notebook.
-This is useful if you want to start a notebook with custom libraries but you dont want to handle
+This is useful if you want to start a notebook with custom libraries, but you don't want to handle
   Dockerfile information.
   
 ### Referencing docker images
-Each docker images must have a `name`. By this name, you can later reference it in 
+Each docker image must have a `name`. By this name, you can later reference it in 
 resource configuration, usually as `docker_image_ref`.
 
 Example:
@@ -46,19 +46,19 @@ notebooks:
 ```
 
 ### Local build vs GCP Cloud Build
-By default, all docker images are build locally on your machine and then pushed to registry.
+By default, all docker images are built locally on your machine and then pushed to the registry.
 For faster testing lifecycle you can build images directly using GCP Cloud Build. 
-Only needed change is to set `cloud_build: true` in `docker` section of WANNA yaml config
+The only needed change is to set `cloud_build: true` in `docker` section of the WANNA yaml config
 or set `WANNA_DOCKER_BUILD_IN_CLOUD=true` (env variable takes precedence).
 
-Building in cloud is generally faster as the docker images are automatically already in registry
+Building in the cloud is generally faster as the docker images are automatically already in the registry
 and there is no need to push the images over the network. That makes it suitable for fast testing. 
-However, building images in cloud is not allowed for production.
+However, building images in the cloud is not allowed for production.
 
 ### Build configuration
 When building locally, we offer you a way to set additional build parameters. These parameters
-must be specified in separate yaml file in path `WANNA_DOCKER_BUILD_CONFIG`. If this is not set,
-it defaults to the `dockerbuild.yaml` in working directory.
+must be specified in a separate yaml file in path `WANNA_DOCKER_BUILD_CONFIG`. If this is not set,
+it defaults to the `dockerbuild.yaml` in the working directory.
 
 You can set:
 
@@ -72,7 +72,7 @@ You can set:
 
 These parameters refer to [standard docker build parameters](https://github.com/docker/buildx#buildx-bake-options-target).
   
-One example usecase can be when you want to git clone your internal repository during
+One example use case can be when you want to git clone your internal repository during
 the docker build.
 
 In the `dockerbuild.yaml`:
@@ -90,7 +90,7 @@ RUN --mount=type=ssh,id=github git clone git@git.your.company.com:your_profile/y
 ```
 
 ### Parameters for docker section
-docker section takes following paremeters:
+docker section takes following parameters:
 - `images` - list of docker images, see below
 - `repository`- GCP Artifact Registry repository for pushing images
 - `registry`- (optional) GCP Artifact Registry, when not set it defaults to `{gcp_profile.region}-docker.pkg.dev`
@@ -126,9 +126,9 @@ Permission and suggested roles (applying the principle of least privilege) requi
 | build in Cloud Build  | `cloudbuild.builds.create` and [more](https://cloud.google.com/build/docs/iam-roles-permissions)       | ` roles/cloudbuild.builds.builder`     |
 | push  | `artifactregistry.repositories.uploadArtifacts`, `artifactregistry.tags.create`, `artifactregistry.tags.update`      | `roles/artifactregistry.writer`       |
 
-For building the docker images locally, you will need the permission for push to GCP as described above and running local Docker daemon.
+For building the docker images locally, you will need permission to push to GCP as described above and running local Docker daemon.
 You also have to authenticate docker with GCP, detailed documentation is [here](https://cloud.google.com/artifact-registry/docs/docker/authentication).
-But generally you should be fine with running:
+But generally, you should be fine with running:
 
 ```bash
 gcloud auth login
