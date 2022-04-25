@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from google.cloud import aiplatform
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
@@ -74,6 +75,7 @@ class PipelinePlugin(BasePlugin):
     ) -> None:
         if file:
             config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+            aiplatform.init(project=config.gcp_profile.project_id, location=config.gcp_profile.region)
             workdir = pathlib.Path(file).parent
             pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
             pipelines = pipeline_service.build(instance_name)

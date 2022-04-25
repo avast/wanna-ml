@@ -1,0 +1,38 @@
+wanna_project:
+  name: distributed-tf-sample
+  version: 1
+  authors: [joao.silva1@avast.com]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: us-burger-gcp-poc
+    zone: europe-west1-b
+    bucket: wanna-ml-west1
+    labels:
+    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+
+tensorboards:
+  - name: wanna-distributed-tf-sample-board
+
+docker:
+  cloud_build: true
+  images:
+    - build_type: local_build_image
+      name: train
+      context_dir: .
+      dockerfile: Dockerfile.train
+
+#    - build_type: provided_image
+#      name: serve
+#      image_url: europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
+  repository: wanna-sample
+
+pipelines:
+  - name: distributed-tf-sample-pipeline
+    schedule:
+      cron: 2 * * * *
+    bucket: gs://wanna-ml-west1
+    pipeline_file: pipeline.py
+#    pipeline_params: params.yaml
+    docker_image_ref: ["train"]
+    tensorboard_ref: wanna-distributed-tf-sample-board

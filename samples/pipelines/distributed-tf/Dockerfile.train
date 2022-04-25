@@ -1,0 +1,6 @@
+FROM europe-docker.pkg.dev/vertex-ai/training/tf-gpu.2-8:latest
+
+WORKDIR /
+
+# Copies the trainer code to the docker image.
+COPY trainer /trainer
