@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
 from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, StorageSource
+from google.protobuf.duration_pb2 import Duration
 from python_on_whales import Image, docker
 
 from wanna.cli.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
@@ -36,6 +37,7 @@ class DockerService:
         self.work_dir = work_dir
         self.wanna_project_name = wanna_project_name
         self.project_id = gcp_profile.project_id
+        self.location = gcp_profile.region
         self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
         self.build_config = self._read_build_config(self.docker_build_config_path)
         self.cloud_build = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", docker_model.cloud_build)
@@ -215,10 +217,14 @@ class DockerService:
         blob = upload_file_to_gcs(filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name)
         tags_args = " ".join([f"-t {t}" for t in tags]).split()
         steps = BuildStep(name="gcr.io/cloud-builders/docker", args=["build", ".", "-f", dockerfile] + tags_args)
+
+        timeout = Duration()
+        timeout.seconds = 7200
         build = Build(
             source=Source(storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)),
             steps=[steps],
             images=tags,
+            timeout=timeout,
         )
         client = CloudBuildClient()
         res = client.create_build(project_id=self.project_id, build=build)

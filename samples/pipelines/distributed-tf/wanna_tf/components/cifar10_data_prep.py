@@ -18,10 +18,10 @@ def data_prep_op(dataset_train: Output[Dataset], dataset_test: Output[Dataset], 
     import tensorflow_datasets as tfds
     from collections import namedtuple
 
-    train_ds, test_ds = tfds.load('cifar10', split=['train', 'test']) # , as_supervised=True, batch_size=-1
-    train_dataset = train_ds.take(4000)
-    val_dataset = train_ds.skip(4000)
-    test_dataset = test_ds.take(4000)
+    train_ds, test_ds = tfds.load('cifar10', split=['train', 'test'])
+    train_dataset = train_ds.take(400)
+    val_dataset = train_ds.skip(400)
+    test_dataset = test_ds.take(400)
 
     train_dataset_path = dataset_train.path
     val_dataset_path = dataset_val.path
@@ -65,8 +65,9 @@ def data_prep_op(dataset_train: Output[Dataset], dataset_test: Output[Dataset], 
     writer.write(serialized_test_features_dataset)
 
     outputs = namedtuple("outputs", ["dataset_train_path", "dataset_test_path", "dataset_val_path"])
-    return outputs(
+    out = outputs(
         dataset_train_path=train_dataset_path,
         dataset_test_path=test_dataset_path,
         dataset_val_path=val_dataset_path
     )
+    return out

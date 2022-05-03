@@ -20,12 +20,13 @@ PIPELINE_ROOT = f"{BUCKET}/pipeline-root/{MODEL_NAME}"
 MODEL_DISPLAY_NAME = f"{MODEL_NAME}-{VERSION}"
 
 # custom training image
-TRAIN_IMAGE_URI = os.environ[f"TRAIN_DOCKER_URI"]  # Fail
-MACHINE_TYPE = "n1-standard-8"
-REPLICA_COUNT = "1"
-ACCELERATOR_TYPE = "NVIDIA_TESLA_T4"
-ACCELERATOR_COUNT = "1"
-NUM_WORKERS = 1
+TRAIN_IMAGE_URI = "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/distributed-tf-sample/train:dev"
+# os.environ[f"TRAIN_DOCKER_URI"]  # Fail
+# https://cloud.google.com/ai-platform/training/docs/using-gpus
+MACHINE_TYPE = "n1-standard-32"
+REPLICA_COUNT = 1
+ACCELERATOR_TYPE = "NVIDIA_TESLA_P100"
+ACCELERATOR_COUNT = "2"
 
 # Custom Serving Config
 # "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"

@@ -1,5 +1,7 @@
 FROM europe-docker.pkg.dev/vertex-ai/training/tf-gpu.2-8:latest
 
+RUN pip install tensorflow tensorflow-io-gcs-filesystem tfx-bsl pyarrow tensorboard apache-beam keras-datasets tensorflow-hub
+
 WORKDIR /
 
 # Copies the trainer code to the docker image.

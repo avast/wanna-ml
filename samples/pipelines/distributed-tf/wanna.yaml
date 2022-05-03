@@ -9,7 +9,7 @@ gcp_profiles:
     zone: europe-west1-b
     bucket: wanna-ml-west1
     labels:
-    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+    service_account: wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com
 
 tensorboards:
   - name: wanna-distributed-tf-sample-board
@@ -25,7 +25,53 @@ docker:
 #    - build_type: provided_image
 #      name: serve
 #      image_url: europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
-  repository: wanna-sample
+  repository: wanna-samples
+
+notebooks:
+  - name: wanna-distributed-tf-sample-vm
+    machine_type: n1-standard-8
+    wanna-ml-testing@us-burger-gcp-poc:
+      iam:
+        gserviceaccount:
+          com:
+    gpu:
+      count: 2
+      accelerator_type: NVIDIA_TESLA_P100
+    environment:
+      vm_image:
+        framework: tf
+        version: ent-2-1-cu110
+        os: debian-10
+    boot_disk:
+      disk_type: pd_ssd
+      size_gb: 100
+    data_disk:
+      disk_type: pd_ssd
+      size_gb: 100
+    bucket_mounts:
+      - bucket_name: wanna-ml-west1
+        bucket_dir: data
+        local_path: /home/jupyter/mounted/gcs
+
+jobs:
+  - name: distributed-tf-sample-pipeline-custom-jobs
+    region: europe-west1
+    tensorboard_ref: wanna-distributed-tf-sample-board
+    service_account: wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com
+    worker:
+      machine_type: n1-standard-8
+      gpu:
+        accelerator_type: NVIDIA_TESLA_V100
+        count: 1
+      container:
+        docker_image_ref: train
+        command: ["python", "/trainer/cifar10_train.py"]
+        args: [
+            "--epoch", 5,
+            "--train_dataset_path", "/gcs/wanna-ml-west1/pipeline-root/distributed-tf-sample-pipeline/966197297054/pipeline-distributed-tf-sample-pipeline-20220503142510/data-prep-op_-6119415527271038976/dataset_train",
+            "--test_dataset_path", "/gcs/wanna-ml-west1/pipeline-root/distributed-tf-sample-pipeline/966197297054/pipeline-distributed-tf-sample-pipeline-20220503142510/data-prep-op_-6119415527271038976/dataset_test" ,
+            "--val_dataset_path", "/gcs/wanna-ml-west1/pipeline-root/distributed-tf-sample-pipeline/966197297054/pipeline-distributed-tf-sample-pipeline-20220503142510/data-prep-op_-6119415527271038976/dataset_val",
+        ]
 
 pipelines:
   - name: distributed-tf-sample-pipeline
