@@ -29,10 +29,11 @@ class PipelinePlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "compile"),
+        quick: bool = typer.Option(False, "--quick", "-q", help="Runs build in quick mode, does not build containers"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
-        pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
+        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, quick_mode=quick)
         pipeline_service.build(instance_name)
 
     @staticmethod

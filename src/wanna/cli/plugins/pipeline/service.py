@@ -42,7 +42,7 @@ def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool,
 
 
 class PipelineService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev"):
+    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev", quick_mode: bool = False):
         super().__init__(
             instance_type="pipeline",
             instance_model=PipelineModel,
@@ -62,6 +62,7 @@ class PipelineService(BaseService):
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,
+            quick_mode=quick_mode,
         )
 
     def build(self, instance_name: str) -> List[Tuple[PipelineMeta, Path]]:
@@ -212,7 +213,10 @@ class PipelineService(BaseService):
                         s.info(f"Pipeline results info: \n\t{df_pipeline}")
 
     def _export_pipeline_params(
-        self, pipeline_instance: PipelineModel, version: str, images: List[Tuple[DockerImageModel, Optional[Image], str]]
+        self,
+        pipeline_instance: PipelineModel,
+        version: str,
+        images: List[Tuple[DockerImageModel, Optional[Image], str]],
     ):
 
         # Prepare env params to be exported
@@ -272,7 +276,9 @@ class PipelineService(BaseService):
             pipeline_json_spec_path = (pipeline_dir / "pipeline_spec.json").resolve()
 
             # Collect kubeflow pipeline params for compilation
-            pipeline_env_params, pipeline_params = self._export_pipeline_params(pipeline_instance, self.docker_service.version, image_tags)
+            pipeline_env_params, pipeline_params = self._export_pipeline_params(
+                pipeline_instance, self.docker_service.version, image_tags
+            )
 
             # Compile kubeflow V2 Pipeline
             compile_pyfile(
@@ -307,7 +313,7 @@ class PipelineService(BaseService):
                 pipeline_name=pipeline_meta.config.name,
                 json_spec_path=str(pipeline_meta.json_spec_path),
                 parameter_values=pipeline_meta.parameter_values,
-                enable_caching=False,
+                enable_caching=True,
                 labels=pipeline_meta.config.labels,
                 project=pipeline_meta.config.project_id,
                 location=pipeline_meta.config.region,
@@ -413,7 +419,10 @@ class PipelineService(BaseService):
         function_name, function_url = function
 
         spinner.info(f"Deploying {manifest.pipeline_name} cloud scheduler with version {version} to env {env}")
-        body = {"pipeline_spec_uri": pipeline_spec_path, "parameter_values": manifest.parameter_values}  # TODO extend with execution_date(now) ?
+        body = {
+            "pipeline_spec_uri": pipeline_spec_path,
+            "parameter_values": manifest.parameter_values,
+        }  # TODO extend with execution_date(now) ?
 
         http_target = {
             "uri": function_url,
