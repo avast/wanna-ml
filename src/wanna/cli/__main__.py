@@ -1,6 +1,11 @@
 import logging
+from enum import Enum
+from pathlib import Path
 
 import typer
+from cookiecutter.main import cookiecutter
+
+from wanna.cli.utils.spinners import Spinner
 
 from .plugins.runner import PluginRunner
 from .version import perform_check
@@ -13,9 +18,38 @@ runner = PluginRunner()
 app = runner.app
 
 
+class WannaRepositoryTemplate(str, Enum):
+    sklearn = "sklearn"
+
+
 @app.command(name="version")
 def version(ctx: typer.Context):
     perform_check()
+
+
+@app.command(name="init")
+def init(
+    ctx: typer.Context,
+    output_dir: Path = typer.Option(
+        ...,
+        "--output-dir",
+        prompt="Where do you want to initiate your wanna-ml repository? (input '.' to use the current directory)",
+        help="The output directory where wanna-ml repository will be created",
+    ),
+    template: WannaRepositoryTemplate = typer.Option(
+        WannaRepositoryTemplate.sklearn.value,
+        "--template",
+        "-t",
+        help="Choose from available repository templates",
+        show_choices=True,
+    ),
+):
+    repository_templates = {
+        WannaRepositoryTemplate.sklearn.value: "https://git.int.avast.com/bds/wanna-ml-cookiecutter"
+    }
+    repository_template_url = repository_templates.get(template)
+    result_dir = cookiecutter(repository_template_url, output_dir=output_dir)
+    Spinner(text=f"Repo initiated at {result_dir}").succeed()
 
 
 def wanna():
