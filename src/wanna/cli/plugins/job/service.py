@@ -436,6 +436,7 @@ class JobService(BaseService):
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
             _, _, tag = self.docker_service.get_image(docker_image_ref=job_model.worker.python_package.docker_image_ref)
+
             result = CustomPythonPackageTrainingJobManifest(
                 job_type=CustomJobType.CustomPythonPackageTrainingJob,
                 job_config=job_model,

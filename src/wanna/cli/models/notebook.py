@@ -67,5 +67,4 @@ class NotebookModel(BaseInstanceModel):
     bucket_mounts: Optional[List[BucketMount]]
     network: Optional[Network]
     tensorboard_ref: Optional[str]
-
     _machine_type = validator("machine_type")(validators.validate_machine_type)

@@ -12,6 +12,7 @@ from wanna_simple.components.trainer.eval_model import eval_model_op
 from wanna_simple.components.trainer.train_xgb_model import train_xgb_model_op
 
 
+
 @component(
     base_image="python:3.9",
     packages_to_install=["slack-webhook-cli"],

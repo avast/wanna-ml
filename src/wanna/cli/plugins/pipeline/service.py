@@ -212,13 +212,14 @@ class PipelineService(BaseService):
                         s.info(f"Pipeline results info: \n\t{df_pipeline}")
 
     def _export_pipeline_params(
-        self, pipeline_instance: PipelineModel, images: List[Tuple[DockerImageModel, Optional[Image], str]]
+        self, pipeline_instance: PipelineModel, version: str, images: List[Tuple[DockerImageModel, Optional[Image], str]]
     ):
 
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
             "pipeline_name": pipeline_instance.name,
+            "version": version,
             "bucket": pipeline_instance.bucket,
             "region": pipeline_instance.region,
             "pipeline_job_id": f"pipeline-{pipeline_instance.name}-{get_timestamp()}",
@@ -271,7 +272,7 @@ class PipelineService(BaseService):
             pipeline_json_spec_path = (pipeline_dir / "pipeline_spec.json").resolve()
 
             # Collect kubeflow pipeline params for compilation
-            pipeline_env_params, pipeline_params = self._export_pipeline_params(pipeline_instance, image_tags)
+            pipeline_env_params, pipeline_params = self._export_pipeline_params(pipeline_instance, self.docker_service.version, image_tags)
 
             # Compile kubeflow V2 Pipeline
             compile_pyfile(
@@ -306,7 +307,7 @@ class PipelineService(BaseService):
                 pipeline_name=pipeline_meta.config.name,
                 json_spec_path=str(pipeline_meta.json_spec_path),
                 parameter_values=pipeline_meta.parameter_values,
-                enable_caching=True,
+                enable_caching=False,
                 labels=pipeline_meta.config.labels,
                 project=pipeline_meta.config.project_id,
                 location=pipeline_meta.config.region,
@@ -412,7 +413,7 @@ class PipelineService(BaseService):
         function_name, function_url = function
 
         spinner.info(f"Deploying {manifest.pipeline_name} cloud scheduler with version {version} to env {env}")
-        body = {"pipeline_spec_uri": pipeline_spec_path, "parameter_values": manifest.parameter_values}  # TODO extend
+        body = {"pipeline_spec_uri": pipeline_spec_path, "parameter_values": manifest.parameter_values}  # TODO extend with execution_date(now) ?
 
         http_target = {
             "uri": function_url,

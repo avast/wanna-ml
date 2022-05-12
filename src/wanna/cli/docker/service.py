@@ -3,6 +3,8 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+from checksumdir import dirhash
+from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
 from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, StorageSource
 from google.protobuf.duration_pb2 import Duration
@@ -20,6 +22,16 @@ class DockerClientException(Exception):
     pass
 
 
+class DockerContextCache:
+
+    def __init__(self, docker_image_ref: str, build_dir: Path):
+        self.build_dir = build_dir
+        self.docker_image_ref = docker_image_ref
+        os.makedirs(self.build_dir / "docker" / docker_image_ref, exist_ok=True)
+
+
+
+
 class DockerService:
     def __init__(
         self,
@@ -35,6 +47,7 @@ class DockerService:
         self.repository = docker_model.repository
         self.version = version
         self.work_dir = work_dir
+        self.build_dir = self.work_dir / "build" / "docker"
         self.wanna_project_name = wanna_project_name
         self.project_id = gcp_profile.project_id
         self.location = gcp_profile.region
@@ -78,16 +91,25 @@ class DockerService:
     def _build_image(
         self, context_dir, file_path: Path, tags: List[str], docker_image_ref: str, **build_args
     ) -> Union[Image, None]:
-        if self.cloud_build:
-            with Spinner(text="Building docker image in GCP Cloud build"):
-                self._build_image_on_gcp_cloud_build(
-                    context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
-                )
-            return None
+
+        should_build = self._should_build_by_dir_checksum(self.build_dir / docker_image_ref, context_dir)
+
+        if should_build:
+
+            if self.cloud_build:
+                with Spinner(text=f"Building {docker_image_ref} docker image in GCP Cloud build"):
+                    self._build_image_on_gcp_cloud_build(
+                        context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
+                    )
+                return None
+            else:
+                with Spinner(text=f"Building {docker_image_ref} docker image locally"):
+                    image = docker.build(context_dir, file=file_path, tags=tags, **build_args)
+                return image  # type: ignore
         else:
-            with Spinner(text="Building docker image locally"):
-                image = docker.build(context_dir, file=file_path, tags=tags, **build_args)
-            return image  # type: ignore
+            with Spinner(text=f"Skipping build for context_dir={context_dir}, dockerfile={file_path} and image {tags[0]}") as s:
+                s.info("Nothing has changed in the dir")
+
 
     def _pull_image(self, image_url: str) -> Union[Image, None]:
         if self.cloud_build:
@@ -149,7 +171,7 @@ class DockerService:
         """
         docker_image_model = self.find_image_model_by_name(docker_image_ref)
 
-        build_dir = self.work_dir / Path("build") / docker_image_model.name
+        build_dir = self.work_dir / Path("build") / "docker" / docker_image_model.name
         os.makedirs(build_dir, exist_ok=True)
         build_args = self.build_config.dict() if self.build_config else {}
 
@@ -198,6 +220,36 @@ class DockerService:
             tags[0],
         )
 
+    def _get_dirhash(self, directory: Path):
+        dockerignore = directory / ".dockerignore"
+        excluded_files = [f"{directory}/component.yaml", f"{directory}/tests/"]
+
+        if dockerignore.exists():
+            with open(dockerignore, "r") as f:
+                lines = f.readlines()
+                new_files = list(map(lambda ignore: f"""{directory}/{ignore.rstrip()}""", lines))
+                excluded_files += new_files
+
+        excluded_files = set(excluded_files)
+        return dirhash(directory, 'sha256', excluded_files=excluded_files, excluded_extensions=['pyc', 'md'])
+
+    def _should_build_by_dir_checksum(self, cache_dir: Path, directory: Path) -> bool:
+        cache_file = cache_dir / "cache"
+        sha256hash = self._get_dirhash(directory)
+        if cache_file.exists():
+            with open(cache_file, "r") as f:
+                old_hash = f.read()
+                return old_hash != sha256hash
+        else:
+            return True
+
+    def _write_context_dir_checksum(self, cache_dir: Path, directory: Path):
+        os.makedirs(cache_dir, exist_ok=True)
+        cache_file = cache_dir / "cache"
+        sha256hash = self._get_dirhash(directory)
+        with open(cache_file, "w") as f:
+            f.write(sha256hash)
+
     def _build_image_on_gcp_cloud_build(
         self, context_dir: Path, file_path: Path, tags: List[str], docker_image_ref: str
     ) -> None:
@@ -210,6 +262,7 @@ class DockerService:
             file_path: path to Dockerfile
             tags:
         """
+
         dockerfile = os.path.relpath(file_path, context_dir)
         tar_filename = self.work_dir / f"build/docker/{docker_image_ref}.tar.gz"
         make_tarfile(context_dir, tar_filename)
@@ -227,8 +280,16 @@ class DockerService:
             timeout=timeout,
         )
         client = CloudBuildClient()
-        res = client.create_build(project_id=self.project_id, build=build)
+        request = cloudbuild_v1.CreateBuildRequest(
+            # parent=f"projects/{self.project_id}/locations/{self.location}",
+            project_id=self.project_id,
+            build=build
+        )
+        res = client.create_build(request=request)
         res.result()
+
+        self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
+
 
     def push_image(self, image: Image, quiet: bool = False) -> None:
         """
