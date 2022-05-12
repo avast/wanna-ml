@@ -7,7 +7,7 @@ from checksumdir import dirhash
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
 from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, StorageSource
-from google.protobuf.duration_pb2 import Duration
+from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
 from wanna.cli.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
@@ -103,6 +103,7 @@ class DockerService:
                 text=f"Skipping build for context_dir={context_dir}, dockerfile={file_path} and image {tags[0]}"
             ) as s:
                 s.info("Nothing has changed in the dir")
+                return None
 
     def _pull_image(self, image_url: str) -> Union[Image, None]:
         if self.cloud_build:
@@ -223,7 +224,7 @@ class DockerService:
                 new_files = list(map(lambda ignore: f"{directory}/{ignore.rstrip()}", lines))
                 excluded_files += new_files
 
-        excluded_files = set(excluded_files)
+        excluded_files = list(set(excluded_files))
         return dirhash(directory, "sha256", excluded_files=excluded_files, excluded_extensions=["pyc", "md"])
 
     def _should_build_by_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path) -> bool:
