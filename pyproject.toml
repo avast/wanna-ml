@@ -75,6 +75,7 @@ xgboost = "^1.5.2"
 types-protobuf = "^3.19.17"
 
 [tool.mypy]
+exclude = "src/wanna/components/templates"
 follow_imports = "silent"
 strict = true
 strict_optional = true
@@ -87,6 +88,9 @@ ignore_missing_imports = true
 [tool.'mypy-google.*']
 ignore_missing_imports = true
 
+[tool.pylint]
+ignore-patterns="**/templates/**"
+
 [tool.pylint.'MESSAGES CONTROL']
 extension-pkg-whitelist = "pydantic"
 
@@ -94,7 +98,7 @@ extension-pkg-whitelist = "pydantic"
 wanna = "wanna.cli.__main__:wanna"
 
 [tool.pytest.ini_options]
-addopts = "--verbose -s --durations=0"
+addopts = "--verbose -s --durations=0 --ignore=src/wanna/components/templates"
 filterwarnings = [
     "error",
     "ignore::UserWarning", # note the use of single quote below to denote "raw" strings in TOML
