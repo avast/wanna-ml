@@ -65,7 +65,7 @@ class NotebookPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option(
             "notebook",
-            "create",
+            "ssh",
             help="Specify to which notebook you want to connect via ssh. "
             "Selecting 'all' will work only if there is just one notebook "
             "defined in your configuration, an error will be thrown otherwise.",

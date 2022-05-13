@@ -68,8 +68,9 @@ class NotebookService(BaseService):
                 )
                 deleted.result()
         else:
-            typer.echo(
-                f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}"
+            typer.secho(
+                f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
+                fg=typer.colors.RED,
             )
 
     def _create_one_instance(self, instance: NotebookModel, **kwargs) -> None:
@@ -329,8 +330,10 @@ class NotebookService(BaseService):
              -- -L 8080:localhost:{local_port}"
         if run_in_background:
             bash_command += " -N -f"
-        process = subprocess.Popen(bash_command.split())
-        process.communicate()
+        process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = process.communicate()
+        if error:
+            typer.secho(error, fg=typer.colors.RED)
 
     def ssh(self, instance_name: str, run_in_background: bool, local_port: int) -> None:
         """
@@ -349,9 +352,9 @@ class NotebookService(BaseService):
             if len(self.config.notebooks) == 1:
                 self._ssh(self.config.notebooks[0], run_in_background, local_port)
             elif len(self.config.notebooks) > 1:
-                typer.echo("You can connect to only one notebook at a time.")
+                Exception("You can connect to only one notebook at a time.")
             else:
-                typer.echo("No notebook definition found in your YAML config.")
+                typer.secho("No notebook definition found in your YAML config.", fg=typer.colors.RED)
         else:
             if instance_name in [notebook.name for notebook in self.config.notebooks]:
                 self._ssh(
@@ -360,4 +363,4 @@ class NotebookService(BaseService):
                     local_port,
                 )
             else:
-                typer.echo(f"No notebook {instance_name} found")
+                typer.secho(f"No notebook {instance_name} found", fg=typer.colors.RED)
