@@ -87,6 +87,7 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_name": "wanna-sklearn-sample",
             "bucket": "gs://wanna-ml",
             "region": "europe-west1",
+            "version": "test",
             "pipeline_root": exppected_pipeline_root,
             "pipeline_labels": """{"wanna_project": "pipeline-sklearn-example-1", "wanna_project_version": "1", """
             """"wanna_project_authors": "joao-silva1"}""",

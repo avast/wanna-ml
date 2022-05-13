@@ -3,6 +3,7 @@ scratch/
 venv/
 .DS_Store
 kf-pipelines/
+out/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
