@@ -15,11 +15,12 @@ wanna_file_option = typer.Option(
 )
 
 
-def instance_name_option(instance_type: str, operation: str):
+def instance_name_option(instance_type: str, operation: str, help: str = None):
     return typer.Option(
         "all",
         "--name",
         "-n",
-        help=f"Specify only one {instance_type} from your wanna-ml yaml configuration to {operation}. "
+        help=help
+        or f"Specify only one {instance_type} from your wanna-ml yaml configuration to {operation}. "
         f"Choose 'all' to {operation} all {instance_type}s.",
     )

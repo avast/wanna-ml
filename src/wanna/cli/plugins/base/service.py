@@ -97,9 +97,15 @@ class BaseService(ABC):
         if instance_name == "all":
             instances = self.instances
             if not instances:
-                typer.echo(f"No {self.instance_type} can be parsed from your wanna-ml yaml config.")
+                typer.secho(
+                    f"No {self.instance_type} can be parsed from your wanna-ml yaml config.", fg=typer.colors.RED
+                )
         else:
             instances = [nb for nb in self.instances if nb.name == instance_name]
         if not instances:
-            typer.echo(f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.")
+            typer.secho(
+                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
+                fg=typer.colors.RED,
+            )
+
         return instances
