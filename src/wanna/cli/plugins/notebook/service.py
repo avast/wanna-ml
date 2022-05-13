@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from typing import List, Optional
 
@@ -302,3 +303,61 @@ class NotebookService(BaseService):
         """
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return f"https://{instance_info.proxy_uri}"
+
+    def _ssh(self, notebook_instance: NotebookModel, run_in_background: bool, local_port: int) -> None:
+        """
+        SSH connect to the notebook instance if the instance is already started.
+
+        Args:
+            notebook_instance: notebook model representing the instance you want to connect to
+            run_in_background: whether to run in the background or in interactive mode
+            local_port: jupyter lab will be exposed at this port at localhost
+
+        Returns:
+
+        """
+        exists = self._instance_exists(notebook_instance)
+        if not exists:
+            typer.echo(f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
+            return
+
+        bash_command = f"gcloud compute ssh \
+             --project {notebook_instance.project_id} \
+             --zone {notebook_instance.zone} \
+             --tunnel-through-iap \
+              {notebook_instance.name} \
+             -- -L 8080:localhost:{local_port}"
+        if run_in_background:
+            bash_command += " -N -f"
+        process = subprocess.Popen(bash_command.split())
+        process.communicate()
+
+    def ssh(self, instance_name: str, run_in_background: bool, local_port: int) -> None:
+        """
+        A wrapper around _ssh method, but this function also verifies if the notebook is
+        defined in YAML config and already started.
+
+        Args:
+            instance_name: name of the notebook to connect to
+            run_in_background: whether to run in the background or in interactive mode
+            local_port: jupyter lab will be exposed at this port at localhost
+
+        Returns:
+
+        """
+        if instance_name == "all":
+            if len(self.config.notebooks) == 1:
+                self._ssh(self.config.notebooks[0], run_in_background, local_port)
+            elif len(self.config.notebooks) > 1:
+                typer.echo("You can connect to only one notebook at a time.")
+            else:
+                typer.echo("No notebook definition found in your YAML config.")
+        else:
+            if instance_name in [notebook.name for notebook in self.config.notebooks]:
+                self._ssh(
+                    [notebook for notebook in self.config.notebooks if notebook.name == instance_name][0],
+                    run_in_background,
+                    local_port,
+                )
+            else:
+                typer.echo(f"No notebook {instance_name} found")
