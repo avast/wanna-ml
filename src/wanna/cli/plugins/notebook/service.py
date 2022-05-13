@@ -330,10 +330,9 @@ class NotebookService(BaseService):
              -- -L 8080:localhost:{local_port}"
         if run_in_background:
             bash_command += " -N -f"
-        process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = process.communicate()
-        if error:
-            typer.secho(error, fg=typer.colors.RED)
+
+        process = subprocess.Popen(bash_command.split())
+        process.communicate()
 
     def ssh(self, instance_name: str, run_in_background: bool, local_port: int) -> None:
         """
