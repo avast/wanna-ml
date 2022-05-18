@@ -72,7 +72,6 @@ types-mock = "^4.0.12"
 types-pyyaml = "^6.0.5"
 types-requests = "^2.27.14"
 xgboost = "^1.5.2"
-types-protobuf = "^3.19.17"
 
 [tool.mypy]
 exclude = "src/wanna/components/templates"
