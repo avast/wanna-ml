@@ -87,16 +87,17 @@ class DockerService:
         should_build = self._should_build_by_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
 
         if should_build and not self.quick_mode:
-
             if self.cloud_build:
                 with Spinner(text=f"Building {docker_image_ref} docker image in GCP Cloud build"):
                     self._build_image_on_gcp_cloud_build(
                         context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
                     )
+                    self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return None
             else:
                 with Spinner(text=f"Building {docker_image_ref} docker image locally"):
                     image = docker.build(context_dir, file=file_path, tags=tags, **build_args)
+                    self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return image  # type: ignore
         else:
             with Spinner(
@@ -282,9 +283,7 @@ class DockerService:
         res = client.create_build(request=request)
         res.result()
 
-        self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
-
-    def push_image(self, image: Image, quiet: bool = False) -> None:
+    def push_image(self, image_or_tags: Union[Image, List[str]], quiet: bool = False) -> None:
         """
         Push a docker image to the registry (image must have tags)
         If you are in the cloud_build mode, nothing is pushed, images already live in cloud.
@@ -292,8 +291,10 @@ class DockerService:
             image: image to push
         """
         if not self.cloud_build:
-            with Spinner(text=f"Pushing docker image {image.repo_tags}"):
-                docker.image.push(image.repo_tags, quiet)
+            tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
+
+            with Spinner(text=f"Pushing docker image {tags}"):
+                docker.image.push(tags, quiet)
 
     def push_image_ref(self, image_ref: str, quiet: bool = False) -> None:
         """
@@ -301,9 +302,9 @@ class DockerService:
         Args:
             image_ref: image_ref to push
         """
-        model, image, _ = self.get_image(image_ref)
-        if image and model.build_type != ImageBuildType.provided_image:
-            self.push_image(image)
+        model, image, tag = self.get_image(image_ref)
+        if (image or tag) and model.build_type != ImageBuildType.provided_image:
+            self.push_image(image or [tag])
 
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:
