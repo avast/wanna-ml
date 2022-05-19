@@ -93,7 +93,7 @@ class PipelineService(BaseService):
                 # Push containers
                 for (model, image, tags) in pipeline_meta.images:
                     if model.build_type != ImageBuildType.provided_image:
-                        self.docker_service.push_image(image, quiet=True)
+                        self.docker_service.push_image(image or tags, quiet=True)
 
                 # upload manifests
                 pipeline_dir_path = self.pipelines_build_dir / f"{manifest.pipeline_name}"
@@ -391,7 +391,7 @@ class PipelineService(BaseService):
                 function_url,
             )
         except NotFound:
-            cf.create_function({"location": manifest.location, "function": function}).result()
+            cf.create_function({"location": parent, "function": function}).result()
             return (
                 function_path,
                 function_url,

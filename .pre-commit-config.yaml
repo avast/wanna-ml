@@ -1,5 +1,5 @@
 files: \.py
-exclude: samples/
+exclude: (samples/|src/wanna/components/templates)
 repos:
   - repo: local
     hooks:

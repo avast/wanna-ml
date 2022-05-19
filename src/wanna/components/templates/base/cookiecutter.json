@@ -1,0 +1,24 @@
+{
+  "component_name": "component_name",
+  "component_author": "component author",
+  "component_author_email": "you@avast.com",
+  "component_version": "0.0.0",
+  "component_description": "Describe your component",
+  "component_url": "Link to MLOps project page on CML",
+  "component_slug": "{{cookiecutter.component_name|lower|replace('-', '_')|replace(' ', '_')}}",
+  "component_docker_ref": "{{cookiecutter.component_slug}}",
+  "component_framework": [
+    "base-cpu",
+    "base-cu110",
+    "base-cu113",
+    "pytorch-xla-1.11",
+    "pytorch-gpu-1.10",
+    "pytorch-gpu-1.11",
+    "sklearn-0.24",
+    "tf-cpu.2-6",
+    "tf-cpu.2-8",
+    "tf-gpu-slim.2-6",
+    "tf-gpu-slim.2-8",
+    "xgboost-cpu.1-1"
+  ]
+}
