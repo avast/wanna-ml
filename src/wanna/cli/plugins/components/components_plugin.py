@@ -8,7 +8,7 @@ from wanna.cli.plugins.components.service import ComponentsService
 
 class ComponentsPlugin(BasePlugin):
     """
-    Main entry point for managing kubeflow components templated generation 
+    Main entry point for managing kubeflow components templated generation
     """
 
     def __init__(self) -> None:
