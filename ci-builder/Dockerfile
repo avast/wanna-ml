@@ -24,8 +24,6 @@ RUN pip install --upgrade wanna-ml
 COPY bin/entrypoint.sh /entrypoint.sh
 RUN mkdir -p /credentials
 
-ENV GOOGLE_APPLICATION_CREDENTIALS="/credentials/service_account.json"
-
 RUN mkdir /wanna
 
 WORKDIR /wanna
