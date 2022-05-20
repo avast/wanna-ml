@@ -13,8 +13,18 @@ RUN mkdir -p $HOME/.pip
 RUN printf "[global]\nindex-url=$INDEX_URL\nextra-index-url=$EXTRA_INDEX_URL" > $HOME/.pip/pip.conf
 
 RUN apt-get update -y \
-    && apt-get install git docker \
-    && apt-get clean
+    && apt-get install -y git docker apt-transport-https ca-certificates gnupg
+
+# Downloading gcloud package
+RUN curl  https://artifactory.ida.avast.com/artifactory/packagesfromnet-generic-local/au/dl-google-com/dl/cloudsdk/release/google-cloud-sdk.tar.gz/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
+
+# Installing the package
+RUN mkdir -p /usr/local/gcloud \
+  && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
+  && /usr/local/gcloud/google-cloud-sdk/install.sh
+
+# Adding the package path to local
+ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 RUN pip install poetry pandas
 
@@ -22,9 +32,6 @@ RUN pip install --upgrade wanna-ml
 
 # Credentials entrypoint
 COPY bin/entrypoint.sh /entrypoint.sh
-RUN mkdir -p /credentials
-
-RUN mkdir /wanna
 
 WORKDIR /wanna
 
