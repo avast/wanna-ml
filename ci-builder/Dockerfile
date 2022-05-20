@@ -13,7 +13,8 @@ RUN mkdir -p $HOME/.pip
 RUN printf "[global]\nindex-url=$INDEX_URL\nextra-index-url=$EXTRA_INDEX_URL" > $HOME/.pip/pip.conf
 
 RUN apt-get update -y \
-    && apt-get install -y git docker apt-transport-https ca-certificates gnupg
+    && apt-get install -y git docker apt-transport-https ca-certificates gnupg \
+    && apt-get clean
 
 # Downloading gcloud package
 RUN curl  https://artifactory.ida.avast.com/artifactory/packagesfromnet-generic-local/au/dl-google-com/dl/cloudsdk/release/google-cloud-sdk.tar.gz/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
