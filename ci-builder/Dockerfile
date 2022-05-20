@@ -18,7 +18,7 @@ RUN apt-get update -y \
 
 RUN pip install poetry pandas
 
-RUN pip install --upgrade wanna
+RUN pip install --upgrade wanna-ml
 
 # Credentials entrypoint
 COPY bin/entrypoint.sh /entrypoint.sh
