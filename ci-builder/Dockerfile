@@ -29,8 +29,8 @@ ENV CONDARC /opt/miniconda/config/.condarc
 
 RUN conda create -n bi-builder python=3.8
 
-RUN eval "$(conda shell.bash hook)"
-    && conda activate bi-builder
+RUN eval "$(conda shell.bash hook)" \
+    && conda activate bi-builder \
     && pip install --upgrade wanna-ml
 
 # Credentials entrypoint
