@@ -1,4 +1,4 @@
-FROM docker.ida.avast.com/dockerhub/python:3.8-buster
+FROM docker-luft.ida.avast.com/dockerhub/google/cloud-sdk:359.0.0-slim
 
 # Avast related settings
 RUN sed -r 's%http://deb.debian.org/debian%http://apt.ida.avast.com/artifactory/apt.deb.debian.org%g' -i /etc/apt/sources.list
@@ -13,27 +13,31 @@ RUN mkdir -p $HOME/.pip
 RUN printf "[global]\nindex-url=$INDEX_URL\nextra-index-url=$EXTRA_INDEX_URL" > $HOME/.pip/pip.conf
 
 RUN apt-get update -y \
-    && apt-get install -y git docker apt-transport-https ca-certificates gnupg \
-    && apt-get clean
+    && apt-get install -y git docker wget
 
-# Downloading gcloud package
-RUN curl  https://artifactory.ida.avast.com/artifactory/packagesfromnet-generic-local/au/dl-google-com/dl/cloudsdk/release/google-cloud-sdk.tar.gz/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
+# Conda Environment
+ENV MINICONDA_VERSION py38_4.9.2
+ENV PATH /opt/miniconda/bin:$PATH
+RUN wget -qO /tmp/miniconda.sh https://artifactory.ida.avast.com/artifactory/packagesfromnet-generic-local/temp/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh && \
+    bash /tmp/miniconda.sh -bf -p /opt/miniconda && \
+    conda clean -ay && \
+    rm -rf /opt/miniconda/pkgs && \
+    rm /tmp/miniconda.sh
 
-# Installing the package
-RUN mkdir -p /usr/local/gcloud \
-  && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
-  && /usr/local/gcloud/google-cloud-sdk/install.sh
+COPY config/.condarc /opt/miniconda/config/.condarc
+ENV CONDARC /opt/miniconda/config/.condarc
 
-# Adding the package path to local
-ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
+RUN conda create -n bi-builder python=3.8
 
-RUN pip install poetry pandas
-
-RUN pip install --upgrade wanna-ml
+RUN eval "$(conda shell.bash hook)" \
+    && conda activate bi-builder \
+    && pip install --upgrade wanna-ml
 
 # Credentials entrypoint
 COPY bin/entrypoint.sh /entrypoint.sh
 
 WORKDIR /wanna
+
+ENV PATH="/opt/miniconda/envs/ci-builder/bin:${PATH}"
 
 ENTRYPOINT ["/entrypoint.sh"]
