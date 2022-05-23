@@ -15,7 +15,7 @@ class PluginRunner:
             ("job", JobPlugin()),
             ("notebook", NotebookPlugin()),
             ("tensorboard", TensorboardPlugin()),
-            ("managed_notebook", ManagedNotebookPlugin()),
+            ("managed-notebook", ManagedNotebookPlugin()),
         ]
         for name, subcommand in typers:
             self.app.add_typer(subcommand.app, name=name)

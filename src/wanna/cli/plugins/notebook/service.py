@@ -380,7 +380,7 @@ class ManagedNotebookService(BaseService):
             instance_model=ManagedNotebookModel,
         )
         self.version = version
-        self.instances = config.notebooks
+        self.instances = config.managed_notebooks
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_profile.bucket
         self.notebook_client = ManagedNotebookServiceClient()
@@ -414,7 +414,7 @@ class ManagedNotebookService(BaseService):
             with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
                 deleted = self.notebook_client.delete_runtime(
                     name=f"projects/{notebook_instance.project_id}/locations/"
-                    f"{notebook_instance.region}/instances/{notebook_instance.name}"
+                    f"{notebook_instance.region}/runtimes/{notebook_instance.name}"
                 )
                 deleted.result()
         else:
@@ -438,7 +438,7 @@ class ManagedNotebookService(BaseService):
         """
         exists = self._instance_exists(instance)
         if exists:
-            typer.echo(f"Instance {instance.name} already exists in location {instance.region}")
+            typer.echo(f"Managed notebook {instance.name} already exists in location {instance.region}")
             should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
             if should_recreate:
                 self._delete_one_instance(instance)
@@ -455,7 +455,7 @@ class ManagedNotebookService(BaseService):
             )  # .result() waits for compute engine behind the notebook to start
         with Spinner(text="Starting JupyterLab"):
             wait(
-                lambda: self._validate_jupyterlab_state(instance_full_name, Instance.State.ACTIVE),
+                lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
                 timeout_seconds=450,
                 sleep_seconds=20,
                 waiting_for="Starting JupyterLab in your instance",
@@ -488,7 +488,7 @@ class ManagedNotebookService(BaseService):
         Returns:
             True if exists, False if not
         """
-        full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
+        full_instance_name = f"projects/{instance.project_id}/locations/{instance.region}/runtimes/{instance.name}"
         return full_instance_name in self._list_running_instances(instance.project_id, instance.region)
 
     
@@ -531,7 +531,7 @@ class ManagedNotebookService(BaseService):
         try:
             instance_info = self.notebook_client.get_runtime(name=instance_id)
         except exceptions.NotFound:
-            raise exceptions.NotFound(f"Notebook {instance_id} was not found.") from None
+            raise exceptions.NotFound(f"Managed Notebook {instance_id} was not found.") from None
         return instance_info.state == state
 
     def _get_jupyterlab_link(self, instance_id: str) -> str:
@@ -560,7 +560,7 @@ class ManagedNotebookService(BaseService):
         """
         exists = self._instance_exists(notebook_instance)
         if not exists:
-            typer.echo(f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
+            typer.echo(f"Managed Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
             return
 
         bash_command = f"gcloud compute ssh \
@@ -589,18 +589,18 @@ class ManagedNotebookService(BaseService):
 
         """
         if instance_name == "all":
-            if len(self.config.runtimes) == 1:
-                self._ssh(self.config.runtimes[0], run_in_background, local_port)
-            elif len(self.config.runtimes) > 1:
-                Exception("You can connect to only one notebook at a time.")
+            if len(self.config.managed_notebooks) == 1:
+                self._ssh(self.config.managed_notebooks[0], run_in_background, local_port)
+            elif len(self.config.managed_notebooks) > 1:
+                Exception("You can connect to only one Managed notebook at a time.")
             else:
-                typer.secho("No notebook definition found in your YAML config.", fg=typer.colors.RED)
+                typer.secho("No Managed notebook definition found in your YAML config.", fg=typer.colors.RED)
         else:
-            if instance_name in [notebook.name for notebook in self.config.runtimes]:
+            if instance_name in [notebook.name for notebook in self.config.managed_notebooks]:
                 self._ssh(
-                    [notebook for notebook in self.config.runtimes if notebook.name == instance_name][0],
+                    [notebook for notebook in self.config.managed_notebooks if notebook.name == instance_name][0],
                     run_in_background,
                     local_port,
                 )
             else:
-                typer.secho(f"No notebook {instance_name} found", fg=typer.colors.RED)
+                typer.secho(f"No Managed notebook {instance_name} found", fg=typer.colors.RED)

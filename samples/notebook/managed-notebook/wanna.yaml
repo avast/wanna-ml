@@ -14,9 +14,3 @@ gcp_profiles:
 managed_notebooks:
   - name: jacek-managednotebook
     region: europe-west1
-  - name: managednotebook-1653
-    region: europe-west1
-
-notebooks:
-  - name: jacek-notebook
-    zone: europe-west1-c
