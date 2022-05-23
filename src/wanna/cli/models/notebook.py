@@ -68,3 +68,8 @@ class NotebookModel(BaseInstanceModel):
     network: Optional[Network]
     tensorboard_ref: Optional[str]
     _machine_type = validator("machine_type")(validators.validate_machine_type)
+
+class ManagedNotebookModel(BaseInstanceModel):
+
+    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
+    region: str

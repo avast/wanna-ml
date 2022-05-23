@@ -6,11 +6,15 @@ wanna_project:
 gcp_profiles:
   - profile_name: default
     project_id: cloud-lab-304213
-    zone: europe-west1-b
-    bucket: wanna-ml-west1-jh #Update the bucket, also below
+    zone: europe-west1-d
+    bucket: wanna-ml-west1-jh
     labels:
-    service_account: jacekhebdatest@cloud-lab-304213.iam.gserviceaccount.com #Update the service account, just here
+    service_account: jacekhebdatest@cloud-lab-304213.iam.gserviceaccount.com
 
-runtimes:
-  - runtime_id: first-wanna-runtime
+managed_notebooks:
+  - name: jacek-managed-notebook
     region: europe-west1
+
+notebooks:
+  - name: jacek-notebook
+    zone: europe-west1-b

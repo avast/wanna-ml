@@ -1,9 +1,8 @@
 import typer
 
 from .job.job_plugin import JobPlugin
-from .notebook.notebook_plugin import NotebookPlugin
+from .notebook.notebook_plugin import NotebookPlugin, ManagedNotebookPlugin
 from .pipeline.pipeline_plugin import PipelinePlugin
-from .runtime.runtime_plugin import RuntimePlugin
 from .tensorboard.tensorboard_plugin import TensorboardPlugin
 
 
@@ -16,7 +15,7 @@ class PluginRunner:
             ("job", JobPlugin()),
             ("notebook", NotebookPlugin()),
             ("tensorboard", TensorboardPlugin()),
-            ("runtime", RuntimePlugin()),
+            ("managed_notebook", ManagedNotebookPlugin()),
         ]
         for name, subcommand in typers:
             self.app.add_typer(subcommand.app, name=name)
