@@ -27,10 +27,10 @@ RUN wget -qO /tmp/miniconda.sh https://artifactory.ida.avast.com/artifactory/pac
 COPY config/.condarc /opt/miniconda/config/.condarc
 ENV CONDARC /opt/miniconda/config/.condarc
 
-RUN conda create -n bi-builder python=3.8
+RUN conda create -n ci-builder python=3.8
 
 RUN eval "$(conda shell.bash hook)" \
-    && conda activate bi-builder \
+    && conda activate ci-builder \
     && pip install --upgrade wanna-ml
 
 # Credentials entrypoint
