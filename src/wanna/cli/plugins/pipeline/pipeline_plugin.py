@@ -74,7 +74,9 @@ class PipelinePlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "run"),
     ) -> None:
-        if file:
+        if manifest:
+            PipelineService.run([manifest], extra_params_path=params, sync=sync)
+        elif file:
             config = load_config_from_yaml(file, gcp_profile_name=profile_name)
             aiplatform.init(project=config.gcp_profile.project_id, location=config.gcp_profile.region)
             workdir = pathlib.Path(file).parent
@@ -83,8 +85,6 @@ class PipelinePlugin(BasePlugin):
             manifests = pipeline_service.push(pipelines, version, local=True)
             manifest_paths = [str(wanna_manifest) for wanna_manifest, _ in manifests]
             PipelineService.run(manifest_paths, extra_params_path=params, sync=sync)
-        elif manifest:
-            PipelineService.run([manifest], extra_params_path=params, sync=sync)
         else:
             typer.echo(message="wanna pipeline run expects --file or --manifest", err=True)
             exit(1)
