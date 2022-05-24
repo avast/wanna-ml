@@ -117,19 +117,10 @@ conda create -n wanna python=3.8 poetry nomkl
 poetry install
 
 # Run the cli during dev
-poetry run wanna
+wanna version
 
-# Run tests with pytest
-poetry run pytest
-
-# Install precommit hooks for code quality checks
-poetry run pre-commit install
-
-# Check all is good in paradise - pylint, isort, mypy, 
-poetry run task build
-
-# Activate poetry venv for commiting work
-poetry shell
+# Check all is good in paradise - pylint, isort, mypy, tests
+task build
 
 ```
 
@@ -144,12 +135,12 @@ issues sometimes.
 If you have changed the sphinx documentation or docstrings of plugins, you must
 generate the HTML documentation from source. You can use the `task` plugin:
 ```bash
-	$ poetry run task docs-serve
+task docs-serve
 ```
 
 Alternatively if you want to see docs in localhost before pushing
 ```bash
-	$ poetry run task docs-deploy
+task docs-deploy
 ```
 
 ## Reading

@@ -88,7 +88,7 @@ ignore_missing_imports = true
 ignore_missing_imports = true
 
 [tool.pylint]
-ignore-patterns="**/templates/**"
+ignore-patterns="src/**/templates/**"
 
 [tool.pylint.'MESSAGES CONTROL']
 extension-pkg-whitelist = "pydantic"
