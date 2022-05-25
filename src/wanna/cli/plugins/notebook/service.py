@@ -1,12 +1,14 @@
 import subprocess
 from pathlib import Path
 from typing import List, Optional
+from requests import request
 
 import typer
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v1.services.managed_notebook_service import ManagedNotebookServiceClient
-from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage, Runtime
+from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage
+from google.cloud.notebooks_v1.types import Runtime, RuntimeAccessConfig, Runtime, CreateRuntimeRequest 
 from waiting import wait
 
 from wanna.cli.docker.service import DockerService
@@ -372,11 +374,10 @@ class ManagedNotebookService(BaseService):
         self,
         config: WannaConfigModel,
         workdir: Path,
-        owner: Optional[str] = None,
         version: str = "dev",
     ):
         super().__init__(
-            instance_type="managed_notebook",
+            instance_type="managed-notebook",
             instance_model=ManagedNotebookModel,
         )
         self.version = version
@@ -396,8 +397,6 @@ class ManagedNotebookService(BaseService):
             if config.docker
             else None
         )
-
-        self.owner = owner
         self.tensorboard_service = TensorboardService(config=config)
 
 
@@ -444,11 +443,21 @@ class ManagedNotebookService(BaseService):
                 self._delete_one_instance(instance)
             else:
                 return
+
+        runtimeAccessConfig = RuntimeAccessConfig(
+            access_type = RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER,
+            runtime_owner = instance.owner
+        )
+        runtime = Runtime(access_config = runtimeAccessConfig)
+        request = CreateRuntimeRequest(
+            parent=f'projects/{instance.project_id}/locations/{instance.region}',
+            runtime_id=instance.name,
+            runtime=runtime
+        )
+
         with Spinner(text=f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_runtime(
-                parent=f'projects/{instance.project_id}/locations/{instance.region}',
-                runtime_id=instance.name,
-                runtime=Runtime()
+                request = request
             )
             instance_full_name = (
                 nb_instance.result().name
@@ -544,7 +553,7 @@ class ManagedNotebookService(BaseService):
             proxy_uri: link to jupyterlab
         """
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
-        return f"https://{instance_info.proxy_uri}"
+        return f"https://{instance_info.access_config.proxy_uri}"
 
     def _ssh(self, notebook_instance: ManagedNotebookModel, run_in_background: bool, local_port: int) -> None:
         """
@@ -604,3 +613,28 @@ class ManagedNotebookService(BaseService):
                 )
             else:
                 typer.secho(f"No Managed notebook {instance_name} found", fg=typer.colors.RED)
+
+    def _return_diff(self):
+        active_runtimes = self._list_running_instances(self.config.gcp_profile.project_id, location='europe-west1')
+        to_be_deleted = []
+        to_be_created = []
+        """
+        Notebooks to be deleted
+        """
+        for notebook in active_runtimes:
+            if notebook not in self.config.managed_notebooks:
+                print(notebook)
+                to_be_deleted.append(notebook)
+        """
+        Notebooks to be created
+        """
+        for notebook in self.config.managed_notebooks:
+            if notebook.name not in active_runtimes:
+                print(notebook.name)
+                to_be_created.append(notebook)
+        
+        return to_be_deleted, to_be_created
+
+    def sync(self):
+        self._return_diff()
+

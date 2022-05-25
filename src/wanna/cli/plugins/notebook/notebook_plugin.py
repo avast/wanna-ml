@@ -6,8 +6,7 @@ import typer
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
-from wanna.cli.plugins.notebook.service import NotebookService
-from wanna.cli.plugins.notebook.service import ManagedNotebookService
+from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
@@ -111,6 +110,7 @@ class ManagedNotebookPlugin(BasePlugin):
                 self.delete,
                 self.create,
                 self.ssh,
+                self.sync
             ]
         )
 
@@ -132,8 +132,7 @@ class ManagedNotebookPlugin(BasePlugin):
     def create(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("managed_notebook", "create"),
-        owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
+        instance_name: str = instance_name_option("managed_notebook", "create")
     ) -> None:
         """
         Create a Managed Workbench Notebook.
@@ -145,7 +144,7 @@ class ManagedNotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        nb_service = ManagedNotebookService(config=config, workdir=workdir, owner=owner)
+        nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.create(instance_name)
 
     @staticmethod
@@ -186,3 +185,21 @@ class ManagedNotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.ssh(instance_name, run_in_background, local_port)
+
+    @staticmethod
+    def sync(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+    ) -> None:
+        """
+        Synchronize existing Managed Notebooks with wanna.yaml
+
+        1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
+        2. Does a diff between what is on GCP and what is on yaml
+        3. Create the ones defined in yaml and missing in GCP
+        4. Delete the ones in GCP that are not in wanna.yaml
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = ManagedNotebookService(config=config, workdir=workdir)
+        nb_service.sync()
