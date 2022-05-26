@@ -110,7 +110,7 @@ class ManagedNotebookPlugin(BasePlugin):
                 self.delete,
                 self.create,
                 self.ssh,
-                self.sync
+                #self.sync
             ]
         )
 
@@ -186,20 +186,20 @@ class ManagedNotebookPlugin(BasePlugin):
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.ssh(instance_name, run_in_background, local_port)
 
-    @staticmethod
-    def sync(
-        file: Path = wanna_file_option,
-        profile_name: str = profile_name_option,
-    ) -> None:
-        """
-        Synchronize existing Managed Notebooks with wanna.yaml
+    # @staticmethod
+    # def sync(
+    #     file: Path = wanna_file_option,
+    #     profile_name: str = profile_name_option,
+    # ) -> None:
+    #     """
+    #     Synchronize existing Managed Notebooks with wanna.yaml
 
-        1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
-        2. Does a diff between what is on GCP and what is on yaml
-        3. Create the ones defined in yaml and missing in GCP
-        4. Delete the ones in GCP that are not in wanna.yaml
-        """
-        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
-        workdir = pathlib.Path(file).parent.resolve()
-        nb_service = ManagedNotebookService(config=config, workdir=workdir)
-        nb_service.sync()
+    #     1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
+    #     2. Does a diff between what is on GCP and what is on yaml
+    #     3. Create the ones defined in yaml and missing in GCP
+    #     4. Delete the ones in GCP that are not in wanna.yaml
+    #     """
+    #     config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+    #     workdir = pathlib.Path(file).parent.resolve()
+    #     nb_service = ManagedNotebookService(config=config, workdir=workdir)
+    #     nb_service.sync()

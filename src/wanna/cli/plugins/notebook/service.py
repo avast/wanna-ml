@@ -567,9 +567,9 @@ class ManagedNotebookService(BaseService):
         Returns:
 
         """
-        exists = self._instance_exists(notebook_instance)
+        exists = NotebookService._instance_exists(notebook_instance)
         if not exists:
-            typer.echo(f"Managed Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
+            typer.echo(f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
             return
 
         bash_command = f"gcloud compute ssh \
@@ -599,7 +599,18 @@ class ManagedNotebookService(BaseService):
         """
         if instance_name == "all":
             if len(self.config.managed_notebooks) == 1:
-                self._ssh(self.config.managed_notebooks[0], run_in_background, local_port)
+                model = self.config.managed_notebooks[0]
+                runtime_name = f"projects/{model.project_id}/locations/{model.region}/runtimes/{model.name}"
+                runtime = self.notebook_client.get_runtime(name = runtime_name)
+                if runtime.state != Runtime.State.ACTIVE:
+                    with Spinner(text=f"Starting compute engine for {model.name}"):
+                        operation = self.notebook_client.start_runtime(name = runtime_name)
+                        response = operation.result()
+                        print(response)
+                instance = runtime.virtual_machine
+                print(instance.instance_name)
+                print("=======================================")
+                self._ssh(instance, run_in_background, local_port)
             elif len(self.config.managed_notebooks) > 1:
                 Exception("You can connect to only one Managed notebook at a time.")
             else:
@@ -614,27 +625,28 @@ class ManagedNotebookService(BaseService):
             else:
                 typer.secho(f"No Managed notebook {instance_name} found", fg=typer.colors.RED)
 
-    def _return_diff(self):
-        active_runtimes = self._list_running_instances(self.config.gcp_profile.project_id, location='europe-west1')
-        to_be_deleted = []
-        to_be_created = []
-        """
-        Notebooks to be deleted
-        """
-        for notebook in active_runtimes:
-            if notebook not in self.config.managed_notebooks:
-                print(notebook)
-                to_be_deleted.append(notebook)
-        """
-        Notebooks to be created
-        """
-        for notebook in self.config.managed_notebooks:
-            if notebook.name not in active_runtimes:
-                print(notebook.name)
-                to_be_created.append(notebook)
+    # def _return_diff(self):
+    #     active_runtimes = self._list_running_instances(self.config.gcp_profile.project_id, location='europe-west1')
+    #     to_be_deleted = []
+    #     to_be_created = []
+    #     """
+    #     Notebooks to be deleted
+    #     """
+    #     for notebook in active_runtimes:
+    #         if notebook not in self.config.managed_notebooks:
+    #             print(notebook)
+    #             to_be_deleted.append(notebook)
+    #     """
+    #     Notebooks to be created
+    #     """
+    #     for notebook in self.config.managed_notebooks:
+    #         if notebook.name not in active_runtimes:
+    #             print(notebook.name)
+    #             to_be_created.append(notebook)
         
-        return to_be_deleted, to_be_created
+    #     return to_be_deleted, to_be_created
 
-    def sync(self):
-        self._return_diff()
+    # def sync(self):
+    #     self._return_diff()
+
 

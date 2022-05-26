@@ -6,13 +6,10 @@ wanna_project:
 gcp_profiles:
   - profile_name: default
     project_id: cloud-lab-304213
-    zone: europe-west1-c
+    zone: europe-west1-b
     bucket: wanna-ml-west1-jh
 
 managed_notebooks:
   - name: jacek-notebook
     region: europe-west1
     owner: jacek.hebda@avast.com
-  - name: joao-notebook
-    region: europe-west1
-    owner: joao.silva1@avast.com
