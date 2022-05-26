@@ -20,6 +20,7 @@ app = runner.app
 
 class WannaRepositoryTemplate(str, Enum):
     sklearn = "sklearn"
+    blank = "blank"
 
 
 @app.command(name="version")
@@ -45,7 +46,8 @@ def init(
     ),
 ):
     repository_templates = {
-        WannaRepositoryTemplate.sklearn.value: "https://git.int.avast.com/bds/wanna-ml-cookiecutter"
+        WannaRepositoryTemplate.sklearn.value: "https://git.int.avast.com/bds/wanna-ml-cookiecutter",
+        WannaRepositoryTemplate.blank.value: "https://git.int.avast.com/mlops/wanna-blank-cookiecutter",
     }
     repository_template_url = repository_templates.get(template)
     result_dir = cookiecutter(repository_template_url, output_dir=output_dir)
