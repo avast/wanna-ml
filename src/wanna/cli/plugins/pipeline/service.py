@@ -1,28 +1,35 @@
 import atexit
 import json
 import os
-import zipfile
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import pandas as pd
 from caseconverter import kebabcase, snakecase
-from google.api_core.exceptions import NotFound
-from google.cloud import aiplatform, scheduler_v1
+from google.cloud import aiplatform
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
-from google.cloud.functions_v1.services.cloud_functions_service import CloudFunctionsServiceClient
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 from smart_open import open
 
+from wanna.cli.deployment import deploy
+from wanna.cli.deployment.models import (
+    CloudFunctionResource,
+    CloudSchedulerResource,
+    ContainerArtifact,
+    JsonArtifact,
+    PathArtifact,
+    PushMode,
+    PushTask,
+)
+from wanna.cli.deployment.push import PushResult, push
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import DockerImageModel, ImageBuildType
-from wanna.cli.models.pipeline import PipelineDeployment, PipelineMeta, PipelineModel
+from wanna.cli.models.docker import DockerBuildResult, DockerImageModel, ImageBuildType
+from wanna.cli.models.pipeline import PipelineDeployment, PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.utils import templates
 from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
@@ -33,7 +40,7 @@ def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool,
     def stop_pipeline_job():
         if sync and pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
             spinner.fail(
-                f"detected exit signal, "
+                "detected exit signal, "
                 f"shutting down running pipeline {pipeline_name} "
                 f"at {pipeline_job._dashboard_uri()}."
             )
@@ -51,11 +58,11 @@ class PipelineService(BaseService):
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_profile.bucket
         self.config = config
-        self.pipeline_store: Dict[str, Dict[str, Any]] = {}
         self.workdir = workdir
         self.pipelines_build_dir = self.workdir / "build" / "pipelines"
         self.tensorboard_service = TensorboardService(config=config)
         os.makedirs(self.pipelines_build_dir, exist_ok=True)
+        self.version = version
         self.docker_service = DockerService(
             docker_model=config.docker,
             gcp_profile=config.gcp_profile,
@@ -65,7 +72,7 @@ class PipelineService(BaseService):
             quick_mode=quick_mode,
         )
 
-    def build(self, instance_name: str) -> List[Tuple[PipelineMeta, Path]]:
+    def build(self, instance_name: str) -> List[Path]:
         """
         Create an instance with name "name" based on wanna-ml config.
         Args:
@@ -80,52 +87,62 @@ class PipelineService(BaseService):
 
         return compiled
 
-    def push(
-        self, pipelines: List[Tuple[PipelineMeta, Path]], version: str, local: bool = False
-    ) -> List[Tuple[str, str]]:
+    def push(self, manifests: List[Path], local: bool = False, mode: PushMode = PushMode.all) -> PushResult:
+        return push(self.docker_service, manifests, self._prepare_push, self.version, local, mode)
 
-        results = []
-        for (pipeline_meta, manifest_path) in pipelines:
+    def _prepare_push(self, pipelines: List[Path], version: str, local: bool = False) -> List[PushTask]:
+
+        push_tasks = []
+        for manifest_path in pipelines:
             manifest = PipelineService.read_manifest(str(manifest_path))
+            json_artifacts = []
+            manifest_artifacts = []
+            container_artifacts = []
 
-            with Spinner(text=f"Pushing pipeline {manifest.pipeline_name}") as s:
+            with Spinner(text=f"Pushing pipeline {manifest.pipeline_name}"):
 
                 # Push containers
-                for (model, image, tags) in pipeline_meta.images:
-                    if model.build_type != ImageBuildType.provided_image:
-                        self.docker_service.push_image(image or tags, quiet=True)
+                for ref in manifest.docker_refs:
+                    if ref.build_type != ImageBuildType.provided_image:
+                        container_artifacts.append(ContainerArtifact(title=ref.name, tags=ref.tags))
 
-                # upload manifests
+                # Prepare manifest paths
                 pipeline_dir_path = self.pipelines_build_dir / f"{manifest.pipeline_name}"
                 pipeline_dir = str(pipeline_dir_path)
-                pipeline_json_spec_path = str(pipeline_dir_path / "pipeline_spec.json")
+                pipeline_json_spec_path = manifest.json_spec_path
 
                 deployment_bucket = f"{manifest.pipeline_root}/deployment/release/{version}"
 
                 if local:
-                    os.makedirs(deployment_bucket, exist_ok=True)
+                    os.makedirs(deployment_bucket.replace("gs://", pipeline_dir), exist_ok=True)
 
                 target_manifest = str(manifest_path).replace(pipeline_dir, deployment_bucket)
                 target_json_spec_path = pipeline_json_spec_path.replace(pipeline_dir, deployment_bucket)
+
                 manifest.json_spec_path = target_json_spec_path
 
-                s.info(f"Uploading wanna running manifest to {target_manifest}")
-                with open(target_manifest, "w") as f:
-                    f.write(manifest.json())
-
-                s.info(f"Uploading vertex ai pipeline spec to {target_json_spec_path}")
-                with open(pipeline_json_spec_path, "r") as fin:
-                    with open(target_json_spec_path, "w") as fout:
-                        fout.write(fin.read())
-
-                results.append(
-                    (
-                        target_manifest,
-                        target_json_spec_path,
+                json_artifacts.append(
+                    JsonArtifact(
+                        title="WANNA pipeline manifest", json_body=manifest.dict(), destination=target_manifest
+                    )
+                )
+                manifest_artifacts.append(
+                    PathArtifact(
+                        title="Kubeflow V2 pipeline spec",
+                        source=str(pipeline_json_spec_path),
+                        destination=manifest.json_spec_path,
                     )
                 )
 
-        return results
+                push_tasks.append(
+                    PushTask(
+                        manifest_artifacts=manifest_artifacts,
+                        container_artifacts=container_artifacts,
+                        json_artifacts=json_artifacts,
+                    )
+                )
+
+        return push_tasks
 
     def deploy(self, instance_name: str, version: str, env: str):
 
@@ -135,21 +152,49 @@ class PipelineService(BaseService):
                 pipeline_root = self._make_pipeline_root(pipeline.bucket, pipeline.name)
                 deployment_manifest_path = f"{pipeline_root}/deployment/release/{version}/wanna_manifest.json"
                 manifest = PipelineService.read_manifest(deployment_manifest_path)
-                parent = f"projects/{manifest.project}/locations/{manifest.location}"
-                function = self._upsert_cloud_function(
-                    parent=parent, manifest=manifest, pipeline_root=pipeline_root, env=env, version=version, spinner=s
+
+                function = deploy.upsert_cloud_function(
+                    resource=CloudFunctionResource(
+                        name=manifest.pipeline_name,
+                        project=manifest.project,
+                        location=manifest.location,
+                        service_account=manifest.schedule.service_account
+                        if manifest.schedule and manifest.schedule.service_account
+                        else manifest.service_account,
+                        build_dir=self.pipelines_build_dir,
+                        resource_root=pipeline_root,
+                        resource_function_template="scheduler_cloud_function.py",
+                        resource_requirements_template="scheduler_cloud_function_requirements.txt",
+                        template_vars=manifest.dict(),
+                        labels=manifest.labels,
+                    ),
+                    env=env,
+                    version=version,
+                    spinner=s,
                 )
 
                 if manifest.schedule:
-                    self._upsert_cloud_scheduler(
+                    pipeline_spec_path = f"{pipeline_root}/deployment/release/{version}/pipeline_spec.json"
+                    body = {
+                        "pipeline_spec_uri": pipeline_spec_path,
+                        "parameter_values": manifest.parameter_values,
+                    }  # TODO extend with execution_date(now) ?
+
+                    deploy.upsert_cloud_scheduler(
                         function=function,
-                        parent=parent,
-                        manifest=manifest,
-                        pipeline_root=pipeline_root,
+                        resource=CloudSchedulerResource(
+                            name=manifest.pipeline_name,
+                            project=manifest.project,
+                            location=manifest.location,
+                            body=body,
+                            cloud_scheduler=manifest.schedule,
+                            service_account=manifest.service_account,
+                        ),
                         env=env,
                         version=version,
                         spinner=s,
                     )
+
                 else:
                     s.warn("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
 
@@ -180,6 +225,7 @@ class PipelineService(BaseService):
                 override_params = load_yaml_path(extra_params_path, Path(".")) if extra_params_path else {}
                 pipeline_params = {**manifest.parameter_values, **override_params}
 
+                # Select service account for pipeline job
                 service_account = service_account or manifest.service_account
 
                 # Define Vertex AI Pipeline job
@@ -232,7 +278,6 @@ class PipelineService(BaseService):
         }
 
         if pipeline_instance.tensorboard_ref:
-
             pipeline_env_params["tensorboard"] = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                 pipeline_instance.tensorboard_ref
             )
@@ -258,7 +303,7 @@ class PipelineService(BaseService):
 
         return pipeline_env_params, pipeline_compile_params
 
-    def _compile_one_instance(self, pipeline_instance: PipelineModel) -> Tuple[PipelineMeta, Path]:
+    def _compile_one_instance(self, pipeline_instance: PipelineModel) -> Path:
 
         image_tags = []
         if pipeline_instance.docker_image_ref:
@@ -290,174 +335,34 @@ class PipelineService(BaseService):
                 use_experimental=False,
             )
 
-            # Update pipeline store with computed metadata
-            compiled_pipeline_meta = {
-                "pipeline_json_spec_path": pipeline_json_spec_path,
-                "pipeline_instance": pipeline_instance,
-                "image_tags": image_tags,
-                "pipeline_parameters": pipeline_params,
-                "pipeline_env_params": pipeline_env_params,
-            }
-
-            self.pipeline_store.update({f"{pipeline_instance.name}": compiled_pipeline_meta})
-
-            pipeline_meta = PipelineMeta(
-                json_spec_path=pipeline_json_spec_path,
-                config=pipeline_instance,
-                images=image_tags,
-                parameter_values=pipeline_params,
-                compile_env_params=pipeline_env_params,
-            )
+            docker_refs = [
+                DockerBuildResult(
+                    name=model.name,
+                    tags=image.repo_tags if image and image.repo_tags else [tag],
+                    build_type=model.build_type,
+                )
+                for model, image, tag in image_tags
+            ]
 
             deployment_manifest = PipelineDeployment(
-                pipeline_name=pipeline_meta.config.name,
-                json_spec_path=str(pipeline_meta.json_spec_path),
-                parameter_values=pipeline_meta.parameter_values,
+                pipeline_name=pipeline_instance.name,
+                json_spec_path=str(pipeline_json_spec_path),
+                parameter_values=pipeline_params,
                 enable_caching=True,
-                labels=pipeline_meta.config.labels,
-                project=pipeline_meta.config.project_id,
-                location=pipeline_meta.config.region,
-                service_account=pipeline_meta.config.service_account,
+                labels=pipeline_instance.labels,
+                project=pipeline_instance.project_id,
+                location=pipeline_instance.region,
+                service_account=pipeline_instance.service_account,
                 pipeline_root=pipeline_env_params.get("pipeline_root"),
-                schedule=pipeline_meta.config.schedule,
+                schedule=pipeline_instance.schedule,
+                docker_refs=docker_refs,
+                compile_env_params=pipeline_env_params,
             )
 
             manifest_path = pipeline_dir / "wanna_manifest.json"
             PipelineService.write_manifest(deployment_manifest, manifest_path)
 
-            return (
-                pipeline_meta,
-                manifest_path,
-            )
-
-    @staticmethod
-    def _is_gcs_path(path: str):
-        return path.startswith("gs://")
-
-    def _upsert_cloud_function(
-        self, parent: str, manifest: PipelineDeployment, pipeline_root: str, version: str, env: str, spinner: Spinner
-    ) -> Tuple[str, str]:
-
-        spinner.info(f"Deploying {manifest.pipeline_name} cloud function with version {version} to env {env}")
-        pipeline_functions_dir = self.pipelines_build_dir / manifest.pipeline_name / "functions"
-        os.makedirs(pipeline_functions_dir, exist_ok=True)
-        local_functions_package = pipeline_functions_dir / "package.zip"
-        functions_gcs_path_dir = f"{pipeline_root}/deployment/release/{version}/functions"
-        functions_gcs_path = f"{functions_gcs_path_dir}/package.zip"
-        function_name = f"{manifest.pipeline_name}-{env}"
-        function_path = f"{parent}/functions/{function_name}"
-
-        cloud_function = templates.render_template(
-            Path("scheduler_cloud_function.py"),
-            manifest=dict(manifest),
-            labels=json.dumps(manifest.labels, separators=(",", ":")),
-        )
-
-        requirements = templates.render_template(
-            Path("scheduler_cloud_function_requirements.txt"), manifest=dict(manifest)
-        )
-
-        with zipfile.ZipFile(local_functions_package, "w") as z:
-            z.writestr("main.py", cloud_function)
-            z.writestr("requirements.txt", requirements)
-
-        if not self._is_gcs_path(functions_gcs_path_dir):
-            os.makedirs(functions_gcs_path_dir, exist_ok=True)
-
-        self._sync_cloud_function_package(str(local_functions_package), functions_gcs_path)
-
-        cf = CloudFunctionsServiceClient()
-        function_url = f"https://{manifest.project}-{manifest.location}.cloudfunctions.net/{function_name}"
-        function = {
-            "name": function_path,
-            "description": f"wanna {manifest.pipeline_name} function for {env} pipeline",
-            "source_archive_url": functions_gcs_path,
-            "entry_point": "process_request",
-            "runtime": "python39",
-            "https_trigger": {
-                "url": function_url,
-            },
-            "service_account_email": manifest.schedule.service_account or manifest.service_account,
-            "labels": manifest.labels,
-            # TODO: timeout
-            # TODO: environment_variables
-        }
-
-        try:
-            cf.get_function({"name": function_path})
-            cf.update_function({"function": function}).result()
-            return (
-                function_path,
-                function_url,
-            )
-        except NotFound:
-            cf.create_function({"location": parent, "function": function}).result()
-            return (
-                function_path,
-                function_url,
-            )
-
-    @staticmethod
-    def _sync_cloud_function_package(local_functions_package: str, functions_gcs_path: str):
-        with open(local_functions_package, "rb") as f:
-            with open(functions_gcs_path, "wb") as fout:
-                fout.write(f.read())
-
-    @staticmethod
-    def _upsert_cloud_scheduler(
-        function: Tuple[str, str],
-        parent: str,
-        manifest: PipelineDeployment,
-        pipeline_root: str,
-        version: str,
-        env: str,
-        spinner: Spinner,
-    ) -> None:
-        client = scheduler_v1.CloudSchedulerClient()
-        pipeline_spec_path = f"{pipeline_root}/deployment/release/{version}/pipeline_spec.json"
-        job_name = f"{parent}/jobs/{manifest.pipeline_name}-{env}"
-        function_name, function_url = function
-
-        spinner.info(f"Deploying {manifest.pipeline_name} cloud scheduler with version {version} to env {env}")
-        body = {
-            "pipeline_spec_uri": pipeline_spec_path,
-            "parameter_values": manifest.parameter_values,
-        }  # TODO extend with execution_date(now) ?
-
-        http_target = {
-            "uri": function_url,
-            "body": json.dumps(body, separators=(",", ":")).encode(),
-            "headers": {
-                "Content-Type": "application/octet-stream",
-                "User-Agent": "Google-Cloud-Scheduler",
-                "Wanna-Pipeline-Version": version,
-            },
-            "oidc_token": {
-                "service_account_email": manifest.schedule.service_account or manifest.service_account,
-                # required scope https://developers.google.com/identity/protocols/oauth2/scopes#cloudfunctions
-                # "scope": "https://www.googleapis.com/auth/cloud-platform"
-            },
-        }
-
-        job = {
-            "name": job_name,
-            "description": f"wanna {manifest.pipeline_name} scheduler for  {env} pipeline",
-            "http_target": http_target,
-            "schedule": manifest.schedule.cron,
-            "time_zone": manifest.schedule.timezone,
-            # TODO: "retry_config"
-            # "attempt_deadline"
-        }
-
-        try:
-            job = client.get_job({"name": job_name})
-            spinner.info(f"Found {job.name} cloud scheduler job")
-            spinner.info(f"Updating {job.name} cloud scheduler job")
-            client.update_job({"job": job})
-        except NotFound:
-            # Does not exist let's create it
-            spinner.info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
-            client.create_job({"parent": parent, "job": job})
+            return manifest_path
 
     @staticmethod
     def _make_pipeline_root(bucket: str, pipeline_name: str):

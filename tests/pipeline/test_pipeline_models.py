@@ -3,13 +3,13 @@ import unittest
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from wanna.cli.models.pipeline import PipelineScheduleModel
+from wanna.cli.models.cloud_scheduler import CloudSchedulerModel
 
 
 class TestPipelineModel(unittest.TestCase):
     def test_pipeline_schedule_incorrect_value(self):
         with pytest.raises(ValidationError):
-            _ = PipelineScheduleModel.parse_obj(
+            _ = CloudSchedulerModel.parse_obj(
                 {
                     "cron": "bad cron schedule",
                 }
@@ -17,7 +17,7 @@ class TestPipelineModel(unittest.TestCase):
 
     def test_pipeline_schedule_correct_value(self):
         try:
-            _ = PipelineScheduleModel.parse_obj(
+            _ = CloudSchedulerModel.parse_obj(
                 {
                     "cron": "0 3 * * *",
                 }

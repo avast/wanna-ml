@@ -18,7 +18,10 @@ from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from google.protobuf.json_format import MessageToDict
 from smart_open import open
 
+from wanna.cli.deployment.models import ContainerArtifact, PathArtifact, PushMode, PushTask
+from wanna.cli.deployment.push import PushResult, push
 from wanna.cli.docker.service import DockerService
+from wanna.cli.models.docker import ImageBuildType
 from wanna.cli.models.training_custom_job import (
     CustomContainerTrainingJobManifest,
     CustomJobManifest,
@@ -321,7 +324,15 @@ class JobService(BaseService):
 
         return built_instances
 
-    def push(self, manifests: List[Tuple[Path, JobManifest]], local: bool = False) -> List[str]:
+    def push(
+        self, manifests: List[Tuple[Path, JobManifest]], local: bool = False, mode: PushMode = PushMode.all
+    ) -> Tuple[List[str], PushResult]:
+        manifest_paths = [str(manifest_path) for manifest_path, _ in manifests]
+        return manifest_paths, push(self.docker_service, manifests, self._prepare_push, self.version, local, mode)
+
+    def _prepare_push(
+        self, manifests: List[Tuple[Path, JobManifest]], version: str, local: bool = False
+    ) -> List[PushTask]:
         """
         Completes the build process buy pushing docker images and pushing manifest files to
         GCS for future execution
@@ -333,33 +344,39 @@ class JobService(BaseService):
             paths to gs:// paths where the manifests were pushed
         """
 
-        pushed_manifests = []
+        push_tasks = []
         for manifest_path, manifest in manifests:
             loaded_manifest = _read_job_manifest(manifest_path)
+            manifest_artifacts = []
+            container_artifacts = []
 
-            with Spinner(text=f"Pushing job manifest {manifest.job_config.name}") as s:
+            with Spinner(text=f"Preparing job manifest {manifest.job_config.name}"):
 
                 for docker_image_ref in loaded_manifest.image_refs:
-                    self.docker_service.push_image_ref(docker_image_ref)
+                    model, image, tag = self.docker_service.get_image(docker_image_ref)
+                    if model.build_type != ImageBuildType.provided_image:
+                        tags = image.repo_tags if image and image.repo_tags else [tag]
+                        container_artifacts.append(ContainerArtifact(title=model.name, tags=tags))
+
+                gcs_manifest_path = _make_gcs_manifest_path(self.config.gcp_profile.bucket, manifest.job_config.name)
+                deployment_dir = f"{gcs_manifest_path}/deployment/release/{version}"
 
                 if local:
-                    deployment_dir = f"{manifest_path.parent}/deployment/release/{self.version}"
+                    deployment_dir = f"{manifest_path.parent}/deployment/release/{version}"
                     os.makedirs(deployment_dir, exist_ok=True)
-                else:
-                    gcs_manifest_path = _make_gcs_manifest_path(
-                        self.config.gcp_profile.bucket, manifest.job_config.name
-                    )
-                    deployment_dir = f"{gcs_manifest_path}/deployment/release/{self.version}"
 
                 target_manifest_path = f"{deployment_dir}/job-manifest.json"
+                manifest_artifacts.append(
+                    PathArtifact(
+                        title=f"{loaded_manifest.job_config.name} job manifest",
+                        source=manifest_path,
+                        destination=target_manifest_path,
+                    )
+                )
 
-                with open(target_manifest_path, "w") as f:
-                    f.write(manifest.json())
+                push_tasks.append(PushTask(containers=container_artifacts, manifests=manifest_artifacts))
 
-                s.info(f"Pushed wanna job manifest to {target_manifest_path}")
-                pushed_manifests.append(target_manifest_path)
-
-        return pushed_manifests
+        return push_tasks
 
     @staticmethod
     def run(

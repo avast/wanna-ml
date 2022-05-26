@@ -58,8 +58,8 @@ class JobPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version)
         jobs = job_service.build(instance_name)
-        manifests = job_service.push(jobs, local=True)
-        JobService.run(manifests, sync=sync)
+        manifest_paths, _ = job_service.push(jobs, local=True)
+        JobService.run(manifest_paths, sync=sync)
 
     @staticmethod
     def run_manifest(
