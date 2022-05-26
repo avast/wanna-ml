@@ -30,9 +30,71 @@ from wanna.cli.models.pipeline import PipelineDeployment, PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.cli.utils.gcp.gcp import is_gcs_path
 from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
+
+
+class PipelinePaths:
+
+    json_spec_filename = "pipeline-spec.json"
+    wanna_manifest_filename = "wanna-manifest.json"
+
+    def __init__(self, workdir: Path, bucket: str, pipeline_name: str):
+        self.pipeline_name = pipeline_name
+        self.workdir = workdir
+        self.bucket = bucket
+        self.pipelines_dir = (workdir / "build").resolve()
+        self.local_pipeline_path = self._get_pipeline_path(str(self.pipelines_dir), pipeline_name)
+        self.gcs_pipeline_path = self._get_pipeline_path(self.bucket, pipeline_name)
+
+    def _get_pipeline_path(self, base_path: str, pipeline_name: str):
+        if not is_gcs_path(base_path):
+            os.makedirs(base_path, exist_ok=True)
+        return f"{base_path}/wanna-pipelines/{kebabcase(pipeline_name).lower()}"
+
+    def _get_pipeline_deployment_path(self, base_path: str, version: str):
+        path = f"{base_path}/deployment/{version}"
+        if not is_gcs_path(path):
+            os.makedirs(path, exist_ok=True)
+        return path
+
+    def _get_pipeline_manifests_path(self, base_path: str, version: str):
+        path = f"{base_path}/deployment/{version}/manifests"
+        if not is_gcs_path(path):
+            os.makedirs(path, exist_ok=True)
+        return path
+
+    def get_local_pipeline_manifest_path(self, version: str):
+        return self._get_pipeline_manifests_path(self.local_pipeline_path, version)
+
+    def get_gcs_pipeline_manifest_path(self, version: str):
+        return self._get_pipeline_manifests_path(self.gcs_pipeline_path, version)
+
+    def get_local_pipeline_deployment_path(self, version: str):
+        return self._get_pipeline_deployment_path(self.local_pipeline_path, version)
+
+    def get_gcs_pipeline_deployment_path(self, version: str):
+        return self._get_pipeline_deployment_path(self.gcs_pipeline_path, version)
+
+    def get_local_pipeline_json_spec_path(self, version: str):
+        return f"{self.get_local_pipeline_manifest_path(version)}/{self.json_spec_filename}"
+
+    def get_gcs_pipeline_json_spec_path(self, version: str):
+        return f"{self.get_gcs_pipeline_manifest_path(version)}/{self.json_spec_filename}"
+
+    def get_local_wanna_manifest_path(self, version: str):
+        return f"{self.get_local_pipeline_manifest_path(version)}/{self.wanna_manifest_filename}"
+
+    def get_gcs_wanna_manifest_path(self, version: str):
+        return f"{self.get_gcs_pipeline_manifest_path(version)}/{self.wanna_manifest_filename}"
+
+    def get_gcs_pipeline_root(self):
+        return f"{self.gcs_pipeline_path}/executions/"
+
+    def get_local_pipeline_root(self):
+        return f"{self.local_pipeline_path}/executions/"
 
 
 def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:
@@ -59,9 +121,7 @@ class PipelineService(BaseService):
         self.bucket_name = config.gcp_profile.bucket
         self.config = config
         self.workdir = workdir
-        self.pipelines_build_dir = self.workdir / "build" / "pipelines"
         self.tensorboard_service = TensorboardService(config=config)
-        os.makedirs(self.pipelines_build_dir, exist_ok=True)
         self.version = version
         self.docker_service = DockerService(
             docker_model=config.docker,
@@ -80,56 +140,51 @@ class PipelineService(BaseService):
                   Set to "all" to create everything from wanna-ml yaml configuration.
         """
         instances = self._filter_instances_by_name(instance_name)
-
-        compiled = []
-        for instance in instances:
-            compiled.append(self._compile_one_instance(instance))
-
-        return compiled
+        return [self._compile_one_instance(instance) for instance in instances]
 
     def push(self, manifests: List[Path], local: bool = False, mode: PushMode = PushMode.all) -> PushResult:
         return push(self.docker_service, manifests, self._prepare_push, self.version, local, mode)
 
     def _prepare_push(self, pipelines: List[Path], version: str, local: bool = False) -> List[PushTask]:
-
         push_tasks = []
-        for manifest_path in pipelines:
-            manifest = PipelineService.read_manifest(str(manifest_path))
+        for local_manifest_path in pipelines:
+            manifest = PipelineService.read_manifest(str(local_manifest_path))
+            pipeline_paths = PipelinePaths(self.workdir, manifest.pipeline_bucket, manifest.pipeline_name)
             json_artifacts = []
             manifest_artifacts = []
             container_artifacts = []
 
             with Spinner(text=f"Pushing pipeline {manifest.pipeline_name}"):
 
-                # Push containers
+                # Push containers task
                 for ref in manifest.docker_refs:
                     if ref.build_type != ImageBuildType.provided_image:
                         container_artifacts.append(ContainerArtifact(title=ref.name, tags=ref.tags))
 
                 # Prepare manifest paths
-                pipeline_dir_path = self.pipelines_build_dir / f"{manifest.pipeline_name}"
-                pipeline_dir = str(pipeline_dir_path)
-                pipeline_json_spec_path = manifest.json_spec_path
-
-                deployment_bucket = f"{manifest.pipeline_root}/deployment/release/{version}"
+                local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
+                wanna_manifest_publish_path = pipeline_paths.get_gcs_wanna_manifest_path(version)
+                kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
 
                 if local:
-                    os.makedirs(deployment_bucket.replace("gs://", pipeline_dir), exist_ok=True)
+                    wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(version)
+                    kubeflow_json_spec_publish_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
 
-                target_manifest = str(manifest_path).replace(pipeline_dir, deployment_bucket)
-                target_json_spec_path = pipeline_json_spec_path.replace(pipeline_dir, deployment_bucket)
-
-                manifest.json_spec_path = target_json_spec_path
+                # Ensure to update manifest json_spec_path to have the actual gcs location
+                manifest.json_spec_path = kubeflow_json_spec_publish_path
 
                 json_artifacts.append(
                     JsonArtifact(
-                        title="WANNA pipeline manifest", json_body=manifest.dict(), destination=target_manifest
+                        title="WANNA pipeline manifest",
+                        json_body=manifest.dict(),
+                        destination=wanna_manifest_publish_path,
                     )
                 )
+
                 manifest_artifacts.append(
                     PathArtifact(
                         title="Kubeflow V2 pipeline spec",
-                        source=str(pipeline_json_spec_path),
+                        source=local_kubeflow_json_spec_path,
                         destination=manifest.json_spec_path,
                     )
                 )
@@ -144,14 +199,13 @@ class PipelineService(BaseService):
 
         return push_tasks
 
-    def deploy(self, instance_name: str, version: str, env: str):
+    def deploy(self, instance_name: str, env: str):
 
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
-            with Spinner(text=f"Deploying {pipeline.name} version {version} to env {env}") as s:
-                pipeline_root = self._make_pipeline_root(pipeline.bucket, pipeline.name)
-                deployment_manifest_path = f"{pipeline_root}/deployment/release/{version}/wanna_manifest.json"
-                manifest = PipelineService.read_manifest(deployment_manifest_path)
+            with Spinner(text=f"Deploying {pipeline.name} version {self.version} to env {env}") as s:
+                pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline_name=pipeline.name)
+                manifest = PipelineService.read_manifest(pipeline_paths.get_gcs_wanna_manifest_path(self.version))
 
                 function = deploy.upsert_cloud_function(
                     resource=CloudFunctionResource(
@@ -161,20 +215,20 @@ class PipelineService(BaseService):
                         service_account=manifest.schedule.service_account
                         if manifest.schedule and manifest.schedule.service_account
                         else manifest.service_account,
-                        build_dir=self.pipelines_build_dir,
-                        resource_root=pipeline_root,
+                        build_dir=pipeline_paths.get_local_pipeline_deployment_path(self.version),
+                        resource_root=pipeline_paths.get_gcs_pipeline_deployment_path(self.version),
                         resource_function_template="scheduler_cloud_function.py",
                         resource_requirements_template="scheduler_cloud_function_requirements.txt",
                         template_vars=manifest.dict(),
                         labels=manifest.labels,
                     ),
                     env=env,
-                    version=version,
+                    version=self.version,
                     spinner=s,
                 )
 
                 if manifest.schedule:
-                    pipeline_spec_path = f"{pipeline_root}/deployment/release/{version}/pipeline_spec.json"
+                    pipeline_spec_path = pipeline_paths.get_gcs_pipeline_json_spec_path(self.version)
                     body = {
                         "pipeline_spec_uri": pipeline_spec_path,
                         "parameter_values": manifest.parameter_values,
@@ -191,7 +245,7 @@ class PipelineService(BaseService):
                             service_account=manifest.service_account,
                         ),
                         env=env,
-                        version=version,
+                        version=self.version,
                         spinner=s,
                     )
 
@@ -260,6 +314,7 @@ class PipelineService(BaseService):
 
     def _export_pipeline_params(
         self,
+        pipeline_paths: PipelinePaths,
         pipeline_instance: PipelineModel,
         version: str,
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
@@ -272,8 +327,7 @@ class PipelineService(BaseService):
             "version": version,
             "bucket": pipeline_instance.bucket,
             "region": pipeline_instance.region,
-            "pipeline_job_id": f"pipeline-{pipeline_instance.name}-{get_timestamp()}",
-            "pipeline_root": self._make_pipeline_root(pipeline_instance.bucket, pipeline_instance.name),
+            "pipeline_root": pipeline_paths.get_gcs_pipeline_root(),
             "pipeline_labels": json.dumps(pipeline_instance.labels),
         }
 
@@ -316,13 +370,11 @@ class PipelineService(BaseService):
 
         with Spinner(text=f"Compiling pipeline {pipeline_instance.name}"):
             # Prep build dir
-            pipeline_dir = self.pipelines_build_dir / pipeline_instance.name
-            os.makedirs(pipeline_dir, exist_ok=True)
-            pipeline_json_spec_path = (pipeline_dir / "pipeline_spec.json").resolve()
+            pipeline_paths = PipelinePaths(self.workdir, pipeline_instance.bucket, pipeline_instance.name)
 
             # Collect kubeflow pipeline params for compilation
             pipeline_env_params, pipeline_params = self._export_pipeline_params(
-                pipeline_instance, self.docker_service.version, image_tags
+                pipeline_paths, pipeline_instance, self.docker_service.version, image_tags
             )
 
             # Compile kubeflow V2 Pipeline
@@ -330,7 +382,7 @@ class PipelineService(BaseService):
                 pyfile=str(self.workdir / pipeline_instance.pipeline_file),
                 function_name=pipeline_instance.pipeline_function,
                 pipeline_parameters=pipeline_params,
-                package_path=str(pipeline_json_spec_path),
+                package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
                 type_check=True,
                 use_experimental=False,
             )
@@ -346,7 +398,9 @@ class PipelineService(BaseService):
 
             deployment_manifest = PipelineDeployment(
                 pipeline_name=pipeline_instance.name,
-                json_spec_path=str(pipeline_json_spec_path),
+                pipeline_bucket=pipeline_instance.bucket,
+                pipeline_version=self.version,
+                json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
                 parameter_values=pipeline_params,
                 enable_caching=True,
                 labels=pipeline_instance.labels,
@@ -359,17 +413,13 @@ class PipelineService(BaseService):
                 compile_env_params=pipeline_env_params,
             )
 
-            manifest_path = pipeline_dir / "wanna_manifest.json"
+            manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
             PipelineService.write_manifest(deployment_manifest, manifest_path)
 
-            return manifest_path
+            return Path(manifest_path).resolve()
 
     @staticmethod
-    def _make_pipeline_root(bucket: str, pipeline_name: str):
-        return f"{bucket}/pipeline-root/{kebabcase(pipeline_name).lower()}"
-
-    @staticmethod
-    def write_manifest(manifest: PipelineDeployment, path: Path) -> None:
+    def write_manifest(manifest: PipelineDeployment, path: str) -> None:
         with open(path, "w") as f:
             f.write(manifest.json())
 

@@ -23,7 +23,9 @@ class PipelineModel(BaseInstanceModel):
 
 class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
     pipeline_name: str
+    pipeline_bucket: str
     pipeline_root: str
+    pipeline_version: str
     json_spec_path: str
     parameter_values: Dict[str, Any] = {}
     labels: Dict[str, str] = {}

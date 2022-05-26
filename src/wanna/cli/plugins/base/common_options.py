@@ -1,5 +1,7 @@
 import typer
 
+from wanna.cli.deployment.models import PushMode
+
 profile_name_option = typer.Option(
     "default",
     "--profile",
@@ -12,6 +14,17 @@ profile_name_option = typer.Option(
 
 wanna_file_option = typer.Option(
     "wanna.yaml", "--file", "-f", envvar="WANNA_FILE", help="Path to the wanna-ml yaml configuration"
+)
+
+
+push_mode_option: PushMode = typer.Option(
+    PushMode.all,
+    "--mode",
+    "-m",
+    help="Pipeline push mode, due to CI/CD not "
+    "allowing to push to docker registry from "
+    "GCP Agent, we need to split it. "
+    "Use all for dev",
 )
 
 

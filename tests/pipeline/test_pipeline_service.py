@@ -11,7 +11,9 @@ from google.cloud.functions_v1.services.cloud_functions_service import CloudFunc
 from mock import patch
 from mock.mock import MagicMock
 
+import wanna.cli.plugins.pipeline.service
 from tests.mocks import mocks
+from wanna.cli.deployment import deploy
 from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
 from wanna.cli.docker.service import DockerService
 from wanna.cli.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
@@ -74,8 +76,7 @@ class TestPipelineService(unittest.TestCase):
             "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
         expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
-        exppected_pipeline_root = str(self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline-root")
-        os.makedirs(exppected_pipeline_root, exist_ok=True)
+        exppected_pipeline_root = "gs://wanna-ml/wanna-pipelines/wanna-sklearn-sample/executions/"
 
         # Check expected metadata
         expected_compile_env_params = {
@@ -96,7 +97,15 @@ class TestPipelineService(unittest.TestCase):
             ),
             DockerBuildResult(name="serve", tags=expected_serve_docker_tags, build_type=ImageBuildType.provided_image),
         ]
-        expected_json_spec_path = self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline_spec.json"
+        expected_json_spec_path = (
+            self.pipeline_build_dir
+            / "wanna-pipelines"
+            / "wanna-sklearn-sample"
+            / "deployment"
+            / "test"
+            / "manifests"
+            / "pipeline-spec.json"
+        )
 
         # Mock PipelineService
         PipelineService._make_pipeline_root = MagicMock(return_value=exppected_pipeline_root)
@@ -134,9 +143,6 @@ class TestPipelineService(unittest.TestCase):
             file=self.sample_pipeline_dir / expected_train_docker_image_model.dockerfile,
             tags=expected_train_docker_tags,
         )
-
-        pipeline_job_id = pipeline_meta.compile_env_params["pipeline_job_id"]
-        del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory
 
         self.assertEqual(pipeline_meta.compile_env_params, expected_compile_env_params)
         self.assertEqual(Path(pipeline_meta.json_spec_path), expected_json_spec_path)
@@ -179,23 +185,13 @@ class TestPipelineService(unittest.TestCase):
         push_result = pipeline_service.push(pipelines, local=True)
         DockerService.push_image.assert_called_once()
 
-        release_path = (
-            self.pipeline_build_dir
-            / "pipelines"
-            / "wanna-sklearn-sample"
-            / "pipeline-root"
-            / "deployment"
-            / "release"
-            / "test"
-        )
-        expected_manifest_json_path = str(release_path / "wanna_manifest.json")
-        expected_pipeline_spec_path = str(release_path / "pipeline_spec.json")
+        release_path = self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test"
+        manifest_path = release_path / "manifests"
+        expected_manifest_json_path = str(manifest_path / "wanna-manifest.json")
+        expected_pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
 
         # Should have been updated to new pushed path
         pipeline_meta.json_spec_path = expected_pipeline_spec_path
-
-        # Lets put it back
-        pipeline_meta.compile_env_params["pipeline_job_id"] = pipeline_job_id
 
         expected_push_result = [
             (
@@ -226,7 +222,9 @@ class TestPipelineService(unittest.TestCase):
         # === Deploy ===
         parent = "projects/us-burger-gcp-poc/locations/europe-west1"
         local_cloud_functions_package = f"{release_path}/functions/package.zip"
-        copied_cloud_functions_package = local_cloud_functions_package
+        copied_cloud_functions_package = (
+            "gs://wanna-ml/wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"
+        )
 
         expected_function_name = "wanna-sklearn-sample-local"
         expected_function_name_resoure = f"{parent}/functions/{expected_function_name}"
@@ -253,9 +251,14 @@ class TestPipelineService(unittest.TestCase):
         CloudFunctionsServiceClient.update_function = MagicMock()
         scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
+        scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
+        wanna.cli.plugins.pipeline.service.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
+            return_value=expected_manifest_json_path
+        )
+        deploy._sync_cloud_function_package = MagicMock(return_value=None)
 
         # Deploy the thing
-        pipeline_service.deploy("all", version="test", env="local")
+        pipeline_service.deploy("all", env="local")
 
         # Check cloud functions packaged was copied to pipeline-root
         self.assertTrue(os.path.exists(local_cloud_functions_package))
