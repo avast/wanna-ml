@@ -12,8 +12,9 @@ from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
+from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import ImageBuildType, LocalBuildImageModel, ProvidedImageModel
+from wanna.cli.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
 from wanna.cli.plugins.pipeline.service import PipelineService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.config_loader import load_config_from_yaml
@@ -72,11 +73,6 @@ class TestPipelineService(unittest.TestCase):
             "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:test",
             "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
-        expected_serve_docker_image_model = ProvidedImageModel(
-            name="serve",
-            build_type=ImageBuildType.provided_image,
-            image_url="europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest",
-        )
         expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
         exppected_pipeline_root = str(self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline-root")
         os.makedirs(exppected_pipeline_root, exist_ok=True)
@@ -95,8 +91,10 @@ class TestPipelineService(unittest.TestCase):
         }
         expected_parameter_values = {"eval_acc_threshold": 0.87}
         expected_images = [
-            (expected_train_docker_image_model, expected_train_docker_tags[0]),
-            (expected_serve_docker_image_model, expected_serve_docker_tags[0]),
+            DockerBuildResult(
+                name="train", tags=[expected_train_docker_tags[0]], build_type=ImageBuildType.local_build_image
+            ),
+            DockerBuildResult(name="serve", tags=expected_serve_docker_tags, build_type=ImageBuildType.provided_image),
         ]
         expected_json_spec_path = self.pipeline_build_dir / "pipelines" / "wanna-sklearn-sample" / "pipeline_spec.json"
 
@@ -126,7 +124,8 @@ class TestPipelineService(unittest.TestCase):
         # === Build ===
         # Get compile result metadata
         pipelines = pipeline_service.build("wanna-sklearn-sample")
-        (pipeline_meta, manifest_path) = pipelines[0]
+        manifest_path = pipelines[0]
+        pipeline_meta = PipelineService.read_manifest(str(manifest_path))
 
         # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
         #                                              tags=expected_train_docker_tags)
@@ -136,23 +135,17 @@ class TestPipelineService(unittest.TestCase):
             tags=expected_train_docker_tags,
         )
 
+        pipeline_job_id = pipeline_meta.compile_env_params["pipeline_job_id"]
         del pipeline_meta.compile_env_params["pipeline_job_id"]  # TODO: make get_timestamp() factory
 
-        self.assertEqual(pipeline_meta.config, config.pipelines[0])
         self.assertEqual(pipeline_meta.compile_env_params, expected_compile_env_params)
-        self.assertEqual(pipeline_meta.json_spec_path, expected_json_spec_path)
+        self.assertEqual(Path(pipeline_meta.json_spec_path), expected_json_spec_path)
         self.assertEqual(pipeline_meta.parameter_values, expected_parameter_values)
 
         # asserting the non "latest" docker tag was created
         self.assertEqual(
-            [
-                (
-                    local,
-                    tags,
-                )
-                for (local, _, tags) in pipeline_meta.images
-            ],
-            expected_images,
+            pipeline_meta.docker_refs,
+            expected_images,  # for now we only want the one with version, not latest
         )
 
         # Check expected env vars are set
@@ -183,7 +176,7 @@ class TestPipelineService(unittest.TestCase):
 
         # === Push ===
         DockerService.push_image = MagicMock(return_value=None)
-        pushed = pipeline_service.push(pipelines, version="dev", local=True)
+        push_result = pipeline_service.push(pipelines, local=True)
         DockerService.push_image.assert_called_once()
 
         release_path = (
@@ -193,18 +186,40 @@ class TestPipelineService(unittest.TestCase):
             / "pipeline-root"
             / "deployment"
             / "release"
-            / "dev"
+            / "test"
         )
         expected_manifest_json_path = str(release_path / "wanna_manifest.json")
         expected_pipeline_spec_path = str(release_path / "pipeline_spec.json")
+
+        # Should have been updated to new pushed path
+        pipeline_meta.json_spec_path = expected_pipeline_spec_path
+
+        # Lets put it back
+        pipeline_meta.compile_env_params["pipeline_job_id"] = pipeline_job_id
+
         expected_push_result = [
             (
-                expected_manifest_json_path,
-                expected_pipeline_spec_path,
+                [
+                    ContainerArtifact(title="train", tags=[expected_train_docker_tags[0]]),
+                ],
+                [
+                    PathArtifact(
+                        title="Kubeflow V2 pipeline spec",
+                        source=str(expected_json_spec_path),
+                        destination=expected_pipeline_spec_path,
+                    ),
+                ],
+                [
+                    JsonArtifact(
+                        title="WANNA pipeline manifest",
+                        json_body=pipeline_meta.dict(),
+                        destination=expected_manifest_json_path,
+                    ),
+                ],
             )
         ]
 
-        self.assertEqual(pushed, expected_push_result)
+        self.assertEqual(push_result, expected_push_result)
         self.assertTrue(os.path.exists(expected_pipeline_spec_path))
         self.assertTrue(os.path.exists(expected_manifest_json_path))
 
@@ -240,7 +255,7 @@ class TestPipelineService(unittest.TestCase):
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
 
         # Deploy the thing
-        pipeline_service.deploy("all", version="dev", env="local")
+        pipeline_service.deploy("all", version="test", env="local")
 
         # Check cloud functions packaged was copied to pipeline-root
         self.assertTrue(os.path.exists(local_cloud_functions_package))

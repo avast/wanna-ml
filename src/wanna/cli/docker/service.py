@@ -32,9 +32,11 @@ class DockerService:
         wanna_project_name: str,
         quick_mode: bool = False,  # just returns tags but does not build
     ):
-        self.image_models = docker_model.images
+        self.image_models = docker_model.images if docker_model and docker_model.images else []
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
-        self.registry = docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
+        self.registry = (
+            docker_model.registry if docker_model and docker_model.registry else f"{gcp_profile.region}-docker.pkg.dev"
+        )
         self.repository = docker_model.repository
         self.version = version
         self.work_dir = work_dir
