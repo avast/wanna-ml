@@ -33,6 +33,8 @@ class WorkerPoolModel(BaseModel, extra=Extra.forbid):
     boot_disk_size_gb: int = Field(ge=100, le=65535, default=100)
     replica_count: int = 1
 
+    # _machine_type = validator("machine_type", allow_reuse=True)(validators.validate_machine_type)
+
     @root_validator
     def one_from_python_or_container_spec_must_be_set(cls, values):  # pylint: disable=no-self-argument,no-self-use
         if values.get("python_package") and values.get("container"):

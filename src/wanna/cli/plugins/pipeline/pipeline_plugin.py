@@ -5,7 +5,12 @@ import typer
 from google.cloud import aiplatform
 
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
+from wanna.cli.plugins.base.common_options import (
+    instance_name_option,
+    profile_name_option,
+    push_mode_option,
+    wanna_file_option,
+)
 from wanna.cli.plugins.pipeline.service import PipelineService, PushMode
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -34,15 +39,7 @@ class PipelinePlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "push"),
-        mode: PushMode = typer.Option(
-            PushMode.all,
-            "--mode",
-            "-m",
-            help="Pipeline push mode, due to CI/CD not "
-            "allowing to push to docker registry from "
-            "GCP Agent, we need to split it. "
-            "Use all for dev",
-        ),
+        mode: PushMode = push_mode_option,
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
@@ -61,7 +58,7 @@ class PipelinePlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
-        pipeline_service.deploy(instance_name, version, env)
+        pipeline_service.deploy(instance_name, env)
 
     @staticmethod
     def run(

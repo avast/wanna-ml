@@ -19,7 +19,7 @@ class BucketMount(BaseModel, extra=Extra.forbid):
     bucket_dir: Path
     local_path: Path
 
-    # _bucket_name = validator("bucket_name")(validators.validate_bucket_name)
+    _bucket_name = validator("bucket_name")(validators.validate_bucket_name)
 
 
 class VMImage(BaseModel, extra=Extra.forbid):

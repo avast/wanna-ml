@@ -87,11 +87,11 @@ Custom Jobs are split into two categories depending on it intended use
 ### Usage
 
 ```bash
-wanna job create --file samples/custom_job/wanna.yaml -n custom-training-job-with-python-package
+wanna job build --file samples/custom_job/wanna.yaml -n custom-training-job-with-python-package
 
-wanna job create --file samples/custom_job/wanna.yaml -n custom-training-job-with-containers
+wanna job build --file samples/custom_job/wanna.yaml -n custom-training-job-with-containers
 
-wanna job create --file samples/custom_job/wanna.yaml -n custom-job-with-containers
+wanna job build --file samples/custom_job/wanna.yaml -n custom-job-with-containers
 ````
 
 ## Development

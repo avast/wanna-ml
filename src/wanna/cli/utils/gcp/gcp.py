@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import storage  # type: ignore
+from google.cloud import storage
 from google.cloud.compute import MachineTypesClient, ZonesClient
 from google.cloud.compute_v1 import RegionsClient
 from google.cloud.compute_v1.services.images import ImagesClient
@@ -232,7 +232,7 @@ def get_available_regions(project_id: str) -> List[str]:
         response = RegionsClient().list(project=project_id)
         return [region.name for region in response.items]
     else:
-        return ["europe-west1", "europe-west-3", "us-east1", "us-west1"]
+        return ["europe-west1", "europe-west3", "us-east1", "us-west1"]
 
 
 def get_region_from_zone(zone: str) -> str:

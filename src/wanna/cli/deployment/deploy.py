@@ -25,10 +25,10 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
 
     spinner.info(f"Deploying {resource.name} cloud function with version {version} to env {env}")
     parent = f"projects/{resource.project}/locations/{resource.location}"
-    pipeline_functions_dir = resource.build_dir / resource.name / "functions"
+    pipeline_functions_dir = resource.build_dir / "functions"
     os.makedirs(pipeline_functions_dir, exist_ok=True)
     local_functions_package = pipeline_functions_dir / "package.zip"
-    functions_gcs_path_dir = f"{resource.resource_root}/deployment/release/{version}/functions"
+    functions_gcs_path_dir = f"{resource.resource_root}/functions"
     functions_gcs_path = f"{functions_gcs_path_dir}/package.zip"
     function_name = f"{resource.name}-{env}"
     function_path = f"{parent}/functions/{function_name}"

@@ -7,6 +7,8 @@ from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
 
 from wanna.cli.utils.gcp.gcp import (
+    DEFAULT_VALIDATION_MODE,
+    VALIDATION_MODE,
     get_available_compute_image_families,
     get_available_compute_machine_types,
     get_available_regions,
@@ -59,12 +61,14 @@ def validate_network_name(network_name):
 
 
 def validate_bucket_name(bucket_name):
-    try:
-        _ = StorageClient().get_bucket(bucket_name)
-    except exceptions.NotFound:
-        raise ValueError(f"Bucket with name {bucket_name} does not exist")
-    except exceptions.Forbidden:
-        logging.warning(f"Your user does not have permission to access bucket {bucket_name}")
+    if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
+        try:
+            _ = StorageClient().get_bucket(bucket_name)
+        except exceptions.NotFound:
+            raise ValueError(f"Bucket with name {bucket_name} does not exist")
+        except exceptions.Forbidden:
+            logging.warning(f"Your user does not have permission to access bucket {bucket_name}")
+
     return bucket_name
 
 

@@ -67,7 +67,7 @@ def _make_local_manifest_path(build_dir: Path, job_name: str) -> Path:
     return build_dir / f"jobs/{kebabcase(job_name).lower()}"
 
 
-def _read_job_manifest(manifest_path: Path) -> JobManifest:
+def _read_job_manifest(manifest_path: str) -> JobManifest:
     """
     Reads a job manifest file
 
@@ -169,10 +169,9 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
         sync=False,
     )
 
-    custom_job.wait_for_resource_creation()
-    job_id = custom_job.resource_name.split("/")[-1]
-
     if sync:
+        custom_job.wait_for_resource_creation()
+        job_id = custom_job.resource_name.split("/")[-1]
         with Spinner(text=f"Running custom job {manifest.job_config.name} in sync mode") as s:
             s.info(
                 f"Job Dashboard in "
@@ -181,6 +180,8 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
             custom_job.wait()
     else:
         with Spinner(text=f"Running custom job {manifest.job_config.name} in async mode") as s:
+            custom_job.wait_for_resource_creation()
+            job_id = custom_job.resource_name.split("/")[-1]
             s.info(
                 f"Job Dashboard in "
                 f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
@@ -346,11 +347,11 @@ class JobService(BaseService):
 
         push_tasks = []
         for manifest_path, manifest in manifests:
-            loaded_manifest = _read_job_manifest(manifest_path)
+            loaded_manifest = _read_job_manifest(str(manifest_path))
             manifest_artifacts = []
             container_artifacts = []
 
-            with Spinner(text=f"Preparing job manifest {manifest.job_config.name}"):
+            with Spinner(text=f"Preparing {manifest.job_config.name} job manifest"):
 
                 for docker_image_ref in loaded_manifest.image_refs:
                     model, image, tag = self.docker_service.get_image(docker_image_ref)
@@ -369,12 +370,18 @@ class JobService(BaseService):
                 manifest_artifacts.append(
                     PathArtifact(
                         title=f"{loaded_manifest.job_config.name} job manifest",
-                        source=manifest_path,
+                        source=str(manifest_path.resolve()),
                         destination=target_manifest_path,
                     )
                 )
 
-                push_tasks.append(PushTask(containers=container_artifacts, manifests=manifest_artifacts))
+                push_tasks.append(
+                    PushTask(
+                        container_artifacts=container_artifacts,
+                        manifest_artifacts=manifest_artifacts,
+                        json_artifacts=[],
+                    )
+                )
 
         return push_tasks
 
@@ -391,7 +398,7 @@ class JobService(BaseService):
 
         """
         for manifest_path in manifests:
-            manifest = _read_job_manifest(Path(manifest_path))
+            manifest = _read_job_manifest(manifest_path)
 
             aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
 
