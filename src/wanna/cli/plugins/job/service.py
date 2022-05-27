@@ -11,7 +11,9 @@ from google.cloud.aiplatform import (
     CustomJob,
     CustomPythonPackageTrainingJob,
     CustomTrainingJob,
+    HyperparameterTuningJob,
 )
+from google.cloud.aiplatform import hyperparameter_tuning as hpt
 from google.cloud.aiplatform.gapic import WorkerPoolSpec
 from google.cloud.aiplatform_v1.types import ContainerSpec, DiskSpec, MachineSpec, PythonPackageSpec
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
@@ -25,6 +27,7 @@ from wanna.cli.models.training_custom_job import (
     CustomJobModel,
     CustomJobType,
     CustomPythonPackageTrainingJobManifest,
+    HyperParamater,
     JobManifest,
     TrainingCustomJobModel,
     WorkerPoolModel,
@@ -149,9 +152,25 @@ def _write_local_job_manifest(build_dir: Path, manifest: JobManifest) -> Path:
     return local_manifest_path
 
 
+def _create_hyperparameter_spec(
+    parameter: HyperParamater,
+) -> hpt._ParameterSpec:
+    if parameter.type == "integer":
+        return hpt.IntegerParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
+    elif parameter.type == "double":
+        return hpt.DoubleParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
+    elif parameter.type == "categorical":
+        return hpt.CategoricalParameterSpec(values=parameter.values)
+    elif parameter.type == "discrete":
+        return hpt.DiscreteParameterSpec(values=parameter.values, scale=parameter.scale)
+    else:
+        raise Exception(f"Unsupported parameter type {parameter.type}")
+
+
 def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
     """
-    Runs a Vertex AI custom job based on the provided manifest
+    Runs a Vertex AI custom job based on the provided manifest.
+    If hp_tuning parameters are set, it starts a HyperParameter Tuning instead.
 
     Args:
         manifest (CustomJobManifest): The Job manifest to be executed
@@ -159,28 +178,45 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
 
     """
     custom_job = CustomJob(**manifest.job_payload)
-    custom_job.run(
+
+    if manifest.job_config.hp_tuning:
+
+        parameter_spec = {
+            param.var_name: _create_hyperparameter_spec(param) for param in manifest.job_config.hp_tuning.parameters
+        }
+        runable = HyperparameterTuningJob(
+            display_name=manifest.job_config.name,
+            custom_job=custom_job,
+            metric_spec=manifest.job_config.hp_tuning.metrics,
+            parameter_spec=parameter_spec,
+            max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
+            parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
+            search_algorithm=manifest.job_config.hp_tuning.search_algorithm,
+        )
+    else:
+        runable = custom_job  # type: ignore
+    runable.run(
         timeout=manifest.job_config.timeout_seconds,
         enable_web_access=manifest.job_config.enable_web_access,
         tensorboard=manifest.tensorboard if manifest.tensorboard else None,
         sync=False,
     )
 
-    custom_job.wait_for_resource_creation()
-    job_id = custom_job.resource_name.split("/")[-1]
+    runable.wait_for_resource_creation()
+    runable_id = runable.resource_name.split("/")[-1]
 
     if sync:
-        with Spinner(text=f"Running custom job {manifest.job_config.name} in sync mode") as s:
+        with Spinner(text=f"Running job {manifest.job_config.name} in sync mode") as s:
             s.info(
                 f"Job Dashboard in "
-                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
+                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
             )
             custom_job.wait()
     else:
-        with Spinner(text=f"Running custom job {manifest.job_config.name} in async mode") as s:
+        with Spinner(text=f"Running job {manifest.job_config.name} in async mode") as s:
             s.info(
                 f"Job Dashboard in "
-                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
+                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
             )
 
 
