@@ -268,7 +268,9 @@ def _run_training_job(
 
 
 class JobService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev"):
+    def __init__(
+        self, config: WannaConfigModel, workdir: Path, version: str = "dev", push_mode: PushMode = PushMode.all
+    ):
         """
         Service to build, push, deploy and run Vertex AI custom jobs
         Args:
@@ -291,12 +293,14 @@ class JobService(BaseService):
         self.bucket_name = config.gcp_profile.bucket
         self.config = config
         self.tensorboard_service = TensorboardService(config=config)
+        self.push_mode = push_mode
         self.docker_service = DockerService(
             docker_model=config.docker,
             gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,
+            quick_mode=self.push_mode.is_quick_mode(),
         )
         self.build_dir = workdir / "build"
         self.version = version
@@ -329,7 +333,7 @@ class JobService(BaseService):
         self, manifests: List[Tuple[Path, JobManifest]], local: bool = False, mode: PushMode = PushMode.all
     ) -> Tuple[List[str], PushResult]:
         manifest_paths = [str(manifest_path) for manifest_path, _ in manifests]
-        return manifest_paths, push(self.docker_service, manifests, self._prepare_push, self.version, local, mode)
+        return manifest_paths, push(self.docker_service, self._prepare_push(manifests, self.version, local))
 
     def _prepare_push(
         self, manifests: List[Tuple[Path, JobManifest]], version: str, local: bool = False
@@ -348,40 +352,43 @@ class JobService(BaseService):
         push_tasks = []
         for manifest_path, manifest in manifests:
             loaded_manifest = _read_job_manifest(str(manifest_path))
-            manifest_artifacts = []
-            container_artifacts = []
+            manifest_artifacts, container_artifacts = [], []
 
-            with Spinner(text=f"Preparing {manifest.job_config.name} job manifest"):
+            with Spinner(text=f"Packaging {manifest.job_config.name} job resources"):
 
-                for docker_image_ref in loaded_manifest.image_refs:
-                    model, image, tag = self.docker_service.get_image(docker_image_ref)
-                    if model.build_type != ImageBuildType.provided_image:
-                        tags = image.repo_tags if image and image.repo_tags else [tag]
-                        container_artifacts.append(ContainerArtifact(title=model.name, tags=tags))
+                if self.push_mode.can_push_containers():
+                    for docker_image_ref in loaded_manifest.image_refs:
+                        model, image, tag = self.docker_service.get_image(docker_image_ref)
+                        if model.build_type != ImageBuildType.provided_image:
+                            tags = image.repo_tags if image and image.repo_tags else [tag]
+                            container_artifacts.append(ContainerArtifact(title=model.name, tags=tags))
 
-                gcs_manifest_path = _make_gcs_manifest_path(self.config.gcp_profile.bucket, manifest.job_config.name)
-                deployment_dir = f"{gcs_manifest_path}/deployment/release/{version}"
-
-                if local:
-                    deployment_dir = f"{manifest_path.parent}/deployment/release/{version}"
-                    os.makedirs(deployment_dir, exist_ok=True)
-
-                target_manifest_path = f"{deployment_dir}/job-manifest.json"
-                manifest_artifacts.append(
-                    PathArtifact(
-                        title=f"{loaded_manifest.job_config.name} job manifest",
-                        source=str(manifest_path.resolve()),
-                        destination=target_manifest_path,
+                if self.push_mode.can_push_gcp_resources():
+                    gcs_manifest_path = _make_gcs_manifest_path(
+                        self.config.gcp_profile.bucket, manifest.job_config.name
                     )
-                )
+                    deployment_dir = f"{gcs_manifest_path}/deployment/release/{version}"
 
-                push_tasks.append(
-                    PushTask(
-                        container_artifacts=container_artifacts,
-                        manifest_artifacts=manifest_artifacts,
-                        json_artifacts=[],
+                    if local:
+                        deployment_dir = f"{manifest_path.parent}/deployment/release/{version}"
+                        os.makedirs(deployment_dir, exist_ok=True)
+
+                    target_manifest_path = f"{deployment_dir}/job-manifest.json"
+                    manifest_artifacts.append(
+                        PathArtifact(
+                            title=f"{loaded_manifest.job_config.name} job manifest",
+                            source=str(manifest_path.resolve()),
+                            destination=target_manifest_path,
+                        )
                     )
-                )
+
+                    push_tasks.append(
+                        PushTask(
+                            container_artifacts=container_artifacts,
+                            manifest_artifacts=manifest_artifacts,
+                            json_artifacts=[],
+                        )
+                    )
 
         return push_tasks
 
