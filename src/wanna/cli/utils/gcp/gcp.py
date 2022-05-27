@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import storage
+from google.cloud import storage  # type: ignore
 from google.cloud.compute import MachineTypesClient, ZonesClient
 from google.cloud.compute_v1 import RegionsClient
 from google.cloud.compute_v1.services.images import ImagesClient
