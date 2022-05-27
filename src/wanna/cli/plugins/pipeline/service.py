@@ -1,13 +1,11 @@
-import atexit
 import json
 import os
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import pandas as pd
-from caseconverter import kebabcase, snakecase
+from caseconverter import snakecase
 from google.cloud import aiplatform
-from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
@@ -29,85 +27,11 @@ from wanna.cli.models.docker import DockerBuildResult, DockerImageModel, ImageBu
 from wanna.cli.models.pipeline import PipelineDeployment, PipelineModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
+from wanna.cli.plugins.pipeline.utils import PipelinePaths, _at_pipeline_exit
 from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.utils.gcp.gcp import is_gcs_path
 from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
-
-
-class PipelinePaths:
-
-    json_spec_filename = "pipeline-spec.json"
-    wanna_manifest_filename = "wanna-manifest.json"
-
-    def __init__(self, workdir: Path, bucket: str, pipeline_name: str):
-        self.pipeline_name = pipeline_name
-        self.workdir = workdir
-        self.bucket = bucket
-        self.pipelines_dir = (workdir / "build").resolve()
-        self.local_pipeline_path = self._get_pipeline_path(str(self.pipelines_dir), pipeline_name)
-        self.gcs_pipeline_path = self._get_pipeline_path(self.bucket, pipeline_name)
-
-    def _get_pipeline_path(self, base_path: str, pipeline_name: str):
-        if not is_gcs_path(base_path):
-            os.makedirs(base_path, exist_ok=True)
-        return f"{base_path}/wanna-pipelines/{kebabcase(pipeline_name).lower()}"
-
-    def _get_pipeline_deployment_path(self, base_path: str, version: str):
-        path = f"{base_path}/deployment/{version}"
-        if not is_gcs_path(path):
-            os.makedirs(path, exist_ok=True)
-        return path
-
-    def _get_pipeline_manifests_path(self, base_path: str, version: str):
-        path = f"{base_path}/deployment/{version}/manifests"
-        if not is_gcs_path(path):
-            os.makedirs(path, exist_ok=True)
-        return path
-
-    def get_local_pipeline_manifest_path(self, version: str):
-        return self._get_pipeline_manifests_path(self.local_pipeline_path, version)
-
-    def get_gcs_pipeline_manifest_path(self, version: str):
-        return self._get_pipeline_manifests_path(self.gcs_pipeline_path, version)
-
-    def get_local_pipeline_deployment_path(self, version: str):
-        return self._get_pipeline_deployment_path(self.local_pipeline_path, version)
-
-    def get_gcs_pipeline_deployment_path(self, version: str):
-        return self._get_pipeline_deployment_path(self.gcs_pipeline_path, version)
-
-    def get_local_pipeline_json_spec_path(self, version: str):
-        return f"{self.get_local_pipeline_manifest_path(version)}/{self.json_spec_filename}"
-
-    def get_gcs_pipeline_json_spec_path(self, version: str):
-        return f"{self.get_gcs_pipeline_manifest_path(version)}/{self.json_spec_filename}"
-
-    def get_local_wanna_manifest_path(self, version: str):
-        return f"{self.get_local_pipeline_manifest_path(version)}/{self.wanna_manifest_filename}"
-
-    def get_gcs_wanna_manifest_path(self, version: str):
-        return f"{self.get_gcs_pipeline_manifest_path(version)}/{self.wanna_manifest_filename}"
-
-    def get_gcs_pipeline_root(self):
-        return f"{self.gcs_pipeline_path}/executions/"
-
-    def get_local_pipeline_root(self):
-        return f"{self.local_pipeline_path}/executions/"
-
-
-def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:
-    @atexit.register
-    def stop_pipeline_job():
-        if sync and pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
-            spinner.fail(
-                "detected exit signal, "
-                f"shutting down running pipeline {pipeline_name} "
-                f"at {pipeline_job._dashboard_uri()}."
-            )
-            pipeline_job.cancel()
-            pipeline_job.wait()
 
 
 class PipelineService(BaseService):
@@ -117,8 +41,6 @@ class PipelineService(BaseService):
             instance_model=PipelineModel,
         )
         self.instances = config.pipelines
-        self.wanna_project = config.wanna_project
-        self.bucket_name = config.gcp_profile.bucket
         self.config = config
         self.workdir = workdir
         self.tensorboard_service = TensorboardService(config=config)
@@ -128,7 +50,7 @@ class PipelineService(BaseService):
             gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
-            wanna_project_name=self.wanna_project.name,
+            wanna_project_name=self.config.wanna_project.name,
             quick_mode=quick_mode,
         )
 
@@ -150,9 +72,7 @@ class PipelineService(BaseService):
         for local_manifest_path in pipelines:
             manifest = PipelineService.read_manifest(str(local_manifest_path))
             pipeline_paths = PipelinePaths(self.workdir, manifest.pipeline_bucket, manifest.pipeline_name)
-            json_artifacts = []
-            manifest_artifacts = []
-            container_artifacts = []
+            json_artifacts, manifest_artifacts, container_artifacts = [], [], []
 
             with Spinner(text=f"Pushing pipeline {manifest.pipeline_name}"):
 
@@ -167,6 +87,7 @@ class PipelineService(BaseService):
                 kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
 
                 if local:
+                    # Override paths to local dir when in "local" mode, IE tests or local run
                     wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(version)
                     kubeflow_json_spec_publish_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
 
@@ -250,7 +171,7 @@ class PipelineService(BaseService):
                     )
 
                 else:
-                    s.warn("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
+                    s.info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
 
     @staticmethod
     def run(
@@ -266,7 +187,7 @@ class PipelineService(BaseService):
 
             manifest = PipelineService.read_manifest(str(manifest_path))
 
-            aiplatform.init(location=manifest.location, project=manifest.project)
+            aiplatform.init(location=manifest.location, project=manifest.project, experiment=manifest.pipeline_name)
 
             mode = "sync mode" if sync else "fire-forget mode"
 
@@ -318,6 +239,7 @@ class PipelineService(BaseService):
         pipeline_instance: PipelineModel,
         version: str,
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
+        tensorboard: Optional[str],
     ):
 
         # Prepare env params to be exported
@@ -331,10 +253,8 @@ class PipelineService(BaseService):
             "pipeline_labels": json.dumps(pipeline_instance.labels),
         }
 
-        if pipeline_instance.tensorboard_ref:
-            pipeline_env_params["tensorboard"] = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                pipeline_instance.tensorboard_ref
-            )
+        if tensorboard:
+            pipeline_env_params["tensorboard"] = tensorboard
 
         # Export Pipeline wanna ENV params to be available during compilation
         pipeline_name_prefix = snakecase(f"{pipeline_instance.name}").upper()
@@ -357,30 +277,31 @@ class PipelineService(BaseService):
 
         return pipeline_env_params, pipeline_compile_params
 
-    def _compile_one_instance(self, pipeline_instance: PipelineModel) -> Path:
+    def _compile_one_instance(self, pipeline: PipelineModel) -> Path:
 
-        image_tags = []
-        if pipeline_instance.docker_image_ref:
-            image_tags = [
-                self.docker_service.get_image(
-                    docker_image_ref=docker_image_ref,
-                )
-                for docker_image_ref in pipeline_instance.docker_image_ref
-            ]
+        image_tags = [
+            self.docker_service.get_image(docker_image_ref=docker_image_ref)
+            for docker_image_ref in pipeline.docker_image_ref
+        ]
 
-        with Spinner(text=f"Compiling pipeline {pipeline_instance.name}"):
+        with Spinner(text=f"Compiling pipeline {pipeline.name}"):
             # Prep build dir
-            pipeline_paths = PipelinePaths(self.workdir, pipeline_instance.bucket, pipeline_instance.name)
+            pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline.name)
+            tensorboard = (
+                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
+                if pipeline.tensorboard_ref
+                else None
+            )
 
             # Collect kubeflow pipeline params for compilation
             pipeline_env_params, pipeline_params = self._export_pipeline_params(
-                pipeline_paths, pipeline_instance, self.docker_service.version, image_tags
+                pipeline_paths, pipeline, self.version, image_tags, tensorboard
             )
 
             # Compile kubeflow V2 Pipeline
             compile_pyfile(
-                pyfile=str(self.workdir / pipeline_instance.pipeline_file),
-                function_name=pipeline_instance.pipeline_function,
+                pyfile=str(self.workdir / pipeline.pipeline_file),
+                function_name=pipeline.pipeline_function,
                 pipeline_parameters=pipeline_params,
                 package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
                 type_check=True,
@@ -397,18 +318,18 @@ class PipelineService(BaseService):
             ]
 
             deployment_manifest = PipelineDeployment(
-                pipeline_name=pipeline_instance.name,
-                pipeline_bucket=pipeline_instance.bucket,
+                pipeline_name=pipeline.name,
+                pipeline_bucket=pipeline.bucket,
                 pipeline_version=self.version,
                 json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
                 parameter_values=pipeline_params,
                 enable_caching=True,
-                labels=pipeline_instance.labels,
-                project=pipeline_instance.project_id,
-                location=pipeline_instance.region,
-                service_account=pipeline_instance.service_account,
+                labels=pipeline.labels,
+                project=pipeline.project_id,
+                location=pipeline.region,
+                service_account=pipeline.service_account,
                 pipeline_root=pipeline_env_params.get("pipeline_root"),
-                schedule=pipeline_instance.schedule,
+                schedule=pipeline.schedule,
                 docker_refs=docker_refs,
                 compile_env_params=pipeline_env_params,
             )

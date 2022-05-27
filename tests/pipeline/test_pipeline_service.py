@@ -169,7 +169,9 @@ class TestPipelineService(unittest.TestCase):
         # === Run ===
         # Run pipeline on Vertex AI(Mocked GCP Calls)
         # Passing dummy callback as pipeline_job.state can't be mocked
+        aiplatform.init = MagicMock(return_value=None)
         PipelineService.run([str(manifest_path)], sync=True, exit_callback=lambda x, y, z, i: None)
+        aiplatform.init.assert_called_once()
 
         # Test GCP services were called and with correct args
         # pipeline_jobs.PipelineJob.assert_called_once()
