@@ -43,7 +43,7 @@ wanna pipeline run --file samples/pipelines/sklearn/wanna.yaml --sync --params s
 ```
 
 ## WANNA Notebooks
-On of the goals of wanna is to allow Avast ML team to get started quickly with Vertex AI platform 
+One of the goals of wanna is to allow Avast ML team to get started quickly with Vertex AI platform 
 and have freedom to explore within a sa  
 
 Builds containers and creates user-managed vertex-ai notebooks where Notebooks:
@@ -73,6 +73,37 @@ wanna notebook create --file samples/notebook/julia/wanna.yaml -n wanna-notebook
 wanna notebook create --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook
 
 wanna notebook delete --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook
+```
+
+## WANNA Managed notebooks
+Managed notebooks allow Avast ML team to get started quickly with Vertex AI platform 
+without setting up the VM details. You can change the underlying hardware later on.
+
+Creates managed vertex-ai notebooks where Notebooks:
+* must have an owner for single person use
+* can have different kernels
+* can have any machine spec including any number of GPUs
+* notebooks will have WANNA default gcp labels for cost tracking
+
+It also allows for deletion and sync (with wanna.yaml) of notebooks with the user confirmation
+
+### Expected GCP roles
+* Artifact Registry Writer
+* Cloud Functions Invoker
+* Cloud Scheduler Job Runner
+* Notebooks Admin
+* Storage Object Creator
+* Vertex AI User
+* Viewer
+
+### Usage
+
+```bash
+wanna managed-notebook create --file samples/notebook/managed-notebook/wanna.yaml
+
+wanna managed-notebook delete --file samples/notebook/managed-notebook/wanna.yaml -n joao-notebook
+
+wanna managed-notebook sync --file samples/notebook/managed-notebook/wanna.yaml
 ```
 
 ## WANNA Jobs

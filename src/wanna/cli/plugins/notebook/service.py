@@ -1,19 +1,31 @@
 import subprocess
 from pathlib import Path
 from typing import List, Optional
-from requests import request
 
 import typer
 from google.api_core import exceptions
-from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v1.services.managed_notebook_service import ManagedNotebookServiceClient
-from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage, RuntimeAcceleratorConfig
-from google.cloud.notebooks_v1.types import Runtime, RuntimeAccessConfig, Runtime, CreateRuntimeRequest, RuntimeSoftwareConfig
-from google.cloud.notebooks_v1.types import VirtualMachine, VirtualMachineConfig, LocalDisk, LocalDiskInitializeParams
+from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
+from google.cloud.notebooks_v1.types import (
+    ContainerImage,
+    CreateInstanceRequest,
+    CreateRuntimeRequest,
+    Instance,
+    LocalDisk,
+    LocalDiskInitializeParams,
+    Runtime,
+    RuntimeAcceleratorConfig,
+    RuntimeAccessConfig,
+    RuntimeSoftwareConfig,
+    VirtualMachine,
+    VirtualMachineConfig,
+    VmImage,
+)
+from requests import request
 from waiting import wait
 
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.notebook import NotebookModel, ManagedNotebookModel
+from wanna.cli.models.notebook import ManagedNotebookModel, NotebookModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
@@ -370,7 +382,6 @@ class NotebookService(BaseService):
 
 
 class ManagedNotebookService(BaseService):
-
     def __init__(
         self,
         config: WannaConfigModel,
@@ -400,7 +411,6 @@ class ManagedNotebookService(BaseService):
         )
         self.tensorboard_service = TensorboardService(config=config)
 
-
     def _delete_one_instance(self, notebook_instance: ManagedNotebookModel) -> None:
         """
         Delete one notebook instance. This assumes that it has been already verified that notebook exists.
@@ -427,7 +437,7 @@ class ManagedNotebookService(BaseService):
         """
         Create a notebook instance based on information in NotebookModel class.
         1. Check if the notebook already exists
-        2. Parse the information from NotebookModel to GCP API friendly format = instance_request
+        2. Parse the information from NotebookModel to GCP API friendly format = runtime_request
         3. Wait for the compute instance behind the notebook to start
         4. Wait for JupyterLab to start
         5. Get and print the link to JupyterLab
@@ -446,58 +456,45 @@ class ManagedNotebookService(BaseService):
                 return
         # Disks
         localDiskParams = LocalDiskInitializeParams(
-            disk_size_gb = instance.data_disk.size_gb,
-            disk_type = instance.data_disk.disk_type
+            disk_size_gb=instance.data_disk.size_gb, disk_type=instance.data_disk.disk_type
         )
-        localDisk = LocalDisk(
-            initialize_params = localDiskParams
-        )
+        localDisk = LocalDisk(initialize_params=localDiskParams)
         # Accelerator
         if instance.gpu:
             runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
-                type = instance.gpu.accelerator_type,
-                core_count = instance.gpu.count
+                type=instance.gpu.accelerator_type, core_count=instance.gpu.count
             )
             virtualMachineConfig = VirtualMachineConfig(
-                machine_type = instance.machine_type,
-                data_disk = localDisk,
-                labels = instance.labels,
-                accelerator_config = runtimeAcceleratorConfig
+                machine_type=instance.machine_type,
+                data_disk=localDisk,
+                labels=instance.labels,
+                accelerator_config=runtimeAcceleratorConfig,
             )
         else:
             virtualMachineConfig = VirtualMachineConfig(
-                machine_type = instance.machine_type,
-                data_disk = localDisk,
-                labels = instance.labels,
+                machine_type=instance.machine_type,
+                data_disk=localDisk,
+                labels=instance.labels,
             )
         # VM
-        virtualMachine = VirtualMachine(
-            virtual_machine_config = virtualMachineConfig
-        )
+        virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
         # Runtime
-        runtimeSoftwareConfig = RuntimeSoftwareConfig(
-            kernels = instance.kernels
-        )
+        runtimeSoftwareConfig = RuntimeSoftwareConfig(kernels=instance.kernels)
         runtimeAccessConfig = RuntimeAccessConfig(
-            access_type = RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER,
-            runtime_owner = instance.owner
+            access_type=RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER, runtime_owner=instance.owner
         )
         runtime = Runtime(
-            access_config = runtimeAccessConfig,
-            software_config = runtimeSoftwareConfig,
-            virtual_machine = virtualMachine
+            access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
         )
         # Create runtime request
         request = CreateRuntimeRequest(
-            parent=f'projects/{instance.project_id}/locations/{instance.region}',
+            parent=f"projects/{instance.project_id}/locations/{instance.region}",
             runtime_id=instance.name,
-            runtime=runtime
+            runtime=runtime,
         )
 
         with Spinner(text=f"Creating underlying compute engine instance for {instance.name}"):
-            nb_instance = self.notebook_client.create_runtime(
-                request = request
-            )
+            nb_instance = self.notebook_client.create_runtime(request=request)
             instance_full_name = (
                 nb_instance.result().name
             )  # .result() waits for compute engine behind the notebook to start
@@ -510,7 +507,6 @@ class ManagedNotebookService(BaseService):
             )
             jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
         typer.echo(f"\N{party popper} JupyterLab started at {jupyterlab_link}")
-        typer.echo(f"{nb_instance.result().virtual_machine}")
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
@@ -540,7 +536,6 @@ class ManagedNotebookService(BaseService):
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.region}/runtimes/{instance.name}"
         return full_instance_name in self._list_running_instances(instance.project_id, instance.region)
 
-    
     def _prepare_startup_script(self, nb_instance: ManagedNotebookModel) -> str:
         """
         Prepare the notebook startup script based on the information from notebook.
@@ -595,98 +590,38 @@ class ManagedNotebookService(BaseService):
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
         return f"https://{instance_info.access_config.proxy_uri}"
 
-    def _ssh(self, notebook_instance: ManagedNotebookModel, run_in_background: bool, local_port: int) -> None:
+    def _return_diff(self):
         """
-        SSH connect to the notebook instance if the instance is already started.
-
-        Args:
-            notebook_instance: notebook model representing the instance you want to connect to
-            run_in_background: whether to run in the background or in interactive mode
-            local_port: jupyter lab will be exposed at this port at localhost
-
-        Returns:
-
+        Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
-        exists = NotebookService._instance_exists(notebook_instance)
-        if not exists:
-            typer.echo(f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
-            return
+        parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
+        active_runtimes = self.notebook_client.list_runtimes(parent=parent)
+        wanna_names = [managednotebook.name for managednotebook in self.config.managed_notebooks]
+        existing_names = [runtime.name for runtime in active_runtimes]
 
-        bash_command = f"gcloud compute ssh \
-             --project {notebook_instance.project_id} \
-             --zone {notebook_instance.zone} \
-             --tunnel-through-iap \
-              {notebook_instance.name} \
-             -- -L 8080:localhost:{local_port}"
-        if run_in_background:
-            bash_command += " -N -f"
-
-        process = subprocess.Popen(bash_command.split())
-        process.communicate()
-
-    def ssh(self, instance_name: str, run_in_background: bool, local_port: int) -> None:
+        to_be_deleted = []
+        to_be_created = []
         """
-        A wrapper around _ssh method, but this function also verifies if the notebook is
-        defined in YAML config and already started.
-
-        Args:
-            instance_name: name of the notebook to connect to
-            run_in_background: whether to run in the background or in interactive mode
-            local_port: jupyter lab will be exposed at this port at localhost
-
-        Returns:
-
+        Notebooks to be deleted
         """
-        if instance_name == "all":
-            if len(self.config.managed_notebooks) == 1:
-                model = self.config.managed_notebooks[0]
-                runtime_name = f"projects/{model.project_id}/locations/{model.region}/runtimes/{model.name}"
-                runtime = self.notebook_client.get_runtime(name = runtime_name)
-                if runtime.state != Runtime.State.ACTIVE:
-                    with Spinner(text=f"Starting compute engine for {model.name}"):
-                        operation = self.notebook_client.start_runtime(name = runtime_name)
-                        response = operation.result()
-                        print(response)
-                instance = runtime.virtual_machine
-                print(instance.instance_name)
-                print("=======================================")
-                self._ssh(instance, run_in_background, local_port)
-            elif len(self.config.managed_notebooks) > 1:
-                Exception("You can connect to only one Managed notebook at a time.")
-            else:
-                typer.secho("No Managed notebook definition found in your YAML config.", fg=typer.colors.RED)
-        else:
-            if instance_name in [notebook.name for notebook in self.config.managed_notebooks]:
-                self._ssh(
-                    [notebook for notebook in self.config.managed_notebooks if notebook.name == instance_name][0],
-                    run_in_background,
-                    local_port,
-                )
-            else:
-                typer.secho(f"No Managed notebook {instance_name} found", fg=typer.colors.RED)
+        for runtime in active_runtimes:
+            if (
+                runtime.virtual_machine.virtual_machine_config.labels["wanna_project"]
+                == self.config.gcp_profile.labels["wanna_project"]
+            ):
+                if runtime.name.split("/")[-1] not in wanna_names:
+                    to_be_deleted.append(runtime.name)
+        """
+        Notebooks to be created
+        """
+        for managednotebook in self.config.managed_notebooks:
+            if managednotebook.name not in existing_names:
+                to_be_created.append(managednotebook)
 
-    # def _return_diff(self):
-    #     active_runtimes = self._list_running_instances(self.config.gcp_profile.project_id, location='europe-west1')
-    #     to_be_deleted = []
-    #     to_be_created = []
-    #     """
-    #     Notebooks to be deleted
-    #     """
-    #     for notebook in active_runtimes:
-    #         if notebook not in self.config.managed_notebooks:
-    #             print(notebook)
-    #             to_be_deleted.append(notebook)
-    #     """
-    #     Notebooks to be created
-    #     """
-    #     for notebook in self.config.managed_notebooks:
-    #         if notebook.name not in active_runtimes:
-    #             print(notebook.name)
-    #             to_be_created.append(notebook)
-        
-    #     return to_be_deleted, to_be_created
+        return to_be_deleted, to_be_created
 
-    # def sync(self):
-    #     self._return_diff()
-
-
+    def sync(self):
+        """
+        Placeholder for development
+        """
+        to_be_deleted, to_be_created = self._return_diff()

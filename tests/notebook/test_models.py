@@ -5,7 +5,14 @@ from mock import patch
 from pydantic.error_wrappers import ValidationError
 
 from tests.mocks import mocks
-from wanna.cli.models.notebook import Network, NotebookDisk, NotebookEnvironment, NotebookGPU, NotebookModel
+from wanna.cli.models.notebook import (
+    ManagedNotebookModel,
+    Network,
+    NotebookDisk,
+    NotebookEnvironment,
+    NotebookGPU,
+    NotebookModel,
+)
 
 
 @patch(
@@ -84,5 +91,21 @@ class TestNotebookModel(unittest.TestCase):
                     "project_id": "gcp-project",
                     "zone": "europe-west4-a",
                     "machine_type": machine_type,
+                }
+            )
+
+
+class TestManagedNotebookModel(unittest.TestCase):
+    def test_kernel(self):
+        kernel1 = "gcr.io/projectId/imageName1"
+        kernel2 = "gcr.io/projectId/imageName2"
+        with pytest.raises(ValidationError):
+            _ = ManagedNotebookModel.parse_obj(
+                {
+                    "name": "jacek-notebook",
+                    "project_id": "cloud-lab-304213",
+                    "owner": "jacek.hebda@avast.com",
+                    "kernels": [kernel1, kernel2],
+                    "data_disk": {"disk_type": "pd_standard", "size_gb": 100},
                 }
             )
