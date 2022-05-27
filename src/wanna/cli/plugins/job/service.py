@@ -28,6 +28,7 @@ from wanna.cli.models.training_custom_job import (
     CustomJobType,
     CustomPythonPackageTrainingJobManifest,
     HyperParamater,
+    HyperparameterTuning,
     JobManifest,
     TrainingCustomJobModel,
     WorkerPoolModel,
@@ -35,6 +36,7 @@ from wanna.cli.models.training_custom_job import (
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 
 
@@ -401,6 +403,7 @@ class JobService(BaseService):
     def run(
         manifests: List[str],
         sync: bool = True,
+        hp_params: Path = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
@@ -412,9 +415,14 @@ class JobService(BaseService):
         for manifest_path in manifests:
             manifest = _read_job_manifest(Path(manifest_path))
 
-            aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
-
             if manifest.job_type is CustomJobType.CustomJob:
+                if hp_params:
+                    override_hp_params = load_yaml_path(hp_params, Path("."))
+                    overriden_hp_tuning = HyperparameterTuning.parse_obj(
+                        {**manifest.job_config.hp_tuning.dict(), **override_hp_params}
+                    )
+                    manifest.job_config.hp_tuning = overriden_hp_tuning
+                typer.echo(manifest)
                 _run_custom_job(manifest, sync)
             else:
                 _run_training_job(manifest, sync)
