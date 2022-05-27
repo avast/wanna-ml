@@ -7,8 +7,9 @@ import typer
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v1.services.managed_notebook_service import ManagedNotebookServiceClient
-from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage
-from google.cloud.notebooks_v1.types import Runtime, RuntimeAccessConfig, Runtime, CreateRuntimeRequest 
+from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage, RuntimeAcceleratorConfig
+from google.cloud.notebooks_v1.types import Runtime, RuntimeAccessConfig, Runtime, CreateRuntimeRequest, RuntimeSoftwareConfig
+from google.cloud.notebooks_v1.types import VirtualMachine, VirtualMachineConfig, LocalDisk, LocalDiskInitializeParams
 from waiting import wait
 
 from wanna.cli.docker.service import DockerService
@@ -443,12 +444,50 @@ class ManagedNotebookService(BaseService):
                 self._delete_one_instance(instance)
             else:
                 return
-
+        # Disks
+        localDiskParams = LocalDiskInitializeParams(
+            disk_size_gb = instance.data_disk.size_gb,
+            disk_type = instance.data_disk.disk_type
+        )
+        localDisk = LocalDisk(
+            initialize_params = localDiskParams
+        )
+        # Accelerator
+        if instance.gpu:
+            runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
+                type = instance.gpu.accelerator_type,
+                core_count = instance.gpu.count
+            )
+            virtualMachineConfig = VirtualMachineConfig(
+                machine_type = instance.machine_type,
+                data_disk = localDisk,
+                labels = instance.labels,
+                accelerator_config = runtimeAcceleratorConfig
+            )
+        else:
+            virtualMachineConfig = VirtualMachineConfig(
+                machine_type = instance.machine_type,
+                data_disk = localDisk,
+                labels = instance.labels,
+            )
+        # VM
+        virtualMachine = VirtualMachine(
+            virtual_machine_config = virtualMachineConfig
+        )
+        # Runtime
+        runtimeSoftwareConfig = RuntimeSoftwareConfig(
+            kernels = instance.kernels
+        )
         runtimeAccessConfig = RuntimeAccessConfig(
             access_type = RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER,
             runtime_owner = instance.owner
         )
-        runtime = Runtime(access_config = runtimeAccessConfig)
+        runtime = Runtime(
+            access_config = runtimeAccessConfig,
+            software_config = runtimeSoftwareConfig,
+            virtual_machine = virtualMachine
+        )
+        # Create runtime request
         request = CreateRuntimeRequest(
             parent=f'projects/{instance.project_id}/locations/{instance.region}',
             runtime_id=instance.name,
@@ -471,6 +510,7 @@ class ManagedNotebookService(BaseService):
             )
             jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
         typer.echo(f"\N{party popper} JupyterLab started at {jupyterlab_link}")
+        typer.echo(f"{nb_instance.result().virtual_machine}")
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """

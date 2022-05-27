@@ -6,7 +6,6 @@ from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validato
 from wanna.cli.models.base_instance import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
-
 class Network(BaseModel, extra=Extra.forbid):
     network_id: str
     subnet: Optional[str]
@@ -74,3 +73,7 @@ class ManagedNotebookModel(BaseInstanceModel):
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     region: str
     owner: str
+    machine_type: str = "n1-standard-4"
+    gpu: Optional[NotebookGPU]
+    data_disk: Optional[NotebookDisk]
+    kernels: Optional[List[str]]

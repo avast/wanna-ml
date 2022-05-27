@@ -1,15 +1,17 @@
 wanna_project:
   name: wanna-29
-  version: 1
-  authors: [joao.silva1@avast.com, jacek.hebda@avast.com]
+  version: 2
+  authors: [joao.silva1@avast.com, michal.mrazek@avast.com, jacek.hebda@avast.com]
 
 gcp_profiles:
   - profile_name: default
     project_id: cloud-lab-304213
-    zone: europe-west1-b
-    bucket: wanna-ml-west1-jh
 
 managed_notebooks:
   - name: jacek-notebook
     region: europe-west1
     owner: jacek.hebda@avast.com
+    machine_type: n1-standard-1
+    data_disk:
+      disk_type: pd_standard
+      size_gb: 100
