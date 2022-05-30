@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validato
 from wanna.cli.models.base_instance import BaseInstanceModel
 from wanna.cli.utils.gcp import validators
 
+
 class Network(BaseModel, extra=Extra.forbid):
     network_id: str
     subnet: Optional[str]

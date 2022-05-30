@@ -1,7 +1,7 @@
 import typer
 
 from .job.job_plugin import JobPlugin
-from .notebook.notebook_plugin import NotebookPlugin, ManagedNotebookPlugin
+from .notebook.notebook_plugin import ManagedNotebookPlugin, NotebookPlugin
 from .pipeline.pipeline_plugin import PipelinePlugin
 from .tensorboard.tensorboard_plugin import TensorboardPlugin
 

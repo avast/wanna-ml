@@ -21,7 +21,6 @@ from google.cloud.notebooks_v1.types import (
     VirtualMachineConfig,
     VmImage,
 )
-from requests import request
 from waiting import wait
 
 from wanna.cli.docker.service import DockerService
