@@ -72,9 +72,10 @@ class NotebookModel(BaseInstanceModel):
 
 class ManagedNotebookModel(BaseInstanceModel):
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
-    region: str
     owner: str
-    machine_type: str = "n1-standard-4"
+    machine_type: Optional[str] = "n1-standard-4"
     gpu: Optional[NotebookGPU]
     data_disk: Optional[NotebookDisk]
     kernels: Optional[List[str]]
+    bucket_mounts: Optional[BucketMount]
+    tensorboard_ref: Optional[str]

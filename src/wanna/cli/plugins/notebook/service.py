@@ -393,21 +393,8 @@ class ManagedNotebookService(BaseService):
         )
         self.version = version
         self.instances = config.managed_notebooks
-        self.wanna_project = config.wanna_project
-        self.bucket_name = config.gcp_profile.bucket
         self.notebook_client = ManagedNotebookServiceClient()
         self.config = config
-        self.docker_service = (
-            DockerService(
-                docker_model=config.docker,
-                gcp_profile=config.gcp_profile,
-                version=version,
-                work_dir=workdir,
-                wanna_project_name=self.wanna_project.name,
-            )
-            if config.docker
-            else None
-        )
         self.tensorboard_service = TensorboardService(config=config)
 
     def _delete_one_instance(self, notebook_instance: ManagedNotebookModel) -> None:
@@ -454,31 +441,38 @@ class ManagedNotebookService(BaseService):
             else:
                 return
         # Disks
-        localDiskParams = LocalDiskInitializeParams(
-            disk_size_gb=instance.data_disk.size_gb, disk_type=instance.data_disk.disk_type
-        )
+        disk_type = instance.data_disk.disk_type if instance.data_disk else "PD_SSD"
+        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else 100
+        localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
         localDisk = LocalDisk(initialize_params=localDiskParams)
         # Accelerator
         if instance.gpu:
             runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
                 type=instance.gpu.accelerator_type, core_count=instance.gpu.count
             )
-            virtualMachineConfig = VirtualMachineConfig(
-                machine_type=instance.machine_type,
-                data_disk=localDisk,
-                labels=instance.labels,
-                accelerator_config=runtimeAcceleratorConfig,
-            )
         else:
-            virtualMachineConfig = VirtualMachineConfig(
-                machine_type=instance.machine_type,
-                data_disk=localDisk,
-                labels=instance.labels,
+            runtimeAcceleratorConfig = None
+        # Post startup script
+        if instance.bucket_mounts or instance.tensorboard_ref:
+            script = self._prepare_startup_script(self.instances[0])
+            blob = upload_string_to_gcs(
+                script,
+                instance.bucket_mounts.bucket_name,
+                f"notebooks/{instance.name}/startup_script.sh",
             )
+            post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
+        else:
+            post_startup_script = None
         # VM
+        virtualMachineConfig = VirtualMachineConfig(
+            machine_type=instance.machine_type,
+            data_disk=localDisk,
+            labels=instance.labels,
+            accelerator_config=runtimeAcceleratorConfig,
+        )
         virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
         # Runtime
-        runtimeSoftwareConfig = RuntimeSoftwareConfig(kernels=instance.kernels)
+        runtimeSoftwareConfig = RuntimeSoftwareConfig(kernels=instance.kernels, post_startup_script=post_startup_script)
         runtimeAccessConfig = RuntimeAccessConfig(
             access_type=RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER, runtime_owner=instance.owner
         )

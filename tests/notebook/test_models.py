@@ -103,9 +103,7 @@ class TestManagedNotebookModel(unittest.TestCase):
             _ = ManagedNotebookModel.parse_obj(
                 {
                     "name": "jacek-notebook",
-                    "project_id": "cloud-lab-304213",
                     "owner": "jacek.hebda@avast.com",
                     "kernels": [kernel1, kernel2],
-                    "data_disk": {"disk_type": "pd_standard", "size_gb": 100},
                 }
             )

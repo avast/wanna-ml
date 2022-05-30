@@ -11,7 +11,4 @@ gcp_profiles:
 managed_notebooks:
   - name: jacek-notebook
     owner: jacek.hebda@avast.com
-    machine_type: n1-standard-1
-    data_disk:
-      disk_type: pd_standard
-      size_gb: 100
+
