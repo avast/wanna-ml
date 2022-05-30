@@ -910,6 +910,44 @@ url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple
 reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
 
 [[package]]
+name = "google-cloud-datacatalog"
+version = "3.8.0"
+description = "Google Cloud Data Catalog API API client library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
+grpc-google-iam-v1 = ">=0.12.4,<1.0.0dev"
+proto-plus = ">=1.15.0"
+
+[package.extras]
+libcst = ["libcst (>=0.2.5)"]
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
+name = "google-cloud-dataplex"
+version = "1.0.0"
+description = "Dataplex API client library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
+proto-plus = ">=1.15.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
 name = "google-cloud-functions"
 version = "1.6.0"
 description = ""
@@ -3121,7 +3159,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11" # google-cloud-bigquery requires this mess
-content-hash = "e3b3f8e4c1227c51630ed65ca039b93b6d57d21f7252f21649c9b27c1431ff5a"
+content-hash = "9de4287eaa913041773c8cb9c91afd0b006c2538d889ac5c5f7b3979f9294d2d"
 
 [metadata.files]
 absl-py = [
@@ -3420,6 +3458,14 @@ google-cloud-compute = [
 google-cloud-core = [
     {file = "google-cloud-core-2.3.0.tar.gz", hash = "sha256:fdaa629e6174b4177c2d56eb8ab1ddd87661064d0a3e9bb06b62e4d7e2344669"},
     {file = "google_cloud_core-2.3.0-py2.py3-none-any.whl", hash = "sha256:35900f614045a33d5208e1d50f0d7945df98ce088388ce7237e7a2db12d5656e"},
+]
+google-cloud-datacatalog = [
+    {file = "google-cloud-datacatalog-3.8.0.tar.gz", hash = "sha256:90661f76f027bdd166ff5bb4092fa7eab18a855e46b46856d7317b49552ef0f6"},
+    {file = "google_cloud_datacatalog-3.8.0-py2.py3-none-any.whl", hash = "sha256:ecd3d41ba9589d876b75e9451c4396665184b6c30a3a006f0c69dce32cbbdbe8"},
+]
+google-cloud-dataplex = [
+    {file = "google-cloud-dataplex-1.0.0.tar.gz", hash = "sha256:f66429939dfcd07c576fa5535edaa1190dd86f9461d37b5a6d91909ad68c987d"},
+    {file = "google_cloud_dataplex-1.0.0-py2.py3-none-any.whl", hash = "sha256:05693dbc6e28aacbb620f02906b8f91e3c1eb31c02e9e08a4d4734e1f09833c6"},
 ]
 google-cloud-functions = [
     {file = "google-cloud-functions-1.6.0.tar.gz", hash = "sha256:7730b4dffe3ec84b7a48b7df21e8330326c474abe3b964070a0c0da95a6610b0"},
