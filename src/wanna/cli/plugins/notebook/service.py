@@ -540,7 +540,6 @@ class ManagedNotebookService(BaseService):
         Returns:
             startup_script
         """
-        bucket_mounts = nb_instance.bucket_mounts
         if nb_instance.tensorboard_ref:
             tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                 nb_instance.tensorboard_ref
@@ -549,7 +548,7 @@ class ManagedNotebookService(BaseService):
             tensorboard_resource_name = None
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
-            bucket_mounts=bucket_mounts,
+            bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
         )
         return startup_script
@@ -598,10 +597,7 @@ class ManagedNotebookService(BaseService):
         Notebooks to be deleted
         """
         for runtime in active_runtimes:
-            if (
-                runtime.virtual_machine.virtual_machine_config.labels["wanna_project"]
-                == self.config.gcp_profile.labels["wanna_project"]
-            ):
+            if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project:
                 if runtime.name.split("/")[-1] not in wanna_names:
                     to_be_deleted.append(runtime.name)
         """
