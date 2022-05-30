@@ -53,3 +53,9 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     repository: str
     registry: Optional[str]
     cloud_build: bool = False
+
+
+class DockerBuildResult(BaseModel, extra=Extra.forbid):
+    name: str
+    tags: List[str]
+    build_type: ImageBuildType
