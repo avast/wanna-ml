@@ -7,6 +7,7 @@ gcp_profiles:
   - profile_name: default
     project_id: us-burger-gcp-poc
     zone: europe-west1-b
+    region: europe-west1
     bucket: wanna-ml
     labels:
     service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"

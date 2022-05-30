@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, root_validator, validator
+from typing_extensions import Annotated
 
 from wanna.cli.models.base_instance import BaseInstanceModel
 
@@ -33,6 +34,8 @@ class WorkerPoolModel(BaseModel, extra=Extra.forbid):
     boot_disk_size_gb: int = Field(ge=100, le=65535, default=100)
     replica_count: int = 1
 
+    # _machine_type = validator("machine_type", allow_reuse=True)(validators.validate_machine_type)
+
     @root_validator
     def one_from_python_or_container_spec_must_be_set(cls, values):  # pylint: disable=no-self-argument,no-self-use
         if values.get("python_package") and values.get("container"):
@@ -46,6 +49,48 @@ class ReductionServerModel(BaseModel, extra=Extra.forbid):
     replica_count: int
     machine_type: str
     container_uri: str
+
+
+class IntegerParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["integer"]
+    var_name: str
+    min: int
+    max: int
+    scale: Literal["log", "linear"] = "linear"
+
+
+class DoubleParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["double"]
+    var_name: str
+    min: float
+    max: float
+    scale: Literal["log", "linear"] = "linear"
+
+
+class CategoricalParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["categorical"]
+    var_name: str
+    values: List[str]
+
+
+class DiscreteParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["discrete"]
+    var_name: str
+    scale: Literal["log", "linear"] = "linear"
+    values: List[int]
+
+
+HyperParamater = Annotated[
+    Union[IntegerParameter, DoubleParameter, CategoricalParameter, DiscreteParameter], Field(discriminator="type")
+]
+
+
+class HyperparameterTuning(BaseModel):
+    metrics: Dict[str, Literal["minimize", "maximize"]]
+    parameters: List[HyperParamater]
+    max_trial_count: int = 15
+    parallel_trial_count: int = 3
+    search_algorithm: Optional[Literal["grid", "random"]]
 
 
 class BaseCustomJobModel(BaseInstanceModel):
@@ -78,6 +123,7 @@ class BaseCustomJobModel(BaseInstanceModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-custom-job
 class CustomJobModel(BaseCustomJobModel):
     workers: List[WorkerPoolModel]
+    hp_tuning: Optional[HyperparameterTuning]
 
     @validator("workers", pre=False)
     def _worker_pool_must_have_same_spec(  # pylint: disable=no-self-argument,no-self-use

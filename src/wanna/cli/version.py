@@ -128,6 +128,6 @@ def perform_check(terminate: bool = True) -> None:
         ):
             typer.Exit()
     else:
-        typer.secho("Your wanna cli is up to date", fg="green")
+        typer.secho(f"Your wanna cli is up to date with {latest_version}", fg="green")
         if terminate:
             typer.Exit()

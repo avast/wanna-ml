@@ -1,0 +1,22 @@
+name: {{ cookiecutter.component_name }}
+
+description: {{ cookiecutter.component_name }}
+
+inputs:
+  - { name: experiment_name, type: String, description: 'experiment_name' }
+
+implementation:
+  container:
+    # The strict name of a container image that you've pushed to a container registry.
+    image: {{'${'}}{{cookiecutter.component_docker_ref|upper|replace('-','_')|replace(' ', '_')}}_DOCKER_URI{{'}'}}
+    # command is a list of strings (command-line arguments).
+    # The YAML language has two syntaxes for lists and you can use either of them.
+    # Here we use the "flow syntax" - comma-separated strings inside square brackets.
+    command: [
+        python3,
+        -m,
+        {{ cookiecutter.component_slug }}.{{cookiecutter.component_slug}},
+    ]
+    args: [
+        --experiment-name, { inputValue: experiment_name },
+    ]

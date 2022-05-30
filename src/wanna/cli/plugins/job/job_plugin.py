@@ -3,8 +3,14 @@ from pathlib import Path
 
 import typer
 
+from wanna.cli.deployment.models import PushMode
 from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
+from wanna.cli.plugins.base.common_options import (
+    instance_name_option,
+    profile_name_option,
+    push_mode_option,
+    wanna_file_option,
+)
 from wanna.cli.plugins.job.service import JobService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -39,12 +45,13 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         version: str = typer.Option(..., "--version", "-v", help="Job version"),
         instance_name: str = instance_name_option("job", "push"),
+        mode: PushMode = push_mode_option,
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version)
         jobs = job_service.build(instance_name)
-        job_service.push(jobs)
+        job_service.push(jobs, mode=mode)
 
     @staticmethod
     def run(
@@ -52,21 +59,23 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         version: str = typer.Option(..., "--version", "-v", help="Job version"),
         instance_name: str = instance_name_option("job", "run"),
+        hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the job in sync mode"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version)
         jobs = job_service.build(instance_name)
-        manifests = job_service.push(jobs, local=True)
-        JobService.run(manifests, sync=sync)
+        manifest_paths, _ = job_service.push(jobs, local=True)
+        JobService.run(manifest_paths, sync=sync, hp_params=hp_params)
 
     @staticmethod
     def run_manifest(
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
+        hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
-        JobService.run([manifest], sync=sync)
+        JobService.run([manifest], sync=sync, hp_params=hp_params)
 
     @staticmethod
     def stop(

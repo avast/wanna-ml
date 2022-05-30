@@ -1,0 +1,48 @@
+wanna_project:
+  name: wanna-hp-tuning
+  version: 1
+  authors: [michal.mrazek@avast.com]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: us-burger-gcp-poc
+    zone: europe-west1-b
+    bucket: wanna-ml-west1
+
+docker:
+  images:
+    - build_type: local_build_image
+      name: hp-tuning-container
+      context_dir: .
+      dockerfile: Dockerfile
+  repository: wanna-samples
+  cloud_build: true
+
+jobs:
+  - name: hp-tuning
+    workers:
+      - container:
+          docker_image_ref: hp-tuning-container
+        machine_type: "n1-standard-8"
+        gpu:
+          accelerator_type: NVIDIA_TESLA_K80
+          count: 1
+    hp_tuning:
+      metrics: {'accuracy':'maximize'}
+      max_trial_count: 10
+      parallel_trial_count: 2
+      parameters:
+        - var_name: learning_rate
+          type: double
+          min: 0.001
+          max: 1
+          scale: log
+        - var_name: momentum
+          type: double
+          min: 0
+          max: 1
+          scale: linear
+        - var_name: num_units
+          type: discrete
+          values: [64, 128, 512]
+

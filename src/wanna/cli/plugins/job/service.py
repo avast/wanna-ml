@@ -11,20 +11,27 @@ from google.cloud.aiplatform import (
     CustomJob,
     CustomPythonPackageTrainingJob,
     CustomTrainingJob,
+    HyperparameterTuningJob,
 )
+from google.cloud.aiplatform import hyperparameter_tuning as hpt
 from google.cloud.aiplatform.gapic import WorkerPoolSpec
 from google.cloud.aiplatform_v1.types import ContainerSpec, DiskSpec, MachineSpec, PythonPackageSpec
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from google.protobuf.json_format import MessageToDict
 from smart_open import open
 
+from wanna.cli.deployment.models import ContainerArtifact, PathArtifact, PushMode, PushTask
+from wanna.cli.deployment.push import PushResult, push
 from wanna.cli.docker.service import DockerService
+from wanna.cli.models.docker import ImageBuildType
 from wanna.cli.models.training_custom_job import (
     CustomContainerTrainingJobManifest,
     CustomJobManifest,
     CustomJobModel,
     CustomJobType,
     CustomPythonPackageTrainingJobManifest,
+    HyperParamater,
+    HyperparameterTuning,
     JobManifest,
     TrainingCustomJobModel,
     WorkerPoolModel,
@@ -32,6 +39,7 @@ from wanna.cli.models.training_custom_job import (
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 
 
@@ -64,7 +72,7 @@ def _make_local_manifest_path(build_dir: Path, job_name: str) -> Path:
     return build_dir / f"jobs/{kebabcase(job_name).lower()}"
 
 
-def _read_job_manifest(manifest_path: Path) -> JobManifest:
+def _read_job_manifest(manifest_path: str) -> JobManifest:
     """
     Reads a job manifest file
 
@@ -149,9 +157,25 @@ def _write_local_job_manifest(build_dir: Path, manifest: JobManifest) -> Path:
     return local_manifest_path
 
 
+def _create_hyperparameter_spec(
+    parameter: HyperParamater,
+) -> hpt._ParameterSpec:
+    if parameter.type == "integer":
+        return hpt.IntegerParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
+    elif parameter.type == "double":
+        return hpt.DoubleParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
+    elif parameter.type == "categorical":
+        return hpt.CategoricalParameterSpec(values=parameter.values)
+    elif parameter.type == "discrete":
+        return hpt.DiscreteParameterSpec(values=parameter.values, scale=parameter.scale)
+    else:
+        raise Exception(f"Unsupported parameter type {parameter.type}")
+
+
 def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
     """
-    Runs a Vertex AI custom job based on the provided manifest
+    Runs a Vertex AI custom job based on the provided manifest.
+    If hp_tuning parameters are set, it starts a HyperParameter Tuning instead.
 
     Args:
         manifest (CustomJobManifest): The Job manifest to be executed
@@ -159,28 +183,45 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
 
     """
     custom_job = CustomJob(**manifest.job_payload)
-    custom_job.run(
+
+    if manifest.job_config.hp_tuning:
+
+        parameter_spec = {
+            param.var_name: _create_hyperparameter_spec(param) for param in manifest.job_config.hp_tuning.parameters
+        }
+        runable = HyperparameterTuningJob(
+            display_name=manifest.job_config.name,
+            custom_job=custom_job,
+            metric_spec=manifest.job_config.hp_tuning.metrics,
+            parameter_spec=parameter_spec,
+            max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
+            parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
+            search_algorithm=manifest.job_config.hp_tuning.search_algorithm,
+        )
+    else:
+        runable = custom_job  # type: ignore
+    runable.run(
         timeout=manifest.job_config.timeout_seconds,
         enable_web_access=manifest.job_config.enable_web_access,
         tensorboard=manifest.tensorboard if manifest.tensorboard else None,
         sync=False,
     )
 
-    custom_job.wait_for_resource_creation()
-    job_id = custom_job.resource_name.split("/")[-1]
+    runable.wait_for_resource_creation()
+    runable_id = runable.resource_name.split("/")[-1]
 
     if sync:
-        with Spinner(text=f"Running custom job {manifest.job_config.name} in sync mode") as s:
+        with Spinner(text=f"Running job {manifest.job_config.name} in sync mode") as s:
             s.info(
                 f"Job Dashboard in "
-                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
+                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
             )
             custom_job.wait()
     else:
-        with Spinner(text=f"Running custom job {manifest.job_config.name} in async mode") as s:
+        with Spinner(text=f"Running job {manifest.job_config.name} in async mode") as s:
             s.info(
                 f"Job Dashboard in "
-                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
+                f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
             )
 
 
@@ -321,7 +362,15 @@ class JobService(BaseService):
 
         return built_instances
 
-    def push(self, manifests: List[Tuple[Path, JobManifest]], local: bool = False) -> List[str]:
+    def push(
+        self, manifests: List[Tuple[Path, JobManifest]], local: bool = False, mode: PushMode = PushMode.all
+    ) -> Tuple[List[str], PushResult]:
+        manifest_paths = [str(manifest_path) for manifest_path, _ in manifests]
+        return manifest_paths, push(self.docker_service, manifests, self._prepare_push, self.version, local, mode)
+
+    def _prepare_push(
+        self, manifests: List[Tuple[Path, JobManifest]], version: str, local: bool = False
+    ) -> List[PushTask]:
         """
         Completes the build process buy pushing docker images and pushing manifest files to
         GCS for future execution
@@ -333,38 +382,51 @@ class JobService(BaseService):
             paths to gs:// paths where the manifests were pushed
         """
 
-        pushed_manifests = []
+        push_tasks = []
         for manifest_path, manifest in manifests:
-            loaded_manifest = _read_job_manifest(manifest_path)
+            loaded_manifest = _read_job_manifest(str(manifest_path))
+            manifest_artifacts = []
+            container_artifacts = []
 
-            with Spinner(text=f"Pushing job manifest {manifest.job_config.name}") as s:
+            with Spinner(text=f"Preparing {manifest.job_config.name} job manifest"):
 
                 for docker_image_ref in loaded_manifest.image_refs:
-                    self.docker_service.push_image_ref(docker_image_ref)
+                    model, image, tag = self.docker_service.get_image(docker_image_ref)
+                    if model.build_type != ImageBuildType.provided_image:
+                        tags = image.repo_tags if image and image.repo_tags else [tag]
+                        container_artifacts.append(ContainerArtifact(title=model.name, tags=tags))
+
+                gcs_manifest_path = _make_gcs_manifest_path(self.config.gcp_profile.bucket, manifest.job_config.name)
+                deployment_dir = f"{gcs_manifest_path}/deployment/release/{version}"
 
                 if local:
-                    deployment_dir = f"{manifest_path.parent}/deployment/release/{self.version}"
+                    deployment_dir = f"{manifest_path.parent}/deployment/release/{version}"
                     os.makedirs(deployment_dir, exist_ok=True)
-                else:
-                    gcs_manifest_path = _make_gcs_manifest_path(
-                        self.config.gcp_profile.bucket, manifest.job_config.name
-                    )
-                    deployment_dir = f"{gcs_manifest_path}/deployment/release/{self.version}"
 
                 target_manifest_path = f"{deployment_dir}/job-manifest.json"
+                manifest_artifacts.append(
+                    PathArtifact(
+                        title=f"{loaded_manifest.job_config.name} job manifest",
+                        source=str(manifest_path.resolve()),
+                        destination=target_manifest_path,
+                    )
+                )
 
-                with open(target_manifest_path, "w") as f:
-                    f.write(manifest.json())
+                push_tasks.append(
+                    PushTask(
+                        container_artifacts=container_artifacts,
+                        manifest_artifacts=manifest_artifacts,
+                        json_artifacts=[],
+                    )
+                )
 
-                s.info(f"Pushed wanna job manifest to {target_manifest_path}")
-                pushed_manifests.append(target_manifest_path)
-
-        return pushed_manifests
+        return push_tasks
 
     @staticmethod
     def run(
         manifests: List[str],
         sync: bool = True,
+        hp_params: Path = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
@@ -374,11 +436,16 @@ class JobService(BaseService):
 
         """
         for manifest_path in manifests:
-            manifest = _read_job_manifest(Path(manifest_path))
-
-            aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
+            manifest = _read_job_manifest(manifest_path)
 
             if manifest.job_type is CustomJobType.CustomJob:
+                if hp_params:
+                    override_hp_params = load_yaml_path(hp_params, Path("."))
+                    overriden_hp_tuning = HyperparameterTuning.parse_obj(
+                        {**manifest.job_config.hp_tuning.dict(), **override_hp_params}
+                    )
+                    manifest.job_config.hp_tuning = overriden_hp_tuning
+                typer.echo(manifest)
                 _run_custom_job(manifest, sync)
             else:
                 _run_training_job(manifest, sync)

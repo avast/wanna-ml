@@ -1,21 +1,11 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, validator
-from python_on_whales import Image
+from pydantic import BaseModel, Field
 
 from wanna.cli.models.base_instance import BaseInstanceModel
-from wanna.cli.models.docker import DockerImageModel
-from wanna.cli.utils.gcp import validators
-
-
-class PipelineScheduleModel(BaseModel):
-    cron: str
-    timezone: str = "Etc/UTC"
-    service_account: Optional[str]
-
-    # Validators
-    _schedule = validator("cron")(validators.validate_cron_schedule)
+from wanna.cli.models.cloud_scheduler import CloudSchedulerModel
+from wanna.cli.models.docker import DockerBuildResult
 
 
 class PipelineModel(BaseInstanceModel):
@@ -27,21 +17,15 @@ class PipelineModel(BaseInstanceModel):
     tags: Optional[List[str]]
     metadata: Optional[List[Dict[str, Any]]]
     docker_image_ref: Optional[List[str]]
-    schedule: Optional[PipelineScheduleModel]
+    schedule: Optional[CloudSchedulerModel]
     tensorboard_ref: Optional[str]
-
-
-class PipelineMeta(BaseModel, arbitrary_types_allowed=True):
-    json_spec_path: Path
-    config: PipelineModel
-    images: List[Tuple[DockerImageModel, Optional[Image], str]]
-    parameter_values: Dict[str, Any]
-    compile_env_params: Dict[str, str]
 
 
 class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
     pipeline_name: str
+    pipeline_bucket: str
     pipeline_root: str
+    pipeline_version: str
     json_spec_path: str
     parameter_values: Dict[str, Any] = {}
     labels: Dict[str, str] = {}
@@ -49,4 +33,6 @@ class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
     project: Optional[str]
     location: Optional[str]
     service_account: Optional[str]
-    schedule: Optional[PipelineScheduleModel]
+    schedule: Optional[CloudSchedulerModel]
+    docker_refs: List[DockerBuildResult]
+    compile_env_params: Dict[str, str]

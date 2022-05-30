@@ -6,11 +6,15 @@ from typing import Any, Dict, List
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import storage
-from google.cloud.compute import MachineTypesClient, RegionsClient, ZonesClient
+from google.cloud import storage  # type: ignore
+from google.cloud.compute import MachineTypesClient, ZonesClient
+from google.cloud.compute_v1 import RegionsClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
+
+DEFAULT_VALIDATION_MODE = "remote"
+VALIDATION_MODE = os.environ.get("WANNA_VALIDATION_MODE", DEFAULT_VALIDATION_MODE)
 
 
 def are_gcp_credentials_set() -> bool:
@@ -49,8 +53,139 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
     Returns:
         list of available machine types
     """
-    response = MachineTypesClient().list(project=project_id, zone=zone)
-    return [mtype.name for mtype in response.items]
+    # TODO: remove once we can push to teamcity via GCP
+    if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
+        response = MachineTypesClient().list(project=project_id, zone=zone)
+        machine_types = [mtype.name for mtype in response.items]
+    else:
+        machine_types = [
+            "c2-standard-30",
+            "c2-standard-4",
+            "c2-standard-60",
+            "c2-standard-8",
+            "e2-highcpu-16",
+            "e2-highcpu-2",
+            "e2-highcpu-32",
+            "e2-highcpu-4",
+            "e2-highcpu-8",
+            "e2-highmem-16",
+            "e2-highmem-2",
+            "e2-highmem-4",
+            "e2-highmem-8",
+            "e2-medium",
+            "e2-micro",
+            "e2-small",
+            "e2-standard-16",
+            "e2-standard-2",
+            "e2-standard-32",
+            "e2-standard-4",
+            "e2-standard-8",
+            "f1-micro",
+            "g1-small",
+            "m1-megamem-96",
+            "m1-ultramem-160",
+            "m1-ultramem-40",
+            "m1-ultramem-80",
+            "m2-megamem-416",
+            "m2-ultramem-208",
+            "m2-ultramem-416",
+            "n1-highcpu-16",
+            "n1-highcpu-2",
+            "n1-highcpu-32",
+            "n1-highcpu-4",
+            "n1-highcpu-64",
+            "n1-highcpu-8",
+            "n1-highcpu-96",
+            "n1-highmem-16",
+            "n1-highmem-2",
+            "n1-highmem-32",
+            "n1-highmem-4",
+            "n1-highmem-64",
+            "n1-highmem-8",
+            "n1-highmem-96",
+            "n1-megamem-96",
+            "n1-standard-1",
+            "n1-standard-16",
+            "n1-standard-2",
+            "n1-standard-32",
+            "n1-standard-4",
+            "n1-standard-64",
+            "n1-standard-8",
+            "n1-standard-96",
+            "n1-ultramem-160",
+            "n1-ultramem-40",
+            "n1-ultramem-80",
+            "n2-highcpu-16",
+            "n2-highcpu-2",
+            "n2-highcpu-32",
+            "n2-highcpu-4",
+            "n2-highcpu-48",
+            "n2-highcpu-64",
+            "n2-highcpu-8",
+            "n2-highcpu-80",
+            "n2-highcpu-96",
+            "n2-highmem-128",
+            "n2-highmem-16",
+            "n2-highmem-2",
+            "n2-highmem-32",
+            "n2-highmem-4",
+            "n2-highmem-48",
+            "n2-highmem-64",
+            "n2-highmem-8",
+            "n2-highmem-80",
+            "n2-highmem-96",
+            "n2-standard-128",
+            "n2-standard-16",
+            "n2-standard-2",
+            "n2-standard-32",
+            "n2-standard-4",
+            "n2-standard-48",
+            "n2-standard-64",
+            "n2-standard-8",
+            "n2-standard-80",
+            "n2-standard-96",
+            "n2d-highcpu-128",
+            "n2d-highcpu-16",
+            "n2d-highcpu-2",
+            "n2d-highcpu-224",
+            "n2d-highcpu-32",
+            "n2d-highcpu-4",
+            "n2d-highcpu-48",
+            "n2d-highcpu-64",
+            "n2d-highcpu-8",
+            "n2d-highcpu-80",
+            "n2d-highcpu-96",
+            "n2d-highmem-16",
+            "n2d-highmem-2",
+            "n2d-highmem-32",
+            "n2d-highmem-4",
+            "n2d-highmem-48",
+            "n2d-highmem-64",
+            "n2d-highmem-8",
+            "n2d-highmem-80",
+            "n2d-highmem-96",
+            "n2d-standard-128",
+            "n2d-standard-16",
+            "n2d-standard-2",
+            "n2d-standard-224",
+            "n2d-standard-32",
+            "n2d-standard-4",
+            "n2d-standard-48",
+            "n2d-standard-64",
+            "n2d-standard-8",
+            "n2d-standard-80",
+            "n2d-standard-96",
+            "t2d-standard-1",
+            "t2d-standard-16",
+            "t2d-standard-2",
+            "t2d-standard-32",
+            "t2d-standard-4",
+            "t2d-standard-48",
+            "t2d-standard-60",
+            "t2d-standard-8",
+        ]
+
+    return machine_types
 
 
 def get_available_zones(project_id: str) -> List[str]:
@@ -62,8 +197,25 @@ def get_available_zones(project_id: str) -> List[str]:
     Returns:
         list of available zones
     """
-    response = ZonesClient().list(project=project_id)
-    return [zone.name for zone in response.items]
+
+    # TODO: remove once we can push to teamcity via GCP
+    if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
+        response = ZonesClient().list(project=project_id)
+        return [zone.name for zone in response.items]
+    else:
+        return [
+            "us-east1-c",
+            "us-east1-d",
+            "us-west1-b",
+            "us-west1-c",
+            "us-west1-a",
+            "europe-west1-b",
+            "europe-west1-d",
+            "europe-west1-c",
+            "europe-west3-c",
+            "europe-west3-a",
+            "europe-west3-b",
+        ]
 
 
 def get_available_regions(project_id: str) -> List[str]:
@@ -75,8 +227,12 @@ def get_available_regions(project_id: str) -> List[str]:
     Returns:
         list of available regions
     """
-    response = RegionsClient().list(project=project_id)
-    return [region.name for region in response.items]
+    # TODO: enable once we can push to teamcity via GCP
+    if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
+        response = RegionsClient().list(project=project_id)
+        return [region.name for region in response.items]
+    else:
+        return ["europe-west1", "europe-west3", "us-east1", "us-west1"]
 
 
 def get_region_from_zone(zone: str) -> str:
@@ -215,3 +371,15 @@ def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage
     blob = bucket.blob(blob_name)
     blob.upload_from_string(data)
     return blob
+
+
+def is_gcs_path(path: str):
+    """
+    Simply checks if path str represents a GCS path
+    Args:
+        path: path string that will be checked
+
+    Returns:
+        bool
+    """
+    return path.startswith("gs://")
