@@ -1,0 +1,15 @@
+max_trial_count: 20
+parameters:
+  - var_name: num_units
+    type: discrete
+    values: [512, 1024]
+  - var_name: learning_rate
+    type: double
+    min: 0.001
+    max: 1
+    scale: log
+  - var_name: momentum
+    type: double
+    min: 0
+    max: 1
+    scale: linear

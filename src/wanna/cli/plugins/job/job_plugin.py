@@ -52,6 +52,7 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         version: str = typer.Option(..., "--version", "-v", help="Job version"),
         instance_name: str = instance_name_option("job", "run"),
+        hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the job in sync mode"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
@@ -59,14 +60,15 @@ class JobPlugin(BasePlugin):
         job_service = JobService(config=config, workdir=workdir, version=version)
         jobs = job_service.build(instance_name)
         manifests = job_service.push(jobs, local=True)
-        JobService.run(manifests, sync=sync)
+        JobService.run(manifests, sync=sync, hp_params=hp_params)
 
     @staticmethod
     def run_manifest(
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
+        hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
-        JobService.run([manifest], sync=sync)
+        JobService.run([manifest], sync=sync, hp_params=hp_params)
 
     @staticmethod
     def stop(

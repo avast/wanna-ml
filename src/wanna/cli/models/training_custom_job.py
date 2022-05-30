@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, root_validator, validator
+from typing_extensions import Annotated
 
 from wanna.cli.models.base_instance import BaseInstanceModel
 
@@ -48,6 +49,48 @@ class ReductionServerModel(BaseModel, extra=Extra.forbid):
     container_uri: str
 
 
+class IntegerParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["integer"]
+    var_name: str
+    min: int
+    max: int
+    scale: Literal["log", "linear"] = "linear"
+
+
+class DoubleParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["double"]
+    var_name: str
+    min: float
+    max: float
+    scale: Literal["log", "linear"] = "linear"
+
+
+class CategoricalParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["categorical"]
+    var_name: str
+    values: List[str]
+
+
+class DiscreteParameter(BaseModel, extra=Extra.forbid):
+    type: Literal["discrete"]
+    var_name: str
+    scale: Literal["log", "linear"] = "linear"
+    values: List[int]
+
+
+HyperParamater = Annotated[
+    Union[IntegerParameter, DoubleParameter, CategoricalParameter, DiscreteParameter], Field(discriminator="type")
+]
+
+
+class HyperparameterTuning(BaseModel):
+    metrics: Dict[str, Literal["minimize", "maximize"]]
+    parameters: List[HyperParamater]
+    max_trial_count: int = 15
+    parallel_trial_count: int = 3
+    search_algorithm: Optional[Literal["grid", "random"]]
+
+
 class BaseCustomJobModel(BaseInstanceModel):
     name: str
     region: str
@@ -78,6 +121,7 @@ class BaseCustomJobModel(BaseInstanceModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-custom-job
 class CustomJobModel(BaseCustomJobModel):
     workers: List[WorkerPoolModel]
+    hp_tuning: Optional[HyperparameterTuning]
 
     @validator("workers", pre=False)
     def _worker_pool_must_have_same_spec(  # pylint: disable=no-self-argument,no-self-use
