@@ -8,6 +8,7 @@ from pydantic import BaseModel, Extra, Field
 class DockerBuildConfigModel(BaseModel, extra=Extra.forbid):
     # Docu for more info: https://gabrieldemarmiesse.github.io/python-on-whales/sub-commands/buildx/#build
     build_args: Dict[str, str] = {}
+    add_hosts: Dict[str, str] = {}
     labels: Dict[str, str] = {}
     network: Optional[str]
     platforms: Optional[List[str]]
