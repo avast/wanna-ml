@@ -96,7 +96,7 @@ class DockerService:
                 return None
             else:
                 with Spinner(text=f"Building {docker_image_ref} docker image locally with {build_args}"):
-                    image = docker.build(context_dir, file=file_path, tags=tags, **build_args)
+                    image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
                     self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return image  # type: ignore
         else:
