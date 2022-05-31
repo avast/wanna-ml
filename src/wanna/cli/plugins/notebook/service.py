@@ -590,17 +590,13 @@ class ManagedNotebookService(BaseService):
         parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
         active_runtimes = self.notebook_client.list_runtimes(parent=parent)
         wanna_names = [managednotebook.name for managednotebook in self.instances]
-        # print("wanna names:", wanna_names)
         existing_names = [runtime.name for runtime in active_runtimes]
-        # print("existing names:", existing_names)
-        # print("wanna_project as per yaml", self.config.wanna_project)
         to_be_deleted = []
         to_be_created = []
         """
         Notebooks to be deleted
         """
         for runtime in active_runtimes:
-            # print("Labels of active ones:", runtime.virtual_machine.virtual_machine_config.labels["wanna_project"])
             if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project.name:
                 if runtime.name.split("/")[-1] not in wanna_names:
                     to_be_deleted.append(runtime.name)
@@ -608,7 +604,6 @@ class ManagedNotebookService(BaseService):
         Notebooks to be created
         """
         for managednotebook in self.instances:
-            # print("Labels of desired:", managednotebook.labels["wanna_project"])
             if managednotebook.name not in existing_names:
                 to_be_created.append(managednotebook)
 
