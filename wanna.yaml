@@ -9,6 +9,6 @@ gcp_profiles:
     region: europe-west1
 
 managed_notebooks:
-  - name: jacek-notebook
+  - name: minimum-setup
     owner: jacek.hebda@avast.com
 
