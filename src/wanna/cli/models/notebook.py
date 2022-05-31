@@ -77,5 +77,5 @@ class ManagedNotebookModel(BaseInstanceModel):
     gpu: Optional[NotebookGPU]
     data_disk: Optional[NotebookDisk]
     kernels: Optional[List[str]]
-    bucket_mounts: Optional[BucketMount]
+    bucket_mount: Optional[BucketMount]
     tensorboard_ref: Optional[str]

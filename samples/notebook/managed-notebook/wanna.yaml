@@ -9,13 +9,13 @@ gcp_profiles:
     region: europe-west1
 
 managed_notebooks:
-  - name: jacek-notebook
+  - name: minimum-setup
     owner: jacek.hebda@avast.com
     data_disk:
       disk_type: pd_standard
       size_gb: 100
 
-  - name: joao-notebook
+  - name: maximum-setup
     owner: joao.silva1@avast.com
     data_disk:
       disk_type: pd_standard

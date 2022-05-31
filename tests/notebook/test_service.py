@@ -184,8 +184,8 @@ class TestManagedNotebookService:
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
         running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.region)
-        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/jacek-notebook" in running_notebooks
-        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/joao-notebook" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/minimum-setup" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/maximum-setup" in running_notebooks
         assert f"projects/{self.project_id}/locations/{self.region}/runtimes/xyz" not in running_notebooks
 
     def test_instance_exists(self):
@@ -196,7 +196,7 @@ class TestManagedNotebookService:
                 {
                     "project_id": self.project_id,
                     "region": self.region,
-                    "name": "jacek-notebook",
+                    "name": "minimum-setup",
                     "owner": "jacek.hebda@avast.com",
                 }
             )
@@ -213,12 +213,12 @@ class TestManagedNotebookService:
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
         state_1 = nb_service._validate_jupyterlab_state(
-            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/jacek-notebook",
+            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/minimum-setup",
             state=Runtime.State.ACTIVE,
         )
         assert state_1
         state_2 = nb_service._validate_jupyterlab_state(
-            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/joao-notebook",
+            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/maximśmum-setup",
             state=Runtime.State.ACTIVE,
         )
         assert not state_2

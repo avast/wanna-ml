@@ -454,11 +454,11 @@ class ManagedNotebookService(BaseService):
         else:
             runtimeAcceleratorConfig = None
         # Post startup script
-        if instance.bucket_mounts or instance.tensorboard_ref:
+        if instance.bucket_mount or instance.tensorboard_ref:
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                instance.bucket_mounts.bucket_name,
+                instance.bucket_mount.bucket_name,
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
@@ -549,7 +549,7 @@ class ManagedNotebookService(BaseService):
             tensorboard_resource_name = None
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
-            bucket_mounts=nb_instance.bucket_mounts,
+            bucket_mount=nb_instance.bucket_mount,
             tensorboard_resource_name=tensorboard_resource_name,
         )
         return startup_script
@@ -603,9 +603,12 @@ class ManagedNotebookService(BaseService):
         """
         Notebooks to be created
         """
-        for managednotebook in self.instances:
-            if managednotebook.name not in existing_names:
-                to_be_created.append(managednotebook)
+        for notebook in self.instances:
+            if (
+                f"projects/{notebook.project_id}/locations/{notebook.region}/runtimes/{notebook.name}"
+                not in existing_names
+            ):
+                to_be_created.append(notebook)
 
         return to_be_deleted, to_be_created
 
@@ -647,3 +650,5 @@ class ManagedNotebookService(BaseService):
                     self._create_one_instance(item)
             else:
                 return
+
+        typer.echo("Managed notebooks on GCP are in sync with wanna.yaml")
