@@ -142,6 +142,7 @@ class TestPipelineService(unittest.TestCase):
             self.sample_pipeline_dir,
             file=self.sample_pipeline_dir / expected_train_docker_image_model.dockerfile,
             tags=expected_train_docker_tags,
+            load=True,
         )
 
         self.assertEqual(pipeline_meta.compile_env_params, expected_compile_env_params)
