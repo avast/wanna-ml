@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from google.cloud.notebooks_v1.types import Instance  # , Runtime
+from google.cloud.notebooks_v1.types import Instance, Runtime
 from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
-from wanna.cli.models.notebook import Network, NotebookDisk, NotebookGPU, NotebookModel  # , ManagedNotebookModel
-from wanna.cli.plugins.notebook.service import NotebookService  # , ManagedNotebookService
+from wanna.cli.models.notebook import ManagedNotebookModel, Network, NotebookDisk, NotebookGPU, NotebookModel
+from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
@@ -184,7 +184,6 @@ class TestManagedNotebookService:
         self.project_id = "cloud-lab-304213"
         self.region = "europe-west1"
 
-    """
     def test_list_running_instances(self):
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
@@ -223,8 +222,7 @@ class TestManagedNotebookService:
         )
         assert state_1
         state_2 = nb_service._validate_jupyterlab_state(
-            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/maximśmum-setup",
-            state=Runtime.State.ACTIVE,
+            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/maximum-setup",
+            state=Runtime.State.STOPPED,
         )
-        assert not state_2
-    """
+        assert state_2

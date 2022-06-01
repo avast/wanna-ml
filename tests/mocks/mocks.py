@@ -88,7 +88,7 @@ def mock_list_running_instances(project_id: str, region: str):
 
 class MockManagedNotebookServiceClient:
     def __init__(self):
-        self.notebook_states = {"jacek-notebook": Runtime.State.ACTIVE, "joao-notebook": Runtime.State.STOPPED}
+        self.notebook_states = {"minimum-setup": Runtime.State.ACTIVE, "maximum-setup": Runtime.State.STOPPED}
         self.project_id = "cloud-lab-304213"
         self.region = "europe-west1"
         self.owner = "jacek.hebda@avast.com"
