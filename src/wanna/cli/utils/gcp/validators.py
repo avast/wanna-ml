@@ -115,7 +115,6 @@ def validate_only_one_must_be_set(cls, v):
 
 
 def validate_cron_schedule(schedule: str):
-
     if schedule is not None and CronValidator.parse(schedule) is None:
         raise ValueError(f"Cron expression is invalid ({schedule}).")
     else:
