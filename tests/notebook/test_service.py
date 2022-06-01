@@ -175,11 +175,15 @@ class TestNotebookService:
     "wanna.cli.utils.gcp.gcp.MachineTypesClient",
     mocks.MockMachineTypesClient,
 )
+@patch(
+    "wanna.cli.utils.gcp.validators.StorageClient",
+    mocks.MockStorageClient,
+)
 class TestManagedNotebookService:
     def setup(self) -> None:
         self.project_id = "cloud-lab-304213"
         self.region = "europe-west1"
-
+    """
     def test_list_running_instances(self):
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
@@ -222,3 +226,4 @@ class TestManagedNotebookService:
             state=Runtime.State.ACTIVE,
         )
         assert not state_2
+    """

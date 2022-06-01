@@ -442,8 +442,8 @@ class ManagedNotebookService(BaseService):
                 return
         # Configuration of the managed notebook
         # Disks
-        disk_type = instance.data_disk.disk_type if instance.data_disk else "PD_SSD"
-        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else 100
+        disk_type = instance.data_disk.disk_type if instance.data_disk else None
+        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
         localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
         localDisk = LocalDisk(initialize_params=localDiskParams)
         # Accelerator
