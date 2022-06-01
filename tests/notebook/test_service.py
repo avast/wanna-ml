@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from google.cloud.notebooks_v1.types import Instance, Runtime
+from google.cloud.notebooks_v1.types import Instance  # , Runtime
 from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
-from wanna.cli.models.notebook import ManagedNotebookModel, Network, NotebookDisk, NotebookGPU, NotebookModel
-from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
+from wanna.cli.models.notebook import Network, NotebookDisk, NotebookGPU, NotebookModel  # , ManagedNotebookModel
+from wanna.cli.plugins.notebook.service import NotebookService  # , ManagedNotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
@@ -183,6 +183,7 @@ class TestManagedNotebookService:
     def setup(self) -> None:
         self.project_id = "cloud-lab-304213"
         self.region = "europe-west1"
+
     """
     def test_list_running_instances(self):
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
