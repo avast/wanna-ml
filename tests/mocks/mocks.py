@@ -1,7 +1,7 @@
 from google.cloud.aiplatform_v1.types import Tensorboard
 from google.cloud.compute_v1.types import Image
 from google.cloud.compute_v1.types.compute import MachineType, MachineTypeList, Region, RegionList, Zone, ZoneList
-from google.cloud.notebooks_v1.types import Instance, ListInstancesResponse
+from google.cloud.notebooks_v1.types import Instance, ListInstancesResponse, ListRuntimesResponse, Runtime
 from google.cloud.storage.bucket import Bucket
 
 
@@ -84,3 +84,25 @@ def mock_list_running_instances(project_id: str, region: str):
         )
         for t in tensorboard_names
     ]
+
+
+class MockManagedNotebookServiceClient:
+    def __init__(self):
+        self.notebook_states = {"minimum-setup": Runtime.State.ACTIVE, "maximum-setup": Runtime.State.STOPPED}
+        self.project_id = "cloud-lab-304213"
+        self.region = "europe-west1"
+        self.owner = "jacek.hebda@avast.com"
+        self.runtimes = [
+            Runtime(
+                name=f"projects/{self.project_id}/locations/{self.region}/runtimes/{n}",
+                state=s,
+            )
+            for n, s in self.notebook_states.items()
+        ]
+
+    def list_runtimes(self, parent):
+        return ListRuntimesResponse(runtimes=[i for i in self.runtimes if i.name.startswith(parent)])
+
+    def get_runtime(self, name):
+        matched_instances = [i for i in self.runtimes if name == i.name]
+        return matched_instances[0]
