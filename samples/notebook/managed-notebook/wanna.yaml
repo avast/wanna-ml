@@ -1,6 +1,6 @@
 wanna_project:
   name: wanna-29
-  version: 4
+  version: 1
   authors: [jacek.hebda@avast.com]
 
 gcp_profiles:

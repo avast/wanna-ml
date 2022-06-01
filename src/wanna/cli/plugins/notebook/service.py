@@ -440,6 +440,7 @@ class ManagedNotebookService(BaseService):
                 self._delete_one_instance(instance)
             else:
                 return
+
         # Configuration of the managed notebook
         # Disks
         disk_type = instance.data_disk.disk_type if instance.data_disk else None
@@ -459,6 +460,7 @@ class ManagedNotebookService(BaseService):
             blob = upload_string_to_gcs(
                 script,
                 instance.bucket_mount.bucket_name,
+
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
@@ -609,7 +611,6 @@ class ManagedNotebookService(BaseService):
                 not in existing_names
             ):
                 to_be_created.append(notebook)
-
         return to_be_deleted, to_be_created
 
     def sync(self):
