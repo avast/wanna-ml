@@ -460,7 +460,6 @@ class ManagedNotebookService(BaseService):
             blob = upload_string_to_gcs(
                 script,
                 instance.bucket_mount.bucket_name,
-
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
