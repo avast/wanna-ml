@@ -187,7 +187,7 @@ class PipelineService(BaseService):
 
             manifest = PipelineService.read_manifest(str(manifest_path))
 
-            aiplatform.init(location=manifest.location, project=manifest.project, experiment=manifest.pipeline_name)
+            aiplatform.init(location=manifest.location, project=manifest.project)
 
             mode = "sync mode" if sync else "fire-forget mode"
 

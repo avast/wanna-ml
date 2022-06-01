@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+from caseconverter import kebabcase
 from checksumdir import dirhash
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
@@ -96,7 +97,7 @@ class DockerService:
                 return None
             else:
                 with Spinner(text=f"Building {docker_image_ref} docker image locally with {build_args}"):
-                    image = docker.build(context_dir, file=file_path, tags=tags, **build_args)
+                    image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
                     self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return image  # type: ignore
         else:
@@ -229,7 +230,7 @@ class DockerService:
         return dirhash(directory, "sha256", excluded_files=excluded_files, excluded_extensions=["pyc", "md"])
 
     def _should_build_by_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path) -> bool:
-        cache_file = hash_cache_dir / "cache.sha256"
+        cache_file = hash_cache_dir / f"{self.repository}-cache.sha256"
         sha256hash = self._get_dirhash(context_dir)
         if cache_file.exists():
             with open(cache_file, "r") as f:
@@ -240,7 +241,7 @@ class DockerService:
 
     def _write_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path):
         os.makedirs(hash_cache_dir, exist_ok=True)
-        cache_file = hash_cache_dir / "cache.sha256"
+        cache_file = hash_cache_dir / f"{kebabcase(self.repository)}-cache.sha256"
         sha256hash = self._get_dirhash(context_dir)
         with open(cache_file, "w") as f:
             f.write(sha256hash)

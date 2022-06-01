@@ -136,12 +136,11 @@ class TestPipelineService(unittest.TestCase):
         manifest_path = pipelines[0]
         pipeline_meta = PipelineService.read_manifest(str(manifest_path))
 
-        # DockerService.build_image.assert_called_with(image_model=expected_train_docker_image_model,
-        #                                              tags=expected_train_docker_tags)
         docker_mock.build.assert_called_with(
             self.sample_pipeline_dir,
             file=self.sample_pipeline_dir / expected_train_docker_image_model.dockerfile,
             tags=expected_train_docker_tags,
+            load=True,
         )
 
         self.assertEqual(pipeline_meta.compile_env_params, expected_compile_env_params)
