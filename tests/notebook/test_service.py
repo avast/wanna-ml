@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from google.cloud.notebooks_v1.types import Instance
+from google.cloud.notebooks_v1.types import Instance, Runtime
 from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
-from wanna.cli.models.notebook import Network, NotebookDisk, NotebookGPU, NotebookModel
-from wanna.cli.plugins.notebook.service import NotebookService
+from wanna.cli.models.notebook import ManagedNotebookModel, Network, NotebookDisk, NotebookGPU, NotebookModel
+from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
@@ -153,3 +153,72 @@ class TestNotebookService:
             "gcsfuse --implicit-dirs --only-dir=data us-burger-gcp-poc-mooncloud /home/jupyter/mounted/gcs"
             in startup_script
         )
+
+
+@patch(
+    "wanna.cli.plugins.notebook.service.ManagedNotebookServiceClient",
+    mocks.MockManagedNotebookServiceClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.gcp.ZonesClient",
+    mocks.MockZonesClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.gcp.RegionsClient",
+    mocks.MockRegionsClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.gcp.ImagesClient",
+    mocks.MockImagesClient,
+)
+@patch(
+    "wanna.cli.utils.gcp.gcp.MachineTypesClient",
+    mocks.MockMachineTypesClient,
+)
+class TestManagedNotebookService:
+    def setup(self) -> None:
+        self.project_id = "cloud-lab-304213"
+        self.region = "europe-west1"
+
+    def test_list_running_instances(self):
+        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
+        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
+        running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.region)
+        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/jacek-notebook" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/joao-notebook" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/xyz" not in running_notebooks
+
+    def test_instance_exists(self):
+        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
+        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
+        should_exist = nb_service._instance_exists(
+            instance=ManagedNotebookModel.parse_obj(
+                {
+                    "project_id": self.project_id,
+                    "region": self.region,
+                    "name": "jacek-notebook",
+                    "owner": "jacek.hebda@avast.com",
+                }
+            )
+        )
+        assert should_exist
+        should_not_exist = nb_service._instance_exists(
+            instance=ManagedNotebookModel.parse_obj(
+                {"project_id": self.project_id, "region": self.region, "name": "xyz", "owner": "jacek.hebda@avast.com"}
+            )
+        )
+        assert not should_not_exist
+
+    def test_validate_jupyterlab_state(self):
+        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
+        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
+        state_1 = nb_service._validate_jupyterlab_state(
+            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/jacek-notebook",
+            state=Runtime.State.ACTIVE,
+        )
+        assert state_1
+        state_2 = nb_service._validate_jupyterlab_state(
+            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/joao-notebook",
+            state=Runtime.State.ACTIVE,
+        )
+        assert not state_2
