@@ -455,11 +455,11 @@ class ManagedNotebookService(BaseService):
         else:
             runtimeAcceleratorConfig = None
         # Post startup script
-        if instance.bucket_mount or instance.tensorboard_ref:
+        if instance.bucket_mounts or instance.tensorboard_ref:
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                instance.bucket_mount.bucket_name,
+                instance.bucket_mounts[0].bucket_name,
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
@@ -550,7 +550,7 @@ class ManagedNotebookService(BaseService):
             tensorboard_resource_name = None
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
-            bucket_mount=nb_instance.bucket_mount,
+            bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
         )
         return startup_script

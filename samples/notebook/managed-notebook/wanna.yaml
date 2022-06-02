@@ -23,9 +23,9 @@ managed_notebooks:
     data_disk:
       disk_type: pd_standard
       size_gb: 100
-    bucket_mount:
-      bucket_name: wanna-ml-west1-jh
-      bucket_dir: jacek
-      local_path: /home/jupyter/mounted/gcs
+    bucket_mounts:
+      - bucket_name: wanna-ml-west1-jh
+        bucket_dir: jacek
+        local_path: /home/jupyter/mounted/gcs
     tensorboard_ref:
     kernels:
