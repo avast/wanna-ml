@@ -440,9 +440,11 @@ class ManagedNotebookService(BaseService):
                 self._delete_one_instance(instance)
             else:
                 return
+
+        # Configuration of the managed notebook
         # Disks
-        disk_type = instance.data_disk.disk_type if instance.data_disk else "PD_SSD"
-        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else 100
+        disk_type = instance.data_disk.disk_type if instance.data_disk else None
+        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
         localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
         localDisk = LocalDisk(initialize_params=localDiskParams)
         # Accelerator
@@ -457,7 +459,7 @@ class ManagedNotebookService(BaseService):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                instance.bucket_mounts.bucket_name,
+                instance.bucket_mounts[0].bucket_name,
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
@@ -588,29 +590,65 @@ class ManagedNotebookService(BaseService):
         """
         parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
         active_runtimes = self.notebook_client.list_runtimes(parent=parent)
-        wanna_names = [managednotebook.name for managednotebook in self.config.managed_notebooks]
+        wanna_names = [managednotebook.name for managednotebook in self.instances]
         existing_names = [runtime.name for runtime in active_runtimes]
-
         to_be_deleted = []
         to_be_created = []
         """
         Notebooks to be deleted
         """
         for runtime in active_runtimes:
-            if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project:
+            if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project.name:
                 if runtime.name.split("/")[-1] not in wanna_names:
                     to_be_deleted.append(runtime.name)
         """
         Notebooks to be created
         """
-        for managednotebook in self.config.managed_notebooks:
-            if managednotebook.name not in existing_names:
-                to_be_created.append(managednotebook)
-
+        for notebook in self.instances:
+            if (
+                f"projects/{notebook.project_id}/locations/{notebook.region}/runtimes/{notebook.name}"
+                not in existing_names
+            ):
+                to_be_created.append(notebook)
         return to_be_deleted, to_be_created
 
     def sync(self):
         """
-        Placeholder for development
+        1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
+        2. Does a diff between what is on GCP and what is on yaml
+        3. Delete the ones in GCP that are not in wanna.yaml
+        4. Create the ones defined in yaml and missing in GCP
         """
         to_be_deleted, to_be_created = self._return_diff()
+
+        if to_be_deleted:
+            typer.secho(
+                "Managed notebooks to be deleted:",
+                fg=typer.colors.RED,
+            )
+            for item in to_be_deleted:
+                typer.echo(item.split("/")[-1])
+            should_delete = typer.confirm("Are you sure you want to delete them?")
+            if should_delete:
+                for item in to_be_deleted:
+                    with Spinner(text=f"Deleting {item}"):
+                        deleted = self.notebook_client.delete_runtime(name=item)
+                        deleted.result()
+            else:
+                return
+
+        if to_be_created:
+            typer.secho(
+                "Managed notebooks to be created:",
+                fg=typer.colors.GREEN,
+            )
+            for item in to_be_created:
+                typer.echo(item.name)
+            should_create = typer.confirm("Are you sure you want to create them?")
+            if should_create:
+                for item in to_be_created:
+                    self._create_one_instance(item)
+            else:
+                return
+
+        typer.echo("Managed notebooks on GCP are in sync with wanna.yaml")

@@ -9,14 +9,23 @@ gcp_profiles:
     region: europe-west1
 
 managed_notebooks:
-  - name: jacek-notebook
+  - name: minimum-setup
     owner: jacek.hebda@avast.com
+    
+  - name: maximum-setup
+    owner: jacek.hebda@avast.com
+    machine_type: n1-standard-4
+    labels:
+      notebook_usecase: wanna-notebook-sample-simple-pip
+    gpu:
+      count: 1
+      accelerator_type: NVIDIA_TESLA_T4
     data_disk:
       disk_type: pd_standard
       size_gb: 100
-
-  - name: joao-notebook
-    owner: joao.silva1@avast.com
-    data_disk:
-      disk_type: pd_standard
-      size_gb: 100
+    bucket_mounts:
+      - bucket_name: wanna-ml-west1-jh
+        bucket_dir: jacek
+        local_path: /home/jupyter/mounted/gcs
+    tensorboard_ref:
+    kernels:
