@@ -27,11 +27,11 @@ class PipelinePlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "compile"),
-        quick: bool = typer.Option(False, "--quick", "-q", help="Runs build in quick mode, does not build containers"),
+        mode: PushMode = push_mode_option,
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
-        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, quick_mode=quick)
+        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
         pipeline_service.build(instance_name)
 
     @staticmethod
@@ -44,9 +44,9 @@ class PipelinePlugin(BasePlugin):
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
-        pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
+        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
         manifests = pipeline_service.build(instance_name)
-        pipeline_service.push(manifests, mode=mode)
+        pipeline_service.push(manifests)
 
     @staticmethod
     def deploy(

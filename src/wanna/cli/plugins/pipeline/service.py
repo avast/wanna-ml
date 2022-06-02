@@ -35,7 +35,9 @@ from wanna.cli.utils.time import get_timestamp
 
 
 class PipelineService(BaseService):
-    def __init__(self, config: WannaConfigModel, workdir: Path, version: str = "dev", quick_mode: bool = False):
+    def __init__(
+        self, config: WannaConfigModel, workdir: Path, version: str = "dev", push_mode: PushMode = PushMode.all
+    ):
         super().__init__(
             instance_type="pipeline",
             instance_model=PipelineModel,
@@ -45,13 +47,14 @@ class PipelineService(BaseService):
         self.workdir = workdir
         self.tensorboard_service = TensorboardService(config=config)
         self.version = version
+        self.push_mode = push_mode
         self.docker_service = DockerService(
             docker_model=config.docker,
             gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
             wanna_project_name=self.config.wanna_project.name,
-            quick_mode=quick_mode,
+            quick_mode=push_mode.is_quick_mode(),
         )
 
     def build(self, instance_name: str) -> List[Path]:
@@ -64,8 +67,8 @@ class PipelineService(BaseService):
         instances = self._filter_instances_by_name(instance_name)
         return [self._compile_one_instance(instance) for instance in instances]
 
-    def push(self, manifests: List[Path], local: bool = False, mode: PushMode = PushMode.all) -> PushResult:
-        return push(self.docker_service, manifests, self._prepare_push, self.version, local, mode)
+    def push(self, manifests: List[Path], local: bool = False) -> PushResult:
+        return push(self.docker_service, self._prepare_push(manifests, self.version, local))
 
     def _prepare_push(self, pipelines: List[Path], version: str, local: bool = False) -> List[PushTask]:
         push_tasks = []
@@ -74,49 +77,53 @@ class PipelineService(BaseService):
             pipeline_paths = PipelinePaths(self.workdir, manifest.pipeline_bucket, manifest.pipeline_name)
             json_artifacts, manifest_artifacts, container_artifacts = [], [], []
 
-            with Spinner(text=f"Pushing pipeline {manifest.pipeline_name}"):
+            with Spinner(text=f"Packaging {manifest.pipeline_name} pipeline resources"):
 
-                # Push containers task
-                for ref in manifest.docker_refs:
-                    if ref.build_type != ImageBuildType.provided_image:
-                        container_artifacts.append(ContainerArtifact(title=ref.name, tags=ref.tags))
+                # Push containers if we are running on Internal Teamcity build agent or on local(all)
+                if self.push_mode.can_push_containers():
+                    for ref in manifest.docker_refs:
+                        if ref.build_type != ImageBuildType.provided_image:
+                            container_artifacts.append(ContainerArtifact(title=ref.name, tags=ref.tags))
 
-                # Prepare manifest paths
-                local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
-                wanna_manifest_publish_path = pipeline_paths.get_gcs_wanna_manifest_path(version)
-                kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
+                # Push gcp resources if we are running on GCP build agent
+                if self.push_mode.can_push_gcp_resources():
 
-                if local:
-                    # Override paths to local dir when in "local" mode, IE tests or local run
-                    wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(version)
-                    kubeflow_json_spec_publish_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
+                    # Prepare manifest paths
+                    local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
+                    wanna_manifest_publish_path = pipeline_paths.get_gcs_wanna_manifest_path(version)
+                    kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
 
-                # Ensure to update manifest json_spec_path to have the actual gcs location
-                manifest.json_spec_path = kubeflow_json_spec_publish_path
+                    if local:
+                        # Override paths to local dir when in "local" mode, IE tests or local run
+                        wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(version)
+                        kubeflow_json_spec_publish_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
 
-                json_artifacts.append(
-                    JsonArtifact(
-                        title="WANNA pipeline manifest",
-                        json_body=manifest.dict(),
-                        destination=wanna_manifest_publish_path,
+                    # Ensure to update manifest json_spec_path to have the actual gcs location
+                    manifest.json_spec_path = kubeflow_json_spec_publish_path
+
+                    json_artifacts.append(
+                        JsonArtifact(
+                            title="WANNA pipeline manifest",
+                            json_body=manifest.dict(),
+                            destination=wanna_manifest_publish_path,
+                        )
                     )
-                )
 
-                manifest_artifacts.append(
-                    PathArtifact(
-                        title="Kubeflow V2 pipeline spec",
-                        source=local_kubeflow_json_spec_path,
-                        destination=manifest.json_spec_path,
+                    manifest_artifacts.append(
+                        PathArtifact(
+                            title="Kubeflow V2 pipeline spec",
+                            source=local_kubeflow_json_spec_path,
+                            destination=manifest.json_spec_path,
+                        )
                     )
-                )
 
-                push_tasks.append(
-                    PushTask(
-                        manifest_artifacts=manifest_artifacts,
-                        container_artifacts=container_artifacts,
-                        json_artifacts=json_artifacts,
+                    push_tasks.append(
+                        PushTask(
+                            manifest_artifacts=manifest_artifacts,
+                            container_artifacts=container_artifacts,
+                            json_artifacts=json_artifacts,
+                        )
                     )
-                )
 
         return push_tasks
 
@@ -289,7 +296,7 @@ class PipelineService(BaseService):
             pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline.name)
             tensorboard = (
                 self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
-                if pipeline.tensorboard_ref
+                if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()
                 else None
             )
 

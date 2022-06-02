@@ -108,7 +108,7 @@ class DockerService:
                 return None
 
     def _pull_image(self, image_url: str) -> Union[Image, None]:
-        if self.cloud_build:
+        if self.cloud_build or self.quick_mode:
             # TODO: verify that images exists remotely but dont pull them to local
             return None
         else:
