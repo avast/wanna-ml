@@ -45,6 +45,8 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
     "wanna.cli.utils.gcp.gcp.RegionsClient",
     mocks.MockRegionsClient,
 )
+@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
 class TestTrainingCustomJobModel(unittest.TestCase):
     def test_base_output_directory_default(self):
         model = TrainingCustomJobModel.parse_obj(

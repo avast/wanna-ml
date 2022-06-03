@@ -26,22 +26,14 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
     "wanna.cli.utils.gcp.gcp.ZonesClient",
     mocks.MockZonesClient,
 )
-@patch(
-    "wanna.cli.utils.gcp.gcp.RegionsClient",
-    mocks.MockRegionsClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.ImagesClient",
-    mocks.MockImagesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.MachineTypesClient",
-    mocks.MockMachineTypesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.validators.StorageClient",
-    mocks.MockStorageClient,
-)
+@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
@@ -53,16 +45,22 @@ class TestPipelineService(unittest.TestCase):
         self.zone = "us-east1-a"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
+        # # Mock GCP auth calls
+        # auth.default = MagicMock(
+        #     return_value=(
+        #         None,
+        #         None,
+        #     )
+        # )
 
     def tearDown(self) -> None:
         pass
 
     @patch("wanna.cli.docker.service.docker")
     def test_run_pipeline(self, docker_mock):
-        # Setup Service
+
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
         pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
-        print(pipeline_service.docker_service.image_store)
         # Setup expected data/fixtures
         expected_train_docker_image_model = LocalBuildImageModel(
             name="train",
@@ -72,17 +70,19 @@ class TestPipelineService(unittest.TestCase):
             dockerfile="Dockerfile.train",
         )
         expected_train_docker_tags = [
-            "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:test",
-            "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/pipeline-sklearn-example-1/train:latest",
+            "europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/pipeline-sklearn-example-1/train:test",
+            "europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
         expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
-        exppected_pipeline_root = "gs://wanna-ml/wanna-pipelines/wanna-sklearn-sample/executions/"
+        exppected_pipeline_root = (
+            "gs://wanna-samples-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/executions/"
+        )
 
         # Check expected metadata
         expected_compile_env_params = {
-            "project_id": "us-burger-gcp-poc",
+            "project_id": "cloud-lab-304213",
             "pipeline_name": "wanna-sklearn-sample",
-            "bucket": "gs://wanna-ml",
+            "bucket": "gs://wanna-samples-cloudlab-europe-west1",
             "region": "europe-west1",
             "version": "test",
             "pipeline_root": exppected_pipeline_root,
@@ -221,15 +221,16 @@ class TestPipelineService(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_manifest_json_path))
 
         # === Deploy ===
-        parent = "projects/us-burger-gcp-poc/locations/europe-west1"
+        parent = "projects/cloud-lab-304213/locations/europe-west1"
         local_cloud_functions_package = f"{release_path}/functions/package.zip"
         copied_cloud_functions_package = (
-            "gs://wanna-ml/wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"
+            "gs://wanna-samples-cloudlab-europe-west1/"
+            "wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"
         )
 
         expected_function_name = "wanna-sklearn-sample-local"
         expected_function_name_resoure = f"{parent}/functions/{expected_function_name}"
-        expected_function_url = "https://us-burger-gcp-poc-europe-west1.cloudfunctions.net/wanna-sklearn-sample-local"
+        expected_function_url = "https://europe-west1-cloud-lab-304213.cloudfunctions.net/wanna-sklearn-sample-local"
         expected_function = {
             "name": expected_function_name_resoure,
             "description": "wanna wanna-sklearn-sample function for local pipeline",
@@ -239,7 +240,7 @@ class TestPipelineService(unittest.TestCase):
             "https_trigger": {
                 "url": expected_function_url,
             },
-            "service_account_email": "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com",
+            "service_account_email": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
             "labels": {
                 "wanna_project": "pipeline-sklearn-example-1",
                 "wanna_project_version": "1",

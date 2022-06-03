@@ -14,6 +14,7 @@ from python_on_whales import Image, docker
 from wanna.cli.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
 from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.utils import loaders
+from wanna.cli.utils.credentials import get_credentials
 from wanna.cli.utils.gcp.gcp import make_tarfile, upload_file_to_gcs
 from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.templates import render_template
@@ -32,10 +33,11 @@ class DockerService:
         work_dir: Path,
         wanna_project_name: str,
         quick_mode: bool = False,  # just returns tags but does not build
+        docker_registry: Optional[str] = None,
     ):
         self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
-        self.registry = docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
+        self.registry = docker_registry or docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
         self.repository = docker_model.repository
         self.version = version
         self.work_dir = work_dir
@@ -275,7 +277,8 @@ class DockerService:
             images=tags,
             timeout=timeout,
         )
-        client = CloudBuildClient()
+        # TODO: make sure credentials does come from global scope
+        client = CloudBuildClient(credentials=get_credentials())
         request = cloudbuild_v1.CreateBuildRequest(
             # parent=f"projects/{self.project_id}/locations/{self.location}",
             project_id=self.project_id,

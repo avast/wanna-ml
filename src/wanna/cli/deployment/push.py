@@ -1,10 +1,9 @@
 import json
 from typing import List, Tuple, TypeVar
 
-from smart_open import open
-
 from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushTask
 from wanna.cli.docker.service import DockerService
+from wanna.cli.utils.io import open
 from wanna.cli.utils.spinners import Spinner
 
 Manifest = TypeVar("Manifest")

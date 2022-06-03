@@ -22,18 +22,13 @@ from wanna.cli.utils.config_loader import load_config_from_yaml
     "wanna.cli.utils.gcp.gcp.RegionsClient",
     mocks.MockRegionsClient,
 )
-@patch(
-    "wanna.cli.utils.gcp.gcp.ImagesClient",
-    mocks.MockImagesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.validators.StorageClient",
-    mocks.MockStorageClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.MachineTypesClient",
-    mocks.MockMachineTypesClient,
-)
+@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestNotebookService:
     def setup(self) -> None:
         self.project_id = "gcp-project"
@@ -155,30 +150,16 @@ class TestNotebookService:
         )
 
 
-@patch(
-    "wanna.cli.plugins.notebook.service.ManagedNotebookServiceClient",
-    mocks.MockManagedNotebookServiceClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.ZonesClient",
-    mocks.MockZonesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.RegionsClient",
-    mocks.MockRegionsClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.ImagesClient",
-    mocks.MockImagesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.MachineTypesClient",
-    mocks.MockMachineTypesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.validators.StorageClient",
-    mocks.MockStorageClient,
-)
+@patch("wanna.cli.plugins.notebook.service.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
+@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestManagedNotebookService:
     def setup(self) -> None:
         self.project_id = "cloud-lab-304213"

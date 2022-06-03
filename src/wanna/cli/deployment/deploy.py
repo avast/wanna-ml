@@ -7,11 +7,11 @@ from typing import Tuple
 from google.api_core.exceptions import NotFound
 from google.cloud import scheduler_v1
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
-from smart_open import open
 
 from wanna.cli.deployment.models import CloudFunctionResource, CloudSchedulerResource
 from wanna.cli.utils import templates
 from wanna.cli.utils.gcp.gcp import is_gcs_path
+from wanna.cli.utils.io import open
 from wanna.cli.utils.spinners import Spinner
 
 
@@ -53,7 +53,7 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
     _sync_cloud_function_package(str(local_functions_package), functions_gcs_path)
 
     cf = CloudFunctionsServiceClient()
-    function_url = f"https://{resource.project}-{resource.location}.cloudfunctions.net/{function_name}"
+    function_url = f"https://{resource.location}-{resource.project}.cloudfunctions.net/{function_name}"
     function = {
         "name": function_path,
         "description": f"wanna {resource.name} function for {env} pipeline",

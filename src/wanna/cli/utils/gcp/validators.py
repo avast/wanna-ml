@@ -6,6 +6,7 @@ from google.api_core import exceptions
 from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
 
+from wanna.cli.utils.credentials import get_credentials
 from wanna.cli.utils.gcp.gcp import (
     DEFAULT_VALIDATION_MODE,
     VALIDATION_MODE,
@@ -63,7 +64,7 @@ def validate_network_name(network_name):
 def validate_bucket_name(bucket_name):
     if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
         try:
-            _ = StorageClient().get_bucket(bucket_name)
+            _ = StorageClient(credentials=get_credentials()).get_bucket(bucket_name)
         except exceptions.NotFound:
             raise ValueError(f"Bucket with name {bucket_name} does not exist")
         except exceptions.Forbidden:

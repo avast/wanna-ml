@@ -9,7 +9,6 @@ from google.cloud import aiplatform
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
-from smart_open import open
 
 from wanna.cli.deployment import deploy
 from wanna.cli.deployment.models import (
@@ -29,6 +28,7 @@ from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.pipeline.utils import PipelinePaths, _at_pipeline_exit
 from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.cli.utils.io import open
 from wanna.cli.utils.loaders import load_yaml_path
 from wanna.cli.utils.spinners import Spinner
 from wanna.cli.utils.time import get_timestamp
@@ -36,7 +36,12 @@ from wanna.cli.utils.time import get_timestamp
 
 class PipelineService(BaseService):
     def __init__(
-        self, config: WannaConfigModel, workdir: Path, version: str = "dev", push_mode: PushMode = PushMode.all
+        self,
+        config: WannaConfigModel,
+        workdir: Path,
+        version: str = "dev",
+        push_mode: PushMode = PushMode.all,
+        docker_registry: Optional[str] = None,
     ):
         super().__init__(
             instance_type="pipeline",
@@ -55,6 +60,7 @@ class PipelineService(BaseService):
             work_dir=workdir,
             wanna_project_name=self.config.wanna_project.name,
             quick_mode=push_mode.is_quick_mode(),
+            docker_registry=docker_registry,
         )
 
     def build(self, instance_name: str) -> List[Path]:

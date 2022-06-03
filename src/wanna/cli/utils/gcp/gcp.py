@@ -6,12 +6,14 @@ from typing import Any, Dict, List
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import storage  # type: ignore
+from google.cloud import storage
 from google.cloud.compute import MachineTypesClient, ZonesClient
 from google.cloud.compute_v1 import RegionsClient
 from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
+
+from wanna.cli.utils.credentials import get_credentials
 
 DEFAULT_VALIDATION_MODE = "remote"
 VALIDATION_MODE = os.environ.get("WANNA_VALIDATION_MODE", DEFAULT_VALIDATION_MODE)
@@ -55,7 +57,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
     """
     # TODO: remove once we can push to teamcity via GCP
     if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
-        response = MachineTypesClient().list(project=project_id, zone=zone)
+        response = MachineTypesClient(credentials=get_credentials()).list(project=project_id, zone=zone)
         machine_types = [mtype.name for mtype in response.items]
     else:
         machine_types = [
@@ -200,7 +202,7 @@ def get_available_zones(project_id: str) -> List[str]:
 
     # TODO: remove once we can push to teamcity via GCP
     if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
-        response = ZonesClient().list(project=project_id)
+        response = ZonesClient(credentials=get_credentials()).list(project=project_id)
         return [zone.name for zone in response.items]
     else:
         return [
@@ -229,7 +231,7 @@ def get_available_regions(project_id: str) -> List[str]:
     """
     # TODO: enable once we can push to teamcity via GCP
     if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
-        response = RegionsClient().list(project=project_id)
+        response = RegionsClient(credentials=get_credentials()).list(project=project_id)
         return [region.name for region in response.items]
     else:
         return ["europe-west1", "europe-west3", "us-east1", "us-west1"]
@@ -257,7 +259,7 @@ def convert_project_id_to_project_number(project_id: str) -> str:
     Returns:
         project_number: GCP project number
     """
-    project_name = ProjectsClient().get_project(name=f"projects/{project_id}").name
+    project_name = ProjectsClient(credentials=get_credentials()).get_project(name=f"projects/{project_id}").name
     project_number = re.sub("projects/", "", project_name)
     return project_number
 
@@ -299,7 +301,7 @@ def get_available_compute_image_families(
 
     """  # noqa: E501
     list_images_request = ListImagesRequest(project=project, filter=image_filter)
-    all_images = ImagesClient().list(list_images_request)
+    all_images = ImagesClient(credentials=get_credentials()).list(list_images_request)
     if family_must_contain:
         return [parse_image_name_family(image.family) for image in all_images if family_must_contain in image.family]
     return [parse_image_name_family(image.family) for image in all_images]
@@ -348,7 +350,7 @@ def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> stor
     Returns:
         storage.blob.Blob
     """
-    storage_client = storage.Client()
+    storage_client = storage.Client(credentials=get_credentials())
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(filename)
@@ -366,7 +368,7 @@ def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage
     Returns:
         storage.blob.Blob
     """
-    storage_client = storage.Client()
+    storage_client = storage.Client(credentials=get_credentials())
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_string(data)

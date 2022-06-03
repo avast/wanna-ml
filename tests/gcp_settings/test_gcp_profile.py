@@ -9,31 +9,20 @@ from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
 
-@patch(
-    "wanna.cli.utils.gcp.gcp.ZonesClient",
-    mocks.MockZonesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.RegionsClient",
-    mocks.MockRegionsClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.validators.StorageClient",
-    mocks.MockStorageClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.MachineTypesClient",
-    mocks.MockMachineTypesClient,
-)
-@patch(
-    "wanna.cli.utils.gcp.gcp.ImagesClient",
-    mocks.MockImagesClient,
-)
+@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestWannaConfigModel:
     def test_parse_region_from_zone(self):
-        gcp_settings_dict = {"project_id": "gcp-project", "zone": "us-east1-a", "profile_name": "default"}
+        gcp_settings_dict = {"project_id": "gcp-project", "zone": "europe-west1-b", "profile_name": "default"}
         gcp_settings = GCPProfileModel.parse_obj(gcp_settings_dict)
-        assert gcp_settings.region == "us-east1"
+        assert gcp_settings.region == "europe-west1"
 
     def test_load_profile_profile_name_set(self):
         config = load_config_from_yaml("samples/notebook/custom-container/wanna.yaml", "default")

@@ -185,7 +185,7 @@ class TensorboardService(BaseService):
         project_id = self.config.gcp_profile.project_id
         root_tag = f"{project_id} / {region}"
         tree.create_node(tag=root_tag, identifier=root_tag)
-        aiplatform.init(project=project_id, location=region)
+
         tensorboards = aiplatform.Tensorboard.list(project=project_id, location=region, filter=filter_expr)
         for tensorboard in tensorboards:
             tag = f"Tensorboard: {tensorboard.display_name}"

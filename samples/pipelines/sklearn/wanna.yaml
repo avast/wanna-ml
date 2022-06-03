@@ -5,12 +5,12 @@ wanna_project:
 
 gcp_profiles:
   - profile_name: default
-    project_id: us-burger-gcp-poc
+    project_id: cloud-lab-304213
     zone: europe-west1-b
     region: europe-west1
-    bucket: wanna-ml
+    bucket: wanna-samples-cloudlab-europe-west1
     labels:
-    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+    service_account: wanna-dev@cloud-lab-304213.iam.gserviceaccount.com
 
 tensorboards:
   - name: wanna-sample-pipeline-board
@@ -29,8 +29,8 @@ docker:
 
 notebooks:
   - name: wanna-sklearn-sample-notebook
-#    service_account:
-    instance_owner: joao.silva1@avast.com
+    service_account: wanna-dev@cloud-lab-304213.iam.gserviceaccount.com
+#    instance_owner: joao.silva1@avast.com
     machine_type: n1-standard-4
     labels:
       notebook_usecase: wanna-notebook-sklearn-sample
@@ -43,7 +43,7 @@ notebooks:
       disk_type: pd_standard
       size_gb: 100
     bucket_mounts:
-      - bucket_name: us-burger-gcp-poc-mooncloud
+      - bucket_name: wanna-cloudlab-europe-west1
         bucket_dir: data
         local_path: /home/jupyter/mounted/gcs
     tensorboard_ref: wanna-sample-pipeline-board
@@ -52,7 +52,7 @@ pipelines:
   - name: wanna-sklearn-sample
     schedule:
       cron: 2 * * * *
-    bucket: gs://wanna-ml
+    bucket: gs://wanna-samples-cloudlab-europe-west1
     pipeline_file: pipeline.py
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]

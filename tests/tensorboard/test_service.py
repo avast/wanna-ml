@@ -6,10 +6,11 @@ from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.tensorboard.service import TensorboardService
 
 
-@patch(
-    "wanna.cli.utils.gcp.gcp.RegionsClient",
-    mocks.MockRegionsClient,
-)
+@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestTensorboardService:
     def test_find_tensorboard_by_display_name(self, mocker):
         tb_service = TensorboardService(config=get_config())

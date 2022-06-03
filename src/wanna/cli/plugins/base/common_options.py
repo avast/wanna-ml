@@ -27,6 +27,16 @@ push_mode_option: PushMode = typer.Option(
     "Use all for dev",
 )
 
+docker_registry_option = typer.Option(
+    None,
+    "--registry",
+    "-r",
+    envvar="WANNA_DOCKER_REGISTRY",
+    help="override docker registry and takes precedence over"
+    "wanna.yaml and fallback registries"
+    "(optionally) from WANNA_DOCKER_REGISTRY",
+)
+
 
 def instance_name_option(instance_type: str, operation: str, help: str = None):
     return typer.Option(

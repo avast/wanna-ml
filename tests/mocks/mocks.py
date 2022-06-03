@@ -1,3 +1,6 @@
+from typing import Optional
+
+from google.auth.credentials import Credentials
 from google.cloud.aiplatform_v1.types import Tensorboard
 from google.cloud.compute_v1.types import Image
 from google.cloud.compute_v1.types.compute import MachineType, MachineTypeList, Region, RegionList, Zone, ZoneList
@@ -6,18 +9,27 @@ from google.cloud.storage.bucket import Bucket
 
 
 class MockZonesClient:
+    def __init__(self, credentials: Optional[Credentials] = None):
+        self.credentials = credentials
+
     def list(self, project: str):
         zone_names = ["europe-west4-a", "us-east1-a", "europe-west1-b"]
         return ZoneList(items=[Zone({"name": name}) for name in zone_names])
 
 
 class MockRegionsClient:
+    def __init__(self, credentials: Optional[Credentials] = None):
+        self.credentials = credentials
+
     def list(self, project: str):
         region_names = ["europe-west1", "us-east1", "europe-west4"]
         return RegionList(items=[Region({"name": name}) for name in region_names])
 
 
 class MockImagesClient:
+    def __init__(self, credentials: Optional[Credentials] = None):
+        self.credentials = credentials
+
     def list(self, list_images_request):
         image_families = [
             "tf2-ent-2-5-cu110-notebooks",
@@ -30,6 +42,9 @@ class MockImagesClient:
 
 
 class MockMachineTypesClient:
+    def __init__(self, credentials: Optional[Credentials] = None):
+        self.credentials = credentials
+
     def list(self, project: str, zone: str):
         machine_type_names = [
             "n1-ultramem-160",
@@ -67,11 +82,15 @@ class MockNotebookServiceClient:
 
 
 class MockStorageClient:
-    def __init__(self):
-        ...
+    def __init__(self, credentials: Optional[Credentials] = None):
+        self.credentials = credentials
 
     def get_bucket(self, bucket_name: str):
         return Bucket(client=self, name=bucket_name)
+
+
+def mock_get_credentials() -> Optional[Credentials]:
+    return None
 
 
 def mock_list_running_instances(project_id: str, region: str):

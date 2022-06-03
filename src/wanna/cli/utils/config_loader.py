@@ -3,9 +3,12 @@ import pathlib
 from pathlib import Path
 from typing import Any, Dict
 
+from google.cloud import aiplatform
+
 from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.utils import loaders
+from wanna.cli.utils.credentials import get_credentials
 from wanna.cli.utils.spinners import Spinner
 
 
@@ -61,10 +64,17 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
             # Load workflow file
             wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
         profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
+        os.environ["GOOGLE_CLOUD_PROJECT"] = profile_model.project_id
         wanna_dict.update({"gcp_profile": profile_model})
         del wanna_dict["gcp_profiles"]
         wanna_config = WannaConfigModel.parse_obj(wanna_dict)
     Spinner().info(f"GCP profile '{profile_model.profile_name}' will be used.")
     Spinner().info(f"Profile details: {profile_model}")
+
+    aiplatform.init(
+        project=wanna_config.gcp_profile.project_id,
+        location=wanna_config.gcp_profile.region,
+        credentials=get_credentials(),
+    )
 
     return wanna_config
