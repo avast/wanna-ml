@@ -1,0 +1,26 @@
+wanna_project:
+  name: kubeflow-bigquery
+  version: 0.0.0
+  authors: [michal.mrazek@avast.com]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: us-burger-gcp-poc
+    zone: europe-west1-b
+    bucket: wanna-ml
+    labels:
+    service_account:
+
+docker:
+  images: []
+  repository: wanna-samples
+  cloud_build: true
+
+pipelines:
+  - name: kubeflow-bigquery-pipeline
+    schedule:
+      cron: 2 * * * *
+    bucket: gs://wanna-ml
+    pipeline_file: pipeline/pipeline.py
+    pipeline_params: pipeline/params.yaml
+    docker_image_ref: []

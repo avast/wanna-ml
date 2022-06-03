@@ -1,0 +1,32 @@
+wanna_project:
+  name: kubeflow-dataproc
+  version: 0.0.0
+  authors: [michal.mrazek@avast.com]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: cloud-lab-304213
+    zone: europe-west1-b
+    bucket: wanna-cloudlab-europe-west1
+    labels:
+    service_account: 
+
+docker:
+  images:
+    # We dont currently support local build for dataproc images, in current version of serverless dataproc,
+    # it is needed to use Container registry and not Artifact registry (our preferred choice).
+    # This is expected to be fixed soon
+    - build_type: provided_image
+      name: dataproc
+      image_url: eu.gcr.io/cloud-lab-304213/wanna-ml/pipelines/spark-pi:latest
+  repository: wanna-samples
+  cloud_build: true
+
+pipelines:
+  - name: kubeflow-dataproc-pipeline
+    schedule:
+      cron: 2 * * * *
+    bucket: gs://wanna-cloudlab-europe-west1
+    pipeline_file: pipeline/pipeline.py
+    pipeline_params: pipeline/params.yaml
+    docker_image_ref: ["dataproc"]
