@@ -16,9 +16,8 @@ def get_credentials() -> Optional[Credentials]:
     target_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 
     try:
-        _credentials, _ = auth.default()
-
-        if impersonate_account and _credentials:
+        if impersonate_account:
+            _credentials, _ = auth.default()
             credentials = impersonated_credentials.Credentials(
                 source_credentials=_credentials,
                 target_principal=impersonate_account,
@@ -29,8 +28,9 @@ def get_credentials() -> Optional[Credentials]:
         else:
             return None
 
-    except DefaultCredentialsError:
+    except DefaultCredentialsError as e:
         Spinner().info(
-            "f default credentials were not found you likely need to execute " "`gcloud auth application-default login`"
+            f"{e}\ndefault credentials were not found you likely need to execute"
+            "`gcloud auth application-default login`"
         )
         exit(1)

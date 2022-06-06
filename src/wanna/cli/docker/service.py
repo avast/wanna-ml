@@ -98,23 +98,22 @@ class DockerService:
 
         if should_build and not self.quick_mode:
             if self.cloud_build:
-                with Spinner(text=f"Building {docker_image_ref} docker image in GCP Cloud build"):
-                    self._build_image_on_gcp_cloud_build(
-                        context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
-                    )
-                    self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
+                Spinner().info(text=f"Building {docker_image_ref} docker image in GCP Cloud build")
+                self._build_image_on_gcp_cloud_build(
+                    context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
+                )
+                self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return None
             else:
-                with Spinner(text=f"Building {docker_image_ref} docker image locally with {build_args}"):
-                    image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
-                    self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
+                Spinner().info(text=f"Building {docker_image_ref} docker image locally with {build_args}")
+                image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
+                self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return image  # type: ignore
         else:
-            with Spinner(
+            Spinner().info(
                 text=f"Skipping build for context_dir={context_dir}, dockerfile={file_path} and image {tags[0]}"
-            ) as s:
-                s.info("Nothing has changed in the dir")
-                return None
+            )
+            return None
 
     def _pull_image(self, image_url: str) -> Union[Image, None]:
         if self.cloud_build or self.quick_mode:
