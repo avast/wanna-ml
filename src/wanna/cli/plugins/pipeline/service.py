@@ -41,7 +41,6 @@ class PipelineService(BaseService):
         workdir: Path,
         version: str = "dev",
         push_mode: PushMode = PushMode.all,
-        docker_registry: Optional[str] = None,
     ):
         super().__init__(
             instance_type="pipeline",
@@ -60,7 +59,6 @@ class PipelineService(BaseService):
             work_dir=workdir,
             wanna_project_name=self.config.wanna_project.name,
             quick_mode=push_mode.is_quick_mode(),
-            docker_registry=docker_registry,
         )
 
     def build(self, instance_name: str) -> List[Path]:

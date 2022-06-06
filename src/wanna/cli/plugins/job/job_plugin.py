@@ -1,13 +1,11 @@
 import pathlib
 from pathlib import Path
-from typing import Optional
 
 import typer
 
 from wanna.cli.deployment.models import PushMode
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.base.common_options import (
-    docker_registry_option,
     instance_name_option,
     profile_name_option,
     push_mode_option,
@@ -35,11 +33,10 @@ class JobPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("job", "build"),
-        docker_registry: Optional[str] = docker_registry_option,
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        job_service = JobService(config=config, workdir=workdir, docker_registry=docker_registry)
+        job_service = JobService(config=config, workdir=workdir)
         job_service.build(instance_name)
 
     @staticmethod
@@ -48,12 +45,11 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         version: str = typer.Option(..., "--version", "-v", help="Job version"),
         instance_name: str = instance_name_option("job", "push"),
-        docker_registry: Optional[str] = docker_registry_option,
         mode: PushMode = push_mode_option,
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        job_service = JobService(config=config, workdir=workdir, version=version, docker_registry=docker_registry)
+        job_service = JobService(config=config, workdir=workdir, version=version)
         jobs = job_service.build(instance_name)
         job_service.push(jobs, mode=mode)
 
@@ -64,12 +60,11 @@ class JobPlugin(BasePlugin):
         version: str = typer.Option(..., "--version", "-v", help="Job version"),
         instance_name: str = instance_name_option("job", "run"),
         hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
-        docker_registry: Optional[str] = docker_registry_option,
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the job in sync mode"),
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        job_service = JobService(config=config, workdir=workdir, version=version, docker_registry=docker_registry)
+        job_service = JobService(config=config, workdir=workdir, version=version)
         jobs = job_service.build(instance_name)
         manifest_paths, _ = job_service.push(jobs, local=True)
         JobService.run(manifest_paths, sync=sync, hp_params=hp_params)

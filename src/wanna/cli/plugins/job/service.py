@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import typer
 from caseconverter import kebabcase, snakecase
@@ -307,12 +307,7 @@ def _run_training_job(
 
 class JobService(BaseService):
     def __init__(
-        self,
-        config: WannaConfigModel,
-        workdir: Path,
-        version: str = "dev",
-        push_mode: PushMode = PushMode.all,
-        docker_registry: Optional[str] = None,
+        self, config: WannaConfigModel, workdir: Path, version: str = "dev", push_mode: PushMode = PushMode.all
     ):
         """
         Service to build, push, deploy and run Vertex AI custom jobs
@@ -339,7 +334,6 @@ class JobService(BaseService):
             work_dir=workdir,
             wanna_project_name=self.wanna_project.name,
             quick_mode=self.push_mode.is_quick_mode(),
-            docker_registry=docker_registry,
         )
         self.build_dir = workdir / "build"
         self.version = version

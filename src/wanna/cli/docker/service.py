@@ -33,12 +33,19 @@ class DockerService:
         work_dir: Path,
         wanna_project_name: str,
         quick_mode: bool = False,  # just returns tags but does not build
-        docker_registry: Optional[str] = None,
     ):
         self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
-        self.registry = docker_registry or docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
-        self.repository = docker_model.repository
+        # Artifactory mirrors to different registry/projectid/repository combo
+        registry_suffix = os.getenv("WANNA_DOCKER_REGISTRY_SUFFIX")
+        self.docker_registry_suffix = f"{registry_suffix}/" if registry_suffix else ""
+
+        self.docker_registry = (
+            os.getenv("WANNA_DOCKER_REGISTRY") or docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
+        )
+        self.docker_repository = os.getenv("WANNA_DOCKER_REGISTRY_REPOSITORY") or docker_model.repository
+        self.docker_project_id = os.getenv("WANNA_DOCKER_REGISTRY_PROJECT_ID") or gcp_profile.project_id
+
         self.version = version
         self.work_dir = work_dir
         self.build_dir = self.work_dir / "build" / "docker"
@@ -176,11 +183,12 @@ class DockerService:
         if docker_image_model.build_type == ImageBuildType.notebook_ready_image:
             image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
-                registry=self.registry,
-                project=self.project_id,
-                repository=self.repository,
+                registry=self.docker_registry,
+                project=self.docker_project_id,
+                repository=self.docker_repository,
                 image_name=image_name,
                 versions=[self.version, "latest"],
+                registry_suffix=self.docker_registry_suffix,
             )
             template_path = Path("notebook_template.Dockerfile")
             shutil.copy2(
@@ -195,11 +203,12 @@ class DockerService:
         elif docker_image_model.build_type == ImageBuildType.local_build_image:
             image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
-                registry=self.registry,
-                project=self.project_id,
-                repository=self.repository,
+                registry=self.docker_registry,
+                project=self.docker_project_id,
+                repository=self.docker_repository,
                 image_name=image_name,
                 versions=[self.version, "latest"],
+                registry_suffix=self.docker_registry_suffix,
             )
             file_path = self.work_dir / docker_image_model.dockerfile
             context_dir = self.work_dir / docker_image_model.context_dir
@@ -232,7 +241,7 @@ class DockerService:
         return dirhash(directory, "sha256", excluded_files=excluded_files, excluded_extensions=["pyc", "md"])
 
     def _should_build_by_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path) -> bool:
-        cache_file = hash_cache_dir / f"{self.repository}-cache.sha256"
+        cache_file = hash_cache_dir / f"{self.docker_repository}-cache.sha256"
         sha256hash = self._get_dirhash(context_dir)
         if cache_file.exists():
             with open(cache_file, "r") as f:
@@ -243,7 +252,7 @@ class DockerService:
 
     def _write_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path):
         os.makedirs(hash_cache_dir, exist_ok=True)
-        cache_file = hash_cache_dir / f"{kebabcase(self.repository)}-cache.sha256"
+        cache_file = hash_cache_dir / f"{kebabcase(self.docker_repository)}-cache.sha256"
         sha256hash = self._get_dirhash(context_dir)
         with open(cache_file, "w") as f:
             f.write(sha256hash)
@@ -319,7 +328,12 @@ class DockerService:
 
     @staticmethod
     def construct_image_tag(
-        registry: str, project: str, repository: str, image_name: str, versions: List[str] = ["latest"]
+        registry: str,
+        project: str,
+        repository: str,
+        image_name: str,
+        registry_suffix: str,
+        versions: List[str] = ["latest"],
     ):
         """
         Construct full image tag.
@@ -334,7 +348,7 @@ class DockerService:
             List of full image tag
         """
 
-        return [f"{registry}/{project}/{repository}/{image_name}:{version}" for version in versions]
+        return [f"{registry}/{registry_suffix}{project}/{repository}/{image_name}:{version}" for version in versions]
 
     @staticmethod
     def _jinja_render_dockerfile(
