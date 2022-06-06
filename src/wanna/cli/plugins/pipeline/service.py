@@ -295,60 +295,61 @@ class PipelineService(BaseService):
             for docker_image_ref in pipeline.docker_image_ref
         ]
 
-        with Spinner(text=f"Compiling pipeline {pipeline.name}"):
-            # Prep build dir
-            pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline.name)
-            tensorboard = (
-                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
-                if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()
-                else None
+        Spinner().info(text=f"Compiling pipeline {pipeline.name}")
+
+        # Prep build dir
+        pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline.name)
+        tensorboard = (
+            self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
+            if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()
+            else None
+        )
+
+        # Collect kubeflow pipeline params for compilation
+        pipeline_env_params, pipeline_params = self._export_pipeline_params(
+            pipeline_paths, pipeline, self.version, image_tags, tensorboard
+        )
+
+        # Compile kubeflow V2 Pipeline
+        compile_pyfile(
+            pyfile=str(self.workdir / pipeline.pipeline_file),
+            function_name=pipeline.pipeline_function,
+            pipeline_parameters=pipeline_params,
+            package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
+            type_check=True,
+            use_experimental=False,
+        )
+
+        docker_refs = [
+            DockerBuildResult(
+                name=model.name,
+                tags=image.repo_tags if image and image.repo_tags else [tag],
+                build_type=model.build_type,
             )
+            for model, image, tag in image_tags
+        ]
 
-            # Collect kubeflow pipeline params for compilation
-            pipeline_env_params, pipeline_params = self._export_pipeline_params(
-                pipeline_paths, pipeline, self.version, image_tags, tensorboard
-            )
+        deployment_manifest = PipelineDeployment(
+            pipeline_name=pipeline.name,
+            pipeline_bucket=pipeline.bucket,
+            pipeline_version=self.version,
+            json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
+            parameter_values=pipeline_params,
+            enable_caching=True,
+            labels=pipeline.labels,
+            project=pipeline.project_id,
+            location=pipeline.region,
+            service_account=pipeline.service_account,
+            pipeline_root=pipeline_env_params.get("pipeline_root"),
+            schedule=pipeline.schedule,
+            docker_refs=docker_refs,
+            compile_env_params=pipeline_env_params,
+        )
 
-            # Compile kubeflow V2 Pipeline
-            compile_pyfile(
-                pyfile=str(self.workdir / pipeline.pipeline_file),
-                function_name=pipeline.pipeline_function,
-                pipeline_parameters=pipeline_params,
-                package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
-                type_check=True,
-                use_experimental=False,
-            )
+        manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
+        PipelineService.write_manifest(deployment_manifest, manifest_path)
 
-            docker_refs = [
-                DockerBuildResult(
-                    name=model.name,
-                    tags=image.repo_tags if image and image.repo_tags else [tag],
-                    build_type=model.build_type,
-                )
-                for model, image, tag in image_tags
-            ]
-
-            deployment_manifest = PipelineDeployment(
-                pipeline_name=pipeline.name,
-                pipeline_bucket=pipeline.bucket,
-                pipeline_version=self.version,
-                json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
-                parameter_values=pipeline_params,
-                enable_caching=True,
-                labels=pipeline.labels,
-                project=pipeline.project_id,
-                location=pipeline.region,
-                service_account=pipeline.service_account,
-                pipeline_root=pipeline_env_params.get("pipeline_root"),
-                schedule=pipeline.schedule,
-                docker_refs=docker_refs,
-                compile_env_params=pipeline_env_params,
-            )
-
-            manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
-            PipelineService.write_manifest(deployment_manifest, manifest_path)
-
-            return Path(manifest_path).resolve()
+        return Path(manifest_path).resolve()
 
     @staticmethod
     def write_manifest(manifest: PipelineDeployment, path: str) -> None:
