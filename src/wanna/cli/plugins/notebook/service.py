@@ -454,12 +454,22 @@ class ManagedNotebookService(BaseService):
             )
         else:
             runtimeAcceleratorConfig = None
+        # Network
+        if instance.network:
+            network = f"projects/{instance.project_id}/global/networks/{instance.network}"
+        else:
+            network = None
+        if instance.subnet:
+            subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
+        else:
+            subnet = None
+
         # Post startup script
-        if instance.bucket_mounts or instance.tensorboard_ref:
+        if instance.tensorboard_ref:
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                instance.bucket_mounts[0].bucket_name,
+                instance.bucket,
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
@@ -471,10 +481,21 @@ class ManagedNotebookService(BaseService):
             data_disk=localDisk,
             labels=instance.labels,
             accelerator_config=runtimeAcceleratorConfig,
+            network=network,
+            subnet=subnet,
+            tags=instance.tags,
+            metadata=instance.metadata,
         )
         virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
         # Runtime
-        runtimeSoftwareConfig = RuntimeSoftwareConfig(kernels=instance.kernels, post_startup_script=post_startup_script)
+        runtimeSoftwareConfig = RuntimeSoftwareConfig(
+            {
+                "kernels": instance.kernels,
+                "post_startup_script": post_startup_script,
+                "idle_shutdown": instance.idle_shutdown,
+                "idle_shutdown_timeout": instance.idle_shutdown_timeout,
+            }
+        )
         runtimeAccessConfig = RuntimeAccessConfig(
             access_type=RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER, runtime_owner=instance.owner
         )
@@ -550,7 +571,6 @@ class ManagedNotebookService(BaseService):
             tensorboard_resource_name = None
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
-            bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
         )
         return startup_script

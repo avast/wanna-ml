@@ -77,5 +77,10 @@ class ManagedNotebookModel(BaseInstanceModel):
     gpu: Optional[NotebookGPU]
     data_disk: Optional[NotebookDisk]
     kernels: Optional[List[str]]
-    bucket_mounts: Optional[List[BucketMount]]
     tensorboard_ref: Optional[str]
+    network: Optional[str]
+    subnet: Optional[str]
+    idle_shutdown: Optional[bool]
+    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440)
+    tags: Optional[List[str]]
+    metadata: Optional[List[Dict[str, str]]]

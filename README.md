@@ -83,7 +83,9 @@ Creates managed vertex-ai notebooks where Notebooks:
 * must have an owner for single person use
 * can have different kernels
 * can have any machine spec including any number of GPUs
-* notebooks will have WANNA default gcp labels for cost tracking
+* will have WANNA default gcp labels for cost tracking
+* can connect to Dataproc Clusters and Metastores
+* will have all the buckets from a given project mounted
 
 It also allows for deletion and sync (with wanna.yaml) of notebooks with the user confirmation
 
