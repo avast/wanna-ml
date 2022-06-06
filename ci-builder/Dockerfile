@@ -12,8 +12,8 @@ ARG EXTRA_INDEX_URL=https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-
 RUN mkdir -p $HOME/.pip
 RUN printf "[global]\nindex-url=$INDEX_URL\nextra-index-url=$EXTRA_INDEX_URL" > $HOME/.pip/pip.conf
 
-RUN apt-get update -y \
-    && apt-get install -y git docker wget
+RUN apt-get remove -y docker docker-engine docker.io \
+    && apt-get update -y && apt-get install -y git docker.io wget
 
 # Conda Environment
 ENV MINICONDA_VERSION py38_4.9.2
