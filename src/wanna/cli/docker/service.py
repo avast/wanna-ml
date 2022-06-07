@@ -304,9 +304,8 @@ class DockerService:
         """
         if not self.cloud_build:
             tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
-
-            with Spinner(text=f"Pushing docker image {tags}"):
-                docker.image.push(tags, quiet)
+            Spinner().info(text=f"Pushing docker image {tags}")
+            docker.image.push(tags, quiet)
 
     def push_image_ref(self, image_ref: str, quiet: bool = False) -> None:
         """

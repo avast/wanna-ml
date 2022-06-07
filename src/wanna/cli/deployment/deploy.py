@@ -4,7 +4,7 @@ import zipfile
 from pathlib import Path
 from typing import Tuple
 
-from google.api_core.exceptions import NotFound
+from google.api_core.exceptions import NotFound, PermissionDenied
 from google.cloud import scheduler_v1
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
 
@@ -76,7 +76,9 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
             function_path,
             function_url,
         )
-    except NotFound:
+    # it can raise denied on resource 'projects/{project_id}/locations/{loaction}/functions/{function_name}'
+    # (or resource may not exist).
+    except (NotFound, PermissionDenied):
         cf.create_function({"location": parent, "function": function}).result()
         return (
             function_path,

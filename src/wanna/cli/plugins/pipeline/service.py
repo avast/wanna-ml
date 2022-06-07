@@ -121,13 +121,13 @@ class PipelineService(BaseService):
                         )
                     )
 
-                    push_tasks.append(
-                        PushTask(
-                            manifest_artifacts=manifest_artifacts,
-                            container_artifacts=container_artifacts,
-                            json_artifacts=json_artifacts,
-                        )
+                push_tasks.append(
+                    PushTask(
+                        manifest_artifacts=manifest_artifacts,
+                        container_artifacts=container_artifacts,
+                        json_artifacts=json_artifacts,
                     )
+                )
 
         return push_tasks
 
