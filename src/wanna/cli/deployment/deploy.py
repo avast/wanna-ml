@@ -10,6 +10,7 @@ from google.cloud.functions_v1 import CloudFunctionsServiceClient
 
 from wanna.cli.deployment.models import CloudFunctionResource, CloudSchedulerResource
 from wanna.cli.utils import templates
+from wanna.cli.utils.credentials import get_credentials
 from wanna.cli.utils.gcp.gcp import is_gcs_path
 from wanna.cli.utils.io import open
 from wanna.cli.utils.spinners import Spinner
@@ -52,7 +53,7 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
 
     _sync_cloud_function_package(str(local_functions_package), functions_gcs_path)
 
-    cf = CloudFunctionsServiceClient()
+    cf = CloudFunctionsServiceClient(credentials=get_credentials())
     function_url = f"https://{resource.location}-{resource.project}.cloudfunctions.net/{function_name}"
     function = {
         "name": function_path,
@@ -93,7 +94,7 @@ def upsert_cloud_scheduler(
     env: str,
     spinner: Spinner,
 ) -> None:
-    client = scheduler_v1.CloudSchedulerClient()
+    client = scheduler_v1.CloudSchedulerClient(credentials=get_credentials())
     parent = f"projects/{resource.project}/locations/{resource.location}"
     job_name = f"{parent}/jobs/{resource.name}-{env}"
     function_name, function_url = function
