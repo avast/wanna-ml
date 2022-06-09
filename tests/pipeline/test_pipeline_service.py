@@ -56,7 +56,7 @@ class TestPipelineService(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    @patch("wanna.core.services.docker")
+    @patch("wanna.core.services.docker.DockerService")
     def test_run_pipeline(self, docker_mock):
 
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")

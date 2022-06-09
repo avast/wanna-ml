@@ -19,7 +19,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestJobService:
-    @patch("wanna.core.services.docker")
+    @patch("wanna.core.services.docker.DockerService")
     def test_create_training_job_manifest_python_package_spec(self, docker_mock):
         auth.default = MagicMock(
             return_value=(
@@ -41,7 +41,7 @@ class TestJobService:
         assert job_manifest.job_payload.get("container_uri") == "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
         assert job_manifest.job_payload.get("python_module_name") == "trainer.task"
 
-    @patch("wanna.core.services.docker")
+    @patch("wanna.core.services.docker.DockerService")
     def test_create_worker_pool_spec_container_spec(self, docker_mock):
         auth.default = MagicMock(
             return_value=(
