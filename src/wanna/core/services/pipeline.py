@@ -18,7 +18,7 @@ from wanna.core.deployment.models import (
     JsonArtifact,
     PathArtifact,
     PushMode,
-    PushTask, LogMetricResource,
+    PushTask,
 )
 from wanna.core.deployment.push import PushResult, push
 from wanna.core.models.docker import DockerBuildResult, DockerImageModel, ImageBuildType
@@ -181,7 +181,7 @@ class PipelineService(BaseService[PipelineModel]):
                             body=body,
                             cloud_scheduler=manifest.schedule,
                             service_account=manifest.service_account,
-                            labels=manifest.labels
+                            labels=manifest.labels,
                         ),
                         env=env,
                         version=self.version,
@@ -288,7 +288,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str,
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
         tensorboard: Optional[str],
-        network = str,
+        network=str,
     ):
 
         labels = {"wanna_pipeline": pipeline_instance.name}
@@ -398,7 +398,7 @@ class PipelineService(BaseService[PipelineModel]):
             schedule=pipeline.schedule,
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,
-            network=network
+            network=network,
         )
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
         PipelineService.write_manifest(deployment_manifest, manifest_path)

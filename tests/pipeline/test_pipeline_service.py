@@ -34,6 +34,9 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch(
+    "wanna.core.services.pipeline.convert_project_id_to_project_number", mocks.mock_convert_project_id_to_project_number
+)
 class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
@@ -45,6 +48,7 @@ class TestPipelineService(unittest.TestCase):
         self.zone = "us-east1-a"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
+        self.maxDiff = None
         # # Mock GCP auth calls
         # auth.default = MagicMock(
         #     return_value=(

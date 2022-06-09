@@ -12,6 +12,7 @@ PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 
+
 def process_request(request):
     # TODO: from wanna.sdk.pipeline import runner
     # runner.run(path_to_manifest)

@@ -2,7 +2,7 @@ import json
 import os
 import zipfile
 from pathlib import Path
-from typing import Tuple, Dict, List, cast
+from typing import Dict, List, Tuple, cast
 
 import google.cloud.logging
 from caseconverter import snakecase
@@ -84,14 +84,17 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
 
     logging_metric_ref = f"{function_name}-cloud-function-errors"
     gcp_resource_type = "cloud_function"
-    upsert_log_metric(LogMetricResource(
-        project=resource.project,
-        name=logging_metric_ref,
-        filter_=f"""
-            resource.type="{gcp_resource_type}" AND severity >= WARNING AND resource.labels.function_name="{function_name}"
+    upsert_log_metric(
+        LogMetricResource(
+            project=resource.project,
+            name=logging_metric_ref,
+            filter_=f"""
+            resource.type="{gcp_resource_type}" AND severity >= WARNING
+            AND resource.labels.function_name="{function_name}"
             """,
-        description=f"Log metric for {function_name} cloud function executions"
-    ))
+            description=f"Log metric for {function_name} cloud function executions",
+        )
+    )
     upsert_alert_policy(
         logging_metric_type=logging_metric_ref,
         resource_type=gcp_resource_type,
@@ -99,7 +102,7 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
         name=f"{function_name}-cloud-function-alert-policy",
         display_name=f"{function_name}-cloud-function-alert-policy",
         labels=resource.labels,
-        notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"]
+        notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
     )
 
     return (
@@ -160,14 +163,16 @@ def upsert_cloud_scheduler(
 
     logging_metric_ref = f"{job_id}-cloud-scheduler-errors"
     gcp_resource_type = "cloud_scheduler_job"
-    upsert_log_metric(LogMetricResource(
-        project=resource.project,
-        name=logging_metric_ref,
-        filter_= f"""
+    upsert_log_metric(
+        LogMetricResource(
+            project=resource.project,
+            name=logging_metric_ref,
+            filter_=f"""
         resource.type="{gcp_resource_type}" AND severity >= WARNING AND resource.labels.job_id="{job_id}"
         """,
-        description=f"Log metric for {resource.name} cloud scheduler job"
-    ))
+            description=f"Log metric for {resource.name} cloud scheduler job",
+        )
+    )
     upsert_alert_policy(
         logging_metric_type=logging_metric_ref,
         resource_type=gcp_resource_type,
@@ -175,17 +180,25 @@ def upsert_cloud_scheduler(
         name=f"{job_id}-cloud-scheduler-alert-policy",
         display_name=f"{job_id}-cloud-scheduler-alert-policy",
         labels=resource.labels,
-        notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"]
+        notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
     )
 
 
-def upsert_alert_policy(logging_metric_type: str, resource_type: str, project: str, name: str, display_name: str, labels: Dict[str, str], notification_channels: List[str]):
+def upsert_alert_policy(
+    logging_metric_type: str,
+    resource_type: str,
+    project: str,
+    name: str,
+    display_name: str,
+    labels: Dict[str, str],
+    notification_channels: List[str],
+):
     client = AlertPolicyServiceClient(credentials=get_credentials())
     alert_policy = {
         "display_name": display_name,
         "user_labels": labels,
         "conditions": [
-             {
+            {
                 "display_name": "Failed scheduling",
                 "condition_threshold": {
                     # https://issuetracker.google.com/issues/143436657?pli=1
@@ -197,16 +210,14 @@ def upsert_alert_policy(logging_metric_type: str, resource_type: str, project: s
                         {
                             "alignment_period": "600s",
                             "cross_series_reducer": "REDUCE_SUM",
-                            "per_series_aligner": "ALIGN_DELTA"
+                            "per_series_aligner": "ALIGN_DELTA",
                         }
                     ],
                     "comparison": "COMPARISON_GT",
                     "duration": "0s",
-                    "trigger": {
-                        "count": 1
-                    },
-                    "threshold_value": 1
-                }
+                    "trigger": {"count": 1},
+                    "threshold_value": 1,
+                },
             }
         ],
         "alert_strategy": {
@@ -214,7 +225,7 @@ def upsert_alert_policy(logging_metric_type: str, resource_type: str, project: s
         },
         "combiner": "OR",
         "enabled": True,
-        "notification_channels": notification_channels
+        "notification_channels": notification_channels,
     }
 
     alert_policy = cast(AlertPolicy, AlertPolicy.from_json(json.dumps(alert_policy)))
@@ -235,4 +246,9 @@ def upsert_log_metric(resource: LogMetricResource):
         client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
     except NotFound as e:
         print(e)
-        client.metrics_api.metric_create(project=resource.project, metric_name=resource.name, filter_=resource.filter_, description=resource.description)
+        client.metrics_api.metric_create(
+            project=resource.project,
+            metric_name=resource.name,
+            filter_=resource.filter_,
+            description=resource.description,
+        )
