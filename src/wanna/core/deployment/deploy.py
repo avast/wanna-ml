@@ -219,12 +219,13 @@ def upsert_alert_policy(logging_metric_type: str, resource_type: str, project: s
 
     alert_policy = cast(AlertPolicy, AlertPolicy.from_json(json.dumps(alert_policy)))
 
-    try:
-        policy = client.get_alert_policy({"name": f"projects/{project}/alertPolicies/{name}"})
+    policies = client.list_alert_policies(name=f"projects/{project}")
+    policy = [policy for policy in policies if policy.display_name == name]
+    if policy:
+        policy = policy[0]
         alert_policy.name = policy.name
         client.update_alert_policy(alert_policy=alert_policy)
-    except NotFound as e:
-        print(e)
+    else:
         client.create_alert_policy(name=f"projects/{project}", alert_policy=alert_policy)
 
 
@@ -232,5 +233,6 @@ def upsert_log_metric(resource: LogMetricResource):
     client = google.cloud.logging.Client(credentials=get_credentials())
     try:
         client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
-    except NotFound:
+    except NotFound as e:
+        print(e)
         client.metrics_api.metric_create(project=resource.project, metric_name=resource.name, filter_=resource.filter_, description=resource.description)
