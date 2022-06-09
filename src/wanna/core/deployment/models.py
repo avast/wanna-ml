@@ -14,6 +14,7 @@ class CloudSchedulerResource(BaseModel):
     cloud_scheduler: CloudSchedulerModel
     service_account: Optional[EmailStr]
     body: Dict[str, Any]
+    labels: Dict[str, str]
 
 
 class CloudFunctionResource(BaseModel):
@@ -29,6 +30,13 @@ class CloudFunctionResource(BaseModel):
     env_params: Dict[str, str]
     labels: Dict[str, str]
     network: str
+
+
+class LogMetricResource(BaseModel):
+    name: str
+    filter_: str
+    project: str
+    description: str
 
 
 class DeploymentArtifact(BaseModel):

@@ -10,7 +10,7 @@ PIPELINE_ROOT = os.getenv("PIPELINE_ROOT")
 PIPELINE_NETWORK = os.getenv("PIPELINE_NETWORK")
 PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
-
+PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 
 def process_request(request):
     # TODO: from wanna.sdk.pipeline import runner
@@ -43,7 +43,7 @@ def process_request(request):
 
     job = aiplatform.PipelineJob(
         display_name="{{manifest.pipeline_name}}",
-        # job_id=pipeline_job_id, #TODO: add me
+        job_id=PIPELINE_JOB_ID,
         template_path=pipeline_spec_uri,
         pipeline_root=PIPELINE_ROOT,
         enable_caching=enable_caching,

@@ -18,7 +18,7 @@ from wanna.core.deployment.models import (
     JsonArtifact,
     PathArtifact,
     PushMode,
-    PushTask,
+    PushTask, LogMetricResource,
 )
 from wanna.core.deployment.push import PushResult, push
 from wanna.core.models.docker import DockerBuildResult, DockerImageModel, ImageBuildType
@@ -28,6 +28,7 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.pipeline_utils import PipelinePaths, _at_pipeline_exit
 from wanna.core.services.tensorboard import TensorboardService
+from wanna.core.utils.gcp import convert_project_id_to_project_number
 from wanna.core.utils.io import open
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.spinners import Spinner
@@ -180,6 +181,7 @@ class PipelineService(BaseService[PipelineModel]):
                             body=body,
                             cloud_scheduler=manifest.schedule,
                             service_account=manifest.service_account,
+                            labels=manifest.labels
                         ),
                         env=env,
                         version=self.version,
@@ -188,6 +190,32 @@ class PipelineService(BaseService[PipelineModel]):
 
                 else:
                     s.info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
+
+                # not possible to set alerts for failed PipelineJobs
+                # since aiplatform.googleapis.com/PipelineJob
+                # is not a monitored job
+                # https://cloud.google.com/monitoring/api/resources
+                # logging_metric_ref = f"{manifest.pipeline_name}-ml-pipeline-error"
+                # gcp_resource_type = "aiplatform.googleapis.com/PipelineJob"
+                # deploy.upsert_log_metric(LogMetricResource(
+                #     project=manifest.project,
+                #     name=logging_metric_ref,
+                #     filter_= f"""
+                #     resource.type="{gcp_resource_type}"
+                #     AND severity >= WARNING
+                #     AND resource.labels.pipeline_job_id:"{manifest.pipeline_name}"
+                #     """,
+                #     description=f"Log metric for {manifest.pipeline_name} vertex ai pipeline"
+                # ))
+                # deploy.upsert_alert_policy(
+                #     logging_metric_type=logging_metric_ref,
+                #     resource_type=gcp_resource_type,
+                #     project=manifest.project,
+                #     name=f"{manifest.pipeline_name}-ml-pipeline-alert-policy",
+                #     display_name=f"{logging_metric_ref}-ml-pipeline-alert-policy",
+                #     labels=manifest.labels,
+                #     notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"]
+                # )
 
     @staticmethod
     def run(
@@ -218,7 +246,10 @@ class PipelineService(BaseService[PipelineModel]):
 
                 # Select service account for pipeline job
                 service_account = service_account or manifest.service_account
+
                 network = network if network else manifest.network
+                project_number = convert_project_id_to_project_number(manifest.project)
+                network = f"projects/{project_number}/global/networks/{network}"
 
                 # Define Vertex AI Pipeline job
                 pipeline_job = PipelineJob(
@@ -257,6 +288,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str,
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
         tensorboard: Optional[str],
+        network = str,
     ):
 
         labels = {"wanna_pipeline": pipeline_instance.name}
@@ -272,9 +304,7 @@ class PipelineService(BaseService[PipelineModel]):
             "region": pipeline_instance.region,
             "pipeline_root": pipeline_paths.get_gcs_pipeline_root(),
             "pipeline_labels": json.dumps(labels),
-            "pipeline_network": (
-                pipeline_instance.network if pipeline_instance.network else self.config.gcp_profile.network
-            ),
+            "pipeline_network": network,
             "pipeline_service_account": (
                 pipeline_instance.service_account
                 if pipeline_instance.service_account
@@ -325,9 +355,13 @@ class PipelineService(BaseService[PipelineModel]):
             else None
         )
 
+        pipeline_network = pipeline.network if pipeline.network else self.config.gcp_profile.network
+        project_number = convert_project_id_to_project_number(pipeline.project_id)
+        network = f"projects/{project_number}/global/networks/{pipeline_network}"
+
         # Collect kubeflow pipeline params for compilation
         pipeline_env_params, pipeline_params = self._export_pipeline_params(
-            pipeline_paths, pipeline, self.version, image_tags, tensorboard
+            pipeline_paths, pipeline, self.version, image_tags, tensorboard, network
         )
 
         # Compile kubeflow V2 Pipeline
@@ -364,7 +398,7 @@ class PipelineService(BaseService[PipelineModel]):
             schedule=pipeline.schedule,
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,
-            network=pipeline_env_params.get("pipeline_network"),
+            network=network
         )
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
         PipelineService.write_manifest(deployment_manifest, manifest_path)

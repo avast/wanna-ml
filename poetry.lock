@@ -822,6 +822,41 @@ url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple
 reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
 
 [[package]]
+name = "google-cloud-appengine-logging"
+version = "1.1.2"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
+proto-plus = ">=1.15.0,<2.0.0dev"
+protobuf = ">=3.19.0,<4.0.0dev"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
+name = "google-cloud-audit-log"
+version = "0.2.0"
+description = "Google Cloud Audit Protos"
+category = "main"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+
+[package.dependencies]
+googleapis-common-protos = ">=1.52.0"
+protobuf = ">=3.6.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
 name = "google-cloud-bigquery"
 version = "2.34.3"
 description = "Google BigQuery API client library"
@@ -921,6 +956,49 @@ python-versions = ">=3.6"
 google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
 grpc-google-iam-v1 = ">=0.12.4,<1.0.0dev"
 proto-plus = ">=1.15.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
+name = "google-cloud-logging"
+version = "3.1.2"
+description = "Stackdriver Logging API client library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
+google-cloud-appengine-logging = ">=0.1.0,<2.0.0dev"
+google-cloud-audit-log = ">=0.1.0,<1.0.0dev"
+google-cloud-core = ">=1.4.1,<3.0.0dev"
+grpc-google-iam-v1 = ">=0.12.4,<1.0.0dev"
+proto-plus = ">=1.15.0,<2.0.0dev"
+protobuf = ">=3.19.0,<4.0.0dev"
+
+[package.source]
+type = "legacy"
+url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple"
+reference = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
+
+[[package]]
+name = "google-cloud-monitoring"
+version = "2.9.2"
+description = "Stackdriver Monitoring API client library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
+proto-plus = ">=1.15.0,<2.0.0dev"
+protobuf = ">=3.19.0,<4.0.0dev"
+
+[package.extras]
+pandas = ["pandas (>=0.17.1)"]
 
 [package.source]
 type = "legacy"
@@ -3121,7 +3199,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11" # google-cloud-bigquery requires this mess
-content-hash = "e3b3f8e4c1227c51630ed65ca039b93b6d57d21f7252f21649c9b27c1431ff5a"
+content-hash = "c365ee6af5342d1be27167d1679c9a9c9a96ec7f2e0095196bd3ce380a7d2f81"
 
 [metadata.files]
 absl-py = [
@@ -3405,6 +3483,14 @@ google-cloud-aiplatform = [
     {file = "google-cloud-aiplatform-1.13.0.tar.gz", hash = "sha256:a9fea53597a894e719417f5e5b613b3dcfc253e583e7db7aaad3ba5e161aa4ad"},
     {file = "google_cloud_aiplatform-1.13.0-py2.py3-none-any.whl", hash = "sha256:b89fc7facb69c989c08b89b418c831e3be5b49e1b350355eaa8a1eea0edfe1af"},
 ]
+google-cloud-appengine-logging = [
+    {file = "google-cloud-appengine-logging-1.1.2.tar.gz", hash = "sha256:ba77615c100f07edda91656ede1b7465907012b8663aad7c4e75ef9687994237"},
+    {file = "google_cloud_appengine_logging-1.1.2-py2.py3-none-any.whl", hash = "sha256:fe930e9dc5d77e8cb9940f8386965dd8f72d4d4ae2fc782e15637acb5ab585d5"},
+]
+google-cloud-audit-log = [
+    {file = "google-cloud-audit-log-0.2.0.tar.gz", hash = "sha256:d0852f525ad65705f9fbff6288be4493e1449a7906fb5e01bd71c8d1e424d1fc"},
+    {file = "google_cloud_audit_log-0.2.0-py2.py3-none-any.whl", hash = "sha256:ecc7f5f2168ad4014331d6397fcea3750b2d41900f0ef6d1081cd78b3a6420e9"},
+]
 google-cloud-bigquery = [
     {file = "google-cloud-bigquery-2.34.3.tar.gz", hash = "sha256:0ab6362a86a29f17e379e886b49544bc0b75626902a48d12c13a0b47f821bf4a"},
     {file = "google_cloud_bigquery-2.34.3-py2.py3-none-any.whl", hash = "sha256:d702c609e57a3d7d7fbd37e4913d8d0e0e77eabaf7119037ceaa33e2370d7dcb"},
@@ -3424,6 +3510,14 @@ google-cloud-core = [
 google-cloud-functions = [
     {file = "google-cloud-functions-1.6.0.tar.gz", hash = "sha256:7730b4dffe3ec84b7a48b7df21e8330326c474abe3b964070a0c0da95a6610b0"},
     {file = "google_cloud_functions-1.6.0-py2.py3-none-any.whl", hash = "sha256:bbb345a53614f872f9f4518c675e27b7ae82058ee0ea7f004e05531f337be680"},
+]
+google-cloud-logging = [
+    {file = "google-cloud-logging-3.1.2.tar.gz", hash = "sha256:3ed00a8bd2076fee7a1dc053880fcb3c973184807e240f8c3c0929dd748eaf7f"},
+    {file = "google_cloud_logging-3.1.2-py2.py3-none-any.whl", hash = "sha256:702b69b01c4b98c50a4e4e7cbe12309de8c6685e99ec100c0c902e1765a45e92"},
+]
+google-cloud-monitoring = [
+    {file = "google-cloud-monitoring-2.9.2.tar.gz", hash = "sha256:78f246101ce8e655c19c20ccb9940f56853d813e327c3b3c619079d31e316fdd"},
+    {file = "google_cloud_monitoring-2.9.2-py2.py3-none-any.whl", hash = "sha256:92488f60b772250a0a5299bc83c9cc3961ab5cf6d9acf8ee884f718210908fc5"},
 ]
 google-cloud-notebooks = [
     {file = "google-cloud-notebooks-1.3.0.tar.gz", hash = "sha256:8772787dc4310428d617b4cf086a7a5fbfd9dd19e1afc56a979b9b4d6a15ac3b"},
