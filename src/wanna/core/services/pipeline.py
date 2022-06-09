@@ -208,9 +208,7 @@ class PipelineService(BaseService):
                 pipeline_job_id = f"pipeline-{manifest.pipeline_name}-{get_timestamp()}"
 
                 # Apply override with cli provided params file
-                override_params = (
-                    load_yaml_path(extra_params_path, Path("../../cli/plugins/pipeline")) if extra_params_path else {}
-                )
+                override_params = load_yaml_path(extra_params_path, Path(".")) if extra_params_path else {}
                 pipeline_params = {**manifest.parameter_values, **override_params}
 
                 # Select service account for pipeline job

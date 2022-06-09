@@ -445,7 +445,7 @@ class JobService(BaseService):
 
             if manifest.job_type is CustomJobType.CustomJob:
                 if hp_params:
-                    override_hp_params = load_yaml_path(hp_params, Path("../../cli/plugins/job"))
+                    override_hp_params = load_yaml_path(hp_params, Path("."))
                     overriden_hp_tuning = HyperparameterTuning.parse_obj(
                         {**manifest.job_config.hp_tuning.dict(), **override_hp_params}
                     )
