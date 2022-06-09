@@ -3,7 +3,7 @@ import unittest
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from wanna.cli.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 
 
 class TestPipelineModel(unittest.TestCase):

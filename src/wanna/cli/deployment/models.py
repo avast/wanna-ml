@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr
 
-from wanna.cli.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 
 
 class CloudSchedulerResource(BaseModel):

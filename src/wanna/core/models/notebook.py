@@ -3,9 +3,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
 
-from wanna.cli.models.base_instance import BaseInstanceModel
-from wanna.cli.models.gcp_components import GPU, Disk, VMImage
 from wanna.cli.utils.gcp import validators
+from wanna.core.models.base_instance import BaseInstanceModel
+from wanna.core.models.gcp_components import GPU, Disk, VMImage
 
 
 class BucketMount(BaseModel, extra=Extra.forbid):

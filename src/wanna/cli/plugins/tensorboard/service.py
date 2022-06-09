@@ -6,10 +6,10 @@ from google.cloud import aiplatform
 from google.cloud.aiplatform.tensorboard.tensorboard_resource import Tensorboard, TensorboardExperiment
 from treelib import Tree
 
-from wanna.cli.models.tensorboard import TensorboardModel
-from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.utils.spinners import Spinner
+from wanna.core.models.tensorboard import TensorboardModel
+from wanna.core.models.wanna_config import WannaConfigModel
 
 logger = logging.getLogger("google.cloud")
 logger.setLevel(logging.ERROR)

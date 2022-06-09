@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
-from wanna.cli.models.gcp_settings import GCPProfileModel
-from wanna.cli.models.wanna_project import WannaProjectModel
+from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.models.wanna_project import WannaProjectModel
 
 
 def add_labels(instance_dict: Dict[str, Any], new_labels: Dict[str, str]) -> Dict[str, Any]:

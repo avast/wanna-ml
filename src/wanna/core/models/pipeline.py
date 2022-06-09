@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from wanna.cli.models.base_instance import BaseInstanceModel
-from wanna.cli.models.cloud_scheduler import CloudSchedulerModel
-from wanna.cli.models.docker import DockerBuildResult
+from wanna.core.models.base_instance import BaseInstanceModel
+from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.docker import DockerBuildResult
 
 
 class PipelineModel(BaseInstanceModel):

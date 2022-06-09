@@ -2,14 +2,14 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Extra, validator
 
-from wanna.cli.models.docker import DockerModel
-from wanna.cli.models.gcp_settings import GCPProfileModel
-from wanna.cli.models.notebook import ManagedNotebookModel, NotebookModel
-from wanna.cli.models.pipeline import PipelineModel
-from wanna.cli.models.tensorboard import TensorboardModel
-from wanna.cli.models.training_custom_job import CustomJobModel, TrainingCustomJobModel
-from wanna.cli.models.wanna_project import WannaProjectModel
 from wanna.cli.utils.config_enricher import enrich_instance_with_gcp_settings
+from wanna.core.models.docker import DockerModel
+from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
+from wanna.core.models.pipeline import PipelineModel
+from wanna.core.models.tensorboard import TensorboardModel
+from wanna.core.models.training_custom_job import CustomJobModel, TrainingCustomJobModel
+from wanna.core.models.wanna_project import WannaProjectModel
 
 
 class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):

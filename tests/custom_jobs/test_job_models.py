@@ -5,7 +5,7 @@ from mock import patch
 from pydantic.error_wrappers import ValidationError
 
 from tests.mocks import mocks
-from wanna.cli.models.training_custom_job import TrainingCustomJobModel, WorkerPoolModel
+from wanna.core.models.training_custom_job import TrainingCustomJobModel, WorkerPoolModel
 
 
 class TestWorkerPoolSpecModel(unittest.TestCase):

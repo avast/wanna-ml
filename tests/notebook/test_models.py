@@ -5,8 +5,8 @@ from mock import patch
 from pydantic.error_wrappers import ValidationError
 
 from tests.mocks import mocks
-from wanna.cli.models.gcp_components import GPU, Disk
-from wanna.cli.models.notebook import ManagedNotebookModel, NotebookEnvironment, NotebookModel
+from wanna.core.models.gcp_components import GPU, Disk
+from wanna.core.models.notebook import ManagedNotebookModel, NotebookEnvironment, NotebookModel
 
 
 @patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)

@@ -23,8 +23,12 @@ from smart_open import open
 from wanna.cli.deployment.models import ContainerArtifact, PathArtifact, PushMode, PushTask
 from wanna.cli.deployment.push import PushResult, push
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import ImageBuildType
-from wanna.cli.models.training_custom_job import (
+from wanna.cli.plugins.base.service import BaseService
+from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.cli.utils.loaders import load_yaml_path
+from wanna.cli.utils.spinners import Spinner
+from wanna.core.models.docker import ImageBuildType
+from wanna.core.models.training_custom_job import (
     CustomContainerTrainingJobManifest,
     CustomJobManifest,
     CustomJobModel,
@@ -36,11 +40,7 @@ from wanna.cli.models.training_custom_job import (
     TrainingCustomJobModel,
     WorkerPoolModel,
 )
-from wanna.cli.models.wanna_config import WannaConfigModel
-from wanna.cli.plugins.base.service import BaseService
-from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.utils.loaders import load_yaml_path
-from wanna.cli.utils.spinners import Spinner
+from wanna.core.models.wanna_config import WannaConfigModel
 
 
 def _make_gcs_manifest_path(bucket: str, job_name: str) -> str:

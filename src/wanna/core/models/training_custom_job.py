@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Extra, Field, root_validator, validator
 from typing_extensions import Annotated
 
-from wanna.cli.models.base_instance import BaseInstanceModel
-from wanna.cli.models.gcp_components import GPU, Disk
+from wanna.core.models.base_instance import BaseInstanceModel
+from wanna.core.models.gcp_components import GPU, Disk
 
 
 class PythonPackageModel(BaseModel, extra=Extra.forbid):

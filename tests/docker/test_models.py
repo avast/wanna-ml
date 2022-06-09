@@ -1,6 +1,6 @@
 import unittest
 
-from wanna.cli.models.docker import DockerModel
+from wanna.core.models.docker import DockerModel
 
 
 class TestDockerModel(unittest.TestCase):

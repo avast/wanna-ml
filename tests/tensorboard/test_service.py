@@ -1,9 +1,9 @@
 from mock import patch
 
 from tests.mocks import mocks
-from wanna.cli.models.tensorboard import TensorboardModel
-from wanna.cli.models.wanna_config import WannaConfigModel
 from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.core.models.tensorboard import TensorboardModel
+from wanna.core.models.wanna_config import WannaConfigModel
 
 
 @patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)

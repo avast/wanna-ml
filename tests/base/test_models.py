@@ -3,7 +3,7 @@ from mock import patch
 from pydantic.error_wrappers import ValidationError
 
 from tests.mocks import mocks
-from wanna.cli.models.base_instance import BaseInstanceModel
+from wanna.core.models.base_instance import BaseInstanceModel
 
 
 @patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)

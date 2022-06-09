@@ -16,10 +16,10 @@ from tests.mocks import mocks
 from wanna.cli.deployment import deploy
 from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
 from wanna.cli.docker.service import DockerService
-from wanna.cli.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
 from wanna.cli.plugins.pipeline.service import PipelineService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.cli.utils.config_loader import load_config_from_yaml
+from wanna.core.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
 
 
 @patch(

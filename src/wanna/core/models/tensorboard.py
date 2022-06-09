@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from wanna.cli.models.base_instance import BaseInstanceModel
+from wanna.core.models.base_instance import BaseInstanceModel
 
 
 class TensorboardModel(BaseInstanceModel):

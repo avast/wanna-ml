@@ -5,8 +5,8 @@ import pytest
 from mock import patch
 
 from tests.mocks import mocks
-from wanna.cli.models.gcp_settings import GCPProfileModel
 from wanna.cli.utils.config_loader import load_config_from_yaml
+from wanna.core.models.gcp_settings import GCPProfileModel
 
 
 @patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)

@@ -5,10 +5,10 @@ from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
-from wanna.cli.models.gcp_components import GPU, Disk
-from wanna.cli.models.notebook import ManagedNotebookModel, NotebookModel
 from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
+from wanna.core.models.gcp_components import GPU, Disk
+from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
 
 
 @patch(

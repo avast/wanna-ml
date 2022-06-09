@@ -1,7 +1,7 @@
 from mock import patch
 
 from tests.mocks import mocks
-from wanna.cli.models.wanna_config import WannaConfigModel
+from wanna.core.models.wanna_config import WannaConfigModel
 
 
 @patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)

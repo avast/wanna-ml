@@ -3,7 +3,7 @@ from typing import List, Type
 
 import typer
 
-from wanna.cli.models.base_instance import BaseInstanceModel
+from wanna.core.models.base_instance import BaseInstanceModel
 
 
 class BaseService(ABC):
