@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Extra, Field, validator
 
-from wanna.cli.utils.gcp import validators
+from wanna.core.utils.gcp import validators
 
 
 class VMImage(BaseModel, extra=Extra.forbid):

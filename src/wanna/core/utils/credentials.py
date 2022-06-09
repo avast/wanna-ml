@@ -7,7 +7,7 @@ from google.auth import impersonated_credentials
 from google.auth.credentials import Credentials
 from google.auth.exceptions import DefaultCredentialsError
 
-from wanna.cli.utils.spinners import Spinner
+from wanna.core.utils.spinners import Spinner
 
 
 @functools.lru_cache(maxsize=1)

@@ -9,11 +9,11 @@ from google.cloud import scheduler_v1
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
 
 from wanna.cli.deployment.models import CloudFunctionResource, CloudSchedulerResource
-from wanna.cli.utils import templates
-from wanna.cli.utils.credentials import get_credentials
-from wanna.cli.utils.gcp.gcp import is_gcs_path
-from wanna.cli.utils.io import open
-from wanna.cli.utils.spinners import Spinner
+from wanna.core.utils import templates
+from wanna.core.utils.credentials import get_credentials
+from wanna.core.utils.gcp.gcp import is_gcs_path
+from wanna.core.utils.io import open
+from wanna.core.utils.spinners import Spinner
 
 
 def _sync_cloud_function_package(local_functions_package: str, functions_gcs_path: str):

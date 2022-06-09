@@ -6,10 +6,10 @@ from tests.mocks import mocks
 from wanna.core.models.base_instance import BaseInstanceModel
 
 
-@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
 class TestBaseModel:
     def test_model_project_id_start_with_number(self):
         with pytest.raises(ValidationError):

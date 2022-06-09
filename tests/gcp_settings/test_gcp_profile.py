@@ -5,19 +5,19 @@ import pytest
 from mock import patch
 
 from tests.mocks import mocks
-from wanna.cli.utils.config_loader import load_config_from_yaml
 from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.utils.config_loader import load_config_from_yaml
 
 
-@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
-@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.core.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestWannaConfigModel:
     def test_parse_region_from_zone(self):
         gcp_settings_dict = {"project_id": "gcp-project", "zone": "europe-west1-b", "profile_name": "default"}

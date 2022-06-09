@@ -25,13 +25,13 @@ from wanna.cli.docker.service import DockerService
 from wanna.cli.plugins.base.service import BaseService
 from wanna.cli.plugins.pipeline.utils import PipelinePaths, _at_pipeline_exit
 from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.utils.io import open
-from wanna.cli.utils.loaders import load_yaml_path
-from wanna.cli.utils.spinners import Spinner
-from wanna.cli.utils.time import get_timestamp
 from wanna.core.models.docker import DockerBuildResult, DockerImageModel, ImageBuildType
 from wanna.core.models.pipeline import PipelineDeployment, PipelineModel
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.utils.io import open
+from wanna.core.utils.loaders import load_yaml_path
+from wanna.core.utils.spinners import Spinner
+from wanna.core.utils.time import get_timestamp
 
 
 class PipelineService(BaseService):

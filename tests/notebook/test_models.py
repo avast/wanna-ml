@@ -9,13 +9,13 @@ from wanna.core.models.gcp_components import GPU, Disk
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookEnvironment, NotebookModel
 
 
-@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestNotebookModel(unittest.TestCase):
     def test_notebook_environment_only_container_is_set(self):
         try:

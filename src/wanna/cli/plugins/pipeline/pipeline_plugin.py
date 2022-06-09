@@ -12,7 +12,7 @@ from wanna.cli.plugins.base.common_options import (
     wanna_file_option,
 )
 from wanna.cli.plugins.pipeline.service import PipelineService
-from wanna.cli.utils.config_loader import load_config_from_yaml
+from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 class PipelinePlugin(BasePlugin):

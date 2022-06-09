@@ -2,8 +2,8 @@ from pathlib import Path
 
 from cookiecutter.main import cookiecutter
 
-from wanna.cli.utils.spinners import Spinner
 from wanna.components import templates
+from wanna.core.utils.spinners import Spinner
 
 
 class ComponentsService:

@@ -3,8 +3,8 @@ from typing import List, Tuple, TypeVar
 
 from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushTask
 from wanna.cli.docker.service import DockerService
-from wanna.cli.utils.io import open
-from wanna.cli.utils.spinners import Spinner
+from wanna.core.utils.io import open
+from wanna.core.utils.spinners import Spinner
 
 Manifest = TypeVar("Manifest")
 PushResult = List[Tuple[List[ContainerArtifact], List[PathArtifact], List[JsonArtifact]]]

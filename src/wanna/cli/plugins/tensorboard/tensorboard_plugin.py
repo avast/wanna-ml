@@ -5,7 +5,7 @@ import typer
 from wanna.cli.plugins.base.base_plugin import BasePlugin
 from wanna.cli.plugins.base.common_options import instance_name_option, profile_name_option, wanna_file_option
 from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.utils.config_loader import load_config_from_yaml
+from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 class TensorboardPlugin(BasePlugin):

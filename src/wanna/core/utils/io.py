@@ -3,7 +3,7 @@ import contextlib
 from google.cloud.storage import Client
 from smart_open import open as gcs_open
 
-from wanna.cli.utils.credentials import get_credentials
+from wanna.core.utils.credentials import get_credentials
 
 
 @contextlib.contextmanager

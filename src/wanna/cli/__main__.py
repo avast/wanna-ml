@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 from cookiecutter.main import cookiecutter
 
-from wanna.cli.utils.spinners import Spinner
+from wanna.core.utils.spinners import Spinner
 
 from .plugins.runner import PluginRunner
 from .version import perform_check

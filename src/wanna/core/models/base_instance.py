@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, Extra, validator
 
-from wanna.cli.utils.gcp import validators
+from wanna.core.utils.gcp import validators
 
 
 class BaseInstanceModel(BaseModel, extra=Extra.ignore, validate_assignment=True):

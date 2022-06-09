@@ -6,9 +6,9 @@ from mock.mock import MagicMock
 
 from tests.mocks import mocks
 from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
-from wanna.cli.utils.config_loader import load_config_from_yaml
 from wanna.core.models.gcp_components import GPU, Disk
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
+from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 @patch(
@@ -16,20 +16,20 @@ from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
     mocks.MockNotebookServiceClient,
 )
 @patch(
-    "wanna.cli.utils.gcp.gcp.ZonesClient",
+    "wanna.core.utils.gcp.gcp.ZonesClient",
     mocks.MockZonesClient,
 )
 @patch(
-    "wanna.cli.utils.gcp.gcp.RegionsClient",
+    "wanna.core.utils.gcp.gcp.RegionsClient",
     mocks.MockRegionsClient,
 )
-@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
-@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestNotebookService:
     def setup(self) -> None:
         self.project_id = "gcp-project"
@@ -152,15 +152,15 @@ class TestNotebookService:
 
 
 @patch("wanna.cli.plugins.notebook.service.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
-@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.cli.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
-@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestManagedNotebookService:
     def setup(self) -> None:
         self.project_id = "cloud-lab-304213"

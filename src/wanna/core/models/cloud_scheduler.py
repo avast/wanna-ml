@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, validator
 
-from wanna.cli.utils.gcp import validators
+from wanna.core.utils.gcp import validators
 
 
 class CloudSchedulerModel(BaseModel):

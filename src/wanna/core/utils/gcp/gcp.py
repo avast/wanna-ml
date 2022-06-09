@@ -13,7 +13,7 @@ from google.cloud.compute_v1.services.images import ImagesClient
 from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
-from wanna.cli.utils.credentials import get_credentials
+from wanna.core.utils.credentials import get_credentials
 
 DEFAULT_VALIDATION_MODE = "remote"
 VALIDATION_MODE = os.environ.get("WANNA_VALIDATION_MODE", DEFAULT_VALIDATION_MODE)

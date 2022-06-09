@@ -7,17 +7,17 @@ from mock import MagicMock, patch
 from tests.mocks import mocks
 from wanna.cli.plugins.job.service import JobService
 from wanna.cli.plugins.tensorboard.service import TensorboardService
-from wanna.cli.utils.config_loader import load_config_from_yaml
+from wanna.core.utils.config_loader import load_config_from_yaml
 
 
-@patch("wanna.cli.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.cli.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.cli.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.cli.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.cli.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestJobService:
     @patch("wanna.cli.docker.service.docker")
     def test_create_training_job_manifest_python_package_spec(self, docker_mock):
