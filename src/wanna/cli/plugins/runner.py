@@ -1,10 +1,10 @@
 import typer
 
-from .components.components_plugin import ComponentsPlugin
-from .job.job_plugin import JobPlugin
-from .notebook.notebook_plugin import ManagedNotebookPlugin, NotebookPlugin
-from .pipeline.pipeline_plugin import PipelinePlugin
-from .tensorboard.tensorboard_plugin import TensorboardPlugin
+from wanna.cli.plugins.components_plugin import ComponentsPlugin
+from wanna.cli.plugins.job_plugin import JobPlugin
+from wanna.cli.plugins.notebook_plugin import ManagedNotebookPlugin, NotebookPlugin
+from wanna.cli.plugins.pipeline_plugin import PipelinePlugin
+from wanna.cli.plugins.tensorboard_plugin import TensorboardPlugin
 
 
 class PluginRunner:

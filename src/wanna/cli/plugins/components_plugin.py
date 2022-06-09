@@ -2,8 +2,8 @@ from pathlib import Path
 
 import typer
 
-from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.components.service import ComponentsService
+from wanna.cli.plugins.base_plugin import BasePlugin
+from wanna.components import template
 
 
 class ComponentsPlugin(BasePlugin):
@@ -28,5 +28,4 @@ class ComponentsPlugin(BasePlugin):
             help="The output directory where wanna-ml repository will be created",
         )
     ) -> None:
-        components_service = ComponentsService(output_dir)
-        components_service.apply_template()
+        template.apply(output_dir)

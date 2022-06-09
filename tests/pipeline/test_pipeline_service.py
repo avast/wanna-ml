@@ -11,14 +11,14 @@ from google.cloud.functions_v1.services.cloud_functions_service import CloudFunc
 from mock import patch
 from mock.mock import MagicMock
 
-import wanna.cli.plugins.pipeline.service
+import wanna.core.services.pipeline
 from tests.mocks import mocks
-from wanna.cli.deployment import deploy
-from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
-from wanna.cli.docker.service import DockerService
-from wanna.cli.plugins.pipeline.service import PipelineService
-from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.core.deployment import deploy
+from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
 from wanna.core.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
+from wanna.core.services.docker import DockerService
+from wanna.core.services.pipeline import PipelineService
+from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
@@ -56,8 +56,11 @@ class TestPipelineService(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    @patch("wanna.cli.docker.service.docker")
+    @patch("wanna.core.services.docker.docker")
     def test_run_pipeline(self, docker_mock):
+
+        docker_mock.build = MagicMock(return_value=None)
+        docker_mock.pull = MagicMock(return_value=None)
 
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
         pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
@@ -254,7 +257,7 @@ class TestPipelineService(unittest.TestCase):
         scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
-        wanna.cli.plugins.pipeline.service.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
+        wanna.core.services.pipeline_utils.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
             return_value=expected_manifest_json_path
         )
         deploy._sync_cloud_function_package = MagicMock(return_value=None)

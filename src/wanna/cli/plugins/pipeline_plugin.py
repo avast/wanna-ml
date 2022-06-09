@@ -3,15 +3,15 @@ from pathlib import Path
 
 import typer
 
-from wanna.cli.deployment.models import PushMode
-from wanna.cli.plugins.base.base_plugin import BasePlugin
-from wanna.cli.plugins.base.common_options import (
+from wanna.cli.plugins.base_plugin import BasePlugin
+from wanna.cli.plugins.common_options import (
     instance_name_option,
     profile_name_option,
     push_mode_option,
     wanna_file_option,
 )
-from wanna.cli.plugins.pipeline.service import PipelineService
+from wanna.core.deployment.models import PushMode
+from wanna.core.services.pipeline import PipelineService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 

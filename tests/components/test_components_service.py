@@ -3,7 +3,7 @@ import pathlib
 import shutil
 import unittest
 
-from wanna.cli.plugins.components.service import ComponentsService
+from wanna.components import template
 
 
 class TestWannaComponentsService(unittest.TestCase):
@@ -12,7 +12,6 @@ class TestWannaComponentsService(unittest.TestCase):
 
     def test_wanna_components_service(self):
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
-        service = ComponentsService(self.pipeline_build_dir)
-        service.apply_template(no_input=True)
+        template.apply(self.pipeline_build_dir, no_input=True)
         component_dir = self.pipeline_build_dir / "component_name"
         self.assertTrue(component_dir.exists())

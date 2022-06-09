@@ -23,11 +23,11 @@ from google.cloud.notebooks_v1.types import (
 )
 from waiting import wait
 
-from wanna.cli.docker.service import DockerService
-from wanna.cli.plugins.base.service import BaseService
-from wanna.cli.plugins.tensorboard.service import TensorboardService
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.services.base import BaseService
+from wanna.core.services.docker import DockerService
+from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
 from wanna.core.utils.gcp.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
 from wanna.core.utils.spinners import Spinner

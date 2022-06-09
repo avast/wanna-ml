@@ -1,6 +1,6 @@
 import typer
 
-from wanna.cli.deployment.models import PushMode
+from wanna.core.deployment.models import PushMode
 
 profile_name_option = typer.Option(
     "default",
