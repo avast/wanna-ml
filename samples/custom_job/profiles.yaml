@@ -1,9 +1,9 @@
 gcp_profiles:
 
   - profile_name: stage-europe-west3
-    project_id: us-burger-gcp-poc
+    project_id: cloud-lab-304213
     zone: europe-west3-b
-    bucket: wanna-ml-west3
-    service_account: "wanna-ml-testing@us-burger-gcp-poc.iam.gserviceaccount.com"
+    bucket: wanna-cloudlab-europe-west3
+    service_account: "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com"
     labels:
       gcp-profile: stage-europe-west3

@@ -5,9 +5,10 @@ wanna_project:
 
 gcp_profiles:
   - profile_name: default
-    project_id: us-burger-gcp-poc
+    project_id: cloud-lab-304213
+    network: cloud-lab
     zone: europe-west1-b
-    bucket: wanna-ml
+    bucket: wanna-cloudlab-europe-west1
     
 docker:
   images:
@@ -15,16 +16,10 @@ docker:
       name: custom_pip_image
       base_image: gcr.io/deeplearning-platform-release/base-cpu
       requirements_txt: requirements.txt
-
-    - build_type: provided_image
-      name: provided_image
-      image_url: eu.gcr.io/us-burger-gcp-poc/hmil-sketchpad-jupyter:latest
   repository: wanna-samples
 
 notebooks:
   - name: wanna-notebook-trial
-    #project_id: us-burger-gcp-poc
-    #zone: europe-west4-b
     service_account:
     instance_owner:
     machine_type: n1-standard-4
@@ -47,14 +42,10 @@ notebooks:
       disk_type: pd_standard
       size_gb: 100
     bucket_mounts:
-      - bucket_name: us-burger-gcp-poc-mooncloud
+      - bucket_name: wanna-cloudlab-europe-west1
         bucket_dir: data
         local_path: /home/jupyter/mounted/gcs
     tensorboard_ref: my-super-tensorboard
-    #network:
-    #  network_id:
-    #  subnet:
 
 tensorboards:
   - name: my-super-tensorboard
-  - name: my-ugly-tensorboard

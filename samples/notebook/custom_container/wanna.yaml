@@ -5,13 +5,15 @@ wanna_project:
 
 gcp_profiles:
   - profile_name: default
-    project_id: us-burger-gcp-poc
+    project_id: cloud-lab-304213
     zone: europe-west1-b
-    bucket: wanna-ml
+    bucket: wanna-cloudlab-europe-west1
+    network: cloud-lab
   - profile_name: test
-    project_id: us-burger-gcp-poc
+    project_id: cloud-lab-304213
     zone: europe-west4-a
-    bucket: wanna-ml-test
+    bucket: wanna-cloudlab-europe-west3
+    network: cloud-lab
 
 docker:
   images:

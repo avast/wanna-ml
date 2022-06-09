@@ -1,19 +1,19 @@
-# WANNA ML
+# WANNA-ML
 
-[![TeamCity](https://teamcity.ida.avast.com/app/rest/builds/buildType:BigDataSystem_Projects_Wanna_ML_Publish___Release,branch:<default>/statusIcon)](https://teamcity.ida.avast.com/project/BigDataSystem_Projects_Wanna_ML?mode=builds)
-[![Artifactory](https://pypi-badger.luft.avast.com/image/pypi-local/wanna-ml)](https://artifactory.ida.avast.com/artifactory/webapp/#/artifacts/browse/tree/General/pypi-local/wanna-ml)
+WANNA-ML is a CLI tool that helps researchers, data scientists, and ML Engineers to easily
+adapt to Google Cloud Platform (GCP) and get started on the cloud in almost no time.
 
-WANNA manage ML on Vertex AI :-)
+It makes it easy to start a Jupyter notebook, run training jobs and pipelines or build Docker container 
+and export logs to Tensorboards.
 
-[Check out the full online documentation](https://git.int.avast.com/pages/bds/wanna-ml/) and follow to tutorial for concepts and example introduction.
+We build on top of Vertex-AI managed services and integrate with other GCP services like Cloud Build and Artifact Registry
+to provide you with a standardized structure for managing ML assets on GCP.
 
-Slack channel: [#t-mlops-developers](https://avast.slack.com/messages/t-mlops-developers/)
-
-CML page for the project is [here](https://cml.avast.com/display/BDS/Cloud+ML+-+WANNA).
+[Check out the full online documentation]() and follow to tutorial for concepts and example introduction.
 
 ## Installation for users
 
-[Please refer to this section of the documentation](https://git.int.avast.com/pages/bds/wanna-ml/installation/).
+[Please refer to this section of the documentation]().
 
 
 ## WANNA ML Pipelines

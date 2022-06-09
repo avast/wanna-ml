@@ -263,8 +263,8 @@ def _run_training_job(
             network=manifest.job_config.network,
             environment_variables=manifest.job_config.worker.env,
             replica_count=manifest.job_config.worker.replica_count,
-            boot_disk_type=manifest.job_config.worker.boot_disk_type,
-            boot_disk_size_gb=manifest.job_config.worker.boot_disk_size_gb,
+            boot_disk_type=manifest.job_config.worker.boot_disk.disk_type,
+            boot_disk_size_gb=manifest.job_config.worker.boot_disk.size_gb,
             reduction_server_replica_count=manifest.job_config.reduction_server.replica_count
             if manifest.job_config.reduction_server
             else 0,

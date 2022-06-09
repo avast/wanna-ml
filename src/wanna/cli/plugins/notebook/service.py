@@ -166,17 +166,18 @@ class NotebookService(BaseService):
         """
         # Network
         if notebook_instance.network:
-            network_name = notebook_instance.network.network_id
-            subnet_name = notebook_instance.network.subnet
-            full_network_name = f"projects/{notebook_instance.project_id}/global/networks/{network_name}"
-            if subnet_name:
-                full_subnet_name = (
-                    f"projects/{notebook_instance.project_id}/region/{notebook_instance.zone}/subnetworks/{subnet_name}"
-                )
-            else:
-                full_subnet_name = None
+            full_network_name = f"projects/{notebook_instance.project_id}/global/networks/{notebook_instance.network}"
         else:
-            full_network_name, full_subnet_name = None, None
+            full_network_name = None
+
+        if notebook_instance.subnet:
+            full_subnet_name = (
+                f"projects/{notebook_instance.project_id}/region/"
+                f"{notebook_instance.zone}/subnetworks/{notebook_instance.subnet}"
+            )
+        else:
+            full_subnet_name = None
+
         # GPU
         if notebook_instance.gpu:
             accelerator_config = Instance.AcceleratorConfig(

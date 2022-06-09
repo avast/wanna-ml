@@ -5,7 +5,8 @@ from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
-from wanna.cli.models.notebook import ManagedNotebookModel, Network, NotebookDisk, NotebookGPU, NotebookModel
+from wanna.cli.models.gcp_components import GPU, Disk
+from wanna.cli.models.notebook import ManagedNotebookModel, NotebookModel
 from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
 from wanna.cli.utils.config_loader import load_config_from_yaml
 
@@ -35,7 +36,7 @@ class TestNotebookService:
         self.zone = "us-east1-a"
 
     def test_list_running_instances(self):
-        config = load_config_from_yaml("samples/notebook/custom-container/wanna.yaml", "default")
+        config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.zone)
         assert f"projects/{self.project_id}/locations/{self.zone}/instances/nb1" in running_notebooks
@@ -44,7 +45,7 @@ class TestNotebookService:
         assert f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra" not in running_notebooks
 
     def test_instance_exists(self):
-        config = load_config_from_yaml("samples/notebook/custom-container/wanna.yaml", "default")
+        config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         should_exist = nb_service._instance_exists(
             instance=NotebookModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"})
@@ -56,7 +57,7 @@ class TestNotebookService:
         assert not should_not_exist
 
     def test_validate_jupyterlab_state(self):
-        config = load_config_from_yaml("samples/notebook/custom-container/wanna.yaml", "default")
+        config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         state_1 = nb_service._validate_jupyterlab_state(
             instance_id=f"projects/{self.project_id}/locations/{self.zone}/instances/nb1",
@@ -73,7 +74,7 @@ class TestNotebookService:
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.network = Network.parse_obj({"network_id": "little-hangleton"})
+        instance.network = "little-hangleton"
         request = nb_service._create_instance_request(instance)
         assert request.instance.network == f"projects/{config.gcp_profile.project_id}/global/networks/little-hangleton"
 
@@ -81,7 +82,8 @@ class TestNotebookService:
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.network = Network.parse_obj({"network_id": "little-hangleton", "subnet": "the-riddle-house"})
+        instance.network = "little-hangleton"
+        instance.subnet = "the-riddle-house"
         request = nb_service._create_instance_request(instance)
         assert (
             request.instance.subnet
@@ -92,21 +94,20 @@ class TestNotebookService:
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.gpu = NotebookGPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
+        instance.gpu = GPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
         request = nb_service._create_instance_request(instance)
         assert request.instance.accelerator_config.type_.name == "NVIDIA_TESLA_V100"
         assert request.instance.accelerator_config.core_count == 4
 
     def test_create_instance_request_custom_container(self):
-        config = load_config_from_yaml("samples/notebook/custom-container/wanna.yaml", "default")
+        config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
         nb_service.docker_service._build_image = MagicMock(return_value=(None, None, None))
         nb_service.docker_service._pull_image = MagicMock(return_value=None)
         request = nb_service._create_instance_request(instance)
         assert (
-            request.instance.container_image.repository
-            == "europe-west1-docker.pkg.dev/us-burger-gcp-poc/wanna-samples/"
+            request.instance.container_image.repository == "europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/"
             "wanna-notebook-sample-custom-container/custom-notebook-container"
         )
         assert request.instance.container_image.tag == "dev"
@@ -122,7 +123,7 @@ class TestNotebookService:
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.boot_disk = NotebookDisk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
+        instance.boot_disk = Disk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
         assert request.instance.boot_disk_type == Instance.DiskType.PD_SSD
         assert request.instance.boot_disk_size_gb == 500
@@ -131,7 +132,7 @@ class TestNotebookService:
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.data_disk = NotebookDisk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
+        instance.data_disk = Disk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
         assert request.instance.data_disk_type == Instance.DiskType.PD_BALANCED
         assert request.instance.data_disk_size_gb == 750
@@ -145,7 +146,7 @@ class TestNotebookService:
         instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
         assert (
-            "gcsfuse --implicit-dirs --only-dir=data us-burger-gcp-poc-mooncloud /home/jupyter/mounted/gcs"
+            "gcsfuse --implicit-dirs --only-dir=data wanna-cloudlab-europe-west1 /home/jupyter/mounted/gcs"
             in startup_script
         )
 

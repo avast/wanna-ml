@@ -251,7 +251,7 @@ def get_region_from_zone(zone: str) -> str:
 
 def convert_project_id_to_project_number(project_id: str) -> str:
     """
-    Convert GCP project_id (eg. 'us-burger-gcp-poc') to project_number (eg. '966197297054')
+    Convert GCP project_id (eg. 'my-gcp-project') to project_number (eg. '966193337054')
 
     Args:
         project_id: GCP project id

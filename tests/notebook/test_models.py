@@ -5,14 +5,8 @@ from mock import patch
 from pydantic.error_wrappers import ValidationError
 
 from tests.mocks import mocks
-from wanna.cli.models.notebook import (
-    ManagedNotebookModel,
-    Network,
-    NotebookDisk,
-    NotebookEnvironment,
-    NotebookGPU,
-    NotebookModel,
-)
+from wanna.cli.models.gcp_components import GPU, Disk
+from wanna.cli.models.notebook import ManagedNotebookModel, NotebookEnvironment, NotebookModel
 
 
 @patch("wanna.cli.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
@@ -51,31 +45,17 @@ class TestNotebookModel(unittest.TestCase):
         assert model.vm_image.framework == "tf"
         assert model.vm_image.version == "ent-2-3-cu110"
 
-    def test_notebook_network_short_name(self):
-        network_id = "network-x"
-        try:
-            _ = Network.parse_obj({"network_id": network_id})
-        except ValidationError:
-            assert False, f"network_id {network_id} raised an exception during validation"
-
-    def test_notebook_network_full_name(self):
-        network_id = "projects/gcp-project/global/networks/network-x"
-        try:
-            _ = Network.parse_obj({"network_id": network_id})
-        except ValidationError:
-            assert False, f"network_id {network_id} raised an exception during validation"
-
     def test_notebook_disk_valid_type(self):
         disk_type = "pd_ssd"
         try:
-            _ = NotebookDisk.parse_obj({"disk_type": disk_type, "size_gb": 500})
+            _ = Disk.parse_obj({"disk_type": disk_type, "size_gb": 500})
         except ValidationError:
             assert False, f"Disk type {disk_type} raised an exception during validation"
 
     def test_notebook_gpu_type_invalid(self):
         gpu_type = "super_tesla"
         with pytest.raises(ValidationError):
-            _ = NotebookGPU.parse_obj({"count": 1, "accelerator_type": gpu_type})
+            _ = GPU.parse_obj({"count": 1, "accelerator_type": gpu_type})
 
     def test_notebook_invalid_machine_type(self):
         machine_type = "expelliarmus"

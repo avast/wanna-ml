@@ -14,8 +14,6 @@ class PipelineModel(BaseInstanceModel):
     pipeline_file: str
     pipeline_function: Optional[str]
     pipeline_params: Union[Path, Dict[str, Any], None]
-    tags: Optional[List[str]]
-    metadata: Optional[List[Dict[str, Any]]]
     docker_image_ref: Optional[List[str]]
     schedule: Optional[CloudSchedulerModel]
     tensorboard_ref: Optional[str]

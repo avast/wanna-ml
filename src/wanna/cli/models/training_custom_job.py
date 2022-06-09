@@ -5,11 +5,7 @@ from pydantic import BaseModel, Extra, Field, root_validator, validator
 from typing_extensions import Annotated
 
 from wanna.cli.models.base_instance import BaseInstanceModel
-
-
-class JobGPUModel(BaseModel, extra=Extra.forbid):
-    count: Literal[1, 2, 4, 8] = 1
-    accelerator_type: str
+from wanna.cli.models.gcp_components import GPU, Disk
 
 
 class PythonPackageModel(BaseModel, extra=Extra.forbid):
@@ -29,9 +25,8 @@ class WorkerPoolModel(BaseModel, extra=Extra.forbid):
     args: Optional[List[str]]
     env: Optional[List[Dict[str, str]]]
     machine_type: str = "n1-standard-4"
-    gpu: Optional[JobGPUModel]
-    boot_disk_type: Literal["pd-ssd", "pd-standard"] = "pd-ssd"
-    boot_disk_size_gb: int = Field(ge=100, le=65535, default=100)
+    gpu: Optional[GPU]
+    boot_disk: Optional[Disk]
     replica_count: int = 1
 
     # _machine_type = validator("machine_type", allow_reuse=True)(validators.validate_machine_type)
@@ -94,10 +89,8 @@ class HyperparameterTuning(BaseModel):
 
 
 class BaseCustomJobModel(BaseInstanceModel):
-    name: str
     region: str
     enable_web_access: bool = False
-    network: Optional[str]
     bucket: str
     base_output_directory: Optional[str]
     tensorboard_ref: Optional[str]
