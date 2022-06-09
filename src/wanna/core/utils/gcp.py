@@ -2,7 +2,7 @@ import os
 import re
 import tarfile
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
@@ -307,7 +307,7 @@ def get_available_compute_image_families(
     return [parse_image_name_family(image.family) for image in all_images]
 
 
-def construct_vm_image_family_from_vm_image(framework: str, version: str, os: str) -> str:
+def construct_vm_image_family_from_vm_image(framework: str, version: str, os: Optional[str]) -> str:
     """
     Construct name of the Compute Engine VM family with given framework(eg. pytorch),
     version(eg. 1-9-xla) and optional OS (eg. debian-10).

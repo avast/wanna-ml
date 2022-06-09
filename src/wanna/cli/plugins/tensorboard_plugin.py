@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -61,7 +62,9 @@ class TensorboardPlugin(BasePlugin):
     def list(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        region: str = typer.Option(None, "--region", help="Overwrites the region from wanna-ml yaml configuration"),
+        region: Optional[str] = typer.Option(
+            None, "--region", help="Overwrites the region from wanna-ml yaml configuration"
+        ),
         filter_expr: str = typer.Option(
             None,
             "--filter",
@@ -82,6 +85,10 @@ class TensorboardPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         tb_service = TensorboardService(config=config)
-        tb_service.list_tensorboards_in_tree(
-            region=region or config.gcp_profile.region, filter_expr=filter_expr, show_url=show_url
-        )
+        region = region or config.gcp_profile.region
+        if not region:
+            raise ValueError(
+                "Please provide a region. Either via cli arg or via region or zone in selected gcp profile"
+            )
+        else:
+            tb_service.list_tensorboards_in_tree(region=region, filter_expr=filter_expr, show_url=show_url)

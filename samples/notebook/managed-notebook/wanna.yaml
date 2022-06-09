@@ -7,7 +7,7 @@ gcp_profiles:
   - profile_name: default
     project_id: cloud-lab-304213
     region: europe-west1
-    bucket:
+    bucket: wanna-cloudlab-europe-west1
 
 managed_notebooks:
   - name: minimum-setup

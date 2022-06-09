@@ -20,7 +20,12 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestWannaConfigModel:
     def test_parse_region_from_zone(self):
-        gcp_settings_dict = {"project_id": "gcp-project", "zone": "europe-west1-b", "profile_name": "default"}
+        gcp_settings_dict = {
+            "project_id": "gcp-project",
+            "zone": "europe-west1-b",
+            "profile_name": "default",
+            "bucket": "bucket",
+        }
         gcp_settings = GCPProfileModel.parse_obj(gcp_settings_dict)
         assert gcp_settings.region == "europe-west1"
 

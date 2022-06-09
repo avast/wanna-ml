@@ -20,7 +20,12 @@ class TestWannaConfigModel:
                 "version": "1.2.3",
                 "authors": ["luna.lovegood@avast.com"],
             },
-            "gcp_profile": {"profile_name": "default", "project_id": "gcp-project", "zone": "us-east1-a"},
+            "gcp_profile": {
+                "profile_name": "default",
+                "project_id": "gcp-project",
+                "zone": "us-east1-a",
+                "bucket": "bucket",
+            },
             "notebooks": [
                 {"name": "potions", "zone": "europe-west4-a", "labels": {"grade": "a"}},
                 {"name": "history-of-magic"},

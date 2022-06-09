@@ -16,11 +16,11 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     wanna_project: WannaProjectModel
     gcp_profile: GCPProfileModel
     docker: Optional[DockerModel]
-    notebooks: Optional[List[NotebookModel]]
-    tensorboards: Optional[List[TensorboardModel]]
-    jobs: Optional[List[Union[CustomJobModel, TrainingCustomJobModel]]]
-    pipelines: Optional[List[PipelineModel]]
-    managed_notebooks: Optional[List[ManagedNotebookModel]]
+    notebooks: List[NotebookModel] = []
+    tensorboards: List[TensorboardModel] = []
+    jobs: List[Union[CustomJobModel, TrainingCustomJobModel]] = []
+    pipelines: List[PipelineModel] = []
+    managed_notebooks: List[ManagedNotebookModel] = []
 
     _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
     _managed_notebooks = validator("managed_notebooks", pre=True, each_item=True, allow_reuse=True)(

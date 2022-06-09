@@ -33,7 +33,7 @@ from wanna.core.utils.gcp import construct_vm_image_family_from_vm_image, upload
 from wanna.core.utils.spinners import Spinner
 
 
-class NotebookService(BaseService):
+class NotebookService(BaseService[NotebookModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -43,7 +43,6 @@ class NotebookService(BaseService):
     ):
         super().__init__(
             instance_type="notebook",
-            instance_model=NotebookModel,
         )
         self.version = version
         self.instances = config.notebooks
@@ -205,7 +204,7 @@ class NotebookService(BaseService):
                 )
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
-        else:
+        elif notebook_instance.environment.vm_image:
             vm_image = VmImage(
                 project="deeplearning-platform-release",
                 image_family=construct_vm_image_family_from_vm_image(
@@ -215,6 +214,11 @@ class NotebookService(BaseService):
                 ),
             )
             container_image = None
+        else:
+            raise ValueError(
+                "No notebook environment was found. This should not be possible."
+                " Something went wrong during model validation"
+            )
         # Disks
         boot_disk_type = notebook_instance.boot_disk.disk_type if notebook_instance.boot_disk else None
         boot_disk_size_gb = notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
@@ -235,7 +239,7 @@ class NotebookService(BaseService):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                notebook_instance.bucket,
+                notebook_instance.bucket or self.bucket_name,
                 f"notebooks/{notebook_instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
@@ -381,7 +385,7 @@ class NotebookService(BaseService):
                 typer.secho(f"No notebook {instance_name} found", fg=typer.colors.RED)
 
 
-class ManagedNotebookService(BaseService):
+class ManagedNotebookService(BaseService[ManagedNotebookModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -390,12 +394,12 @@ class ManagedNotebookService(BaseService):
     ):
         super().__init__(
             instance_type="managed-notebook",
-            instance_model=ManagedNotebookModel,
         )
         self.version = version
         self.instances = config.managed_notebooks
         self.notebook_client = ManagedNotebookServiceClient()
         self.config = config
+        self.bucket_name = config.gcp_profile.bucket
         self.tensorboard_service = TensorboardService(config=config)
 
     def _delete_one_instance(self, notebook_instance: ManagedNotebookModel) -> None:
@@ -470,12 +474,13 @@ class ManagedNotebookService(BaseService):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                instance.bucket,
+                instance.bucket or self.bucket_name,
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
         else:
             post_startup_script = None
+
         # VM
         virtualMachineConfig = VirtualMachineConfig(
             machine_type=instance.machine_type,
@@ -551,7 +556,9 @@ class ManagedNotebookService(BaseService):
             True if exists, False if not
         """
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.region}/runtimes/{instance.name}"
-        return full_instance_name in self._list_running_instances(instance.project_id, instance.region)
+        return full_instance_name in self._list_running_instances(
+            instance.project_id, instance.region or self.config.gcp_profile.region
+        )
 
     def _prepare_startup_script(self, nb_instance: ManagedNotebookModel) -> str:
         """

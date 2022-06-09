@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import typer
 from caseconverter import kebabcase, snakecase
@@ -85,21 +85,18 @@ def _read_job_manifest(manifest_path: str) -> JobManifest:
 
     with open(manifest_path, "r") as fin:
         json_dict = json.loads(fin.read())
-        try:
-            job_type = CustomJobType[json_dict["job_type"]]
-            if job_type is CustomJobType.CustomJob:
-                return CustomJobManifest.parse_obj(json_dict)
-            elif job_type is CustomJobType.CustomPythonPackageTrainingJob:
-                return CustomPythonPackageTrainingJobManifest.parse_obj(json_dict)
-            elif job_type is CustomJobType.CustomContainerTrainingJob:
-                return CustomContainerTrainingJobManifest.parse_obj(json_dict)
-            else:
-                raise ValueError(
-                    "Issue in code, this branch should have not been reached. "
-                    f"job_type {json_dict['job_type']} is unknown"
-                )
-        except Exception as e:
-            typer.echo(f"{e}", err=True)
+        job_type = CustomJobType[json_dict["job_type"]]
+        if job_type is CustomJobType.CustomJob:
+            return CustomJobManifest.parse_obj(json_dict)
+        elif job_type is CustomJobType.CustomPythonPackageTrainingJob:
+            return CustomPythonPackageTrainingJobManifest.parse_obj(json_dict)
+        elif job_type is CustomJobType.CustomContainerTrainingJob:
+            return CustomContainerTrainingJobManifest.parse_obj(json_dict)
+        else:
+            raise ValueError(
+                "Issue in code, this branch should have not been reached. "
+                f"job_type {json_dict['job_type']} is unknown"
+            )
 
 
 def _remove_nones(d):
@@ -192,7 +189,7 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
         runable = HyperparameterTuningJob(
             display_name=manifest.job_config.name,
             custom_job=custom_job,
-            metric_spec=manifest.job_config.hp_tuning.metrics,
+            metric_spec=manifest.job_config.hp_tuning.metrics.__dict__,
             parameter_spec=parameter_spec,
             max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
             parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
@@ -263,8 +260,12 @@ def _run_training_job(
             network=manifest.job_config.network,
             environment_variables=manifest.job_config.worker.env,
             replica_count=manifest.job_config.worker.replica_count,
-            boot_disk_type=manifest.job_config.worker.boot_disk.disk_type,
-            boot_disk_size_gb=manifest.job_config.worker.boot_disk.size_gb,
+            boot_disk_type=manifest.job_config.worker.boot_disk.disk_type
+            if manifest.job_config.worker.boot_disk
+            else "pd-ssd",
+            boot_disk_size_gb=manifest.job_config.worker.boot_disk.size_gb
+            if manifest.job_config.worker.boot_disk
+            else 100,
             reduction_server_replica_count=manifest.job_config.reduction_server.replica_count
             if manifest.job_config.reduction_server
             else 0,
@@ -305,7 +306,7 @@ def _run_training_job(
             # we need a "hack" to terminate main with exit 0.
 
 
-class JobService(BaseService):
+class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
     def __init__(
         self, config: WannaConfigModel, workdir: Path, version: str = "dev", push_mode: PushMode = PushMode.all
     ):
@@ -318,7 +319,6 @@ class JobService(BaseService):
         """
         super().__init__(
             instance_type="job",
-            instance_model=TrainingCustomJobModel,
         )
 
         self.instances = config.jobs
@@ -328,7 +328,7 @@ class JobService(BaseService):
         self.tensorboard_service = TensorboardService(config=config)
         self.push_mode = push_mode
         self.docker_service = DockerService(
-            docker_model=config.docker,
+            docker_model=config.docker,  # type: ignore
             gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
@@ -362,9 +362,7 @@ class JobService(BaseService):
 
         return built_instances
 
-    def push(
-        self, manifests: List[Tuple[Path, JobManifest]], local: bool = False, mode: PushMode = PushMode.all
-    ) -> Tuple[List[str], PushResult]:
+    def push(self, manifests: List[Tuple[Path, JobManifest]], local: bool = False) -> Tuple[List[str], PushResult]:
         manifest_paths = [str(manifest_path) for manifest_path, _ in manifests]
         return manifest_paths, push(self.docker_service, self._prepare_push(manifests, self.version, local))
 
@@ -429,7 +427,7 @@ class JobService(BaseService):
     def run(
         manifests: List[str],
         sync: bool = True,
-        hp_params: Path = None,
+        hp_params: Optional[Path] = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
@@ -443,12 +441,11 @@ class JobService(BaseService):
 
             aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
 
-            if manifest.job_type is CustomJobType.CustomJob:
+            if isinstance(manifest, CustomJobManifest):
                 if hp_params:
                     override_hp_params = load_yaml_path(hp_params, Path("."))
-                    overriden_hp_tuning = HyperparameterTuning.parse_obj(
-                        {**manifest.job_config.hp_tuning.dict(), **override_hp_params}
-                    )
+                    manifest_hp_params = manifest.job_config.hp_tuning.dict() if manifest.job_config.hp_tuning else {}
+                    overriden_hp_tuning = HyperparameterTuning.parse_obj({**manifest_hp_params, **override_hp_params})
                     manifest.job_config.hp_tuning = overriden_hp_tuning
                 typer.echo(manifest)
             else:
@@ -507,7 +504,7 @@ class JobService(BaseService):
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
             _, _, tag = self.docker_service.get_image(docker_image_ref=job_model.worker.python_package.docker_image_ref)
-            result = CustomPythonPackageTrainingJobManifest(
+            return CustomPythonPackageTrainingJobManifest(
                 job_type=CustomJobType.CustomPythonPackageTrainingJob,
                 job_config=job_model,
                 job_payload={
@@ -525,11 +522,10 @@ class JobService(BaseService):
                 if job_model.tensorboard_ref
                 else None,
             )
-            return result
-        else:
+        elif job_model.worker.container:
             image_ref = job_model.worker.container.docker_image_ref
             _, _, tag = self.docker_service.get_image(docker_image_ref=job_model.worker.container.docker_image_ref)
-            result = CustomContainerTrainingJobManifest(
+            return CustomContainerTrainingJobManifest(
                 job_type=CustomJobType.CustomContainerTrainingJob,
                 job_config=job_model,
                 job_payload={
@@ -546,7 +542,8 @@ class JobService(BaseService):
                 if job_model.tensorboard_ref
                 else None,
             )
-            return result
+        else:
+            raise ValueError(f"Job {job_model.name} worker must have `container` or `python_package` defined")
 
     def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> Tuple[str, WorkerPoolSpec]:
         # TODO: this can be doggy
@@ -559,11 +556,16 @@ class JobService(BaseService):
             The wanna container image_ref to be pushed
             and the aiplatform sdk worker pool spec
         """
-        image_ref = (
-            worker_pool_model.container.docker_image_ref
-            if worker_pool_model.container
-            else worker_pool_model.python_package.docker_image_ref
-        )
+
+        if worker_pool_model.container:
+            image_ref = worker_pool_model.container.docker_image_ref
+        elif worker_pool_model.python_package:
+            image_ref = worker_pool_model.python_package.docker_image_ref
+        else:
+            raise ValueError(
+                "Worker pool does not have container nor python_package. " "This means validation has a bug."
+            )
+
         return image_ref, WorkerPoolSpec(
             container_spec=ContainerSpec(
                 image_uri=self.docker_service.get_image(image_ref)[2],
@@ -586,8 +588,11 @@ class JobService(BaseService):
                 accelerator_count=worker_pool_model.gpu.count if worker_pool_model.gpu else None,
             ),
             disk_spec=DiskSpec(
-                boot_disk_type=worker_pool_model.boot_disk_type, boot_disk_size_gb=worker_pool_model.boot_disk_size_gb
-            ),
+                boot_disk_type=worker_pool_model.boot_disk.disk_type,
+                boot_disk_size_gb=worker_pool_model.boot_disk.size_gb,
+            )
+            if worker_pool_model.boot_disk
+            else None,
             replica_count=worker_pool_model.replica_count,
         )
 
@@ -622,7 +627,7 @@ class JobService(BaseService):
         jobs = aiplatform.CustomTrainingJob.list(filter=filter_expr)
         return jobs  # type: ignore
 
-    def _stop_one_instance(self, instance: TrainingCustomJobModel) -> None:
+    def _stop_one_instance(self, instance: Union[CustomJobModel, TrainingCustomJobModel]) -> None:
         """
         Pause one all jobs that have the same region and name as "instance".
         First we list all jobs with state running and pending and then

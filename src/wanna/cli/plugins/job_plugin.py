@@ -49,9 +49,9 @@ class JobPlugin(BasePlugin):
     ) -> None:
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        job_service = JobService(config=config, workdir=workdir, version=version)
+        job_service = JobService(config=config, workdir=workdir, version=version, push_mode=mode)
         jobs = job_service.build(instance_name)
-        job_service.push(jobs, mode=mode)
+        job_service.push(jobs)
 
     @staticmethod
     def run(

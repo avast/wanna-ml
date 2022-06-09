@@ -15,11 +15,10 @@ logger = logging.getLogger("google.cloud")
 logger.setLevel(logging.ERROR)
 
 
-class TensorboardService(BaseService):
+class TensorboardService(BaseService[TensorboardModel]):
     def __init__(self, config: WannaConfigModel):
         super().__init__(
             instance_type="tensorboard",
-            instance_model=TensorboardModel,
         )
         self.config = config
         self.instances = config.tensorboards
@@ -125,7 +124,10 @@ class TensorboardService(BaseService):
         Returns:
             TensorboardModel
         """
-        matched_tb_models = list(filter(lambda i: i.name.strip() == tb_name.strip(), self.instances))
+        matched_tb_models: List[TensorboardModel] = list(
+            filter(lambda i: i.name.strip() == tb_name.strip(), self.instances)
+        )
+
         if len(matched_tb_models) == 0:
             raise ValueError(f"No tensorboard model with name {tb_name} found")
         elif len(matched_tb_models) > 1:

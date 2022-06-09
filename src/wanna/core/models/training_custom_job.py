@@ -22,8 +22,8 @@ class ContainerModel(BaseModel, extra=Extra.forbid):
 class WorkerPoolModel(BaseModel, extra=Extra.forbid):
     python_package: Optional[PythonPackageModel]
     container: Optional[ContainerModel]
-    args: Optional[List[str]]
-    env: Optional[List[Dict[str, str]]]
+    args: Optional[List[Union[str, float, int]]]
+    env: Optional[Dict[str, str]]
     machine_type: str = "n1-standard-4"
     gpu: Optional[GPU]
     boot_disk: Optional[Disk]

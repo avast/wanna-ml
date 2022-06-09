@@ -10,9 +10,9 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     profile_name: str
     project_id: str
     zone: Optional[str]
-    region: Optional[str]
+    region: str
     labels: Optional[Dict[str, str]]
-    bucket: Optional[str]
+    bucket: str
     service_account: Optional[str]
     network: Optional[str]
 

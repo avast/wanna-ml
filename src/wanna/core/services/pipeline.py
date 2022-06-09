@@ -34,7 +34,7 @@ from wanna.core.utils.spinners import Spinner
 from wanna.core.utils.time import get_timestamp
 
 
-class PipelineService(BaseService):
+class PipelineService(BaseService[PipelineModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -44,7 +44,6 @@ class PipelineService(BaseService):
     ):
         super().__init__(
             instance_type="pipeline",
-            instance_model=PipelineModel,
         )
         self.instances = config.pipelines
         self.config = config
@@ -53,7 +52,7 @@ class PipelineService(BaseService):
         self.version = version
         self.push_mode = push_mode
         self.docker_service = DockerService(
-            docker_model=config.docker,
+            docker_model=config.docker,  # type: ignore
             gcp_profile=config.gcp_profile,
             version=version,
             work_dir=workdir,
@@ -136,7 +135,11 @@ class PipelineService(BaseService):
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
             with Spinner(text=f"Deploying {pipeline.name} version {self.version} to env {env}") as s:
-                pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline_name=pipeline.name)
+                pipeline_paths = PipelinePaths(
+                    self.workdir,
+                    pipeline.bucket or f"gs://{self.config.gcp_profile.bucket}",
+                    pipeline_name=pipeline.name,
+                )
                 manifest = PipelineService.read_manifest(pipeline_paths.get_gcs_wanna_manifest_path(self.version))
 
                 function = deploy.upsert_cloud_function(
@@ -298,7 +301,9 @@ class PipelineService(BaseService):
         Spinner().info(text=f"Compiling pipeline {pipeline.name}")
 
         # Prep build dir
-        pipeline_paths = PipelinePaths(self.workdir, pipeline.bucket, pipeline.name)
+        pipeline_paths = PipelinePaths(
+            self.workdir, pipeline.bucket or f"gs://{self.config.gcp_profile.bucket}", pipeline.name
+        )
         tensorboard = (
             self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
             if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()

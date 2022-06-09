@@ -50,9 +50,9 @@ DockerImageModel = Union[LocalBuildImageModel, ProvidedImageModel, NotebookReady
 
 
 class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
-    images: List[DockerImageModel]
+    images: List[DockerImageModel] = []
     repository: str
-    registry: Optional[str]
+    registry: Optional[str] = None
     cloud_build: bool = False
 
 

@@ -8,7 +8,7 @@ gcp_profiles:
     project_id: cloud-lab-304213
     zone: europe-west1-b
     region: europe-west1
-    bucket: wanna-samples-cloudlab-europe-west1
+    bucket: wanna-cloudlab-europe-west1
     labels:
     service_account: wanna-dev@cloud-lab-304213.iam.gserviceaccount.com
 

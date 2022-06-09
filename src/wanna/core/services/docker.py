@@ -11,7 +11,15 @@ from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, 
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
-from wanna.core.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
+from wanna.core.models.docker import (
+    DockerBuildConfigModel,
+    DockerImageModel,
+    DockerModel,
+    ImageBuildType,
+    LocalBuildImageModel,
+    NotebookReadyImageModel,
+    ProvidedImageModel,
+)
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
@@ -179,7 +187,7 @@ class DockerService:
         os.makedirs(build_dir, exist_ok=True)
         build_args = self.build_config.dict() if self.build_config else {}
 
-        if docker_image_model.build_type == ImageBuildType.notebook_ready_image:
+        if isinstance(docker_image_model, NotebookReadyImageModel):
             image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
                 registry=self.docker_registry,
@@ -199,7 +207,7 @@ class DockerService:
             image = self._build_image(
                 context_dir, file_path=file_path, tags=tags, docker_image_ref=docker_image_ref, **build_args
             )
-        elif docker_image_model.build_type == ImageBuildType.local_build_image:
+        elif isinstance(docker_image_model, LocalBuildImageModel):
             image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
                 registry=self.docker_registry,
@@ -214,7 +222,7 @@ class DockerService:
             image = self._build_image(
                 context_dir, file_path=file_path, tags=tags, docker_image_ref=docker_image_ref, **build_args
             )
-        elif docker_image_model.build_type == ImageBuildType.provided_image:
+        elif isinstance(docker_image_model, ProvidedImageModel):
             image = self._pull_image(docker_image_model.image_url)
             tags = [docker_image_model.image_url]
         else:
@@ -364,7 +372,7 @@ class DockerService:
         Returns:
             path to the rendered dockerfile
         """
-        if image_model.build_type == ImageBuildType.notebook_ready_image:
+        if isinstance(image_model, NotebookReadyImageModel):
             rendered = render_template(
                 source_path=template_path,
                 base_image=image_model.base_image,

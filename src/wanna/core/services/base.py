@@ -1,12 +1,14 @@
 from abc import ABC
-from typing import List, Type
+from typing import Generic, List, TypeVar
 
 import typer
 
 from wanna.core.models.base_instance import BaseInstanceModel
 
+T = TypeVar("T", bound=BaseInstanceModel)
 
-class BaseService(ABC):
+
+class BaseService(ABC, Generic[T]):
     """
     This is a base service and every other service (notebooks, jobs, pipelines,...)
     should build on top of this. It implements some basic function (create, delete)
@@ -20,11 +22,9 @@ class BaseService(ABC):
     def __init__(
         self,
         instance_type: str,
-        instance_model: Type[BaseInstanceModel],
     ):
-        self.instances: List[BaseInstanceModel] = []
+        self.instances: List[T] = []
         self.instance_type = instance_type
-        self.InstanceModel = instance_model
 
     def create(self, instance_name: str, **kwargs) -> None:
         """
@@ -65,25 +65,25 @@ class BaseService(ABC):
         for instance in instances:
             self._stop_one_instance(instance)
 
-    def _delete_one_instance(self, instance: BaseInstanceModel) -> None:
+    def _delete_one_instance(self, instance: T) -> None:
         """
         Abstract class. Should delete one instance based on one model (eg. delete one notebook).
         """
         ...
 
-    def _create_one_instance(self, instance: BaseInstanceModel, **kwargs) -> None:
+    def _create_one_instance(self, instance: T, **kwargs) -> None:
         """
         Abstract class. Should create one instance based on one model (eg. create one notebook).
         """
         ...
 
-    def _stop_one_instance(self, instance: BaseInstanceModel) -> None:
+    def _stop_one_instance(self, instance: T) -> None:
         """
         Abstract class. Should stop one instance based on one model (eg. stop one job).
         """
         ...
 
-    def _filter_instances_by_name(self, instance_name: str) -> List[BaseInstanceModel]:
+    def _filter_instances_by_name(self, instance_name: str) -> List[T]:
         """
         From self.instances filter only the instances with name instance_name.
 
