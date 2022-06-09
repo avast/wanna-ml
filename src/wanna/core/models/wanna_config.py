@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, Extra, validator
 
 from wanna.core.models.docker import DockerModel
-from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
 from wanna.core.models.pipeline import PipelineModel
 from wanna.core.models.tensorboard import TensorboardModel

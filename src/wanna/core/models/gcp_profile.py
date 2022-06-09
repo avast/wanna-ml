@@ -2,8 +2,8 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel, Extra, root_validator, validator
 
-from wanna.core.utils.gcp import validators
-from wanna.core.utils.gcp.gcp import get_region_from_zone
+from wanna.core.utils import validators
+from wanna.core.utils.gcp import get_region_from_zone
 
 
 class GCPProfileModel(BaseModel, extra=Extra.forbid):

@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_project import WannaProjectModel
 
 

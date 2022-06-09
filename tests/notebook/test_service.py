@@ -16,18 +16,18 @@ from wanna.core.utils.config_loader import load_config_from_yaml
     mocks.MockNotebookServiceClient,
 )
 @patch(
-    "wanna.core.utils.gcp.gcp.ZonesClient",
+    "wanna.core.utils.gcp.ZonesClient",
     mocks.MockZonesClient,
 )
 @patch(
-    "wanna.core.utils.gcp.gcp.RegionsClient",
+    "wanna.core.utils.gcp.RegionsClient",
     mocks.MockRegionsClient,
 )
-@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.core.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
-@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestNotebookService:
@@ -152,13 +152,13 @@ class TestNotebookService:
 
 
 @patch("wanna.core.services.notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
-@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.core.utils.gcp.validators.StorageClient", mocks.MockStorageClient)
-@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.validators.StorageClient", mocks.MockStorageClient)
+@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestManagedNotebookService:

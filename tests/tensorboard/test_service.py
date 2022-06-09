@@ -6,9 +6,9 @@ from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.tensorboard import TensorboardService
 
 
-@patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient)
+@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestTensorboardService:

@@ -29,7 +29,7 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
-from wanna.core.utils.gcp.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
+from wanna.core.utils.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
 from wanna.core.utils.spinners import Spinner
 
 

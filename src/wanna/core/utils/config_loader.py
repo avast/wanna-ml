@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 from google.cloud import aiplatform
 
-from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
