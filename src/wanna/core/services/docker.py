@@ -12,10 +12,10 @@ from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-
 from python_on_whales import Image, docker
 
 from wanna.core.models.docker import DockerBuildConfigModel, DockerImageModel, DockerModel, ImageBuildType
-from wanna.core.models.gcp_settings import GCPProfileModel
+from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.gcp.gcp import make_tarfile, upload_file_to_gcs
+from wanna.core.utils.gcp import make_tarfile, upload_file_to_gcs
 from wanna.core.utils.spinners import Spinner
 from wanna.core.utils.templates import render_template
 

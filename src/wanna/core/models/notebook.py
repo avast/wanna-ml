@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validato
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.gcp_components import GPU, Disk, VMImage
-from wanna.core.utils.gcp import validators
+from wanna.core.utils import validators
 
 
 class BucketMount(BaseModel, extra=Extra.forbid):

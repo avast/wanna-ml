@@ -7,7 +7,7 @@ from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
 
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.gcp.gcp import (
+from wanna.core.utils.gcp import (
     DEFAULT_VALIDATION_MODE,
     VALIDATION_MODE,
     get_available_compute_image_families,

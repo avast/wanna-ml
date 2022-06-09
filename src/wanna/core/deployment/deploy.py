@@ -11,7 +11,7 @@ from google.cloud.functions_v1 import CloudFunctionsServiceClient
 from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource
 from wanna.core.utils import templates
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.gcp.gcp import is_gcs_path
+from wanna.core.utils.gcp import is_gcs_path
 from wanna.core.utils.io import open
 from wanna.core.utils.spinners import Spinner
 

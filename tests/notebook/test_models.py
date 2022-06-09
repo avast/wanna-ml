@@ -9,11 +9,11 @@ from wanna.core.models.gcp_components import GPU, Disk
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookEnvironment, NotebookModel
 
 
-@patch("wanna.core.utils.gcp.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.core.utils.gcp.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.gcp.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
+@patch("wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient)
+@patch("wanna.core.utils.gcp.ZonesClient", mocks.MockZonesClient)
+@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestNotebookModel(unittest.TestCase):
