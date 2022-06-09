@@ -17,6 +17,7 @@ class PipelineModel(BaseInstanceModel):
     docker_image_ref: List[str] = []
     schedule: Optional[CloudSchedulerModel]
     tensorboard_ref: Optional[str]
+    network: Optional[str]
 
 
 class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
