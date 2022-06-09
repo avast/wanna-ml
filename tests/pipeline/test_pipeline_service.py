@@ -56,8 +56,11 @@ class TestPipelineService(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    @patch("wanna.core.services.docker.DockerService")
+    @patch("wanna.core.services.docker.docker")
     def test_run_pipeline(self, docker_mock):
+
+        docker_mock.build = MagicMock(return_value=None)
+        docker_mock.pull = MagicMock(return_value=None)
 
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
         pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
