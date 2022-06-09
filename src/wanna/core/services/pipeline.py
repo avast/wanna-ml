@@ -10,8 +10,8 @@ from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 
-from wanna.cli.deployment import deploy
-from wanna.cli.deployment.models import (
+from wanna.core.deployment import deploy
+from wanna.core.deployment.models import (
     CloudFunctionResource,
     CloudSchedulerResource,
     ContainerArtifact,
@@ -20,14 +20,14 @@ from wanna.cli.deployment.models import (
     PushMode,
     PushTask,
 )
-from wanna.cli.deployment.push import PushResult, push
-from wanna.cli.docker.service import DockerService
-from wanna.cli.plugins.base.service import BaseService
-from wanna.cli.plugins.pipeline.utils import PipelinePaths, _at_pipeline_exit
-from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.core.deployment.push import PushResult, push
 from wanna.core.models.docker import DockerBuildResult, DockerImageModel, ImageBuildType
 from wanna.core.models.pipeline import PipelineDeployment, PipelineModel
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.services.base import BaseService
+from wanna.core.services.docker import DockerService
+from wanna.core.services.pipeline_utils import PipelinePaths, _at_pipeline_exit
+from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.io import open
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.spinners import Spinner
@@ -208,7 +208,9 @@ class PipelineService(BaseService):
                 pipeline_job_id = f"pipeline-{manifest.pipeline_name}-{get_timestamp()}"
 
                 # Apply override with cli provided params file
-                override_params = load_yaml_path(extra_params_path, Path(".")) if extra_params_path else {}
+                override_params = (
+                    load_yaml_path(extra_params_path, Path("../../cli/plugins/pipeline")) if extra_params_path else {}
+                )
                 pipeline_params = {**manifest.parameter_values, **override_params}
 
                 # Select service account for pipeline job

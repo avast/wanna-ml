@@ -5,8 +5,8 @@ from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from mock import MagicMock, patch
 
 from tests.mocks import mocks
-from wanna.cli.plugins.job.service import JobService
-from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.core.services.jobs import JobService
+from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
@@ -19,7 +19,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestJobService:
-    @patch("wanna.cli.docker.service.docker")
+    @patch("wanna.core.services.docker")
     def test_create_training_job_manifest_python_package_spec(self, docker_mock):
         auth.default = MagicMock(
             return_value=(
@@ -41,7 +41,7 @@ class TestJobService:
         assert job_manifest.job_payload.get("container_uri") == "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
         assert job_manifest.job_payload.get("python_module_name") == "trainer.task"
 
-    @patch("wanna.cli.docker.service.docker")
+    @patch("wanna.core.services.docker")
     def test_create_worker_pool_spec_container_spec(self, docker_mock):
         auth.default = MagicMock(
             return_value=(

@@ -2,7 +2,7 @@ import os
 import unittest
 from pathlib import Path
 
-from wanna.cli.plugins.pipeline.utils import PipelinePaths
+from wanna.core.services.pipeline_utils import PipelinePaths
 
 
 class TestPipelineService(unittest.TestCase):

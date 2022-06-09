@@ -20,11 +20,8 @@ from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from google.protobuf.json_format import MessageToDict
 from smart_open import open
 
-from wanna.cli.deployment.models import ContainerArtifact, PathArtifact, PushMode, PushTask
-from wanna.cli.deployment.push import PushResult, push
-from wanna.cli.docker.service import DockerService
-from wanna.cli.plugins.base.service import BaseService
-from wanna.cli.plugins.tensorboard.service import TensorboardService
+from wanna.core.deployment.models import ContainerArtifact, PathArtifact, PushMode, PushTask
+from wanna.core.deployment.push import PushResult, push
 from wanna.core.models.docker import ImageBuildType
 from wanna.core.models.training_custom_job import (
     CustomContainerTrainingJobManifest,
@@ -39,6 +36,9 @@ from wanna.core.models.training_custom_job import (
     WorkerPoolModel,
 )
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.services.base import BaseService
+from wanna.core.services.docker import DockerService
+from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.spinners import Spinner
 
@@ -445,7 +445,7 @@ class JobService(BaseService):
 
             if manifest.job_type is CustomJobType.CustomJob:
                 if hp_params:
-                    override_hp_params = load_yaml_path(hp_params, Path("."))
+                    override_hp_params = load_yaml_path(hp_params, Path("../../cli/plugins/job"))
                     overriden_hp_tuning = HyperparameterTuning.parse_obj(
                         {**manifest.job_config.hp_tuning.dict(), **override_hp_params}
                     )

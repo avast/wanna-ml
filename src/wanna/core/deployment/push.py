@@ -1,8 +1,8 @@
 import json
 from typing import List, Tuple, TypeVar
 
-from wanna.cli.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushTask
-from wanna.cli.docker.service import DockerService
+from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushTask
+from wanna.core.services.docker import DockerService
 from wanna.core.utils.io import open
 from wanna.core.utils.spinners import Spinner
 

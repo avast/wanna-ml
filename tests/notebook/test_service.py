@@ -5,14 +5,14 @@ from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
-from wanna.cli.plugins.notebook.service import ManagedNotebookService, NotebookService
 from wanna.core.models.gcp_components import GPU, Disk
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
+from wanna.core.services.notebook import ManagedNotebookService, NotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 @patch(
-    "wanna.cli.plugins.notebook.service.NotebookServiceClient",
+    "wanna.core.services.notebook.NotebookServiceClient",
     mocks.MockNotebookServiceClient,
 )
 @patch(
@@ -151,7 +151,7 @@ class TestNotebookService:
         )
 
 
-@patch("wanna.cli.plugins.notebook.service.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
+@patch("wanna.core.services.notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
 @patch("wanna.core.utils.gcp.gcp.ZonesClient", mocks.MockZonesClient)
 @patch("wanna.core.utils.gcp.gcp.RegionsClient", mocks.MockRegionsClient)
 @patch("wanna.core.utils.gcp.gcp.ImagesClient", mocks.MockImagesClient)
