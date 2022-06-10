@@ -9,12 +9,28 @@ and export logs to Tensorboards.
 We build on top of Vertex-AI managed services and integrate with other GCP services like Cloud Build and Artifact Registry
 to provide you with a standardized structure for managing ML assets on GCP.
 
-[Check out the full online documentation]() and follow to tutorial for concepts and example introduction.
+[Check out the complete online documentation]() and follow to tutorial for concepts and example introduction.
 
 ## Installation for users
+The easiest option is to install the latest version [via PyPI](https://pypi.org/project/wanna-ml):
+```bash
+pip install wanna-ml
+```
 
-[Please refer to this section of the documentation]().
+## Get started
+To properly use wanna-ml, you will need a `Python >=3.7` environment setup and [gcloud cli](https://cloud.google.com/sdk/docs/install-sdk) installed.
+Wanna-ml uses the `gcloud` credentials behind the scene. 
+Wanna-ml heavily uses Docker images, if you want to build images locally, you need to have a local Docker daemon running.
 
+```bash
+# Login to GCP
+gcloud auth login
+
+# Auth against GCP docker registries
+gcloud auth configure-docker europe-west1-docker.pkg.dev 
+gcloud auth configure-docker europe-west3-docker.pkg.dev
+ 
+```
 
 ## WANNA ML Pipelines
 
@@ -127,8 +143,6 @@ wanna job build --file samples/custom_job/wanna.yaml -n custom-training-job-with
 wanna job build --file samples/custom_job/wanna.yaml -n custom-job-with-containers
 ````
 
-## Development
-
 ### Environment setup
 
 To hack on WANNA you will need `docker` daemon, a `Python >=3.8` environment setup and [gcloud cli](https://cloud.google.com/sdk/docs/install-sdk) installed
@@ -157,25 +171,3 @@ task build
 
 ```
 
-### Editable mode
-Project based on the `setuptools` package had to be installed in "editable mode"
-so that changes are picked up between tests. This in turn could cause other
-issues sometimes.
-
-`poetry` handles the editable mode for you, no special commands are necessary.
-
-### Generating documentation
-If you have changed the sphinx documentation or docstrings of plugins, you must
-generate the HTML documentation from source. You can use the `task` plugin:
-```bash
-task docs-serve
-```
-
-Alternatively if you want to see docs in localhost before pushing
-```bash
-task docs-deploy
-```
-
-## Reading
-* https://python-poetry.org/
-* https://pre-commit.com/
