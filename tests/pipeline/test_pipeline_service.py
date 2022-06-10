@@ -37,6 +37,8 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @patch(
     "wanna.core.services.pipeline.convert_project_id_to_project_number", mocks.mock_convert_project_id_to_project_number
 )
+@patch("wanna.core.deployment.deploy.upsert_log_metric", mocks.mock_upsert_log_metric)
+@patch("wanna.core.deployment.deploy.upsert_alert_policy", mocks.mock_upsert_alert_policy)
 class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
@@ -99,7 +101,7 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_root": exppected_pipeline_root,
             "pipeline_labels": expected_pipeline_labels,
             "tensorboard": "projects/123456789/locations/europe-west4/tensorboards/123456789",
-            "pipeline_network": "cloud-lab",
+            "pipeline_network": "projects/123456789/global/networks/cloud-lab",
             "pipeline_service_account": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
         }
         expected_parameter_values = {"eval_acc_threshold": 0.87}
@@ -266,7 +268,7 @@ class TestPipelineService(unittest.TestCase):
                 "REGION": "europe-west1",
                 "PIPELINE_ROOT": "gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/executions/",
                 "PIPELINE_LABELS": expected_pipeline_labels,
-                "PIPELINE_NETWORK": "cloud-lab",
+                "PIPELINE_NETWORK": "projects/123456789/global/networks/cloud-lab",
                 "PIPELINE_SERVICE_ACCOUNT": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
                 "TENSORBOARD": "projects/123456789/locations/europe-west4/tensorboards/123456789",
             },

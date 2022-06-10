@@ -93,7 +93,15 @@ def mock_get_credentials() -> Optional[Credentials]:
     return None
 
 
-def mock_convert_project_id_to_project_number(project_id: str):
+def mock_upsert_log_metric(resource):
+    return None
+
+
+def mock_upsert_alert_policy(resource):
+    return None
+
+
+def mock_convert_project_id_to_project_number(project_id):
     return 123456789
 
 

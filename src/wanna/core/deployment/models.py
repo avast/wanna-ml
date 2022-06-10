@@ -39,6 +39,16 @@ class LogMetricResource(BaseModel):
     description: str
 
 
+class AlertPolicyResource(BaseModel):
+    logging_metric_type: str
+    resource_type: str
+    project: str
+    name: str
+    display_name: str
+    labels: Dict[str, str]
+    notification_channels: List[str]
+
+
 class DeploymentArtifact(BaseModel):
     title: str
 

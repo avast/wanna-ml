@@ -2,7 +2,7 @@ import json
 import os
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Tuple, cast
+from typing import Tuple, cast
 
 import google.cloud.logging
 from caseconverter import snakecase
@@ -12,7 +12,12 @@ from google.cloud.functions_v1 import CloudFunctionsServiceClient
 from google.cloud.monitoring_v3 import AlertPolicy
 from google.cloud.monitoring_v3.services.alert_policy_service import AlertPolicyServiceClient
 
-from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, LogMetricResource
+from wanna.core.deployment.models import (
+    AlertPolicyResource,
+    CloudFunctionResource,
+    CloudSchedulerResource,
+    LogMetricResource,
+)
 from wanna.core.utils import templates
 from wanna.core.utils.credentials import get_credentials
 from wanna.core.utils.gcp import is_gcs_path
@@ -96,13 +101,15 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
         )
     )
     upsert_alert_policy(
-        logging_metric_type=logging_metric_ref,
-        resource_type=gcp_resource_type,
-        project=resource.project,
-        name=f"{function_name}-cloud-function-alert-policy",
-        display_name=f"{function_name}-cloud-function-alert-policy",
-        labels=resource.labels,
-        notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
+        AlertPolicyResource(
+            logging_metric_type=logging_metric_ref,
+            resource_type=gcp_resource_type,
+            project=resource.project,
+            name=f"{function_name}-cloud-function-alert-policy",
+            display_name=f"{function_name}-cloud-function-alert-policy",
+            labels=resource.labels,
+            notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
+        )
     )
 
     return (
@@ -174,29 +181,23 @@ def upsert_cloud_scheduler(
         )
     )
     upsert_alert_policy(
-        logging_metric_type=logging_metric_ref,
-        resource_type=gcp_resource_type,
-        project=resource.project,
-        name=f"{job_id}-cloud-scheduler-alert-policy",
-        display_name=f"{job_id}-cloud-scheduler-alert-policy",
-        labels=resource.labels,
-        notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
+        AlertPolicyResource(
+            logging_metric_type=logging_metric_ref,
+            resource_type=gcp_resource_type,
+            project=resource.project,
+            name=f"{job_id}-cloud-scheduler-alert-policy",
+            display_name=f"{job_id}-cloud-scheduler-alert-policy",
+            labels=resource.labels,
+            notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
+        )
     )
 
 
-def upsert_alert_policy(
-    logging_metric_type: str,
-    resource_type: str,
-    project: str,
-    name: str,
-    display_name: str,
-    labels: Dict[str, str],
-    notification_channels: List[str],
-):
+def upsert_alert_policy(resource: AlertPolicyResource):
     client = AlertPolicyServiceClient(credentials=get_credentials())
     alert_policy = {
-        "display_name": display_name,
-        "user_labels": labels,
+        "display_name": resource.display_name,
+        "user_labels": resource.labels,
         "conditions": [
             {
                 "display_name": "Failed scheduling",
@@ -204,7 +205,8 @@ def upsert_alert_policy(
                     # https://issuetracker.google.com/issues/143436657?pli=1
                     # resource.type must be defined based on the resource type from log metric
                     "filter": f"""
-                    metric.type="logging.googleapis.com/user/{logging_metric_type}" AND resource.type="{resource_type}"
+                    metric.type="logging.googleapis.com/user/{resource.logging_metric_type}"
+                    AND resource.type="{resource.resource_type}"
                     """,
                     "aggregations": [
                         {
@@ -225,19 +227,18 @@ def upsert_alert_policy(
         },
         "combiner": "OR",
         "enabled": True,
-        "notification_channels": notification_channels,
+        "notification_channels": resource.notification_channels,
     }
 
     alert_policy = cast(AlertPolicy, AlertPolicy.from_json(json.dumps(alert_policy)))
-
-    policies = client.list_alert_policies(name=f"projects/{project}")
-    policy = [policy for policy in policies if policy.display_name == name]
+    policies = client.list_alert_policies(name=f"projects/{resource.project}")
+    policy = [policy for policy in policies if policy.display_name == resource.name]
     if policy:
         policy = policy[0]
         alert_policy.name = policy.name
         client.update_alert_policy(alert_policy=alert_policy)
     else:
-        client.create_alert_policy(name=f"projects/{project}", alert_policy=alert_policy)
+        client.create_alert_policy(name=f"projects/{resource.project}", alert_policy=alert_policy)
 
 
 def upsert_log_metric(resource: LogMetricResource):
