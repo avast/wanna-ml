@@ -8,6 +8,7 @@ gcp_profiles:
     project_id: cloud-lab-304213
     zone: europe-west1-b
     bucket: wanna-cloudlab-europe-west1
+    network: cloud-lab
     labels:
     service_account: 
 

@@ -18,6 +18,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
 @patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
+@patch("wanna.core.services.jobs.convert_project_id_to_project_number", mocks.mock_convert_project_id_to_project_number)
 class TestJobService:
     @patch("wanna.core.services.docker.docker")
     def test_create_training_job_manifest_python_package_spec(self, docker_mock):

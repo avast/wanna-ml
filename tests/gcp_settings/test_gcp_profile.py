@@ -25,6 +25,7 @@ class TestWannaConfigModel:
             "zone": "europe-west1-b",
             "profile_name": "default",
             "bucket": "bucket",
+            "network": "default",
         }
         gcp_settings = GCPProfileModel.parse_obj(gcp_settings_dict)
         assert gcp_settings.region == "europe-west1"

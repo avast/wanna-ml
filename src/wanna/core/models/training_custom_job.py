@@ -150,6 +150,7 @@ class BaseJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, a
     job_payload: Dict[str, Any]
     image_refs: List[str] = []
     tensorboard: Optional[str]
+    network: str
 
 
 class CustomJobManifest(BaseJobManifest):

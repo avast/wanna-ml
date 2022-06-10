@@ -25,6 +25,7 @@ class TestWannaConfigModel:
                 "project_id": "gcp-project",
                 "zone": "us-east1-a",
                 "bucket": "bucket",
+                "network": "cloud-lab",
             },
             "notebooks": [
                 {"name": "potions", "zone": "europe-west4-a", "labels": {"grade": "a"}},

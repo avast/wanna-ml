@@ -4,6 +4,7 @@ import zipfile
 from pathlib import Path
 from typing import Tuple
 
+from caseconverter import snakecase
 from google.api_core.exceptions import NotFound, PermissionDenied
 from google.cloud import scheduler_v1
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
@@ -66,8 +67,8 @@ def upsert_cloud_function(resource: CloudFunctionResource, version: str, env: st
         },
         "service_account_email": resource.service_account,
         "labels": resource.labels,
+        "environment_variables": {snakecase(k).upper(): v for k, v in resource.env_params.items()}
         # TODO: timeout
-        # TODO: environment_variables
     }
 
     try:

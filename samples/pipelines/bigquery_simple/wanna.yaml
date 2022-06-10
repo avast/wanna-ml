@@ -10,6 +10,7 @@ gcp_profiles:
     bucket: wanna-cloudlab-europe-west1
     labels:
     service_account:
+    network: cloud-lab
 
 docker:
   images: []

@@ -43,6 +43,7 @@ def get_config():
                 "project_id": "gcp-project",
                 "zone": "us-east1-a",
                 "bucket": "bucket",
+                "network": "cloud-lab",
             },
         }
     )

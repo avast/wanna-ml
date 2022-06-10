@@ -39,6 +39,7 @@ from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
+from wanna.core.utils.gcp import convert_project_id_to_project_number
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.spinners import Spinner
 
@@ -143,6 +144,7 @@ def _write_local_job_manifest(build_dir: Path, manifest: JobManifest) -> Path:
             "image_refs": manifest.image_refs,
             "job_payload": manifest.job_payload,
             "tensorboard": manifest.tensorboard,
+            "network": manifest.network,
         }
         json_dump = json.dumps(
             _remove_nones(json_dict),
@@ -245,6 +247,9 @@ def _run_training_job(
         )
 
     with Spinner(text=f"Initiating {manifest.job_config.name} custom job") as s:
+        project_number = convert_project_id_to_project_number(manifest.job_config.project_id)
+        network = f"projects/{project_number}/global/networks/{manifest.job_config.network}"
+
         s.info(f"Outputs will be saved to {manifest.job_config.base_output_directory}")
         training_job.run(
             machine_type=manifest.job_config.worker.machine_type,
@@ -257,7 +262,7 @@ def _run_training_job(
             args=manifest.job_config.worker.args,
             base_output_dir=manifest.job_config.base_output_directory,
             service_account=manifest.job_config.service_account,
-            network=manifest.job_config.network,
+            network=network,
             environment_variables=manifest.job_config.worker.env,
             replica_count=manifest.job_config.worker.replica_count,
             boot_disk_type=manifest.job_config.worker.boot_disk.disk_type
@@ -413,13 +418,13 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                         )
                     )
 
-                    push_tasks.append(
-                        PushTask(
-                            container_artifacts=container_artifacts,
-                            manifest_artifacts=manifest_artifacts,
-                            json_artifacts=[],
-                        )
+                push_tasks.append(
+                    PushTask(
+                        container_artifacts=container_artifacts,
+                        manifest_artifacts=manifest_artifacts,
+                        json_artifacts=[],
                     )
+                )
 
         return push_tasks
 
@@ -486,6 +491,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 )
                 if instance.tensorboard_ref
                 else None,
+                network=instance.network if instance.network else self.config.gcp_profile.network,
             )
 
     def _create_training_job_manifest(
@@ -521,6 +527,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 )
                 if job_model.tensorboard_ref
                 else None,
+                network=job_model.network if job_model.network else self.config.gcp_profile.network,
             )
         elif job_model.worker.container:
             image_ref = job_model.worker.container.docker_image_ref
@@ -541,6 +548,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 )
                 if job_model.tensorboard_ref
                 else None,
+                network=job_model.network if job_model.network else self.config.gcp_profile.network,
             )
         else:
             raise ValueError(f"Job {job_model.name} worker must have `container` or `python_package` defined")

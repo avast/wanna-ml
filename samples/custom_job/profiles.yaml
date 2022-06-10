@@ -4,6 +4,7 @@ gcp_profiles:
     project_id: cloud-lab-304213
     zone: europe-west3-b
     bucket: wanna-cloudlab-europe-west3
+    network: cloud-lab
     service_account: "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com"
     labels:
       gcp-profile: stage-europe-west3

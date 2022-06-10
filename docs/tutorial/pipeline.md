@@ -242,13 +242,11 @@ now with everything in place, lets build the pipeline with `wanna pipeline build
 When WANNA runs a pipeline from local it will,
 
 1. build & push the component containers to Google Docker registry
-2. compile the kubeflow pipelinem upload to gcs the pipeline kubeflow json spec
-3. compile and upload to gcs wanna manifest
+2. compile the kubeflow pipeline and upload to gcs the resulting pipeline json spec
+3. compile and upload to gcs wanna manifest that allows to run the pipeline from anywhere
 4. Trigger the pipeline run and print its dashboard url and running state
 
-
-Assuming we are on `✔ Compiling pipeline pipeline-tutorial-pipeline` succeeded we can now actually run the pipeline from our local environment assuming your GCP project is dedicated to `DEV` or you are using cloud-lab project as mentioned earlier.
-
+Assuming we are on `✔ Compiling pipeline pipeline-tutorial-pipeline` succeeded we can now actually run the pipeline.
 
 ```bash
 wanna pipeline run --name pipeline-tutorial-pipeline --params pipeline/params.yaml --version dev --sync
@@ -276,18 +274,17 @@ PipelineJob projects/968728188698/locations/europe-west1/pipelineJobs/pipeline-p
 ✔ Running pipeline pipeline-tutorial-pipeline in sync mode
 ```
 
-Besides some on the noise above you can clearly see the urls to the Vertex AI dashboard where you can inspect the pipeline execution, logs, kubeflow inputs and outpus and any logged metadata.
+You can clearly see the url to the Vertex AI dashboard where you can inspect the pipeline execution, logs, kubeflow inputs and outputs and any logged metadata.
 
-
-You may have noticed in above the line `Uploading wanna running manifest to gs://wanna-ml-west1-jh/pipeline-root/pipeline-tutorial-pipeline/deployment/release/dev/wanna_manifest.json` in the logs.
-This means wanna publishes has it's own pipeline manifest which allow us to run any pipeline version with any set of params.
+You may have noticed in above the line `Uploading wanna running manifest to gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/deployment/dev/manifests/wanna-manifest.json` in the logs.
+This means wanna publishes has its own pipeline manifest which allow us to run any pipeline version with any set of params.
 
 Let's try it:
 
 ```bash
 echo "eval_acc_threshold: 0.79" > pipeline/params.experiment.yaml
 
-wanna pipeline run --manifest gs://wanna-ml-west1-jh/pipeline-root/pipeline-tutorial-pipeline/deployment/release/dev/wanna_manifest.json --params pipeline/params.experiment.yaml  --sync
+wanna pipeline run --manifest gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/deployment/dev/manifests/wanna-manifest.json --params pipeline/params.experiment.yaml  --sync
 ```
 
 The above snippet will run the pipeline we published earlier with a new set of params. Each manifest version is pushed to `gs://${PIPELINE_BUCKET}/pipeline-root/${PIPELINE_NAME}/deployment/release/${VERSION}/wanna_manifest.json` so it's easy to trigger these pipelines.

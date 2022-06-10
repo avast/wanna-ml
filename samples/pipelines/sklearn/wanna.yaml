@@ -10,6 +10,7 @@ gcp_profiles:
     region: europe-west1
     bucket: wanna-cloudlab-europe-west1
     labels:
+    network: cloud-lab
     service_account: wanna-dev@cloud-lab-304213.iam.gserviceaccount.com
 
 tensorboards:
@@ -52,7 +53,7 @@ pipelines:
   - name: wanna-sklearn-sample
     schedule:
       cron: 2 * * * *
-    bucket: gs://wanna-samples-cloudlab-europe-west1
+    bucket: gs://wanna-cloudlab-europe-west1
     pipeline_file: pipeline.py
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]

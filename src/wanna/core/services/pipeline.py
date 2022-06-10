@@ -155,7 +155,9 @@ class PipelineService(BaseService[PipelineModel]):
                         resource_function_template="scheduler_cloud_function.py",
                         resource_requirements_template="scheduler_cloud_function_requirements.txt",
                         template_vars=manifest.dict(),
+                        env_params=manifest.compile_env_params,
                         labels=manifest.labels,
+                        network=manifest.network,
                     ),
                     env=env,
                     version=self.version,
@@ -216,6 +218,7 @@ class PipelineService(BaseService[PipelineModel]):
 
                 # Select service account for pipeline job
                 service_account = service_account or manifest.service_account
+                network = network if network else manifest.network
 
                 # Define Vertex AI Pipeline job
                 pipeline_job = PipelineJob(
@@ -256,6 +259,10 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
     ):
 
+        labels = {"wanna_pipeline": pipeline_instance.name}
+        if pipeline_instance.labels:
+            labels = {**pipeline_instance.labels, **labels}
+
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
@@ -264,7 +271,15 @@ class PipelineService(BaseService[PipelineModel]):
             "bucket": pipeline_instance.bucket,
             "region": pipeline_instance.region,
             "pipeline_root": pipeline_paths.get_gcs_pipeline_root(),
-            "pipeline_labels": json.dumps(pipeline_instance.labels),
+            "pipeline_labels": json.dumps(labels),
+            "pipeline_network": (
+                pipeline_instance.network if pipeline_instance.network else self.config.gcp_profile.network
+            ),
+            "pipeline_service_account": (
+                pipeline_instance.service_account
+                if pipeline_instance.service_account
+                else self.config.gcp_profile.service_account
+            ),
         }
 
         if tensorboard:
@@ -349,8 +364,8 @@ class PipelineService(BaseService[PipelineModel]):
             schedule=pipeline.schedule,
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,
+            network=pipeline_env_params.get("pipeline_network"),
         )
-
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
         PipelineService.write_manifest(deployment_manifest, manifest_path)
 

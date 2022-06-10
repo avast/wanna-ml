@@ -93,6 +93,10 @@ def mock_get_credentials() -> Optional[Credentials]:
     return None
 
 
+def mock_convert_project_id_to_project_number(project_id: str):
+    return 123456789
+
+
 def mock_list_running_instances(project_id: str, region: str):
     tensorboard_names = ["tb1", "tb2"]
     return [

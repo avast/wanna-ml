@@ -34,3 +34,4 @@ class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
     schedule: Optional[CloudSchedulerModel]
     docker_refs: List[DockerBuildResult]
     compile_env_params: Dict[str, str]
+    network: str

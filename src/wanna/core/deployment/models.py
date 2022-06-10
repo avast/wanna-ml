@@ -26,7 +26,9 @@ class CloudFunctionResource(BaseModel):
     resource_function_template: str
     resource_requirements_template: str
     template_vars: Dict[str, Any]
+    env_params: Dict[str, str]
     labels: Dict[str, str]
+    network: str
 
 
 class DeploymentArtifact(BaseModel):
