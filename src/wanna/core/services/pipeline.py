@@ -259,7 +259,7 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
     ):
 
-        labels = {"wanna_pipeline": pipeline_instance.name}
+        labels = {"wanna_pipeline": pipeline_instance.name, "wanna_resource": "pipeline"}
         if pipeline_instance.labels:
             labels = {**pipeline_instance.labels, **labels}
 
@@ -388,4 +388,7 @@ class PipelineService(BaseService[PipelineModel]):
         pass
 
     def _instance_exists(self, instance: PipelineModel) -> bool:
+        pass
+
+    def _report(self, output: str, instance_name: str) -> str:
         pass
