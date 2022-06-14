@@ -1,9 +1,11 @@
+import atexit
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 from google.cloud import aiplatform
 from google.cloud.aiplatform import PipelineJob
+from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, PipelineResource
@@ -16,6 +18,20 @@ from wanna.core.utils.time import get_timestamp
 
 
 class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
+    @staticmethod
+    def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool) -> None:
+        @atexit.register
+        def stop_pipeline_job():
+            if sync and pipeline_job and getattr(pipeline_job._gca_resource, "name", None):
+                if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
+                    Spinner().fail(
+                        "detected exit signal, "
+                        f"shutting down running pipeline {pipeline_name} "
+                        f"at {pipeline_job._dashboard_uri()}."
+                    )
+                    pipeline_job.wait()
+                    pipeline_job.cancel()
+
     def run_pipeline(
         self,
         resource: PipelineResource,
@@ -49,11 +65,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             location=resource.location,
         )
 
-        # TODO: Cancel pipeline if wanna process exits
-        # exit_callback(manifest.pipeline_name, pipeline_job, sync, s)
+        VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
 
         # submit pipeline job for execution
-        # TODO: should we remove service_account and  network from this call ?
         pipeline_job.submit(service_account=resource.service_account, network=network)
 
         if sync:

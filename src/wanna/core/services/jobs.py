@@ -9,7 +9,6 @@ from google.cloud.aiplatform.gapic import WorkerPoolSpec
 from google.cloud.aiplatform_v1.types import ContainerSpec, DiskSpec, MachineSpec, PythonPackageSpec
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from google.protobuf.json_format import MessageToDict
-from smart_open import open
 
 from wanna.core.deployment.models import (
     JOB,
@@ -109,9 +108,10 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         """
 
         push_tasks = []
-        for manifest_path in manifests:
-            loaded_manifest = JobService.read_manifest(str(manifest_path))
-            job_paths = JobPaths(self.workdir, self.bucket_name, loaded_manifest.job_config.name)
+        for manifest in manifests:
+            manifest_path = str(manifest.resolve())
+            loaded_manifest = JobService.read_manifest(self.connector, manifest_path)
+            job_paths = JobPaths(self.workdir, f"gs://{self.bucket_name}", loaded_manifest.job_config.name)
             manifest_artifacts, container_artifacts = [], []
 
             Spinner().info(text=f"Packaging {loaded_manifest.job_config.name} job resources")
@@ -129,8 +129,8 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 if not local:
                     manifest_artifacts.append(
                         PathArtifact(
-                            title=f"{loaded_manifest.job_config.name} job manifest",
-                            source=str(manifest_path.resolve()),
+                            name=f"{loaded_manifest.job_config.name} job manifest",
+                            source=manifest_path,
                             destination=gcs_manifest_path,
                         )
                     )
@@ -159,10 +159,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             hp_params:
 
         """
-        connector = VertexConnector[JobResource[JOB]]()
         for manifest_path in manifests:
-            manifest = JobService.read_manifest(manifest_path)
-
+            connector = VertexConnector[JobResource[JOB]]()
+            manifest = JobService.read_manifest(connector, manifest_path)
             aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
 
             if isinstance(manifest.job_config, CustomJobModel):
@@ -186,13 +185,14 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         """
 
         job_paths = JobPaths(self.workdir, instance.bucket or f"gs://{self.config.gcp_profile.bucket}", instance.name)
-        manifest_path = job_paths.get_local_job_wanna_manifest_path(self.version)
+        manifest_path = Path(job_paths.get_local_job_wanna_manifest_path(self.version))
         resource: Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]] = (
             self._create_training_job_resource(instance)
             if isinstance(instance, TrainingCustomJobModel)
             else self._create_custom_job_resource(instance)
         )
-        return JobService.write_manifest(manifest_path, resource)
+
+        return self.write_manifest(manifest_path, resource)
 
     def _create_custom_job_resource(
         self,
@@ -303,14 +303,14 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 env=worker_pool_model.args,
             )
             if worker_pool_model.container
-            else {},
+            else None,
             python_package_spec=PythonPackageSpec(
                 executor_image_uri=self.docker_service.get_image(image_ref)[2],
                 package_uris=[worker_pool_model.python_package.package_gcs_uri],
                 python_module=worker_pool_model.python_package.module_name,
             )
             if worker_pool_model.python_package
-            else {},
+            else None,
             machine_spec=MachineSpec(
                 machine_type=worker_pool_model.machine_type,
                 accelerator_type=worker_pool_model.gpu.accelerator_type if worker_pool_model.gpu else None,
@@ -321,7 +321,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 boot_disk_size_gb=worker_pool_model.boot_disk.size_gb,
             )
             if worker_pool_model.boot_disk
-            else {},
+            else None,
             replica_count=worker_pool_model.replica_count,
         )
 
@@ -382,53 +382,58 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
 
     @staticmethod
     def read_manifest(
+        connector: VertexConnector[JobResource[JOB]],
         manifest_path: str,
-    ) -> Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]]:  # typec
+    ) -> Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]]:
         """
         Reads a job manifest file
 
         Args:
             manifest_path (Path): Manifest path to be loaded
+            connector VertexConnector[JobResource[JOB]]() connector to read manifest
 
         Returns:
             JobManifest: Parsed and loaded JobManifest
+
         """
 
-        with open(manifest_path, "r") as fin:
-            json_dict = json.loads(fin.read())
-            try:
-                return JobResource[CustomJobModel].parse_obj(json_dict)
-            except:
-                return JobResource[TrainingCustomJobModel].parse_obj(json_dict)
+        json_dict = connector.read(manifest_path)
+        try:
+            return JobResource[CustomJobModel].parse_obj(json_dict)
+        except:
+            return JobResource[TrainingCustomJobModel].parse_obj(json_dict)
 
-    @staticmethod
     def write_manifest(
-        local_manifest_path: Path, resource: Union[JobResource[TrainingCustomJobModel], JobResource[CustomJobModel]]
+        self,
+        local_manifest_path: Path,
+        resource: Union[JobResource[TrainingCustomJobModel], JobResource[CustomJobModel]],
     ) -> Path:
         """
         Writes a JobManifest to a local path
 
         Args:
             local_manifest_path (Path): wanna local path save manifest
-            resource (JobResource): the job manifest that should be saved locally
+            resource (JobResource): the job resource manifest that should be saved locally
 
         Returns:
-            Path: Path where built manifest was saved to
+            Path: Path where resource manifest was saved to
         """
 
-        with open(local_manifest_path, "w") as out:
-            json_dict = {
-                "job_config": resource.job_config.dict(),
-                "image_refs": resource.image_refs,
-                "job_payload": resource.job_payload,
-                "tensorboard": resource.tensorboard,
-                "network": resource.network,
-            }
-            json_dump = json.dumps(
-                remove_nones(json_dict),
-                allow_nan=False,
-                default=lambda o: dict((key, value) for key, value in o.__dict__.items() if value),
-            )
-            out.write(json_dump)
+        json_dict = {
+            "name": resource.name,
+            "project": resource.project,
+            "location": resource.location,
+            "job_config": resource.job_config.dict(),
+            "image_refs": resource.image_refs,
+            "job_payload": resource.job_payload,
+            "tensorboard": resource.tensorboard,
+            "network": resource.network,
+        }
+        json_dump = json.dumps(
+            remove_nones(json_dict),
+            allow_nan=False,
+            default=lambda o: dict((key, value) for key, value in o.__dict__.items() if value),
+        )
+        self.connector.write(local_manifest_path, json_dump)
 
         return local_manifest_path

@@ -1,26 +1,9 @@
-import atexit
 import os
 from pathlib import Path
 
 from caseconverter import kebabcase
-from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
-from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 
 from wanna.core.utils.gcp import is_gcs_path
-from wanna.core.utils.spinners import Spinner
-
-
-def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:
-    @atexit.register
-    def stop_pipeline_job():
-        if sync and pipeline_job and pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
-            spinner.fail(
-                "detected exit signal, "
-                f"shutting down running pipeline {pipeline_name} "
-                f"at {pipeline_job._dashboard_uri()}."
-            )
-            pipeline_job.wait()
-            pipeline_job.cancel()
 
 
 class JobPaths:
