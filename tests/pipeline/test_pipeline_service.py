@@ -41,8 +41,8 @@ class TestPipelineService(unittest.TestCase):
     pipeline_build_dir = sample_pipeline_dir / "build"
 
     def setup(self) -> None:
-        self.project_id = "gcp-project"
-        self.zone = "us-east1-a"
+        self.project_id = "cloud-lab-304213"
+        self.zone = "europe-west1-1b"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
         # # Mock GCP auth calls
@@ -58,7 +58,6 @@ class TestPipelineService(unittest.TestCase):
 
     @patch("wanna.core.services.docker.docker")
     def test_run_pipeline(self, docker_mock):
-
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 
@@ -82,7 +81,7 @@ class TestPipelineService(unittest.TestCase):
         expected_pipeline_labels = (
             """{"wanna_project": "pipeline-sklearn-example-1", """
             """"wanna_project_version": "1", "wanna_project_authors": "joao-silva1", """
-            """"wanna_pipeline": "wanna-sklearn-sample"}"""
+            """"wanna_name": "wanna-sklearn-sample", "wanna_resource": "pipeline"}"""
         )
 
         # Check expected metadata
