@@ -232,7 +232,9 @@ class NotebookService(BaseService[NotebookModel]):
 
         # labels and tags
         tags = notebook_instance.tags
-        labels = notebook_instance.labels if notebook_instance.labels else {}
+        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type}
+        if notebook_instance.labels:
+            labels = {**notebook_instance.labels, **labels}
 
         # post startup script
         if notebook_instance.bucket_mounts or notebook_instance.tensorboard_ref:
@@ -384,6 +386,28 @@ class NotebookService(BaseService[NotebookModel]):
             else:
                 typer.secho(f"No notebook {instance_name} found", fg=typer.colors.RED)
 
+    def report(self, instance_name: str) -> None:
+        """
+        Some values like Billing and Organization IDs are hard coded
+        """
+        billing_url = "https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;"
+        organization = "?organizationId=676993294933"
+        wanna_project = self.config.wanna_project.name
+
+        if instance_name == "all":
+            labels = f"labels=wanna_project:{wanna_project},wanna-resource:{self.instance_type}"
+        elif instance_name not in [nb.name for nb in self.instances]:
+            typer.secho(
+                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
+                fg=typer.colors.RED,
+            )
+            return
+        else:
+            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+
+        link = billing_url + labels + organization
+        typer.echo(f"Here is a link to your cost report:")
+        typer.secho(f"{link}", fg=typer.colors.BLUE)
 
 class ManagedNotebookService(BaseService[ManagedNotebookModel]):
     def __init__(
@@ -447,11 +471,18 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 return
 
         # Configuration of the managed notebook
+        
+        # Labels
+        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type}
+        if instance.labels:
+            labels = {**instance.labels, **labels}
+
         # Disks
         disk_type = instance.data_disk.disk_type if instance.data_disk else None
         disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
         localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
         localDisk = LocalDisk(initialize_params=localDiskParams)
+
         # Accelerator
         if instance.gpu:
             runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
@@ -459,15 +490,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             )
         else:
             runtimeAcceleratorConfig = None
-        # Network
-        if instance.network:
-            network = f"projects/{instance.project_id}/global/networks/{instance.network}"
-        else:
-            network = None
-        if instance.subnet:
-            subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
-        else:
-            subnet = None
+
+        # Network - doesn't seem to influence the actual VM
+        subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
 
         # Post startup script
         if instance.tensorboard_ref:
@@ -485,10 +510,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         virtualMachineConfig = VirtualMachineConfig(
             machine_type=instance.machine_type,
             data_disk=localDisk,
-            labels=instance.labels,
+            labels=labels,
             accelerator_config=runtimeAcceleratorConfig,
-            network=network,
-            subnet=subnet,
+            #subnet=subnet,
             tags=instance.tags,
             metadata=instance.metadata,
         )
@@ -680,3 +704,26 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 return
 
         typer.echo("Managed notebooks on GCP are in sync with wanna.yaml")
+
+    def report(self, instance_name: str) -> None:
+        """
+        Some values like Billing and Organization IDs are hard coded
+        """
+        billing_url = "https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;"
+        organization = "?organizationId=676993294933"
+        wanna_project = self.config.wanna_project.name
+
+        if instance_name == "all":
+            labels = f"labels=wanna_project:{wanna_project},wanna-resource:{self.instance_type}"
+        elif instance_name not in [nb.name for nb in self.instances]:
+            typer.secho(
+                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
+                fg=typer.colors.RED,
+            )
+            return
+        else:
+            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+
+        link = billing_url + labels + organization
+        typer.echo(f"Here is a link to your {self.instance_type} cost report:")
+        typer.secho(f"{link}", fg=typer.colors.BLUE)

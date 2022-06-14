@@ -86,13 +86,14 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def report(
-        version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
-        output: str = typer.Option(None, "--output", "-o", help="Where to output cost of pipeline(s)"),
-        instance_name: str = instance_name_option("pipeline", "report"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("pipeline", "report"),
     ) -> None:
+        """
+        Displays a link to the cost report per wanna_project and optionally per instance name
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
-        pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
-        pipeline_service._report(output=output, instance_name=instance_name)
+        pipeline_service = PipelineService(config=config, workdir=workdir)
+        pipeline_service.report(instance_name)

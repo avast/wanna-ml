@@ -1,5 +1,6 @@
 import json
 import os
+import typer
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
@@ -259,7 +260,7 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
     ):
 
-        labels = {"wanna_pipeline": pipeline_instance.name, "wanna_resource": "pipeline"}
+        labels = {"wanna_name": pipeline_instance.name, "wanna_resource": self.instance_type}
         if pipeline_instance.labels:
             labels = {**pipeline_instance.labels, **labels}
 
@@ -390,5 +391,25 @@ class PipelineService(BaseService[PipelineModel]):
     def _instance_exists(self, instance: PipelineModel) -> bool:
         pass
 
-    def _report(self, output: str, instance_name: str) -> str:
-        pass
+    def report(self, instance_name: str) -> None:
+        """
+        Some values like Billing and Organization IDs are hard coded
+        """
+        billing_url = "https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;"
+        organization = "?organizationId=676993294933"
+        wanna_project = self.config.wanna_project.name
+
+        if instance_name == "all":
+            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type}"
+        elif instance_name not in [nb.name for nb in self.instances]:
+            typer.secho(
+                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
+                fg=typer.colors.RED,
+            )
+            return
+        else:
+            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+
+        link = billing_url + labels + organization
+        typer.echo(f"Here is a link to your {self.instance_type} cost report:")
+        typer.secho(f"{link}", fg=typer.colors.BLUE)

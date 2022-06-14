@@ -22,6 +22,7 @@ class NotebookPlugin(BasePlugin):
                 self.delete,
                 self.create,
                 self.ssh,
+                self.report
             ]
         )
 
@@ -98,6 +99,20 @@ class NotebookPlugin(BasePlugin):
         nb_service = NotebookService(config=config, workdir=workdir)
         nb_service.ssh(instance_name, run_in_background, local_port)
 
+    @staticmethod
+    def report(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("notebook", "report"),
+    ) -> None:
+        """
+        Displays a link to the cost report per wanna_project and optionally per instance name
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service.report(instance_name)
+
 
 class ManagedNotebookPlugin(BasePlugin):
     """
@@ -106,7 +121,7 @@ class ManagedNotebookPlugin(BasePlugin):
 
     def __init__(self) -> None:
         super().__init__()
-        self.register_many([self.delete, self.create, self.sync])
+        self.register_many([self.delete, self.create, self.sync, self.report])
 
     @staticmethod
     def delete(
@@ -158,3 +173,17 @@ class ManagedNotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.sync()
+
+    @staticmethod
+    def report(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("managed_notebook", "report"),
+    ) -> None:
+        """
+        Displays a link to the cost report per wanna_project and optionally per instance name
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = ManagedNotebookService(config=config, workdir=workdir)
+        nb_service.report(instance_name)
