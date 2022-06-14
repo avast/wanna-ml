@@ -232,7 +232,7 @@ class NotebookService(BaseService[NotebookModel]):
 
         # labels and tags
         tags = notebook_instance.tags
-        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type}
+        labels = {"wanna_name": notebook_instance.name, "wanna_resource": self.instance_type}
         if notebook_instance.labels:
             labels = {**notebook_instance.labels, **labels}
 
@@ -403,11 +403,14 @@ class NotebookService(BaseService[NotebookModel]):
             )
             return
         else:
-            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            labels = (
+                f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            )
 
         link = billing_url + labels + organization
-        typer.echo(f"Here is a link to your cost report:")
+        typer.echo(f"Here is a link to your {self.instance_type} cost report:")
         typer.secho(f"{link}", fg=typer.colors.BLUE)
+
 
 class ManagedNotebookService(BaseService[ManagedNotebookModel]):
     def __init__(
@@ -471,7 +474,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 return
 
         # Configuration of the managed notebook
-        
+
         # Labels
         labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type}
         if instance.labels:
@@ -492,7 +495,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             runtimeAcceleratorConfig = None
 
         # Network - doesn't seem to influence the actual VM
-        subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
+        # subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
 
         # Post startup script
         if instance.tensorboard_ref:
@@ -512,7 +515,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             data_disk=localDisk,
             labels=labels,
             accelerator_config=runtimeAcceleratorConfig,
-            #subnet=subnet,
+            # subnet=subnet,
             tags=instance.tags,
             metadata=instance.metadata,
         )
@@ -722,7 +725,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             )
             return
         else:
-            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            labels = (
+                f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            )
 
         link = billing_url + labels + organization
         typer.echo(f"Here is a link to your {self.instance_type} cost report:")

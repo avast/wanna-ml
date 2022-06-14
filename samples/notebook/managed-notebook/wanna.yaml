@@ -29,6 +29,6 @@ managed_notebooks:
       size_gb: 100
     tensorboard_ref:
     kernels:
-    subnet: cloud-lab
+    subnet:
     idle_shutdown: True
     idle_shutdown_timeout: 10

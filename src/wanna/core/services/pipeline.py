@@ -1,10 +1,10 @@
 import json
 import os
-import typer
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import pandas as pd
+import typer
 from caseconverter import snakecase
 from google.cloud import aiplatform
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
@@ -408,7 +408,9 @@ class PipelineService(BaseService[PipelineModel]):
             )
             return
         else:
-            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            labels = (
+                f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            )
 
         link = billing_url + labels + organization
         typer.echo(f"Here is a link to your {self.instance_type} cost report:")

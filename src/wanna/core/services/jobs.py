@@ -680,7 +680,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             )
             return
         else:
-            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            labels = (
+                f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
+            )
 
         link = billing_url + labels + organization
         typer.echo(f"Here is a link to your {self.instance_type} cost report:")

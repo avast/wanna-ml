@@ -17,14 +17,7 @@ class NotebookPlugin(BasePlugin):
 
     def __init__(self) -> None:
         super().__init__()
-        self.register_many(
-            [
-                self.delete,
-                self.create,
-                self.ssh,
-                self.report
-            ]
-        )
+        self.register_many([self.delete, self.create, self.ssh, self.report])
 
     @staticmethod
     def delete(
