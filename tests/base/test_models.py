@@ -1,15 +1,9 @@
 import pytest
-from mock import patch
 from pydantic.error_wrappers import ValidationError
 
-from tests.mocks import mocks
 from wanna.core.models.base_instance import BaseInstanceModel
 
 
-@patch("wanna.core.utils.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 class TestBaseModel:
     def test_model_project_id_start_with_number(self):
         with pytest.raises(ValidationError):

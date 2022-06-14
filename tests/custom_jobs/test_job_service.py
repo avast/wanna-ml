@@ -4,21 +4,11 @@ from google import auth
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from mock import MagicMock, patch
 
-from tests.mocks import mocks
 from wanna.core.services.jobs import JobService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
-@patch("wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.core.utils.gcp.ZonesClient", mocks.MockZonesClient)
-@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.services.jobs.convert_project_id_to_project_number", mocks.mock_convert_project_id_to_project_number)
 class TestJobService:
     @patch("wanna.core.services.docker.docker")
     def test_create_training_job_manifest_python_package_spec(self, docker_mock):
@@ -38,7 +28,7 @@ class TestJobService:
         # Mock Tensorboard Service
         TensorboardService.get_or_create_tensorboard_instance_by_name = MagicMock(return_value="some-tf-board")
 
-        job_manifest = service._create_training_job_manifest(job_model)
+        job_manifest = service._create_training_job_resource(job_model)
         assert job_manifest.job_payload.get("container_uri") == "gcr.io/cloud-aiplatform/training/tf-gpu.2-1:latest"
         assert job_manifest.job_payload.get("python_module_name") == "trainer.task"
 
@@ -56,7 +46,7 @@ class TestJobService:
         # Mock Docker IO
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
-        manifest = service._create_training_job_manifest(job_model)
+        manifest = service._create_training_job_resource(job_model)
 
         assert manifest.job_payload.get("container_uri") == "gcr.io/google-containers/debian-base:1.0.0"
         assert manifest.job_payload.get("command") == ["echo", "'Test'"]

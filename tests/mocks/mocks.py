@@ -105,6 +105,10 @@ def mock_convert_project_id_to_project_number(project_id):
     return 123456789
 
 
+def mock_upload_file(any, src, dest):
+    return None
+
+
 def mock_list_running_instances(project_id: str, region: str):
     tensorboard_names = ["tb1", "tb2"]
     return [
