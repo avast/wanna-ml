@@ -3,24 +3,26 @@ from typing import Callable, List
 
 from wanna.core.deployment.io import IOMixin
 from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushResult, PushTask
-from wanna.core.utils.spinners import Spinner
+from wanna.core.loggers.wanna_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ArtifactsPushMixin(IOMixin):
     def push_artifacts(self, docker_pusher: Callable[[List[str]], None], push_tasks: List[PushTask]) -> PushResult:
         def push_containers(container_artifacts: List[ContainerArtifact]):
             for artifact in container_artifacts:
-                with Spinner(text=f"Pushing {artifact.name.lower()} to {artifact.tags}"):
+                with logger.user_spinner(f"Pushing {artifact.name.lower()} to {artifact.tags}"):
                     docker_pusher(artifact.tags)
 
         def push_manifests(manifest_artifacts: List[PathArtifact]):
             for artifact in manifest_artifacts:
-                with Spinner(text=f"Pushing {artifact.name.lower()} to {artifact.destination}"):
+                with logger.user_spinner(f"Pushing {artifact.name.lower()} to {artifact.destination}"):
                     self.upload_file(artifact.source, artifact.destination)
 
         def push_json(artifacts: List[JsonArtifact]):
             for artifact in artifacts:
-                with Spinner(text=f"Pushing {artifact.name.lower()} to {artifact.destination}"):
+                with logger.user_spinner(f"Pushing {artifact.name.lower()} to {artifact.destination}"):
                     self.write(artifact.destination, json.dumps(artifact.json_body))
 
         results: PushResult = []

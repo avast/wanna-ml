@@ -18,9 +18,11 @@ from wanna.core.deployment.models import (
     LogMetricResource,
 )
 from wanna.core.deployment.monitoring import MonitoringMixin
+from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.utils import templates
 from wanna.core.utils.gcp import is_gcs_path
-from wanna.core.utils.spinners import Spinner
+
+logger = get_logger(__name__)
 
 
 class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
@@ -33,7 +35,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         job_name = f"{parent}/jobs/{job_id}"
         function_name, function_url = function
 
-        Spinner().info(f"Deploying {resource.name} cloud scheduler with version {version} to env {env}")
+        logger.user_info(f"Deploying {resource.name} cloud scheduler with version {version} to env {env}")
 
         http_target = {
             "uri": function_url,
@@ -62,11 +64,11 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
 
         try:
             job = client.get_job({"name": job_name})
-            Spinner().info(f"Found {job.name} cloud scheduler job, updating it")
+            logger.user_info(f"Found {job.name} cloud scheduler job, updating it")
             client.update_job({"job": job})
         except NotFound:
             # Does not exist let's create it
-            Spinner().info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
+            logger.user_info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
             client.create_job({"parent": parent, "job": job})
 
         logging_metric_ref = f"{job_id}-cloud-scheduler-errors"
@@ -96,7 +98,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         )
 
     def upsert_cloud_function(self, resource: CloudFunctionResource, version: str, env: str) -> Tuple[str, str]:
-        Spinner().info(f"Deploying {resource.name} cloud function with version {version} to env {env}")
+        logger.user_info(f"Deploying {resource.name} cloud function with version {version} to env {env}")
         parent = f"projects/{resource.project}/locations/{resource.location}"
         pipeline_functions_dir = resource.build_dir / "functions"
         os.makedirs(pipeline_functions_dir, exist_ok=True)

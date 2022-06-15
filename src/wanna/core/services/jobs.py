@@ -20,6 +20,7 @@ from wanna.core.deployment.models import (
     PushTask,
 )
 from wanna.core.deployment.vertex_connector import VertexConnector
+from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.docker import ImageBuildType
 from wanna.core.models.training_custom_job import (
     CustomJobModel,
@@ -34,7 +35,8 @@ from wanna.core.services.path_utils import JobPaths
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.json import remove_nones
 from wanna.core.utils.loaders import load_yaml_path
-from wanna.core.utils.spinners import Spinner
+
+logger = get_logger(__name__)
 
 
 class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
@@ -114,7 +116,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             job_paths = JobPaths(self.workdir, f"gs://{self.bucket_name}", loaded_manifest.job_config.name)
             manifest_artifacts, container_artifacts = [], []
 
-            Spinner().info(text=f"Packaging {loaded_manifest.job_config.name} job resources")
+            logger.user_info(f"Packaging {loaded_manifest.job_config.name} job resources")
 
             if self.push_mode.can_push_containers():
                 for docker_image_ref in loaded_manifest.image_refs:
@@ -375,10 +377,10 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                     f"Do you want to cancel job {job.display_name} (started at {job.create_time})?"
                 )
                 if should_cancel:
-                    with Spinner(text=f"Canceling job {job.display_name}"):
+                    with logger.user_spinner(f"Canceling job {job.display_name}"):
                         job.cancel()
         else:
-            typer.echo(f"No running or pending job with name {instance.name}")
+            logger.user_info(f"No running or pending job with name {instance.name}")
 
     @staticmethod
     def read_manifest(
