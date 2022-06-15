@@ -176,6 +176,18 @@ Alternatively if you want to see docs in localhost before pushing
 task docs-deploy
 ```
 
+## Cost tracking
+For pipelines, notebooks and jobs there is a possibility to get a quick link to the cost
+report in GCP console. You can either specify a name of the resource or get all from the given
+resource type. Here are some examples of such queries.
+```bash
+wanna notebook report --file samples/notebook/julia/wanna.yaml -n wanna-notebook-julia
+
+wanna pipeline report --file samples/pipelines/sklearn/wanna.yaml -n wanna-sklearn-sample-notebook
+
+wanna managed-notebook report --file samples/notebook/managed-notebook/wanna.yaml
+```
+
 ## Reading
 * https://python-poetry.org/
 * https://pre-commit.com/
