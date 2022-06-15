@@ -96,4 +96,9 @@ class PipelinePlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir)
-        pipeline_service.report(instance_name)
+        pipeline_service.report(
+            instance_name=instance_name,
+            wanna_project=config.wanna_project.name,
+            wanna_resource="pipeline",
+            gcp_project=config.gcp_profile.project_id,
+        )

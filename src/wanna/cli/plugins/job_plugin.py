@@ -101,4 +101,9 @@ class JobPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir)
-        job_service.report(instance_name)
+        job_service.report(
+            instance_name=instance_name,
+            wanna_project=config.wanna_project.name,
+            wanna_resource="job",
+            gcp_project=config.gcp_profile.project_id,
+        )

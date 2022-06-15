@@ -235,7 +235,6 @@ class NotebookService(BaseService[NotebookModel]):
         labels = {
             "wanna_name": notebook_instance.name,
             "wanna_resource": self.instance_type,
-            "gcp_project": self.config.gcp_profile.project_id,
         }
         if notebook_instance.labels:
             labels = {**notebook_instance.labels, **labels}
@@ -390,31 +389,6 @@ class NotebookService(BaseService[NotebookModel]):
             else:
                 typer.secho(f"No notebook {instance_name} found", fg=typer.colors.RED)
 
-    def report(self, instance_name: str) -> None:
-        """
-        Some values like Billing and Organization IDs are hard coded
-        """
-        billing_url = "https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;"
-        organization = "?organizationId=676993294933"
-        wanna_project = self.config.wanna_project.name
-
-        if instance_name == "all":
-            labels = f"labels=wanna_project:{wanna_project},wanna-resource:{self.instance_type}"
-        elif instance_name not in [nb.name for nb in self.instances]:
-            typer.secho(
-                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
-                fg=typer.colors.RED,
-            )
-            return
-        else:
-            labels = (
-                f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
-            )
-
-        link = billing_url + labels + organization
-        typer.echo(f"Here is a link to your {self.instance_type} cost report:")
-        typer.secho(f"{link}", fg=typer.colors.BLUE)
-
 
 class ManagedNotebookService(BaseService[ManagedNotebookModel]):
     def __init__(
@@ -483,7 +457,6 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         labels = {
             "wanna_name": instance.name,
             "wanna_resource": self.instance_type,
-            "gcp_project": self.config.gcp_profile.project_id,
         }
         if instance.labels:
             labels = {**instance.labels, **labels}
@@ -715,28 +688,3 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 return
 
         typer.echo("Managed notebooks on GCP are in sync with wanna.yaml")
-
-    def report(self, instance_name: str) -> None:
-        """
-        Some values like Billing and Organization IDs are hard coded
-        """
-        billing_url = "https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;"
-        organization = "?organizationId=676993294933"
-        wanna_project = self.config.wanna_project.name
-
-        if instance_name == "all":
-            labels = f"labels=wanna_project:{wanna_project},wanna-resource:{self.instance_type}"
-        elif instance_name not in [nb.name for nb in self.instances]:
-            typer.secho(
-                f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
-                fg=typer.colors.RED,
-            )
-            return
-        else:
-            labels = (
-                f"labels=wanna_project:{wanna_project},wanna_resource:{self.instance_type},wanna_name:{instance_name}"
-            )
-
-        link = billing_url + labels + organization
-        typer.echo(f"Here is a link to your {self.instance_type} cost report:")
-        typer.secho(f"{link}", fg=typer.colors.BLUE)

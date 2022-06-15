@@ -109,3 +109,25 @@ class BaseService(ABC, Generic[T]):
             )
 
         return instances
+
+    def report(self, instance_name: str, wanna_project: str, wanna_resource: str, gcp_project: str) -> None:
+        """
+        Some values like Billing and Organization IDs are hard coded
+        """
+        base_url = f"https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;projects={gcp_project}"
+        organization = "?organizationId=676993294933"
+
+        if instance_name == "all":
+            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
+        elif instance_name not in [nb.name for nb in self.instances]:
+            typer.secho(
+                f"{wanna_resource} with name {instance_name} not found in your wanna-ml yaml config.",
+                fg=typer.colors.RED,
+            )
+            return
+        else:
+            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource},wanna_name:{instance_name}"
+
+        link = base_url + labels + organization
+        typer.echo(f"Here is a link to your {wanna_resource} cost report:")
+        typer.secho(f"{link}", fg=typer.colors.BLUE)

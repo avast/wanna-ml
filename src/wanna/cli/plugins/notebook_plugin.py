@@ -104,7 +104,12 @@ class NotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = NotebookService(config=config, workdir=workdir)
-        nb_service.report(instance_name)
+        nb_service.report(
+            instance_name=instance_name,
+            wanna_project=config.wanna_project.name,
+            wanna_resource="notebook",
+            gcp_project=config.gcp_profile.project_id,
+        )
 
 
 class ManagedNotebookPlugin(BasePlugin):
@@ -179,4 +184,9 @@ class ManagedNotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
-        nb_service.report(instance_name)
+        nb_service.report(
+            instance_name=instance_name,
+            wanna_project=config.wanna_project.name,
+            wanna_resource="managed_notebook",
+            gcp_project=config.gcp_profile.project_id,
+        )
