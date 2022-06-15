@@ -465,7 +465,11 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         Returns:
             Job Manifest for execution
         """
-        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type}
+        labels = {
+            "wanna_name": instance.name,
+            "wanna_resource": self.instance_type,
+            "gcp_project": self.config.gcp_profile.project_id,
+        }
         if instance.labels:
             labels = {**instance.labels, **labels}
 

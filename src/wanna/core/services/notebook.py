@@ -232,7 +232,11 @@ class NotebookService(BaseService[NotebookModel]):
 
         # labels and tags
         tags = notebook_instance.tags
-        labels = {"wanna_name": notebook_instance.name, "wanna_resource": self.instance_type}
+        labels = {
+            "wanna_name": notebook_instance.name,
+            "wanna_resource": self.instance_type,
+            "gcp_project": self.config.gcp_profile.project_id,
+        }
         if notebook_instance.labels:
             labels = {**notebook_instance.labels, **labels}
 
@@ -476,7 +480,11 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         # Configuration of the managed notebook
 
         # Labels
-        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type}
+        labels = {
+            "wanna_name": instance.name,
+            "wanna_resource": self.instance_type,
+            "gcp_project": self.config.gcp_profile.project_id,
+        }
         if instance.labels:
             labels = {**instance.labels, **labels}
 

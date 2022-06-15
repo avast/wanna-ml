@@ -260,7 +260,11 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
     ):
 
-        labels = {"wanna_name": pipeline_instance.name, "wanna_resource": self.instance_type}
+        labels = {
+            "wanna_name": pipeline_instance.name,
+            "wanna_resource": self.instance_type,
+            "gcp_project": self.config.gcp_profile.project_id,
+        }
         if pipeline_instance.labels:
             labels = {**pipeline_instance.labels, **labels}
 
