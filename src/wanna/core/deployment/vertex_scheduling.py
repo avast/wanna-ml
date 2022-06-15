@@ -9,7 +9,6 @@ from google.api_core.exceptions import PermissionDenied
 from google.cloud import scheduler_v1
 from google.cloud.exceptions import NotFound
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
-
 from wanna.core.deployment.io import IOMixin
 from wanna.core.deployment.models import (
     AlertPolicyResource,
@@ -84,6 +83,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 description=f"Log metric for {resource.name} cloud scheduler job",
             )
         )
+
         self.upsert_alert_policy(
             AlertPolicyResource(
                 logging_metric_type=logging_metric_ref,

@@ -6,7 +6,8 @@ from google.cloud.aiplatform import PipelineJob
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
-from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, PipelineResource
+from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, PipelineResource, \
+    NotificationChannelResource
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.services.path_utils import PipelinePaths
@@ -77,6 +78,13 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
     def deploy_pipeline(
         self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str
     ) -> None:
+
+        channels = self.upsert_notification_channel(resource=NotificationChannelResource(
+            name=resource.pipeline_name,
+            project=resource.project,
+            location=resource.location,
+            email
+        ))
 
         function = self.upsert_cloud_function(
             resource=CloudFunctionResource(

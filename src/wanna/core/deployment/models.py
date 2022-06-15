@@ -47,6 +47,11 @@ class AlertPolicyResource(GCPResource):
     notification_channels: List[str]
 
 
+class NotificationChannelResource(GCPResource):
+    email_address: EmailStr
+    labels: Dict[str, str]
+
+
 class PipelineResource(GCPResource):
     pipeline_name: str
     pipeline_bucket: str

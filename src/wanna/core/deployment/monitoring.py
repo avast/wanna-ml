@@ -1,17 +1,48 @@
 import json
-from typing import cast
+from typing import cast, Optional
 
 from google.cloud.exceptions import NotFound
 from google.cloud.logging import Client as LoggingClient
-from google.cloud.monitoring_v3 import AlertPolicy, AlertPolicyServiceClient
-
+from google.cloud.monitoring_v3 import AlertPolicy, AlertPolicyServiceClient, NotificationChannelServiceClient, \
+    NotificationChannel
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
-from wanna.core.deployment.models import AlertPolicyResource, LogMetricResource
+from wanna.core.deployment.models import AlertPolicyResource, LogMetricResource, NotificationChannelResource
 
 
 class MonitoringMixin(GCPCredentialsMixIn):
+
+
+    def upsert_notification_channel(self, resource: NotificationChannelResource):
+        client = NotificationChannelServiceClient(credentials=self.credentials)
+
+        def _get_notification_channel(client: NotificationChannelServiceClient, project: str, display_name: str) -> Optional[NotificationChannel]:
+            channels = client.list_notification_channels(name=f"projects/{project}")
+            channels = [channel for channel in channels if channel.display_name == display_name]
+            if channels:
+                return channels[0]
+            return None
+
+        channel = _get_notification_channel(client, resource.project, resource.name)
+
+        if not channel:
+            notification_channel = NotificationChannel(
+                display_name=resource.name,
+                description="",
+                labels={
+                    "email": resource.email_address
+                },
+                user_labels=resource.labels,
+                verification_status=NotificationChannel.VerificationStatus.VERIFIED,
+                enabled=True
+            )
+            return client.create_notification_channel(name=f"projects/{resource.project}", notification_channel=notification_channel)
+        else:
+            return channel
+
+
     def upsert_alert_policy(self, resource: AlertPolicyResource):
         client = AlertPolicyServiceClient(credentials=self.credentials)
+
         alert_policy = {
             "display_name": resource.display_name,
             "user_labels": resource.labels,
