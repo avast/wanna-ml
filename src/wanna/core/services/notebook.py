@@ -1,6 +1,7 @@
+import logging
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import typer
 from google.api_core import exceptions
@@ -23,6 +24,7 @@ from google.cloud.notebooks_v1.types import (
 )
 from waiting import wait
 
+from wanna.core.loggers.wanna_logger import WannaLogger
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.base import BaseService
@@ -30,7 +32,9 @@ from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
 from wanna.core.utils.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
-from wanna.core.utils.spinners import Spinner
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 
 class NotebookService(BaseService[NotebookModel]):
@@ -75,16 +79,15 @@ class NotebookService(BaseService[NotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
+            with logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}"):
                 deleted = self.notebook_client.delete_instance(
                     name=f"projects/{notebook_instance.project_id}/locations/"
                     f"{notebook_instance.zone}/instances/{notebook_instance.name}"
                 )
                 deleted.result()
         else:
-            typer.secho(
+            logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
-                fg=typer.colors.RED,
             )
 
     def _create_one_instance(self, instance: NotebookModel, **kwargs) -> None:
@@ -102,19 +105,19 @@ class NotebookService(BaseService[NotebookModel]):
         """
         exists = self._instance_exists(instance)
         if exists:
-            typer.echo(f"Instance {instance.name} already exists in location {instance.zone}")
+            logger.user_info(f"Instance {instance.name} already exists in location {instance.zone}")
             should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
             if should_recreate:
                 self._delete_one_instance(instance)
             else:
                 return
         instance_request = self._create_instance_request(notebook_instance=instance)
-        with Spinner(text=f"Creating underlying compute engine instance for {instance.name}"):
+        with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
                 nb_instance.result().name
             )  # .result() waits for compute engine behind the notebook to start
-        with Spinner(text="Starting JupyterLab"):
+        with logger.user_spinner("Starting JupyterLab"):
             wait(
                 lambda: self._validate_jupyterlab_state(instance_full_name, Instance.State.ACTIVE),
                 timeout_seconds=450,
@@ -122,7 +125,7 @@ class NotebookService(BaseService[NotebookModel]):
                 waiting_for="Starting JupyterLab in your instance",
             )
             jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        typer.echo(f"\N{party popper} JupyterLab started at {jupyterlab_link}")
+        logger.user_success(f"JupyterLab started at {jupyterlab_link}")
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
@@ -339,7 +342,9 @@ class NotebookService(BaseService[NotebookModel]):
         """
         exists = self._instance_exists(notebook_instance)
         if not exists:
-            typer.echo(f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it.")
+            logger.user_info(
+                f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it."
+            )
             return
 
         bash_command = f"gcloud compute ssh \
@@ -373,7 +378,7 @@ class NotebookService(BaseService[NotebookModel]):
             elif len(self.config.notebooks) > 1:
                 Exception("You can connect to only one notebook at a time.")
             else:
-                typer.secho("No notebook definition found in your YAML config.", fg=typer.colors.RED)
+                logger.user_error("No notebook definition found in your YAML config.")
         else:
             if instance_name in [notebook.name for notebook in self.config.notebooks]:
                 self._ssh(
@@ -382,7 +387,7 @@ class NotebookService(BaseService[NotebookModel]):
                     local_port,
                 )
             else:
-                typer.secho(f"No notebook {instance_name} found", fg=typer.colors.RED)
+                logger.user_error(f"No notebook {instance_name} found")
 
 
 class ManagedNotebookService(BaseService[ManagedNotebookModel]):
@@ -412,16 +417,15 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            with Spinner(text=f"Deleting {self.instance_type} {notebook_instance.name}"):
+            with logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}"):
                 deleted = self.notebook_client.delete_runtime(
                     name=f"projects/{notebook_instance.project_id}/locations/"
                     f"{notebook_instance.region}/runtimes/{notebook_instance.name}"
                 )
                 deleted.result()
         else:
-            typer.secho(
+            logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
-                fg=typer.colors.RED,
             )
 
     def _create_one_instance(self, instance: ManagedNotebookModel, **kwargs) -> None:
@@ -439,7 +443,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         """
         exists = self._instance_exists(instance)
         if exists:
-            typer.echo(f"Managed notebook {instance.name} already exists in location {instance.region}")
+            logger.user_info(f"Managed notebook {instance.name} already exists in location {instance.region}")
             should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
             if should_recreate:
                 self._delete_one_instance(instance)
@@ -515,12 +519,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             runtime=runtime,
         )
 
-        with Spinner(text=f"Creating underlying compute engine instance for {instance.name}"):
+        with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_runtime(request=request)
             instance_full_name = (
                 nb_instance.result().name
             )  # .result() waits for compute engine behind the notebook to start
-        with Spinner(text="Starting JupyterLab"):
+        with logger.user_spinner("Starting JupyterLab"):
             wait(
                 lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
                 timeout_seconds=450,
@@ -528,7 +532,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 waiting_for="Starting JupyterLab in your instance",
             )
             jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        typer.echo(f"\N{party popper} JupyterLab started at {jupyterlab_link}")
+        logger.user_success(f"JupyterLab started at {jupyterlab_link}")
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
@@ -650,28 +654,22 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         to_be_deleted, to_be_created = self._return_diff()
 
         if to_be_deleted:
-            typer.secho(
-                "Managed notebooks to be deleted:",
-                fg=typer.colors.RED,
+            to_be_deleted_str = "\n".join(["-" + item.name for item in to_be_deleted])
+            logger.info(
+                f"Managed notebooks to be deleted: \n {to_be_deleted_str}",
             )
-            for item in to_be_deleted:
-                typer.echo(item.split("/")[-1])
             should_delete = typer.confirm("Are you sure you want to delete them?")
             if should_delete:
                 for item in to_be_deleted:
-                    with Spinner(text=f"Deleting {item}"):
+                    with logger.user_spinner(f"Deleting {item}"):
                         deleted = self.notebook_client.delete_runtime(name=item)
                         deleted.result()
             else:
                 return
 
         if to_be_created:
-            typer.secho(
-                "Managed notebooks to be created:",
-                fg=typer.colors.GREEN,
-            )
-            for item in to_be_created:
-                typer.echo(item.name)
+            to_be_created_str = "\n".join(["-" + item.name for item in to_be_created])
+            logger.user_info(f"Managed notebooks to be created: \n {to_be_created_str}")
             should_create = typer.confirm("Are you sure you want to create them?")
             if should_create:
                 for item in to_be_created:
@@ -679,4 +677,4 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             else:
                 return
 
-        typer.echo("Managed notebooks on GCP are in sync with wanna.yaml")
+        logger.user_success("Managed notebooks on GCP are in sync with wanna.yaml")

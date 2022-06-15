@@ -3,15 +3,18 @@ import re
 from datetime import datetime, timedelta
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, cast
 
 import requests
 import typer
 from packaging import version
 
+from wanna.core.loggers.wanna_logger import WannaLogger
+
 from .. import __version__
 
-logger = logging.getLogger(__name__)
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 ARTIFACTORY_URL = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/wanna-ml/"
 VERSION_CHECK_FILE = "last_version_check"
@@ -114,11 +117,10 @@ def perform_check(terminate: bool = True) -> None:
 
     latest_version = get_latest_version()
     if latest_version and version.Version(__version__) < latest_version:
-        typer.secho(
+        logger.user_error(
             f"Installed version is {__version__}, the latest version is {latest_version}",
-            fg="red",
         )
-        typer.secho(
+        logger.user_info(
             UPDATE_MESSAGE,
             fg="yellow",
         )
@@ -128,6 +130,6 @@ def perform_check(terminate: bool = True) -> None:
         ):
             typer.Exit()
     else:
-        typer.secho(f"Your wanna cli is up to date with {latest_version}", fg="green")
+        logger.user_success(f"Your wanna cli is up to date with {latest_version}")
         if terminate:
             typer.Exit()

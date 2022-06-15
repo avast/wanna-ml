@@ -6,8 +6,8 @@ from caseconverter import kebabcase
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 
+from wanna.core.loggers.wanna_logger import Spinner
 from wanna.core.utils.gcp import is_gcs_path
-from wanna.core.utils.spinners import Spinner
 
 
 def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool, spinner: Spinner) -> None:

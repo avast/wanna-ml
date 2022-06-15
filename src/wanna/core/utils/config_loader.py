@@ -1,15 +1,19 @@
+import logging
 import os
 import pathlib
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from google.cloud import aiplatform
 
+from wanna.core.loggers.wanna_logger import WannaLogger
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.spinners import Spinner
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 
 def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfileModel:
@@ -59,7 +63,7 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
 
     """
 
-    with Spinner(text="Reading and validating wanna yaml config"):
+    with logger.user_spinner("Reading and validating wanna yaml config"):
         with open(wanna_config_path) as file:
             # Load workflow file
             wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
@@ -68,8 +72,8 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
         wanna_dict.update({"gcp_profile": profile_model})
         del wanna_dict["gcp_profiles"]
         wanna_config = WannaConfigModel.parse_obj(wanna_dict)
-    Spinner().info(f"GCP profile '{profile_model.profile_name}' will be used.")
-    Spinner().info(f"Profile details: {profile_model}")
+    logger.user_info(f"GCP profile '{profile_model.profile_name}' will be used.")
+    logger.user_info(f"Profile details: {profile_model}")
 
     aiplatform.init(
         project=wanna_config.gcp_profile.project_id,

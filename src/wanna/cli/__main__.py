@@ -1,14 +1,18 @@
 import logging
 from enum import Enum
 from pathlib import Path
+from typing import cast
 
 import typer
 from cookiecutter.main import cookiecutter
 
-from wanna.core.utils.spinners import Spinner
+from wanna.core.loggers.wanna_logger import WannaLogger
 
 from .plugins.runner import PluginRunner
 from .version import perform_check
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 logging.getLogger("smart_open").setLevel(logging.ERROR)
 logging.getLogger("google").setLevel(logging.ERROR)
@@ -51,7 +55,7 @@ def init(
     }
     repository_template_url = repository_templates.get(template)
     result_dir = cookiecutter(repository_template_url, output_dir=output_dir)
-    Spinner(text=f"Repo initiated at {result_dir}").succeed()
+    logger.user_success(f"Repo initiated at {result_dir}")
 
 
 def wanna():

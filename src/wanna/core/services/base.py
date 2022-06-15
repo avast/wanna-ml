@@ -1,9 +1,12 @@
+import logging
 from abc import ABC
-from typing import Generic, List, TypeVar
+from typing import Generic, List, TypeVar, cast
 
-import typer
-
+from wanna.core.loggers.wanna_logger import WannaLogger
 from wanna.core.models.base_instance import BaseInstanceModel
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 T = TypeVar("T", bound=BaseInstanceModel)
 
@@ -97,15 +100,12 @@ class BaseService(ABC, Generic[T]):
         if instance_name == "all":
             instances = self.instances
             if not instances:
-                typer.secho(
-                    f"No {self.instance_type} can be parsed from your wanna-ml yaml config.", fg=typer.colors.RED
-                )
+                logger.user_error(f"No {self.instance_type} can be parsed from your wanna-ml yaml config.")
         else:
             instances = [nb for nb in self.instances if nb.name == instance_name]
         if not instances:
-            typer.secho(
+            logger.user_error(
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
-                fg=typer.colors.RED,
             )
 
         return instances

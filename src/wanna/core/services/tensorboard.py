@@ -6,13 +6,16 @@ from google.cloud import aiplatform
 from google.cloud.aiplatform.tensorboard.tensorboard_resource import Tensorboard, TensorboardExperiment
 from treelib import Tree
 
+from wanna.core.loggers.wanna_logger import WannaLogger
 from wanna.core.models.tensorboard import TensorboardModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.base import BaseService
-from wanna.core.utils.spinners import Spinner
 
-logger = logging.getLogger("google.cloud")
-logger.setLevel(logging.ERROR)
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
+
+logger_gcs = logging.getLogger("google.cloud")
+logger_gcs.setLevel(logging.ERROR)
 
 
 class TensorboardService(BaseService[TensorboardModel]):
@@ -32,9 +35,9 @@ class TensorboardService(BaseService[TensorboardModel]):
         """
         tensorboard = self._find_existing_tensorboard_by_model(instance)
         if not tensorboard:
-            typer.echo(f"Tensorboard {instance.name} does not exist, nothing to delete.")
+            logger.user_info(f"Tensorboard {instance.name} does not exist, nothing to delete.")
         else:
-            with Spinner(text=f"Deleting Tensorboard {instance.name}"):
+            with logger.user_spinner(f"Deleting Tensorboard {instance.name}"):
                 aiplatform.Tensorboard(tensorboard_name=tensorboard.resource_name).delete()
 
     def _create_one_instance(self, instance: TensorboardModel, **kwargs) -> None:
@@ -50,7 +53,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         if self._instance_exists(instance):
             existing_instance = self._find_existing_tensorboard_by_model(instance)
             if existing_instance:
-                typer.echo(
+                logger.user_info(
                     f"Tensorboard {instance.name} already exists and is running at {existing_instance.resource_name}"
                 )
                 should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
@@ -58,7 +61,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                     self._delete_one_instance(instance)
                 else:
                     return
-        with Spinner(text=f"Creating Tensorboard {instance.name}"):
+        with logger.user_success(f"Creating Tensorboard {instance.name}"):
             aiplatform.Tensorboard.create(
                 display_name=instance.name,
                 description=instance.description,
@@ -69,7 +72,7 @@ class TensorboardService(BaseService[TensorboardModel]):
 
         created = self._find_existing_tensorboard_by_model(instance)
         if created:
-            typer.echo(f"Tensorboard {instance.name} is running at {created.resource_name}")
+            logger.user_info(f"Tensorboard {instance.name} is running at {created.resource_name}")
 
     def _find_existing_tensorboard_by_model(self, instance: TensorboardModel) -> Union[Tensorboard, None]:
         """
@@ -149,7 +152,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         tb_model = self._find_tensorboard_model_by_name(tb_name=tensorboard_name)
         tb_existing = self._find_existing_tensorboard_by_model(instance=tb_model)
         if not tb_existing:
-            typer.echo(f"Tensorboard with name {tb_model.name} in {tb_model.region} not found, creating it.")
+            logger.user_info(f"Tensorboard with name {tb_model.name} in {tb_model.region} not found, creating it.")
             self._create_one_instance(tb_model)
             tb_existing = self._find_existing_tensorboard_by_model(instance=tb_model)
             if not tb_existing:
@@ -207,6 +210,6 @@ class TensorboardService(BaseService[TensorboardModel]):
         return tree
 
     def list_tensorboards_in_tree(self, region: str, filter_expr: str, show_url: bool) -> None:
-        with Spinner(text="Creating Tensorboard tree"):
+        with logger.user_spinner("Creating Tensorboard tree"):
             tree = self._create_tensorboard_tree(region=region, filter_expr=filter_expr, show_url=show_url)
         tree.show()

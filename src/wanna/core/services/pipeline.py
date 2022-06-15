@@ -1,7 +1,8 @@
 import json
+import logging
 import os
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, cast
 
 import pandas as pd
 from caseconverter import snakecase
@@ -21,6 +22,7 @@ from wanna.core.deployment.models import (
     PushTask,
 )
 from wanna.core.deployment.push import PushResult, push
+from wanna.core.loggers.wanna_logger import Spinner, WannaLogger
 from wanna.core.models.docker import DockerBuildResult, DockerImageModel, ImageBuildType
 from wanna.core.models.pipeline import PipelineDeployment, PipelineModel
 from wanna.core.models.wanna_config import WannaConfigModel
@@ -30,8 +32,10 @@ from wanna.core.services.pipeline_utils import PipelinePaths, _at_pipeline_exit
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.io import open
 from wanna.core.utils.loaders import load_yaml_path
-from wanna.core.utils.spinners import Spinner
 from wanna.core.utils.time import get_timestamp
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 
 class PipelineService(BaseService[PipelineModel]):
@@ -80,7 +84,7 @@ class PipelineService(BaseService[PipelineModel]):
             pipeline_paths = PipelinePaths(self.workdir, manifest.pipeline_bucket, manifest.pipeline_name)
             json_artifacts, manifest_artifacts, container_artifacts = [], [], []
 
-            with Spinner(text=f"Packaging {manifest.pipeline_name} pipeline resources"):
+            with logger.user_spinner(f"Packaging {manifest.pipeline_name} pipeline resources"):
 
                 # Push containers if we are running on Internal Teamcity build agent or on local(all)
                 if self.push_mode.can_push_containers():
@@ -134,7 +138,7 @@ class PipelineService(BaseService[PipelineModel]):
 
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
-            with Spinner(text=f"Deploying {pipeline.name} version {self.version} to env {env}") as s:
+            with logger.user_spinner(f"Deploying {pipeline.name} version {self.version} to env {env}") as s:
                 pipeline_paths = PipelinePaths(
                     self.workdir,
                     pipeline.bucket or f"gs://{self.config.gcp_profile.bucket}",
@@ -207,7 +211,7 @@ class PipelineService(BaseService[PipelineModel]):
 
             mode = "sync mode" if sync else "fire-forget mode"
 
-            with Spinner(text=f"Running pipeline {manifest.pipeline_name} in {mode}") as s:
+            with logger.user_spinner(f"Running pipeline {manifest.pipeline_name} in {mode}") as s:
 
                 # fetch compiled params
                 pipeline_job_id = f"pipeline-{manifest.pipeline_name}-{get_timestamp()}"
@@ -313,7 +317,7 @@ class PipelineService(BaseService[PipelineModel]):
             for docker_image_ref in pipeline.docker_image_ref
         ]
 
-        Spinner().info(text=f"Compiling pipeline {pipeline.name}")
+        logger.user_info(f"Compiling pipeline {pipeline.name}")
 
         # Prep build dir
         pipeline_paths = PipelinePaths(

@@ -12,6 +12,9 @@ class Spinner(Halo):
 
     def __enter__(self):
         """Starts the spinner on a separate thread. For use in context managers.
+        The spinner is actually started only in the interactive terminal (tty),
+        if the environment is output only, we only print the start and end of the process.
+
         Returns
         -------
         self
@@ -21,25 +24,37 @@ class Spinner(Halo):
     def __exit__(self, exception_type, exception_value, traceback):
         """Stops the spinner. For use in context managers."""
         if exception_value:
-            self.text_color = "red"
+            self.text_color = typer.colors.RED
             self.fail()
         else:
+            self.text_color = typer.colors.GREEN
             self.succeed()
 
 
 class WannaLogger(logging.Logger):
+    """
+    This Logger supports all common logging library methods
+    like .info, .warning or .debug.
+    On top of that, we introduce new methods for visually
+    more appealing printing to users.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Set the logging config here if needed
         logging.basicConfig()
 
     @staticmethod
-    def user_error(text, *args, **kwargs) -> None:
-        typer.secho(f"✖ {text}", fg=typer.colors.RED, err=True, *args, **kwargs)
+    def user_error(text, fg: str = typer.colors.RED, *args, **kwargs) -> None:
+        typer.secho(f"✖ {text}", fg=fg, *args, **kwargs)
 
     @staticmethod
     def user_info(text, *args, **kwargs) -> None:
         typer.secho(f"ℹ {text}", *args, **kwargs)
+
+    @staticmethod
+    def user_success(text, fg: str = typer.colors.GREEN, *args, **kwargs) -> None:
+        typer.secho(f"✔ {text}", fg=fg, *args, **kwargs)
 
     @staticmethod
     def user_spinner(text, *args, **kwargs) -> Spinner:

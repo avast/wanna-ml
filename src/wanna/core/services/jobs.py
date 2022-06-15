@@ -1,7 +1,8 @@
 import json
+import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 
 import typer
 from caseconverter import kebabcase, snakecase
@@ -22,6 +23,7 @@ from smart_open import open
 
 from wanna.core.deployment.models import ContainerArtifact, PathArtifact, PushMode, PushTask
 from wanna.core.deployment.push import PushResult, push
+from wanna.core.loggers.wanna_logger import WannaLogger
 from wanna.core.models.docker import ImageBuildType
 from wanna.core.models.training_custom_job import (
     CustomContainerTrainingJobManifest,
@@ -41,7 +43,9 @@ from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.gcp import convert_project_id_to_project_number
 from wanna.core.utils.loaders import load_yaml_path
-from wanna.core.utils.spinners import Spinner
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 
 def _make_gcs_manifest_path(bucket: str, job_name: str) -> str:
@@ -211,14 +215,14 @@ def _run_custom_job(manifest: CustomJobManifest, sync: bool) -> None:
     runable_id = runable.resource_name.split("/")[-1]
 
     if sync:
-        with Spinner(text=f"Running job {manifest.job_config.name} in sync mode") as s:
+        with logger.user_spinner(f"Running job {manifest.job_config.name} in sync mode") as s:
             s.info(
                 f"Job Dashboard in "
                 f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
             )
             custom_job.wait()
     else:
-        with Spinner(text=f"Running job {manifest.job_config.name} in async mode") as s:
+        with logger.user_spinner(f"Running job {manifest.job_config.name} in async mode") as s:
             s.info(
                 f"Job Dashboard in "
                 f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
@@ -246,7 +250,7 @@ def _run_training_job(
             f"{CustomJobType.CustomContainerTrainingJob}"
         )
 
-    with Spinner(text=f"Initiating {manifest.job_config.name} custom job") as s:
+    with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job") as s:
         project_number = convert_project_id_to_project_number(manifest.job_config.project_id)
         network = f"projects/{project_number}/global/networks/{manifest.job_config.network}"
 
@@ -289,14 +293,14 @@ def _run_training_job(
     if sync:
         training_job.wait_for_resource_creation()
         job_id = training_job.resource_name.split("/")[-1]
-        with Spinner(text=f"Running custom training job {manifest.job_config.name} in sync mode") as s:
+        with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in sync mode") as s:
             s.info(
                 "Job Dashboard in "
                 f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
             )
             training_job.wait()
     else:
-        with Spinner(text=f"Running custom training job {manifest.job_config.name} in async mode") as s:
+        with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in async mode") as s:
             training_job.wait_for_resource_creation()
             job_id = training_job.resource_name.split("/")[-1]
             s.info(
@@ -390,7 +394,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             loaded_manifest = _read_job_manifest(str(manifest_path))
             manifest_artifacts, container_artifacts = [], []
 
-            with Spinner(text=f"Packaging {manifest.job_config.name} job resources"):
+            with logger.user_spinner(f"Packaging {manifest.job_config.name} job resources"):
 
                 if self.push_mode.can_push_containers():
                     for docker_image_ref in loaded_manifest.image_refs:
@@ -452,7 +456,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                     manifest_hp_params = manifest.job_config.hp_tuning.dict() if manifest.job_config.hp_tuning else {}
                     overriden_hp_tuning = HyperparameterTuning.parse_obj({**manifest_hp_params, **override_hp_params})
                     manifest.job_config.hp_tuning = overriden_hp_tuning
-                typer.echo(manifest)
+                logger.user_info(manifest)
             else:
                 _run_training_job(manifest, sync)
 
@@ -654,7 +658,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                     f"Do you want to cancel job {job.display_name} (started at {job.create_time})?"
                 )
                 if should_cancel:
-                    with Spinner(text=f"Canceling job {job.display_name}"):
+                    with logger.user_spinner(f"Canceling job {job.display_name}"):
                         job.cancel()
         else:
-            typer.echo(f"No running or pending job with name {instance.name}")
+            logger.user_info(f"No running or pending job with name {instance.name}")

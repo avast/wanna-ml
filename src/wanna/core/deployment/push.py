@@ -1,10 +1,14 @@
 import json
-from typing import List, Tuple, TypeVar
+import logging
+from typing import List, Tuple, TypeVar, cast
 
 from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushTask
+from wanna.core.loggers.wanna_logger import WannaLogger
 from wanna.core.services.docker import DockerService
 from wanna.core.utils.io import open
-from wanna.core.utils.spinners import Spinner
+
+logging.setLoggerClass(WannaLogger)
+logger = cast(WannaLogger, logging.getLogger(__name__))
 
 Manifest = TypeVar("Manifest")
 PushResult = List[Tuple[List[ContainerArtifact], List[PathArtifact], List[JsonArtifact]]]
@@ -16,19 +20,19 @@ def push(
 ) -> PushResult:
     def push_containers(container_artifacts: List[ContainerArtifact]):
         for artifact in container_artifacts:
-            with Spinner(text=f"Pushing {artifact.title.lower()} to {artifact.tags}"):
+            with logger.user_spinner(f"Pushing {artifact.title.lower()} to {artifact.tags}"):
                 docker_service.push_image(artifact.tags)
 
     def push_manifests(manifest_artifacts: List[PathArtifact]):
         for artifact in manifest_artifacts:
-            with Spinner(text=f"Pushing {artifact.title.lower()} to {artifact.destination}"):
+            with logger.user_spinner(f"Pushing {artifact.title.lower()} to {artifact.destination}"):
                 with open(artifact.source, "r") as fin:
                     with open(artifact.destination, "w") as fout:
                         fout.write(fin.read())
 
     def push_json(artifacts: List[JsonArtifact]):
         for artifact in artifacts:
-            with Spinner(text=f"Pushing {artifact.title.lower()} to {artifact.destination}"):
+            with logger.user_spinner(f"Pushing {artifact.title.lower()} to {artifact.destination}"):
                 with open(artifact.destination, "w") as fout:
                     fout.write(json.dumps(artifact.json_body))
 
