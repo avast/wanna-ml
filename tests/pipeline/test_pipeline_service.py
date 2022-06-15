@@ -5,15 +5,14 @@ from pathlib import Path
 
 import pandas as pd
 from google import auth
-from google.cloud import aiplatform, scheduler_v1
+from google.cloud import aiplatform, logging, scheduler_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from google.cloud.functions_v1.services.cloud_functions_service import CloudFunctionsServiceClient
+from google.cloud.monitoring_v3 import AlertPolicyServiceClient
 from mock import patch
 from mock.mock import MagicMock
 
 import wanna.core.services.pipeline
-from tests.mocks import mocks
-from wanna.core.deployment import deploy
 from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
 from wanna.core.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
 from wanna.core.services.docker import DockerService
@@ -22,18 +21,6 @@ from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
-@patch(
-    "wanna.core.utils.gcp.ZonesClient",
-    mocks.MockZonesClient,
-)
-@patch("wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient)
-@patch("wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient)
-@patch("wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient)
-@patch("wanna.core.utils.validators.StorageClient", mocks.MockStorageClient)
-@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.config_loader.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.io.get_credentials", mocks.mock_get_credentials)
 class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
@@ -45,13 +32,13 @@ class TestPipelineService(unittest.TestCase):
         self.zone = "us-east1-a"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
-        # # Mock GCP auth calls
-        # auth.default = MagicMock(
-        #     return_value=(
-        #         None,
-        #         None,
-        #     )
-        # )
+        self.maxDiff = None
+        auth.default = MagicMock(
+            return_value=(
+                None,
+                None,
+            )
+        )
 
     def tearDown(self) -> None:
         pass
@@ -95,7 +82,7 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_root": exppected_pipeline_root,
             "pipeline_labels": expected_pipeline_labels,
             "tensorboard": "projects/123456789/locations/europe-west4/tensorboards/123456789",
-            "pipeline_network": "cloud-lab",
+            "pipeline_network": "projects/123456789/global/networks/cloud-lab",
             "pipeline_service_account": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
         }
         expected_parameter_values = {"eval_acc_threshold": 0.87}
@@ -142,7 +129,7 @@ class TestPipelineService(unittest.TestCase):
         # Get compile result metadata
         pipelines = pipeline_service.build("wanna-sklearn-sample")
         manifest_path = pipelines[0]
-        pipeline_meta = PipelineService.read_manifest(str(manifest_path))
+        pipeline_meta = PipelineService.read_manifest(pipeline_service.connector, str(manifest_path))
 
         docker_mock.build.assert_called_with(
             self.sample_pipeline_dir,
@@ -177,7 +164,7 @@ class TestPipelineService(unittest.TestCase):
         # Run pipeline on Vertex AI(Mocked GCP Calls)
         # Passing dummy callback as pipeline_job.state can't be mocked
         aiplatform.init = MagicMock(return_value=None)
-        PipelineService.run([str(manifest_path)], sync=True, exit_callback=lambda x, y, z, i: None)
+        PipelineService.run([str(manifest_path)], sync=True)
         aiplatform.init.assert_called_once()
 
         # Test GCP services were called and with correct args
@@ -205,18 +192,18 @@ class TestPipelineService(unittest.TestCase):
         expected_push_result = [
             (
                 [
-                    ContainerArtifact(title="train", tags=[expected_train_docker_tags[0]]),
+                    ContainerArtifact(name="train", tags=[expected_train_docker_tags[0]]),
                 ],
                 [
                     PathArtifact(
-                        title="Kubeflow V2 pipeline spec",
+                        name="Kubeflow V2 pipeline spec",
                         source=str(expected_json_spec_path),
                         destination=expected_pipeline_spec_path,
                     ),
                 ],
                 [
                     JsonArtifact(
-                        title="WANNA pipeline manifest",
+                        name="WANNA pipeline manifest",
                         json_body=pipeline_meta.dict(),
                         destination=expected_manifest_json_path,
                     ),
@@ -262,22 +249,28 @@ class TestPipelineService(unittest.TestCase):
                 "REGION": "europe-west1",
                 "PIPELINE_ROOT": "gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/executions/",
                 "PIPELINE_LABELS": expected_pipeline_labels,
-                "PIPELINE_NETWORK": "cloud-lab",
+                "PIPELINE_NETWORK": "projects/123456789/global/networks/cloud-lab",
                 "PIPELINE_SERVICE_ACCOUNT": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
                 "TENSORBOARD": "projects/123456789/locations/europe-west4/tensorboards/123456789",
             },
         }
 
         # Set Mocks
+        AlertPolicyServiceClient.list_alert_policies = MagicMock(return_value=[])
+        AlertPolicyServiceClient.update_alert_policy = MagicMock()
+        AlertPolicyServiceClient.create_alert_policy = MagicMock()
+
+        logging.Client.metrics_api.metric_create = MagicMock()
+        logging.Client.metrics_api.metric_get = MagicMock()
+
         CloudFunctionsServiceClient.get_function = MagicMock()
         CloudFunctionsServiceClient.update_function = MagicMock()
         scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
-        wanna.core.services.pipeline_utils.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
+        wanna.core.services.path_utils.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
             return_value=expected_manifest_json_path
         )
-        deploy._sync_cloud_function_package = MagicMock(return_value=None)
 
         # Deploy the thing
         pipeline_service.deploy("all", env="local")
@@ -297,4 +290,9 @@ class TestPipelineService(unittest.TestCase):
         scheduler_v1.CloudSchedulerClient.get_job.assert_called_once()
         scheduler_v1.CloudSchedulerClient.update_job.assert_called_once()
         scheduler_v1.CloudSchedulerClient.get_job.assert_called_with({"name": job_name})
-        # scheduler_v1.CloudSchedulerClient.update_job.assert_called_with({})
+
+        # TODO: test which data was used to with the call
+        AlertPolicyServiceClient.list_alert_policies.assert_called()
+        AlertPolicyServiceClient.create_alert_policy.assert_called()
+        # logging.Client.metrics_api.metric_get.assert_called()
+        # logging.Client.metrics_api.metric_create.assert_called()

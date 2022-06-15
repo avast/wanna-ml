@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Extra, Field, root_validator, validator
@@ -137,32 +136,3 @@ class CustomJobModel(BaseCustomJobModel):
 class TrainingCustomJobModel(BaseCustomJobModel):
     worker: WorkerPoolModel
     reduction_server: Optional[ReductionServerModel]
-
-
-class CustomJobType(Enum):
-    CustomContainerTrainingJob = "CustomContainerTrainingJob"
-    CustomPythonPackageTrainingJob = "CustomPythonPackageTrainingJob"
-    CustomJob = "CustomJob"
-
-
-class BaseJobManifest(BaseModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
-    job_type: CustomJobType
-    job_payload: Dict[str, Any]
-    image_refs: List[str] = []
-    tensorboard: Optional[str]
-    network: str
-
-
-class CustomJobManifest(BaseJobManifest):
-    job_config: CustomJobModel
-
-
-class CustomPythonPackageTrainingJobManifest(BaseJobManifest):
-    job_config: TrainingCustomJobModel
-
-
-class CustomContainerTrainingJobManifest(BaseJobManifest):
-    job_config: TrainingCustomJobModel
-
-
-JobManifest = Union[CustomJobManifest, CustomPythonPackageTrainingJobManifest, CustomContainerTrainingJobManifest]

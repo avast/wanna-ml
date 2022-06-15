@@ -1,26 +1,29 @@
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Extra
+from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.docker import DockerBuildResult
+from wanna.core.models.training_custom_job import BaseCustomJobModel
 
 
-class CloudSchedulerResource(BaseModel):
+class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
     name: str
     project: str
     location: str
-    cloud_scheduler: CloudSchedulerModel
     service_account: Optional[EmailStr]
+
+
+class CloudSchedulerResource(GCPResource):
+    cloud_scheduler: CloudSchedulerModel
     body: Dict[str, Any]
+    labels: Dict[str, str]
 
 
-class CloudFunctionResource(BaseModel):
-    name: str
-    project: str
-    location: str
-    service_account: str
+class CloudFunctionResource(GCPResource):
     build_dir: Path
     resource_root: str
     resource_function_template: str
@@ -31,24 +34,63 @@ class CloudFunctionResource(BaseModel):
     network: str
 
 
-class DeploymentArtifact(BaseModel):
-    title: str
+class LogMetricResource(GCPResource):
+    filter_: str
+    description: str
 
 
-class JsonArtifact(DeploymentArtifact):
-    title: str
+class AlertPolicyResource(GCPResource):
+    logging_metric_type: str
+    resource_type: str
+    display_name: str
+    labels: Dict[str, str]
+    notification_channels: List[str]
+
+
+class PipelineResource(GCPResource):
+    pipeline_name: str
+    pipeline_bucket: str
+    pipeline_root: str
+    pipeline_version: str
+    json_spec_path: str
+    parameter_values: Dict[str, Any] = {}
+    labels: Dict[str, str] = {}
+    enable_caching: bool = True
+    schedule: Optional[CloudSchedulerModel]
+    docker_refs: List[DockerBuildResult]
+    compile_env_params: Dict[str, str]
+    network: str
+
+
+JOB = TypeVar("JOB", bound=BaseCustomJobModel, covariant=True)  # dependency from wanna models
+
+
+class JobResource(GCPResource, Generic[JOB]):
+    job_payload: Dict[str, Any]
+    image_refs: List[str] = []
+    tensorboard: Optional[str]
+    network: str
+    job_config: JOB
+
+
+class PushArtifact(BaseModel):
+    name: str
+
+
+class JsonArtifact(PushArtifact):
+    name: str
     json_body: Dict[Any, Any]
     destination: str
 
 
-class PathArtifact(DeploymentArtifact):
-    title: str
+class PathArtifact(PushArtifact):
+    name: str
     source: str
     destination: str
 
 
-class ContainerArtifact(DeploymentArtifact):
-    title: str
+class ContainerArtifact(PushArtifact):
+    name: str
     tags: List[str]
 
 
@@ -72,3 +114,6 @@ class PushTask(BaseModel):
     manifest_artifacts: List[PathArtifact]
     container_artifacts: List[ContainerArtifact]
     json_artifacts: List[JsonArtifact]
+
+
+PushResult = List[Tuple[List[ContainerArtifact], List[PathArtifact], List[JsonArtifact]]]

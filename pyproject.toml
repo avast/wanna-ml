@@ -47,6 +47,8 @@ waiting = "^1.4.1"
 merge-args = "^0.1.4"
 checksumdir = "^1.2.0"
 pandas = "^1.4.2"
+google-cloud-monitoring = "^2.9.2"
+google-cloud-logging = "^3.1.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
