@@ -3,7 +3,6 @@ import shutil
 import unittest
 from pathlib import Path
 
-import pandas as pd
 from google import auth
 from google.cloud import aiplatform, logging, scheduler_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
@@ -123,7 +122,6 @@ class TestPipelineService(unittest.TestCase):
         PipelineJob.submit = MagicMock(return_value=None)
         PipelineJob.wait = MagicMock(return_value=None)
         PipelineJob._dashboard_uri = MagicMock(return_value=None)
-        aiplatform.get_pipeline_df = MagicMock(return_value=pd.DataFrame(columns=["name"]))
 
         # === Build ===
         # Get compile result metadata
@@ -172,9 +170,6 @@ class TestPipelineService(unittest.TestCase):
         PipelineJob.submit.assert_called_once()
         PipelineJob.wait.assert_called_once()
         PipelineJob._dashboard_uri.assert_called_once()
-
-        aiplatform.get_pipeline_df.assert_called_once()
-        aiplatform.get_pipeline_df.assert_called_with(pipeline="wanna-sklearn-sample")
 
         # === Push ===
         DockerService.push_image = MagicMock(return_value=None)

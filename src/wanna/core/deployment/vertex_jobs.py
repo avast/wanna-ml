@@ -9,7 +9,15 @@ from google.cloud.aiplatform import hyperparameter_tuning as hpt
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import JobResource
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.training_custom_job import CustomJobModel, HyperParamater, TrainingCustomJobModel
+from wanna.core.models.training_custom_job import (
+    CategoricalParameter,
+    CustomJobModel,
+    DiscreteParameter,
+    DoubleParameter,
+    HyperParamater,
+    IntegerParameter,
+    TrainingCustomJobModel,
+)
 from wanna.core.utils.gcp import convert_project_id_to_project_number
 
 logger = get_logger(__name__)
@@ -20,16 +28,16 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         self,
         parameter: HyperParamater,
     ) -> hpt._ParameterSpec:
-        if parameter.type == "integer":
+        if isinstance(parameter, IntegerParameter) and parameter.type == "integer":
             return hpt.IntegerParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
-        elif parameter.type == "double":
+        elif isinstance(parameter, DoubleParameter) and parameter.type == "double":
             return hpt.DoubleParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
-        elif parameter.type == "categorical":
+        elif isinstance(parameter, CategoricalParameter) and parameter.type == "categorical":
             return hpt.CategoricalParameterSpec(values=parameter.values)
-        elif parameter.type == "discrete":
+        elif isinstance(parameter, DiscreteParameter) and parameter.type == "discrete":
             return hpt.DiscreteParameterSpec(values=parameter.values, scale=parameter.scale)
         else:
-            raise Exception(f"Unsupported parameter type {parameter.type}")
+            raise ValueError(f"Unsupported parameter type {parameter.type}")
 
     def run_custom_job(self, manifest: JobResource[CustomJobModel], sync: bool) -> None:
         """
