@@ -25,6 +25,7 @@ class JobPlugin(BasePlugin):
                 self.run,
                 self.run_manifest,
                 self.stop,
+                self.report,
             ]
         )
 
@@ -87,3 +88,22 @@ class JobPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir)
         job_service.stop(instance_name)
+
+    @staticmethod
+    def report(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("job", "report"),
+    ) -> None:
+        """
+        Displays a link to the cost report per wanna_project and optionally per job name
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        job_service = JobService(config=config, workdir=workdir)
+        job_service.report(
+            instance_name=instance_name,
+            wanna_project=config.wanna_project.name,
+            wanna_resource="job",
+            gcp_project=config.gcp_profile.project_id,
+        )

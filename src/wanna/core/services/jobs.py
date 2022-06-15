@@ -185,7 +185,6 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         Returns:
             Job Resource for execution
         """
-
         job_paths = JobPaths(self.workdir, instance.bucket or f"gs://{self.config.gcp_profile.bucket}", instance.name)
         manifest_path = Path(job_paths.get_local_job_wanna_manifest_path(self.version))
         resource: Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]] = (
@@ -203,6 +202,12 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         image_refs, worker_pool_specs = list(
             zip(*[self._create_worker_pool_spec(worker) for worker in job_model.workers])
         )
+        labels = {
+            "wanna_name": job_model.name,
+            "wanna_resource": self.instance_type,
+        }
+        if job_model.labels:
+            labels = {**job_model.labels, **labels}
         return JobResource[CustomJobModel](
             name=job_model.name,
             project=job_model.project_id,
@@ -214,7 +219,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                     remove_nones(MessageToDict(s._pb, preserving_proto_field_name=True))
                     for s in list(worker_pool_specs)
                 ],
-                "labels": job_model.labels,
+                "labels": labels,
                 "staging_bucket": job_model.bucket,
             },
             image_refs=set(image_refs),
@@ -238,7 +243,12 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         Returns:
             Custom Python on Custom Container training job Manifests
         """
-
+        labels = {
+            "wanna_name": job_model.name,
+            "wanna_resource": self.instance_type,
+        }
+        if job_model.labels:
+            labels = {**job_model.labels, **labels}
         job_payload: Dict[str, Any] = {}
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
@@ -248,7 +258,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 "python_package_gcs_uri": job_model.worker.python_package.package_gcs_uri,
                 "python_module_name": job_model.worker.python_package.module_name,
                 "container_uri": tag,
-                "labels": job_model.labels,
+                "labels": labels,
                 "staging_bucket": job_model.bucket,
             }
         elif job_model.worker.container:
@@ -258,7 +268,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                 "display_name": job_model.name,
                 "container_uri": tag,
                 "command": job_model.worker.container.command,
-                "labels": job_model.labels,
+                "labels": labels,
                 "staging_bucket": job_model.bucket,
             }
         else:

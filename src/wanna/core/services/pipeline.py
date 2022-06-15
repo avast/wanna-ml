@@ -164,7 +164,10 @@ class PipelineService(BaseService[PipelineModel]):
         network=str,
     ):
 
-        labels = {"wanna_pipeline": pipeline_instance.name}
+        labels = {
+            "wanna_name": pipeline_instance.name,
+            "wanna_resource": self.instance_type,
+        }
         if pipeline_instance.labels:
             labels = {**pipeline_instance.labels, **labels}
 
