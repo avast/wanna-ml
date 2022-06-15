@@ -233,7 +233,12 @@ class NotebookService(BaseService[NotebookModel]):
 
         # labels and tags
         tags = notebook_instance.tags
-        labels = notebook_instance.labels if notebook_instance.labels else {}
+        labels = {
+            "wanna_name": notebook_instance.name,
+            "wanna_resource": self.instance_type,
+        }
+        if notebook_instance.labels:
+            labels = {**notebook_instance.labels, **labels}
 
         # post startup script
         if notebook_instance.bucket_mounts or notebook_instance.tensorboard_ref:
@@ -449,6 +454,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 return
 
         # Configuration of the managed notebook
+        labels = {
+            "wanna_name": instance.name,
+            "wanna_resource": self.instance_type,
+        }
+        if instance.labels:
+            labels = {**instance.labels, **labels}
         # Disks
         disk_type = instance.data_disk.disk_type if instance.data_disk else None
         disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
@@ -462,14 +473,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         else:
             runtimeAcceleratorConfig = None
         # Network
-        if instance.network:
-            network = f"projects/{instance.project_id}/global/networks/{instance.network}"
-        else:
-            network = None
         if instance.subnet:
             subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
-        else:
-            subnet = None
 
         # Post startup script
         if instance.tensorboard_ref:
@@ -487,9 +492,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         virtualMachineConfig = VirtualMachineConfig(
             machine_type=instance.machine_type,
             data_disk=localDisk,
-            labels=instance.labels,
+            labels=labels,
             accelerator_config=runtimeAcceleratorConfig,
-            network=network,
             subnet=subnet,
             tags=instance.tags,
             metadata=instance.metadata,
