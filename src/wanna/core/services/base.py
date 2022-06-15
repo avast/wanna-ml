@@ -127,5 +127,5 @@ class BaseService(ABC, Generic[T]):
             labels = f"labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource},wanna_name:{instance_name}"
 
         link = base_url + labels + organization
-        logger.info(f"Here is a link to your {wanna_resource} cost report:")
-        logger.info(f"{link}")
+        logger.user_info(f"Here is a link to your {wanna_resource} cost report:")
+        logger.user_success(f"{link}")
