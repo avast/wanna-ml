@@ -51,8 +51,8 @@ class JobPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version, push_mode=mode)
-        jobs = job_service.build(instance_name)
-        job_service.push(jobs)
+        manifests = job_service.build(instance_name)
+        job_service.push(manifests)
 
     @staticmethod
     def run(
@@ -66,9 +66,9 @@ class JobPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version)
-        jobs = job_service.build(instance_name)
-        manifest_paths, _ = job_service.push(jobs, local=True)
-        JobService.run(manifest_paths, sync=sync, hp_params=hp_params)
+        manifests = job_service.build(instance_name)
+        job_service.push(manifests, local=False)
+        JobService.run([str(p) for p in manifests], sync=sync, hp_params=hp_params)
 
     @staticmethod
     def run_manifest(

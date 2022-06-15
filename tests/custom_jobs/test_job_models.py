@@ -1,10 +1,8 @@
 import unittest
 
 import pytest
-from mock import patch
 from pydantic.error_wrappers import ValidationError
 
-from tests.mocks import mocks
 from wanna.core.models.training_custom_job import TrainingCustomJobModel, WorkerPoolModel
 
 
@@ -41,12 +39,6 @@ class TestWorkerPoolSpecModel(unittest.TestCase):
             )
 
 
-@patch(
-    "wanna.core.utils.gcp.RegionsClient",
-    mocks.MockRegionsClient,
-)
-@patch("wanna.core.utils.validators.get_credentials", mocks.mock_get_credentials)
-@patch("wanna.core.utils.gcp.get_credentials", mocks.mock_get_credentials)
 class TestTrainingCustomJobModel(unittest.TestCase):
     def test_base_output_directory_default(self):
         model = TrainingCustomJobModel.parse_obj(

@@ -74,7 +74,7 @@ class PipelinePlugin(BasePlugin):
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
         manifests = pipeline_service.build(instance_name)
         pipeline_service.push(manifests, local=False)
-        PipelineService.run([str(p) for p in manifests], extra_params_path=params, sync=sync)
+        PipelineService.run([str(p) for p in manifests], extra_params=params, sync=sync)
 
     @staticmethod
     def run_manifest(

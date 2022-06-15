@@ -17,6 +17,7 @@ class PipelineModel(BaseInstanceModel):
     docker_image_ref: List[str] = []
     schedule: Optional[CloudSchedulerModel]
     tensorboard_ref: Optional[str]
+    network: Optional[str]
 
 
 class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
@@ -28,7 +29,7 @@ class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
     parameter_values: Dict[str, Any] = {}
     labels: Dict[str, str] = {}
     enable_caching: bool = True
-    project: Optional[str]
+    project: str
     location: Optional[str]
     service_account: Optional[str]
     schedule: Optional[CloudSchedulerModel]
