@@ -139,3 +139,4 @@ dmypy.json
 # Editors
 .vscode
 .idea
+*.iml
