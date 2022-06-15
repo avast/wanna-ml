@@ -8,9 +8,11 @@ from google.cloud.aiplatform import hyperparameter_tuning as hpt
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import JobResource
+from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.training_custom_job import CustomJobModel, HyperParamater, TrainingCustomJobModel
 from wanna.core.utils.gcp import convert_project_id_to_project_number
-from wanna.core.utils.spinners import Spinner
+
+logger = get_logger(__name__)
 
 
 class VertexJobsMixInVertex(ArtifactsPushMixin):
@@ -70,14 +72,14 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         runable_id = runable.resource_name.split("/")[-1]
 
         if sync:
-            with Spinner(text=f"Running job {manifest.job_config.name} in sync mode") as s:
+            with logger.user_spinner(f"Running job {manifest.job_config.name} in sync mode") as s:
                 s.info(
                     f"Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
                 )
                 custom_job.wait()
         else:
-            with Spinner(text=f"Running job {manifest.job_config.name} in async mode") as s:
+            with logger.user_spinner(f"Running job {manifest.job_config.name} in async mode") as s:
                 s.info(
                     f"Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
@@ -105,7 +107,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
                 "must be set on the owrker"
             )
 
-        with Spinner(text=f"Initiating {manifest.job_config.name} custom job") as s:
+        with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job") as s:
             project_number = convert_project_id_to_project_number(manifest.job_config.project_id)
             network = f"projects/{project_number}/global/networks/{manifest.job_config.network}"
 
@@ -148,14 +150,14 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         if sync:
             training_job.wait_for_resource_creation()
             job_id = training_job.resource_name.split("/")[-1]
-            with Spinner(text=f"Running custom training job {manifest.job_config.name} in sync mode") as s:
+            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in sync mode") as s:
                 s.info(
                     "Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
                 )
                 training_job.wait()
         else:
-            with Spinner(text=f"Running custom training job {manifest.job_config.name} in async mode") as s:
+            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in async mode") as s:
                 training_job.wait_for_resource_creation()
                 job_id = training_job.resource_name.split("/")[-1]
                 s.info(

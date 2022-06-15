@@ -10,11 +10,13 @@ from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeli
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, PipelineResource
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
+from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.utils.gcp import convert_project_id_to_project_number
 from wanna.core.utils.loaders import load_yaml_path
-from wanna.core.utils.spinners import Spinner
 from wanna.core.utils.time import get_timestamp
+
+logger = get_logger(__name__)
 
 
 class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
@@ -24,7 +26,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         def stop_pipeline_job():
             if sync and pipeline_job and getattr(pipeline_job._gca_resource, "name", None):
                 if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
-                    Spinner().fail(
+                    logger.user_error(
                         "detected exit signal, "
                         f"shutting down running pipeline {pipeline_name} "
                         f"at {pipeline_job._dashboard_uri()}."
@@ -40,7 +42,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
     ) -> None:
         mode = "sync mode" if sync else "fire-forget mode"
 
-        Spinner().info(text=f"Running pipeline {resource.pipeline_name} in {mode}")
+        logger.user_info(f"Running pipeline {resource.pipeline_name} in {mode}")
 
         # fetch compiled params
         pipeline_job_id = f"pipeline-{resource.pipeline_name}-{get_timestamp()}"
@@ -71,14 +73,14 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         pipeline_job.submit(service_account=resource.service_account, network=network)
 
         if sync:
-            Spinner().info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
+            logger.user_info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
             pipeline_job.wait()
 
             df_pipeline = aiplatform.get_pipeline_df(pipeline=resource.pipeline_name.replace("_", "-"))
             with pd.option_context(
                 "display.max_rows", None, "display.max_columns", None
             ):  # more options can be specified also
-                Spinner().info(f"Pipeline results info: \n\t{df_pipeline}")
+                logger.user_info(f"Pipeline results info: \n\t{df_pipeline}")
 
     def deploy_pipeline(
         self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str
@@ -128,7 +130,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             )
 
         else:
-            Spinner().info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
+            logger.user_info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
 
         # not possible to set alerts for failed PipelineJobs
         # since aiplatform.googleapis.com/PipelineJob

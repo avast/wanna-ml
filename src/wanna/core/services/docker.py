@@ -11,6 +11,7 @@ from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, 
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
+from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.docker import (
     DockerBuildConfigModel,
     DockerImageModel,
@@ -24,8 +25,9 @@ from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
 from wanna.core.utils.gcp import make_tarfile, upload_file_to_gcs
-from wanna.core.utils.spinners import Spinner
 from wanna.core.utils.templates import render_template
+
+logger = get_logger(__name__)
 
 
 class DockerClientException(Exception):
@@ -106,19 +108,19 @@ class DockerService:
 
         if should_build and not self.quick_mode:
             if self.cloud_build:
-                Spinner().info(text=f"Building {docker_image_ref} docker image in GCP Cloud build")
+                logger.user_info(text=f"Building {docker_image_ref} docker image in GCP Cloud build")
                 self._build_image_on_gcp_cloud_build(
                     context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
                 )
                 self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return None
             else:
-                Spinner().info(text=f"Building {docker_image_ref} docker image locally with {build_args}")
+                logger.user_info(text=f"Building {docker_image_ref} docker image locally with {build_args}")
                 image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
                 self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
                 return image  # type: ignore
         else:
-            Spinner().info(
+            logger.user_info(
                 text=f"Skipping build for context_dir={context_dir}, dockerfile={file_path} and image {tags[0]}"
             )
             return None
@@ -128,7 +130,7 @@ class DockerService:
             # TODO: verify that images exists remotely but dont pull them to local
             return None
         else:
-            with Spinner(text="Pulling image locally"):
+            with logger.user_spinner("Pulling image locally"):
                 image = docker.pull(image_url, quiet=True)
             return image  # type: ignore
 
@@ -312,7 +314,7 @@ class DockerService:
         """
         if not self.cloud_build:
             tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
-            Spinner().info(text=f"Pushing docker image {tags}")
+            logger.user_info(text=f"Pushing docker image {tags}")
             docker.image.push(tags, quiet)
 
     def push_image_ref(self, image_ref: str, quiet: bool = False) -> None:
