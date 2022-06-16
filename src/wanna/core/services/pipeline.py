@@ -59,6 +59,7 @@ class PipelineService(BaseService[PipelineModel]):
             wanna_project_name=self.config.wanna_project.name,
             quick_mode=push_mode.is_quick_mode(),
         )
+        self.notification_channels = {channel.name: channel for channel in self.config.notification_channels}
 
     def build(self, instance_name: str) -> List[Path]:
         """
@@ -161,7 +162,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str,
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
         tensorboard: Optional[str],
-        network=str,
+        network: str,
     ):
 
         labels = {
@@ -259,6 +260,14 @@ class PipelineService(BaseService[PipelineModel]):
             for model, image, tag in image_tags
         ]
 
+        channels = []
+        for ref in pipeline.notification_channels_ref:
+            channel = self.notification_channels.get(ref)
+            if channel:
+                channels.append(channel)
+            else:
+                raise ValueError(f"{ref} notification channel not specified")
+
         deployment_manifest = PipelineResource(
             name=f"pipeline {pipeline.name}",
             project=pipeline.project_id,
@@ -276,6 +285,7 @@ class PipelineService(BaseService[PipelineModel]):
             schedule=pipeline.schedule,
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,
+            notification_channels=channels,
         )
 
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)

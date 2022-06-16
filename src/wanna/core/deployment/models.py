@@ -7,6 +7,7 @@ from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
+from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.training_custom_job import BaseCustomJobModel
 
 
@@ -16,11 +17,20 @@ class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, ar
     location: str
     service_account: Optional[EmailStr]
 
+    def get_base_resource(self):
+        return self.dict()
+
+
+class NotificationChannelResource(GCPResource):
+    config: Dict[str, str]
+    labels: Dict[str, str]
+
 
 class CloudSchedulerResource(GCPResource):
     cloud_scheduler: CloudSchedulerModel
     body: Dict[str, Any]
     labels: Dict[str, str]
+    notification_channels: List[str]
 
 
 class CloudFunctionResource(GCPResource):
@@ -32,6 +42,7 @@ class CloudFunctionResource(GCPResource):
     env_params: Dict[str, str]
     labels: Dict[str, str]
     network: str
+    notification_channels: List[str]
 
 
 class LogMetricResource(GCPResource):
@@ -47,11 +58,6 @@ class AlertPolicyResource(GCPResource):
     notification_channels: List[str]
 
 
-class NotificationChannelResource(GCPResource):
-    email_address: EmailStr
-    labels: Dict[str, str]
-
-
 class PipelineResource(GCPResource):
     pipeline_name: str
     pipeline_bucket: str
@@ -65,6 +71,7 @@ class PipelineResource(GCPResource):
     docker_refs: List[DockerBuildResult]
     compile_env_params: Dict[str, str]
     network: str
+    notification_channels: List[NotificationChannelModel]
 
 
 JOB = TypeVar("JOB", bound=BaseCustomJobModel, covariant=True)  # dependency from wanna models

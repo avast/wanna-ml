@@ -1,11 +1,16 @@
 import sys
+
 if sys.version_info >= (3, 8):
-    from typing import Literal, List
+    from typing import Literal
 else:
     from typing_extensions import Literal
 
-from pydantic import BaseModel, Extra, EmailStr
+from typing import List
 
-class NotificationChannel(BaseModel, extra=Extra.forbid):
-    type: Literal['email']
+from pydantic import BaseModel, EmailStr, Extra
+
+
+class NotificationChannelModel(BaseModel, extra=Extra.forbid):
+    name: str
+    type: Literal["email"]
     emails: List[EmailStr]
