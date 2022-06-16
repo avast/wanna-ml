@@ -70,7 +70,7 @@ repos:
         name: pytest
         entry: poetry run pytest
         language: python
-        args: ["-W", "ignore", "-s"]
+        args: ["-W", "ignore", "-s", "--cov=src", "--cov-append"]
         always_run: true
         pass_filenames: false
         verbose: true

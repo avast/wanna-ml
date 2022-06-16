@@ -2,8 +2,6 @@ import atexit
 from pathlib import Path
 from typing import Optional
 
-import pandas as pd
-from google.cloud import aiplatform
 from google.cloud.aiplatform import PipelineJob
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 
@@ -75,12 +73,6 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         if sync:
             logger.user_info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
             pipeline_job.wait()
-
-            df_pipeline = aiplatform.get_pipeline_df(pipeline=resource.pipeline_name.replace("_", "-"))
-            with pd.option_context(
-                "display.max_rows", None, "display.max_columns", None
-            ):  # more options can be specified also
-                logger.user_info(f"Pipeline results info: \n\t{df_pipeline}")
 
     def deploy_pipeline(
         self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str

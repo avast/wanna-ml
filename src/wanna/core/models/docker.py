@@ -1,6 +1,12 @@
+import sys
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Optional, Union
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 from pydantic import BaseModel, Extra, Field
 

@@ -93,7 +93,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 name=f"{job_id}-cloud-scheduler-alert-policy",
                 display_name=f"{job_id}-cloud-scheduler-alert-policy",
                 labels=resource.labels,
-                notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
+                notification_channels=[],  # TODO: fill me
             )
         )
 
@@ -175,7 +175,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 resource_type=gcp_resource_type,
                 display_name=f"{function_name}-cloud-function-alert-policy",
                 labels=resource.labels,
-                notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"],
+                notification_channels=[],  # TODO: fill me
             )
         )
 

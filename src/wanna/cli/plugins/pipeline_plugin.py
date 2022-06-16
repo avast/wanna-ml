@@ -18,7 +18,16 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 class PipelinePlugin(BasePlugin):
     def __init__(self) -> None:
         super().__init__()
-        self.register_many([self.build, self.push, self.deploy, self.run, self.run_manifest])
+        self.register_many(
+            [
+                self.build,
+                self.push,
+                self.deploy,
+                self.run,
+                self.run_manifest,
+                self.report,
+            ]
+        )
 
     @staticmethod
     def build(
@@ -83,3 +92,22 @@ class PipelinePlugin(BasePlugin):
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
         PipelineService.run([manifest], extra_params=params, sync=sync)
+
+    @staticmethod
+    def report(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("managed_notebook", "report"),
+    ) -> None:
+        """
+        Displays a link to the cost report per wanna_project and optionally per instance name
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent
+        pipeline_service = PipelineService(config=config, workdir=workdir)
+        pipeline_service.report(
+            instance_name=instance_name,
+            wanna_project=config.wanna_project.name,
+            wanna_resource="pipeline",
+            gcp_project=config.gcp_profile.project_id,
+        )
