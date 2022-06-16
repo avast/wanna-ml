@@ -2,7 +2,7 @@
 
 ---
 
-<p style="text-align: center; font-style: italic"> MLOps on Google Cloud Platform made easy </p>
+<p style="text-align: center; font-style: italic"> Complete MLOps framework for Vertex-AI </p>
 
 ---
 
