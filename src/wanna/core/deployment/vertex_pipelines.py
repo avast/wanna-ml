@@ -97,10 +97,11 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         channels = []
         for config in resource.notification_channels:
             for email in config.emails:
-                channel_config = {config.type: email}
+                channel_config = {"email_address": email}
                 name = email.split("@")[0].replace(".", "-")
                 channel = self.upsert_notification_channel(
                     resource=NotificationChannelResource(
+                        type_=config.type,
                         name=f"{name}-wanna-email-channel",
                         config=channel_config,
                         labels=resource.labels,

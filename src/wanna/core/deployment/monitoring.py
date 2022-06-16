@@ -31,6 +31,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
 
         if not channel:
             notification_channel = NotificationChannel(
+                type_=resource.type_,
                 display_name=resource.name,
                 description="",
                 labels=resource.config,
@@ -70,7 +71,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
                         "comparison": "COMPARISON_GT",
                         "duration": "0s",
                         "trigger": {"count": 1},
-                        "threshold_value": 1,
+                        "threshold_value": 0,
                     },
                 }
             ],

@@ -22,6 +22,7 @@ class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, ar
 
 
 class NotificationChannelResource(GCPResource):
+    type_: str
     config: Dict[str, str]
     labels: Dict[str, str]
 
@@ -71,7 +72,7 @@ class PipelineResource(GCPResource):
     docker_refs: List[DockerBuildResult]
     compile_env_params: Dict[str, str]
     network: str
-    notification_channels: List[NotificationChannelModel]
+    notification_channels: List[NotificationChannelModel] = []
 
 
 JOB = TypeVar("JOB", bound=BaseCustomJobModel, covariant=True)  # dependency from wanna models
