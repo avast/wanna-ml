@@ -1,14 +1,14 @@
 wanna_project:
   name: kubeflow-dataproc
   version: 0.0.0
-  authors: [michal.mrazek@avast.com]
+  authors: ["john.doe@example.com", "jane.doe@example.com"]
 
 gcp_profiles:
   - profile_name: default
-    project_id: cloud-lab-304213
+    project_id: "your-gcp-project-id"
     zone: europe-west1-b
-    bucket: wanna-cloudlab-europe-west1
-    network: cloud-lab
+    bucket: "your-staging-bucket-name"
+    network: default
     labels:
     service_account: 
 
@@ -27,7 +27,7 @@ pipelines:
   - name: kubeflow-dataproc-pipeline
     schedule:
       cron: 2 * * * *
-    bucket: gs://wanna-cloudlab-europe-west1
+    bucket: "your-staging-bucket-name"
     pipeline_file: pipeline/pipeline.py
     pipeline_params: pipeline/params.yaml
     docker_image_ref: ["dataproc"]

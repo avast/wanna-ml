@@ -1,14 +1,14 @@
 wanna_project:
   name: wanna-notebook-sample
   version: 1
-  authors: [michal.mrazek@avast.com]
+  authors: ["john.doe@example.com", "jane.doe@example.com"]
 
 gcp_profiles:
   - profile_name: default
-    project_id: cloud-lab-304213
-    network: cloud-lab
+    project_id: "your-gcp-project-id"
+    network: default
     zone: europe-west1-b
-    bucket: wanna-cloudlab-europe-west1
+    bucket: "your-staging-bucket-name"
     
 docker:
   images:
@@ -42,7 +42,7 @@ notebooks:
       disk_type: pd_standard
       size_gb: 100
     bucket_mounts:
-      - bucket_name: wanna-cloudlab-europe-west1
+      - bucket_name: "your-staging-bucket-name"
         bucket_dir: data
         local_path: /home/jupyter/mounted/gcs
     tensorboard_ref: my-super-tensorboard

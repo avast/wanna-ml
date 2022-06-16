@@ -92,7 +92,8 @@ class TestNotebookService:
         nb_service.docker_service._pull_image = MagicMock(return_value=None)
         request = nb_service._create_instance_request(instance)
         assert (
-            request.instance.container_image.repository == "europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/"
+            request.instance.container_image.repository
+            == "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/"
             "wanna-notebook-sample-custom-container/custom-notebook-container"
         )
         assert request.instance.container_image.tag == "dev"
@@ -131,7 +132,7 @@ class TestNotebookService:
         instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
         assert (
-            "gcsfuse --implicit-dirs --only-dir=data wanna-cloudlab-europe-west1 /home/jupyter/mounted/gcs"
+            "gcsfuse --implicit-dirs --only-dir=data your-staging-bucket-name /home/jupyter/mounted/gcs"
             in startup_script
         )
 
@@ -139,7 +140,7 @@ class TestNotebookService:
 @patch("wanna.core.services.notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
 class TestManagedNotebookService:
     def setup(self) -> None:
-        self.project_id = "cloud-lab-304213"
+        self.project_id = "your-gcp-project-id"
         self.region = "europe-west1"
 
     def test_list_running_instances(self):

@@ -59,30 +59,30 @@ class TestPipelineService(unittest.TestCase):
             dockerfile="Dockerfile.train",
         )
         expected_train_docker_tags = [
-            "europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/pipeline-sklearn-example-1/train:test",
-            "europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/pipeline-sklearn-example-1/train:latest",
+            "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:test",
+            "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
         expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
-        exppected_pipeline_root = "gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/executions/"
+        exppected_pipeline_root = "gs://your-staging-bucket-name/wanna-pipelines/wanna-sklearn-sample/executions/"
 
         expected_pipeline_labels = (
             """{"wanna_project": "pipeline-sklearn-example-1", """
-            """"wanna_project_version": "1", "wanna_project_authors": "joao-silva1", """
+            """"wanna_project_version": "1", "wanna_project_authors": "jane-doe", """
             """"wanna_name": "wanna-sklearn-sample", "wanna_resource": "pipeline"}"""
         )
 
         # Check expected metadata
         expected_compile_env_params = {
-            "project_id": "cloud-lab-304213",
+            "project_id": "your-gcp-project-id",
             "pipeline_name": "wanna-sklearn-sample",
-            "bucket": "gs://wanna-cloudlab-europe-west1",
+            "bucket": "gs://your-staging-bucket-name",
             "region": "europe-west1",
             "version": "test",
             "pipeline_root": exppected_pipeline_root,
             "pipeline_labels": expected_pipeline_labels,
             "tensorboard": "projects/123456789/locations/europe-west4/tensorboards/123456789",
-            "pipeline_network": "projects/123456789/global/networks/cloud-lab",
-            "pipeline_service_account": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
+            "pipeline_network": "projects/123456789/global/networks/default",
+            "pipeline_service_account": "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com",
         }
         expected_parameter_values = {"eval_acc_threshold": 0.87}
         expected_images = [
@@ -211,16 +211,16 @@ class TestPipelineService(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_manifest_json_path))
 
         # === Deploy ===
-        parent = "projects/cloud-lab-304213/locations/europe-west1"
+        parent = "projects/your-gcp-project-id/locations/europe-west1"
         local_cloud_functions_package = f"{release_path}/functions/package.zip"
         copied_cloud_functions_package = (
-            "gs://wanna-cloudlab-europe-west1/"
+            "gs://your-staging-bucket-name/"
             "wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"
         )
 
         expected_function_name = "wanna-sklearn-sample-local"
         expected_function_name_resoure = f"{parent}/functions/{expected_function_name}"
-        expected_function_url = "https://europe-west1-cloud-lab-304213.cloudfunctions.net/wanna-sklearn-sample-local"
+        expected_function_url = "https://europe-west1-your-gcp-project-id.cloudfunctions.net/wanna-sklearn-sample-local"
         expected_function = {
             "name": expected_function_name_resoure,
             "description": "wanna wanna-sklearn-sample function for local pipeline",
@@ -230,22 +230,22 @@ class TestPipelineService(unittest.TestCase):
             "https_trigger": {
                 "url": expected_function_url,
             },
-            "service_account_email": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
+            "service_account_email": "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com",
             "labels": {
                 "wanna_project": "pipeline-sklearn-example-1",
                 "wanna_project_version": "1",
-                "wanna_project_authors": "joao-silva1",
+                "wanna_project_authors": "jane-doe",
             },
             "environment_variables": {
-                "PROJECT_ID": "cloud-lab-304213",
+                "PROJECT_ID": "your-gcp-project-id",
                 "PIPELINE_NAME": "wanna-sklearn-sample",
                 "VERSION": "test",
-                "BUCKET": "gs://wanna-cloudlab-europe-west1",
+                "BUCKET": "gs://your-staging-bucket-name",
                 "REGION": "europe-west1",
-                "PIPELINE_ROOT": "gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/executions/",
+                "PIPELINE_ROOT": "gs://your-staging-bucket-name/wanna-pipelines/wanna-sklearn-sample/executions/",
                 "PIPELINE_LABELS": expected_pipeline_labels,
-                "PIPELINE_NETWORK": "projects/123456789/global/networks/cloud-lab",
-                "PIPELINE_SERVICE_ACCOUNT": "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com",
+                "PIPELINE_NETWORK": "projects/123456789/global/networks/default",
+                "PIPELINE_SERVICE_ACCOUNT": "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com",
                 "TENSORBOARD": "projects/123456789/locations/europe-west4/tensorboards/123456789",
             },
         }

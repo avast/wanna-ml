@@ -1,10 +1,9 @@
 gcp_profiles:
 
   - profile_name: stage-europe-west3
-    project_id: cloud-lab-304213
+    project_id: "your-gcp-project-id"
     zone: europe-west3-b
-    bucket: wanna-cloudlab-europe-west3
-    network: cloud-lab
-    service_account: "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com"
+    bucket: "your-staging-bucket-name"
+    network: default
     labels:
       gcp-profile: stage-europe-west3
