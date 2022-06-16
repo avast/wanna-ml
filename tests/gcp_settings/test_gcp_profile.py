@@ -23,12 +23,12 @@ class TestWannaConfigModel:
         config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "default")
         assert config.gcp_profile.zone == "europe-west1-b"
         assert config.gcp_profile.profile_name == "default"
-        assert config.gcp_profile.bucket == "wanna-cloudlab-europe-west1"
+        assert config.gcp_profile.bucket == "your-staging-bucket-name"
 
         config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "test")
         assert config.gcp_profile.zone == "europe-west4-a"
         assert config.gcp_profile.profile_name == "test"
-        assert config.gcp_profile.bucket == "wanna-cloudlab-europe-west3"
+        assert config.gcp_profile.bucket == "your-staging-bucket-name"
 
     def test_load_profile_invalid_profile_name(self):
         with pytest.raises(ValueError):

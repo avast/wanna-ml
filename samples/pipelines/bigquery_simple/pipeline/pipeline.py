@@ -38,20 +38,20 @@ def wanna_pipeline():
     with dsl.ExitHandler(exit_task):
         bq_table = BigqueryQueryJobOp(
             # https://google-cloud-pipeline-components.readthedocs.io/en/google-cloud-pipeline-components-1.0.0/google_cloud_pipeline_components.v1.bigquery.html#google_cloud_pipeline_components.v1.bigquery.BigqueryQueryJobOp
-            project="cloud-lab-304213",
+            project=cfg.PROJECT_ID,
             location="EU",
-            query="""
+            query=f"""
             SELECT 
                 MIN(sepal_length) AS min_length, 
                 MIN(sepal_width) AS min_width, 
                 MAX(sepal_length) AS max_length, 
                 MAX(sepal_width) AS max_width 
-            FROM  `cloud-lab-304213`.temporary.iris
+            FROM  `{cfg.PROJECT_ID}`.temporary.iris
             GROUP BY class
             """,
             job_configuration_query={
                 "destinationTable": {
-                    "projectId": "cloud-lab-304213",
+                    "projectId": cfg.PROJECT_ID,
                     "datasetId": "temporary",
                     "tableId": "iris_stats",
                 },

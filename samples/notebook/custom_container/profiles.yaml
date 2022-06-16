@@ -1,6 +1,6 @@
 gcp_profiles:
   - profile_name: prod
-    project_id: cloud-lab-304213
+    project_id: "your-gcp-project-id"
     zone: europe-west1-b
     bucket: wanna-ml-prod
-    network: cloud-lab
+    network: default

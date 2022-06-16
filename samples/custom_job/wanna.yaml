@@ -1,15 +1,15 @@
 wanna_project:
   name: wanna-custom-job-sample
   version: 1
-  authors: [michal.mrazek@avast.com]
+  authors: ["john.doe@example.com", "jane.doe@example.com"]
 
 gcp_profiles:
   - profile_name: default
-    project_id: cloud-lab-304213
-    network: cloud-lab
+    project_id: "your-gcp-project-id"
+    network: default
     zone: europe-west1-b
-    bucket: wanna-cloudlab-europe-west1
-    service_account: "wanna-dev@cloud-lab-304213.iam.gserviceaccount.com"
+    bucket: "your-staging-bucket-name"
+    service_account: "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com"
     labels:
       some-default: label
 
@@ -32,7 +32,7 @@ jobs:
     worker:
       python_package:
         docker_image_ref: tensorflow
-        package_gcs_uri: "gs://wanna-cloudlab-europe-west1/trainer-0.1.tar"
+        package_gcs_uri: "your-staging-bucket-name/trainer-0.1.tar"
         module_name: "trainer.task"
       args: ['--epochs=100', '--steps=100', '--distribute=single']
       machine_type: "n1-standard-4"
