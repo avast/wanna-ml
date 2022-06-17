@@ -1,6 +1,6 @@
 site_name: WANNA ML
-repo_url: https://git.int.avast.com/bds/wanna-ml/
-repo_name: bds/wanna-ml
+repo_url: https://github.com/avast/wanna-ml/
+repo_name: avast/wanna-ml
 edit_uri: edit/master/docs/
 theme:
   name: material
@@ -9,14 +9,14 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to dark mode
-        #    primary: indigo
-        #    accent: indigo
+        primary: indigo
+        accent: indigo
         features:
           - navigation.instant
           - navigation.tracking
           - navigation.tabs
           - navigation.tabs.sticky
-          - navigation.sections
+#          - navigation.sections
           - navigation.expand
           - navigation.indexes
           - navigation.top
@@ -31,8 +31,8 @@ theme:
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
-  #    primary: indigo
-  #    accent: indigo
+      primary: indigo
+      accent: indigo
       features:
         - navigation.instant
         - navigation.tracking
@@ -60,13 +60,13 @@ nav:
         - 'WANNA Docker': 'tutorial/docker.md'
         - 'WANNA Tensorboard': 'tutorial/tensorboard.md'
         - 'WANNA Notebook': 'tutorial/notebook.md'
+        - 'WANNA Managed Notebook': 'tutorial/managed-notebook.md'
         - 'WANNA Job': 'tutorial/job.md'
         - 'WANNA Pipeline': 'tutorial/pipeline.md'
     - Plugins: 'cli/commands.md'
 
 plugins:
 - search
-- mkdocstrings
 
 markdown_extensions:
     - mkdocs-typer
