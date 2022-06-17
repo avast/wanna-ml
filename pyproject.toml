@@ -122,7 +122,7 @@ filterwarnings = [
 ]
 
 [tool.taskipy.tasks]
-docs-deploy = "mkdocs gh-deploy"
+docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 build = "pre-commit run --all-files"
 pre_build = "pre-commit install"
