@@ -2,7 +2,9 @@
 
 ---
 
-<p style="text-align: center; font-style: italic"> Complete MLOps framework for Vertex-AI </p>
+<p align="center" font-style="italic"> 
+<em> Complete MLOps framework for Vertex-AI  </em>
+</p>
 
 ---
 
@@ -45,7 +47,7 @@ Different WANNA-ML calls require different GCP permissions to create given resou
 lists recommended GCP IAM roles for each `wanna` command.
 
 ## Examples
-Jump to [the samples](https://github.com/avast/wanna-ml/blob/main/samples) to see a complete solution 
+Jump to [the samples](https://github.com/avast/wanna-ml/tree/master/samples) to see a complete solution 
 for various use cases.
 
 ## Issues
