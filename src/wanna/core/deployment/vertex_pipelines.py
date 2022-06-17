@@ -6,7 +6,12 @@ from google.cloud.aiplatform import PipelineJob
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
-from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, PipelineResource
+from wanna.core.deployment.models import (
+    CloudFunctionResource,
+    CloudSchedulerResource,
+    NotificationChannelResource,
+    PipelineResource,
+)
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.services.path_utils import PipelinePaths
@@ -78,14 +83,36 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str
     ) -> None:
 
+        base_resource = {
+            "project": resource.project,
+            "location": resource.location,
+            "service_account": (
+                resource.schedule.service_account
+                if resource.schedule and resource.schedule.service_account
+                else resource.service_account
+            ),
+        }
+
+        # Create notification channels
+        channels = []
+        for config in resource.notification_channels:
+            for email in config.emails:
+                channel_config = {"email_address": email}
+                name = email.split("@")[0].replace(".", "-")
+                channel = self.upsert_notification_channel(
+                    resource=NotificationChannelResource(
+                        type_=config.type,
+                        name=f"{name}-wanna-email-channel",
+                        config=channel_config,
+                        labels=resource.labels,
+                        **base_resource,
+                    )
+                )
+                channels.append(channel.name)
+
         function = self.upsert_cloud_function(
             resource=CloudFunctionResource(
                 name=resource.pipeline_name,
-                project=resource.project,
-                location=resource.location,
-                service_account=resource.schedule.service_account
-                if resource.schedule and resource.schedule.service_account
-                else resource.service_account,
                 build_dir=pipeline_paths.get_local_pipeline_deployment_path(version),
                 resource_root=pipeline_paths.get_gcs_pipeline_deployment_path(version),
                 resource_function_template="scheduler_cloud_function.py",
@@ -94,6 +121,8 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                 env_params=resource.compile_env_params,
                 labels=resource.labels,
                 network=resource.network,
+                notification_channels=channels,
+                **base_resource,
             ),
             env=env,
             version=version,
@@ -110,12 +139,11 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                 function=function,
                 resource=CloudSchedulerResource(
                     name=resource.pipeline_name,
-                    project=resource.project,
-                    location=resource.location,
                     body=body,
                     cloud_scheduler=resource.schedule,
-                    service_account=resource.service_account,
                     labels=resource.labels,
+                    notification_channels=channels,
+                    **base_resource,
                 ),
                 env=env,
                 version=version,

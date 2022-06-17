@@ -5,6 +5,7 @@ from pydantic import BaseModel, Extra, validator
 from wanna.core.models.docker import DockerModel
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
+from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.pipeline import PipelineModel
 from wanna.core.models.tensorboard import TensorboardModel
 from wanna.core.models.training_custom_job import CustomJobModel, TrainingCustomJobModel
@@ -21,6 +22,7 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     jobs: List[Union[CustomJobModel, TrainingCustomJobModel]] = []
     pipelines: List[PipelineModel] = []
     managed_notebooks: List[ManagedNotebookModel] = []
+    notification_channels: List[NotificationChannelModel] = []
 
     _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
     _managed_notebooks = validator("managed_notebooks", pre=True, each_item=True, allow_reuse=True)(

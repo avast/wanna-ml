@@ -84,6 +84,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 description=f"Log metric for {resource.name} cloud scheduler job",
             )
         )
+
         self.upsert_alert_policy(
             AlertPolicyResource(
                 logging_metric_type=logging_metric_ref,
@@ -93,7 +94,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 name=f"{job_id}-cloud-scheduler-alert-policy",
                 display_name=f"{job_id}-cloud-scheduler-alert-policy",
                 labels=resource.labels,
-                notification_channels=[],  # TODO: fill me
+                notification_channels=resource.notification_channels,
             )
         )
 
@@ -166,6 +167,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 description=f"Log metric for {function_name} cloud function executions",
             )
         )
+
         self.upsert_alert_policy(
             AlertPolicyResource(
                 name=f"{function_name}-cloud-function-alert-policy",
@@ -175,7 +177,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 resource_type=gcp_resource_type,
                 display_name=f"{function_name}-cloud-function-alert-policy",
                 labels=resource.labels,
-                notification_channels=[],  # TODO: fill me
+                notification_channels=resource.notification_channels,
             )
         )
 

@@ -1,11 +1,10 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
-from wanna.core.models.docker import DockerBuildResult
 
 
 class PipelineModel(BaseInstanceModel):
@@ -18,21 +17,4 @@ class PipelineModel(BaseInstanceModel):
     schedule: Optional[CloudSchedulerModel]
     tensorboard_ref: Optional[str]
     network: Optional[str]
-
-
-class PipelineDeployment(BaseModel, arbitrary_types_allowed=True):
-    pipeline_name: str
-    pipeline_bucket: str
-    pipeline_root: str
-    pipeline_version: str
-    json_spec_path: str
-    parameter_values: Dict[str, Any] = {}
-    labels: Dict[str, str] = {}
-    enable_caching: bool = True
-    project: str
-    location: Optional[str]
-    service_account: Optional[str]
-    schedule: Optional[CloudSchedulerModel]
-    docker_refs: List[DockerBuildResult]
-    compile_env_params: Dict[str, str]
-    network: str
+    notification_channels_ref: List[str] = []
