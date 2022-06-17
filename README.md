@@ -8,6 +8,20 @@
 
 ---
 
+<p align="center">
+<a href="https://github.com/avast/wanna-ml/actions/workflows/build.yml" target="_blank">
+    <img src="https://github.com/avast/wanna-ml/actions/workflows/build.yml/badge.svg" alt="Test">
+</a>
+<a href="https://github.com/avast/wanna-ml/actions/workflows/deploy_new_version.yml" target="_blank">
+    <img src="https://github.com/avast/wanna-ml/actions/workflows/deploy_new_version.yml/badge.svg" alt="Publish">
+</a>
+<a href="https://codecov.io/gh/avast/wanna-ml" target="_blank">
+    <img src="https://codecov.io/gh/avast/wanna-ml/branch/master/graph/badge.svg?token=TAFWK4GJPR" alt="Coverage">
+</a>
+<a href="https://pypi.org/project/wanna-ml/" target="_blank">
+    <img src="https://img.shields.io/pypi/v/wanna-ml?color=%2334D058&label=pypi%20package" alt="Package version">
+</a>
+</p>
 
 # About WANNA-ML
 
