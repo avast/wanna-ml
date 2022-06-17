@@ -1,0 +1,32 @@
+name: Deploy to PyPI and docs
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: pypi-deploy
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+      - name: Build and publish
+        run: |
+          poetry version $(git describe --tags --abbrev=0)
+          poetry build
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish
+      - name: Publish docs
+        run: |
+          poetry install
+          poetry run task docs-deploy
