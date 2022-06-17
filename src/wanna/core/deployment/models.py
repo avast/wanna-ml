@@ -1,3 +1,10 @@
+import sys
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
@@ -22,7 +29,7 @@ class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, ar
 
 
 class NotificationChannelResource(GCPResource):
-    type_: str
+    type_: Literal["email"]
     config: Dict[str, str]
     labels: Dict[str, str]
 

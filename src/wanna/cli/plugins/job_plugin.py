@@ -76,7 +76,7 @@ class JobPlugin(BasePlugin):
         hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
-        JobService.run([manifest], sync=sync, hp_params=hp_params)
+        JobService.run(manifests=[manifest], sync=sync, hp_params=hp_params)
 
     @staticmethod
     def stop(
