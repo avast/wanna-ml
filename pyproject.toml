@@ -136,12 +136,3 @@ max-line-length = 120
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core>=1.0.0"]
-
-[[tool.poetry.source]]
-default = true
-name = "avast-repo" # This name will be used in the configuration to retrieve the proper credentials
-url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple/" # URL used to download your packages from
-
-[[tool.poetry.source]]
-name = "avast-local"
-url = "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/"
