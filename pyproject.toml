@@ -112,7 +112,7 @@ extension-pkg-whitelist = "pydantic"
 wanna = "wanna.cli.__main__:wanna"
 
 [tool.pytest.ini_options]
-addopts = "--verbose -s --cov=src --durations=0 --ignore=src/wanna/components/templates"
+addopts = "--verbose -s --cov-report term --cov-report xml:coverage.xml --cov=src --durations=0 --ignore=src/wanna/components/templates"
 filterwarnings = [
     "error",
     "ignore::UserWarning", # note the use of single quote below to denote "raw" strings in TOML

@@ -22,3 +22,5 @@ jobs:
       - name: Build
         run: |
           poetry run task build
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v2
