@@ -1,9 +1,0 @@
-channel_alias: https://artifactory.ida.avast.com/artifactory
-channels:
-  - https://artifactory.ida.avast.com/artifactory/repo.anaconda.com-pkgs/free/
-  - https://artifactory.ida.avast.com/artifactory/repo.anaconda.com-pkgs/main/
-  - https://artifactory.ida.avast.com/artifactory/repo.anaconda.com-pkgs/archive/
-  - https://artifactory.ida.avast.com/artifactory/conda.anaconda.org-anaconda/
-  - https://artifactory.ida.avast.com/artifactory/conda.anaconda.org-conda-forge/
-
-allow_other_channels: False
