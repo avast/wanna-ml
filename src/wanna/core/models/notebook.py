@@ -33,6 +33,7 @@ class NotebookModel(BaseInstanceModel):
     boot_disk: Optional[Disk]
     data_disk: Optional[Disk]
     bucket_mounts: Optional[List[BucketMount]]
+    network: Optional[str]
     subnet: Optional[str]
     tensorboard_ref: Optional[str]
 
@@ -47,6 +48,7 @@ class ManagedNotebookModel(BaseInstanceModel):
     data_disk: Optional[Disk]
     kernels: Optional[List[str]]
     tensorboard_ref: Optional[str]
+    network: Optional[str]
     subnet: Optional[str]
     idle_shutdown: Optional[bool]
     idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440)
