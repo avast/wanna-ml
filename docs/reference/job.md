@@ -9,8 +9,6 @@ date: 2022-04-06
 
 # WANNA Job
 
-
-
 ## Hyper-parameter tuning
 A custom job can be simply converted to a hyper-parameter tuning job just by adding 
 one extra parameter called `hp_tuning`. This will start a series of jobs (instead of just one job) 

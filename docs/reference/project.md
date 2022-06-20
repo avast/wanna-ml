@@ -8,7 +8,8 @@ date: 2022-04-06
 ---
 
 # WANNA project
-WANNA project settings set some basic values about your project. 
+
+WANNA project settings set some generic information about your project. 
 
 `wanna_project` section of the yaml config consists of the following inputs:
 

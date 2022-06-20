@@ -8,7 +8,7 @@ date: 2022-04-06
 
 # Welcome to WANNA
 
-WANNA is a ML platform product that integrates security, data governance and deployment best practices with well-defined constructs provided by [GCP Vertex AI](https://cloud.google.com/vertex-ai/#section-1) native services to make research move faster, more efficiently and predictively from ML prototypes to production models whilst leaving behind the limitations of an on-prem infrastructure.
+WANNA is a ML framework that integrates security, data governance and deployment best practices with well-defined constructs provided by [GCP Vertex AI](https://cloud.google.com/vertex-ai/#section-1) native services to make research move faster, more efficiently and predicatively from ML prototypes to production models whilst leaving behind the limitations of an on-prem infrastructure.
 
 ## Objective
 
@@ -20,7 +20,7 @@ Having the goal for a unified set of APIs, frameworks, UIs and secure data acces
 
 Vertex AI native services are vast and welcomed, however we must have clear communication, interfaces, requirements and prioritization to cover all researchers and ML Engineers use cases within this ecosystem. 
 
-WANNA will provide this thought its CLI, standardized project structure, CI/CD integration and addressing and supporting customer needs.  
+WANNA provides this declaratively through its CLI and standardized project structure.  
 
 ## Problem definition
 Remove barriers and standardize the management of ML projects on Vertex AI through the lenses of unified tooling.

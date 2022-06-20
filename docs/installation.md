@@ -34,6 +34,15 @@ if you want to manage the project with poetry
 pipx install poetry
 ```
 
+## Installing with conda
+```
+conda create -n wanna-dev python=3.7 poetry nomkl --channel conda-forge
+
+conda activate wanna-dev
+
+pip install -U wanna-ml
+```
+
 ## Installing with Pip
 
 wanna-ml is a normal Python package and you can install it with pip:

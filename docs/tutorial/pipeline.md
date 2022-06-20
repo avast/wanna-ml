@@ -74,7 +74,7 @@ wanna pipeline build
 ```
 
 ## Components
-Now that we have a blank bootstraped Kubeflow V2 pipeline we need to add components. In this tutorial we choose to go with self contained components that are independent and testable. There is a recomended structure but it can be tedious to repeat every time and this is where `wanna` comes in to aliviate this boilerplate.
+Now that we have a blank bootstrapped Kubeflow V2 pipeline we need to add components. In this tutorial we choose to go with self contained components that are independent and testable. There is a recomended structure but it can be tedious to repeat every time and this is where `wanna` comes in to aliviate this boilerplate.
 
 ### Create first component for data prep
 The first component we will create is a data component where we can do some data preparation for the rest of the pipeline

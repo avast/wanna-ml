@@ -32,6 +32,23 @@ It makes it easy to start a Jupyter notebook, run training jobs and pipelines, b
 We build on top of Vertex-AI managed services and integrate with other GCP services like Cloud Build and Artifact Registry to provide you with a standardized structure for managing ML assets on GCP.
 
 
+## How does wanna-ml work ?
+
+wanna-ml is a CLI tool that provides a declarative and automated approach via a single `wanna.yaml` file and grammar to generate and manage GCP Vertex AI resources, for a structured and hassle free
+e2e ML experience.
+
+Through wanna-ml you can:
+
+* manage multiple containers built from a single place
+* select different GCP profiles where resources should be created and deployed
+* create, deploy, schedule, monitor and run Vertex AI pipelines from the comfort of your terminal
+* create, deploy and run Vertex custom and hp tuning jobs for adhoc experiments
+* create custom user or google managed Vertex AI notebooks
+* create and assign tensorboard resource to your Vertex AI pipelines, notebooks or custom jobs
+* remove all boilerplate to create Kubeflow components
+* getting your project repository of the ground fast with pre-build templates
+* what else to you wanna ?
+
 ## Help
 
 See the [documentation](https://avast.github.io/wanna-ml/) for more details.
@@ -39,26 +56,9 @@ See the [documentation](https://avast.github.io/wanna-ml/) for more details.
 
 ## Get started
 
-### Installation
-Install using `pip install -U wanna-ml`.
+* [installation](https://avast.github.io/wanna-ml/installation/) for more details.
+* [get started](https://avast.github.io/wanna-ml/tutorial/) for more details.
 
-For more information on the installation process and requirements, visit out [installation page in documentation](https://avast.github.io/wanna-ml/installation)
-
-### Authentication
-WANNA-ML relies on `gcloud` for user authentication. 
-
-1. Install the `gcloud` CLI - follow [official guide](https://cloud.google.com/sdk/docs/install)
-2. Authenticate with the `gcloud init`
-3. Set you Google Application Credentials `gcloud auth application-default login`
-
-### Docker Build
-You can use a local Docker daemon to build Docker images, but it is not required. 
-You are free to choose between local building on GCP Cloud Build. 
-If you prefer local Docker image building, install  [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-
-### GCP IAM Roles and Permissions
-Different WANNA-ML calls require different GCP permissions to create given resources on GCP. Our [documentation page](https://avast.github.io/wanna-ml/)
-lists recommended GCP IAM roles for each `wanna` command.
 
 ## Examples
 Jump to [the samples](https://github.com/avast/wanna-ml/tree/master/samples) to see a complete solution 
