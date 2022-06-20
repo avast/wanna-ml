@@ -23,6 +23,7 @@ class NotebookPlugin(BasePlugin):
                 self.create,
                 self.ssh,
                 self.report,
+                self.build,
             ]
         )
 
@@ -117,6 +118,13 @@ class NotebookPlugin(BasePlugin):
             wanna_resource="notebook",
             gcp_project=config.gcp_profile.project_id,
         )
+    
+    @staticmethod
+    def build(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+    ) -> None:
+        pass
 
 
 class ManagedNotebookPlugin(BasePlugin):
