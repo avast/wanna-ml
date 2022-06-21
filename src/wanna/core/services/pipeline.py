@@ -213,6 +213,17 @@ class PipelineService(BaseService[PipelineModel]):
 
         return pipeline_env_params, pipeline_compile_params
 
+    def _get_pipeline_network(
+        self, project_id: str, push_mode: PushMode, pipeline_network: Optional[str], fallback_network: str
+    ) -> str:
+        pipeline_network = pipeline_network if pipeline_network else fallback_network
+        if push_mode.can_push_gcp_resources():
+            # we in certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
+            project_number = convert_project_id_to_project_number(project_id)
+            return f"projects/{project_number}/global/networks/{pipeline_network}"
+        else:
+            return f"projects/{project_id}/global/networks/{pipeline_network}"
+
     def _compile_one_instance(self, pipeline: PipelineModel) -> Path:
 
         image_tags = [
@@ -232,13 +243,12 @@ class PipelineService(BaseService[PipelineModel]):
             else None
         )
 
-        pipeline_network = pipeline.network if pipeline.network else self.config.gcp_profile.network
-        if self.push_mode.can_push_gcp_resources():
-            # we in certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
-            project_number = convert_project_id_to_project_number(pipeline.project_id)
-            network = f"projects/{project_number}/global/networks/{pipeline_network}"
-        else:
-            network = f"projects/{self.config.gcp_profile.project_id}/global/networks/{pipeline_network}"
+        network = self._get_pipeline_network(
+            project_id=pipeline.project_id,
+            push_mode=self.push_mode,
+            pipeline_network=pipeline.network,
+            fallback_network=self.config.gcp_profile.network,
+        )
 
         # Collect kubeflow pipeline params for compilation
         pipeline_env_params, pipeline_params = self._export_pipeline_params(

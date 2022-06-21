@@ -12,7 +12,7 @@ from mock import patch
 from mock.mock import MagicMock
 
 import wanna.core.services.pipeline
-from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
+from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushMode
 from wanna.core.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
 from wanna.core.services.docker import DockerService
 from wanna.core.services.pipeline import PipelineService
@@ -291,3 +291,20 @@ class TestPipelineService(unittest.TestCase):
         AlertPolicyServiceClient.create_alert_policy.assert_called()
         # logging.Client.metrics_api.metric_get.assert_called()
         # logging.Client.metrics_api.metric_create.assert_called()
+
+        push_network = pipeline_service._get_pipeline_network(
+            project_id="test-project-id",
+            push_mode=PushMode.all,
+            pipeline_network="pipeline-network",
+            fallback_network="fallback-network",
+        )
+        self.assertEqual(push_network, "projects/123456789/global/networks/pipeline-network")
+
+        non_push_network = pipeline_service._get_pipeline_network(
+            project_id="test-project-id",
+            push_mode=PushMode.containers,
+            pipeline_network=None,
+            fallback_network="fallback-network",
+        )
+
+        self.assertEqual(non_push_network, "projects/test-project-id/global/networks/fallback-network")
