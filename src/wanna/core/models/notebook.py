@@ -50,5 +50,6 @@ class ManagedNotebookModel(BaseInstanceModel):
     tensorboard_ref: Optional[str]
     network: Optional[str]
     subnet: Optional[str]
+    internal_ip_only: Optional[bool] = True
     idle_shutdown: Optional[bool]
     idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440)

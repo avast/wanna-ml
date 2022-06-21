@@ -392,10 +392,11 @@ class NotebookService(BaseService[NotebookModel]):
             else:
                 logger.user_error(f"No notebook {instance_name} found")
 
-    def build(self) -> None:
+    def build(self) -> int:
         for instance in self.instances:
             self._create_instance_request(notebook_instance=instance, deploy=False)
         logger.user_success("Notebooks validation OK!")
+        return 0
 
 
 class ManagedNotebookService(BaseService[ManagedNotebookModel]):
@@ -446,14 +447,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         else:
             runtimeAcceleratorConfig = None
         # Network and subnetwork
-        network = instance.network if instance.network else self.config.gcp_profile.network
-        full_subnet = None
-        if network:
-            full_network = f"projects/{instance.project_id}/regions/global/{network}"
-            if instance.subnet:
-                full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
+        if instance.subnet:
+            full_network = f"projects/{instance.project_id}/regions/global/{instance.network}"
+            full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
         else:
             full_network = None
+            full_subnet = None
 
         # Post startup script
         if deploy and instance.tensorboard_ref:
@@ -475,6 +474,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             accelerator_config=runtimeAcceleratorConfig,
             network=full_network,
             subnet=full_subnet,
+            # internal_ip_only=instance.internal_ip_only,
             tags=instance.tags,
             metadata=instance.metadata,
         )
@@ -705,7 +705,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         logger.user_success("Managed notebooks on GCP are in sync with wanna.yaml")
 
-    def build(self) -> None:
+    def build(self) -> int:
         for instance in self.instances:
             self._create_runtime_request(instance=instance, deploy=False)
         logger.user_success("Managed notebooks validation OK!")
+        return 0
