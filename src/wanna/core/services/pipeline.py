@@ -232,8 +232,8 @@ class PipelineService(BaseService[PipelineModel]):
             else None
         )
 
+        pipeline_network = pipeline.network if pipeline.network else self.config.gcp_profile.network
         if self.push_mode.can_push_gcp_resources():
-            pipeline_network = pipeline.network if pipeline.network else self.config.gcp_profile.network
             # we in certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
             project_number = convert_project_id_to_project_number(pipeline.project_id)
             network = f"projects/{project_number}/global/networks/{pipeline_network}"
