@@ -136,6 +136,11 @@ class TestNotebookService:
             in startup_script
         )
 
+    def test_build(self):
+        config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
+        nb_service = NotebookService(config=config, workdir=Path("."))
+        assert nb_service.build() == 0
+
 
 @patch("wanna.core.services.notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
 class TestManagedNotebookService:
@@ -185,3 +190,8 @@ class TestManagedNotebookService:
             state=Runtime.State.STOPPED,
         )
         assert state_2
+
+    def test_build(self):
+        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
+        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
+        assert nb_service.build() == 0

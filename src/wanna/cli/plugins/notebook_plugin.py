@@ -23,6 +23,7 @@ class NotebookPlugin(BasePlugin):
                 self.create,
                 self.ssh,
                 self.report,
+                self.build,
             ]
         )
 
@@ -118,6 +119,19 @@ class NotebookPlugin(BasePlugin):
             gcp_project=config.gcp_profile.project_id,
         )
 
+    @staticmethod
+    def build(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+    ) -> None:
+        """
+        Validates build of notebooks as they are defined in wanna.yaml
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service.build()
+
 
 class ManagedNotebookPlugin(BasePlugin):
     """
@@ -132,6 +146,7 @@ class ManagedNotebookPlugin(BasePlugin):
                 self.create,
                 self.sync,
                 self.report,
+                self.build,
             ]
         )
 
@@ -204,3 +219,16 @@ class ManagedNotebookPlugin(BasePlugin):
             wanna_resource="managed_notebook",
             gcp_project=config.gcp_profile.project_id,
         )
+
+    @staticmethod
+    def build(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+    ) -> None:
+        """
+        Validates build of notebooks as they are defined in wanna.yaml
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = ManagedNotebookService(config=config, workdir=workdir)
+        nb_service.build()

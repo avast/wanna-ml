@@ -109,7 +109,7 @@ class NotebookService(BaseService[NotebookModel]):
                 self._delete_one_instance(instance)
             else:
                 return
-        instance_request = self._create_instance_request(notebook_instance=instance)
+        instance_request = self._create_instance_request(notebook_instance=instance, deploy=True)
         with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
@@ -153,7 +153,7 @@ class NotebookService(BaseService[NotebookModel]):
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
         return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
 
-    def _create_instance_request(self, notebook_instance: NotebookModel) -> CreateInstanceRequest:
+    def _create_instance_request(self, notebook_instance: NotebookModel, deploy: bool = True) -> CreateInstanceRequest:
         """
         Transform the information about desired notebook from our NotebookModel model (based on yaml config)
         to the form suitable for GCP API.
@@ -241,7 +241,7 @@ class NotebookService(BaseService[NotebookModel]):
             labels = {**notebook_instance.labels, **labels}
 
         # post startup script
-        if notebook_instance.bucket_mounts or notebook_instance.tensorboard_ref:
+        if deploy and (notebook_instance.bucket_mounts or notebook_instance.tensorboard_ref):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
@@ -392,6 +392,12 @@ class NotebookService(BaseService[NotebookModel]):
             else:
                 logger.user_error(f"No notebook {instance_name} found")
 
+    def build(self) -> int:
+        for instance in self.instances:
+            self._create_instance_request(notebook_instance=instance, deploy=False)
+        logger.user_success("Notebooks validation OK!")
+        return 0
+
 
 class ManagedNotebookService(BaseService[ManagedNotebookModel]):
     def __init__(
@@ -409,6 +415,91 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         self.config = config
         self.bucket_name = config.gcp_profile.bucket
         self.tensorboard_service = TensorboardService(config=config)
+
+    def _create_runtime_request(self, instance: ManagedNotebookModel, deploy: bool = True) -> CreateRuntimeRequest:
+        """
+        Transform the information about desired managed-notebook from the model based on yaml config
+        to the form suitable for GCP API.
+
+        Args:
+            instance
+
+        Returns:
+            CreateRuntimeRequest
+        """
+        # Configuration of the managed notebook
+        labels = {
+            "wanna_name": instance.name,
+            "wanna_resource": self.instance_type,
+        }
+        if instance.labels:
+            labels = {**instance.labels, **labels}
+        # Disks
+        disk_type = instance.data_disk.disk_type if instance.data_disk else None
+        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
+        localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
+        localDisk = LocalDisk(initialize_params=localDiskParams)
+        # Accelerator
+        if instance.gpu:
+            runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
+                type=instance.gpu.accelerator_type, core_count=instance.gpu.count
+            )
+        else:
+            runtimeAcceleratorConfig = None
+        # Network and subnetwork
+        if instance.subnet:
+            full_network = f"projects/{instance.project_id}/regions/global/{instance.network}"
+            full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
+        else:
+            full_network = None
+            full_subnet = None
+
+        # Post startup script
+        if deploy and instance.tensorboard_ref:
+            script = self._prepare_startup_script(self.instances[0])
+            blob = upload_string_to_gcs(
+                script,
+                instance.bucket or self.bucket_name,
+                f"notebooks/{instance.name}/startup_script.sh",
+            )
+            post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
+        else:
+            post_startup_script = None
+
+        # VM
+        virtualMachineConfig = VirtualMachineConfig(
+            machine_type=instance.machine_type,
+            data_disk=localDisk,
+            labels=labels,
+            accelerator_config=runtimeAcceleratorConfig,
+            network=full_network,
+            subnet=full_subnet,
+            # internal_ip_only=instance.internal_ip_only,
+            tags=instance.tags,
+            metadata=instance.metadata,
+        )
+        virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
+        # Runtime
+        runtimeSoftwareConfig = RuntimeSoftwareConfig(
+            {
+                "kernels": instance.kernels,
+                "post_startup_script": post_startup_script,
+                "idle_shutdown": instance.idle_shutdown,
+                "idle_shutdown_timeout": instance.idle_shutdown_timeout,
+            }
+        )
+        runtimeAccessConfig = RuntimeAccessConfig(
+            access_type=RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER, runtime_owner=instance.owner
+        )
+        runtime = Runtime(
+            access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
+        )
+        # Create runtime request
+        return CreateRuntimeRequest(
+            parent=f"projects/{instance.project_id}/locations/{instance.region}",
+            runtime_id=instance.name,
+            runtime=runtime,
+        )
 
     def _delete_one_instance(self, notebook_instance: ManagedNotebookModel) -> None:
         """
@@ -453,74 +544,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             else:
                 return
 
-        # Configuration of the managed notebook
-        labels = {
-            "wanna_name": instance.name,
-            "wanna_resource": self.instance_type,
-        }
-        if instance.labels:
-            labels = {**instance.labels, **labels}
-        # Disks
-        disk_type = instance.data_disk.disk_type if instance.data_disk else None
-        disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
-        localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
-        localDisk = LocalDisk(initialize_params=localDiskParams)
-        # Accelerator
-        if instance.gpu:
-            runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
-                type=instance.gpu.accelerator_type, core_count=instance.gpu.count
-            )
-        else:
-            runtimeAcceleratorConfig = None
-        # Network
-        if instance.subnet:
-            subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
-
-        # Post startup script
-        if instance.tensorboard_ref:
-            script = self._prepare_startup_script(self.instances[0])
-            blob = upload_string_to_gcs(
-                script,
-                instance.bucket or self.bucket_name,
-                f"notebooks/{instance.name}/startup_script.sh",
-            )
-            post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
-        else:
-            post_startup_script = None
-
-        # VM
-        virtualMachineConfig = VirtualMachineConfig(
-            machine_type=instance.machine_type,
-            data_disk=localDisk,
-            labels=labels,
-            accelerator_config=runtimeAcceleratorConfig,
-            subnet=subnet,
-            tags=instance.tags,
-            metadata=instance.metadata,
-        )
-        virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
-        # Runtime
-        runtimeSoftwareConfig = RuntimeSoftwareConfig(
-            {
-                "kernels": instance.kernels,
-                "post_startup_script": post_startup_script,
-                "idle_shutdown": instance.idle_shutdown,
-                "idle_shutdown_timeout": instance.idle_shutdown_timeout,
-            }
-        )
-        runtimeAccessConfig = RuntimeAccessConfig(
-            access_type=RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER, runtime_owner=instance.owner
-        )
-        runtime = Runtime(
-            access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
-        )
-        # Create runtime request
-        request = CreateRuntimeRequest(
-            parent=f"projects/{instance.project_id}/locations/{instance.region}",
-            runtime_id=instance.name,
-            runtime=runtime,
-        )
-
+        request = self._create_runtime_request(instance=instance, deploy=True)
         with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_runtime(request=request)
             instance_full_name = (
@@ -646,7 +670,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 to_be_created.append(notebook)
         return to_be_deleted, to_be_created
 
-    def sync(self):
+    def sync(self) -> None:
         """
         1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
         2. Does a diff between what is on GCP and what is on yaml
@@ -656,9 +680,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         to_be_deleted, to_be_created = self._return_diff()
 
         if to_be_deleted:
-            to_be_deleted_str = "\n".join(["-" + item.name for item in to_be_deleted])
+            to_be_deleted_str = "\n".join(["-" + item for item in to_be_deleted])
             logger.info(
-                f"Managed notebooks to be deleted: \n {to_be_deleted_str}",
+                f"Managed notebooks to be deleted:\n{to_be_deleted_str}",
             )
             should_delete = typer.confirm("Are you sure you want to delete them?")
             if should_delete:
@@ -671,7 +695,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         if to_be_created:
             to_be_created_str = "\n".join(["-" + item.name for item in to_be_created])
-            logger.user_info(f"Managed notebooks to be created: \n {to_be_created_str}")
+            logger.user_info(f"Managed notebooks to be created:\n{to_be_created_str}")
             should_create = typer.confirm("Are you sure you want to create them?")
             if should_create:
                 for item in to_be_created:
@@ -679,4 +703,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             else:
                 return
 
-        logger.info("Managed notebooks on GCP are in sync with wanna.yaml")
+        logger.user_success("Managed notebooks on GCP are in sync with wanna.yaml")
+
+    def build(self) -> int:
+        for instance in self.instances:
+            self._create_runtime_request(instance=instance, deploy=False)
+        logger.user_success("Managed notebooks validation OK!")
+        return 0
