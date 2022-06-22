@@ -7,8 +7,10 @@ from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeli
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import (
+    AlertPolicyResource,
     CloudFunctionResource,
     CloudSchedulerResource,
+    LogMetricResource,
     NotificationChannelResource,
     PipelineResource,
 )
@@ -152,28 +154,31 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         else:
             logger.user_info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
 
-        # not possible to set alerts for failed PipelineJobs
-        # since aiplatform.googleapis.com/PipelineJob
-        # is not a monitored job
-        # https://cloud.google.com/monitoring/api/resources
-        # logging_metric_ref = f"{manifest.pipeline_name}-ml-pipeline-error"
-        # gcp_resource_type = "aiplatform.googleapis.com/PipelineJob"
-        # deploy.upsert_log_metric(LogMetricResource(
-        #     project=manifest.project,
-        #     name=logging_metric_ref,
-        #     filter_= f"""
-        #     resource.type="{gcp_resource_type}"
-        #     AND severity >= WARNING
-        #     AND resource.labels.pipeline_job_id:"{manifest.pipeline_name}"
-        #     """,
-        #     description=f"Log metric for {manifest.pipeline_name} vertex ai pipeline"
-        # ))
-        # deploy.upsert_alert_policy(
-        #     logging_metric_type=logging_metric_ref,
-        #     resource_type=gcp_resource_type,
-        #     project=manifest.project,
-        #     name=f"{manifest.pipeline_name}-ml-pipeline-alert-policy",
-        #     display_name=f"{logging_metric_ref}-ml-pipeline-alert-policy",
-        #     labels=manifest.labels,
-        #     notification_channels=["projects/cloud-lab-304213/notificationChannels/1568320106180659521"]
-        # )
+        logging_metric_ref = f"{resource.pipeline_name}-ml-pipeline-error"
+        gcp_resource_type = "aiplatform.googleapis.com/PipelineJob"
+        self.upsert_log_metric(
+            LogMetricResource(
+                project=resource.project,
+                name=logging_metric_ref,
+                location=resource.location,
+                filter_=f"""
+            resource.type="{gcp_resource_type}"
+            AND severity >= WARNING
+            AND resource.labels.pipeline_job_id:"{resource.pipeline_name}"
+            """,
+                description=f"Log metric for {resource.pipeline_name} vertex ai pipeline",
+            )
+        )
+        logging_policy_name = f"{resource.pipeline_name}-{env}-ml-pipeline-alert-policy"
+        self.upsert_alert_policy(
+            AlertPolicyResource(
+                name=logging_policy_name,
+                project=resource.project,
+                location=resource.location,
+                logging_metric_type=logging_metric_ref,
+                resource_type=gcp_resource_type,
+                display_name=logging_policy_name,
+                labels=resource.labels,
+                notification_channels=channels,
+            )
+        )
