@@ -682,8 +682,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         if to_be_deleted:
             to_be_deleted_str = "\n".join(["-" + item for item in to_be_deleted])
             logger.user_info(f"Managed notebooks to be deleted:\n{to_be_deleted_str}")
-            should_delete = typer.confirm("Are you sure you want to delete them?") if not force else False
-            if force or should_delete:
+            should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
+            if should_delete:
                 for item in to_be_deleted:
                     with logger.user_spinner(f"Deleting {item}"):
                         deleted = self.notebook_client.delete_runtime(name=item)
@@ -694,8 +694,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         if to_be_created:
             to_be_created_str = "\n".join(["-" + item.name for item in to_be_created])
             logger.user_info(f"Managed notebooks to be created:\n{to_be_created_str}")
-            should_create = typer.confirm("Are you sure you want to create them?") if not force else False
-            if force or should_create:
+            should_create = True if force else typer.confirm("Are you sure you want to create them?")
+            if should_create:
                 for item in to_be_created:
                     self._create_one_instance(item)
             else:
