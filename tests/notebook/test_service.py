@@ -195,3 +195,8 @@ class TestManagedNotebookService:
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
         assert nb_service.build() == 0
+
+    def test_sync(self):
+        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
+        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
+        assert nb_service.sync(force=True) == 0

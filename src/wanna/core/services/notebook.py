@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional, Tuple
 
 import typer
 from google.api_core import exceptions
@@ -642,12 +642,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
         return f"https://{instance_info.access_config.proxy_uri}"
 
-    def _return_diff(self):
+    def _return_diff(self) -> Tuple[List[Any], List[Any]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
         parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
-        active_runtimes = self.notebook_client.list_runtimes(parent=parent)
+        active_runtimes = self.notebook_client.list_runtimes(parent=parent).runtimes
         wanna_names = [managednotebook.name for managednotebook in self.instances]
         existing_names = [runtime.name for runtime in active_runtimes]
         to_be_deleted = []
@@ -670,7 +670,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 to_be_created.append(notebook)
         return to_be_deleted, to_be_created
 
-    def sync(self, force) -> None:
+    def sync(self, force) -> int:
         """
         1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
         2. Does a diff between what is on GCP and what is on yaml
@@ -689,7 +689,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                         deleted = self.notebook_client.delete_runtime(name=item)
                         deleted.result()
             else:
-                return
+                return 0
 
         if to_be_created:
             to_be_created_str = "\n".join(["-" + item.name for item in to_be_created])
@@ -699,9 +699,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 for item in to_be_created:
                     self._create_one_instance(item)
             else:
-                return
+                return 0
 
         logger.user_info("Managed notebooks on GCP are in sync with wanna.yaml")
+        return 0
 
     def build(self) -> int:
         for instance in self.instances:
