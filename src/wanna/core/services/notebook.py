@@ -671,7 +671,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         return to_be_deleted, to_be_created
 
-    def sync(self, force) -> None:
+    def sync(self, force: bool) -> None:
         """
         1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
         2. Does a diff between what is on GCP and what is on yaml
