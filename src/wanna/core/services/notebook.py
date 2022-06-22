@@ -670,7 +670,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 to_be_created.append(notebook)
         return to_be_deleted, to_be_created
 
-    def sync(self) -> None:
+    def sync(self, force) -> None:
         """
         1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
         2. Does a diff between what is on GCP and what is on yaml
@@ -681,11 +681,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         if to_be_deleted:
             to_be_deleted_str = "\n".join(["-" + item for item in to_be_deleted])
-            logger.info(
-                f"Managed notebooks to be deleted:\n{to_be_deleted_str}",
-            )
-            should_delete = typer.confirm("Are you sure you want to delete them?")
-            if should_delete:
+            logger.user_info(f"Managed notebooks to be deleted:\n{to_be_deleted_str}")
+            should_delete = typer.confirm("Are you sure you want to delete them?") if not force else False
+            if force or should_delete:
                 for item in to_be_deleted:
                     with logger.user_spinner(f"Deleting {item}"):
                         deleted = self.notebook_client.delete_runtime(name=item)
@@ -696,14 +694,14 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         if to_be_created:
             to_be_created_str = "\n".join(["-" + item.name for item in to_be_created])
             logger.user_info(f"Managed notebooks to be created:\n{to_be_created_str}")
-            should_create = typer.confirm("Are you sure you want to create them?")
-            if should_create:
+            should_create = typer.confirm("Are you sure you want to create them?") if not force else False
+            if force or should_create:
                 for item in to_be_created:
                     self._create_one_instance(item)
             else:
                 return
 
-        logger.user_success("Managed notebooks on GCP are in sync with wanna.yaml")
+        logger.user_info("Managed notebooks on GCP are in sync with wanna.yaml")
 
     def build(self) -> int:
         for instance in self.instances:
