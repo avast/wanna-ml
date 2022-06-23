@@ -26,7 +26,7 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.services.tensorboard import TensorboardService
-from wanna.core.utils.gcp import convert_project_id_to_project_number
+from wanna.core.utils.gcp import convert_project_id_to_project_number, get_network_info
 from wanna.core.utils.loaders import load_yaml_path
 
 logger = get_logger(__name__)
@@ -135,13 +135,13 @@ class PipelineService(BaseService[PipelineModel]):
     def deploy(self, instance_name: str, env: str):
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
-            with logger.user_spinner(f"Deploying {pipeline.name} version {self.version} to env {env}"):
-                pipeline_bucket = pipeline.bucket if pipeline.bucket else f"gs://{self.config.gcp_profile.bucket}"
-                pipeline_paths = PipelinePaths(self.workdir, pipeline_bucket, pipeline_name=pipeline.name)
-                manifest = PipelineService.read_manifest(
-                    self.connector, pipeline_paths.get_gcs_wanna_manifest_path(self.version)
-                )
-                self.connector.deploy_pipeline(manifest, pipeline_paths, self.version, env)
+            logger.user_info(f"Deploying {pipeline.name} version {self.version} to env {env}")
+            pipeline_bucket = pipeline.bucket if pipeline.bucket else f"gs://{self.config.gcp_profile.bucket}"
+            pipeline_paths = PipelinePaths(self.workdir, pipeline_bucket, pipeline_name=pipeline.name)
+            manifest = PipelineService.read_manifest(
+                self.connector, pipeline_paths.get_gcs_wanna_manifest_path(self.version)
+            )
+            self.connector.deploy_pipeline(manifest, pipeline_paths, self.version, env)
 
     @staticmethod
     def run(
@@ -217,12 +217,17 @@ class PipelineService(BaseService[PipelineModel]):
         self, project_id: str, push_mode: PushMode, pipeline_network: Optional[str], fallback_network: str
     ) -> str:
         pipeline_network = pipeline_network if pipeline_network else fallback_network
+        result = get_network_info(pipeline_network)
+        if result:
+            # long format network found
+            project_id, pipeline_network = result
+
+        # In certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
         if push_mode.can_push_gcp_resources():
-            # we in certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
-            project_number = convert_project_id_to_project_number(project_id)
-            return f"projects/{project_number}/global/networks/{pipeline_network}"
-        else:
-            return f"projects/{project_id}/global/networks/{pipeline_network}"
+            if not project_id.isdigit():
+                project_id = convert_project_id_to_project_number(project_id)
+
+        return f"projects/{project_id}/global/networks/{pipeline_network}"
 
     def _compile_one_instance(self, pipeline: PipelineModel) -> Path:
 

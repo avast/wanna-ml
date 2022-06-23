@@ -14,6 +14,7 @@ from wanna.core.utils.gcp import (
     get_available_compute_machine_types,
     get_available_regions,
     get_available_zones,
+    get_network_info,
 )
 
 
@@ -51,7 +52,7 @@ def validate_requirements(cls, v):
 
 
 def validate_network_name(network_name):
-    if not re.match("^(projects\/[a-z0-9-]+\/global\/networks\/[a-z][a-z0-9-]+)$", network_name):
+    if not get_network_info(network_name):
         if not re.match("^[a-z][a-z0-9-]+$", network_name):
             raise ValueError(
                 "Invalid format of network name. Either use the full name of VPC network"
