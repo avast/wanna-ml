@@ -6,11 +6,11 @@ from mock import patch
 
 from tests.mocks import mocks
 from wanna.core.models.notebook import ManagedNotebookModel
-from wanna.core.services.notebook import ManagedNotebookService
+from wanna.core.services.managed_notebook import ManagedNotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
-@patch("wanna.core.services.notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
+@patch("wanna.core.services.managed_notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
 class TestManagedNotebookService(unittest.TestCase):
     project_id = "your-gcp-project-id"
     region = "europe-west1"
