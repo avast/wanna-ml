@@ -12,7 +12,7 @@ from mock import patch
 from mock.mock import MagicMock
 
 import wanna.core.services.pipeline
-from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact
+from wanna.core.deployment.models import ContainerArtifact, JsonArtifact, PathArtifact, PushMode
 from wanna.core.models.docker import DockerBuildResult, ImageBuildType, LocalBuildImageModel
 from wanna.core.services.docker import DockerService
 from wanna.core.services.pipeline import PipelineService
@@ -286,8 +286,22 @@ class TestPipelineService(unittest.TestCase):
         scheduler_v1.CloudSchedulerClient.update_job.assert_called_once()
         scheduler_v1.CloudSchedulerClient.get_job.assert_called_with({"name": job_name})
 
-        # TODO: test which data was used to with the call
-        AlertPolicyServiceClient.list_alert_policies.assert_called()
-        AlertPolicyServiceClient.create_alert_policy.assert_called()
-        # logging.Client.metrics_api.metric_get.assert_called()
-        # logging.Client.metrics_api.metric_create.assert_called()
+        self.assertEqual(AlertPolicyServiceClient.list_alert_policies.call_count, 3)
+        self.assertEqual(AlertPolicyServiceClient.create_alert_policy.call_count, 3)
+
+        push_network = pipeline_service._get_pipeline_network(
+            project_id="test-project-id",
+            push_mode=PushMode.all,
+            pipeline_network="pipeline-network",
+            fallback_network="fallback-network",
+        )
+        self.assertEqual(push_network, "projects/123456789/global/networks/pipeline-network")
+
+        non_push_network = pipeline_service._get_pipeline_network(
+            project_id="test-project-id",
+            push_mode=PushMode.containers,
+            pipeline_network=None,
+            fallback_network="fallback-network",
+        )
+
+        self.assertEqual(non_push_network, "projects/test-project-id/global/networks/fallback-network")

@@ -1,13 +1,14 @@
+import unittest
 from pathlib import Path
 
-from google.cloud.notebooks_v1.types import Instance, Runtime
+from google.cloud.notebooks_v1.types import Instance
 from mock import patch
 from mock.mock import MagicMock
 
 from tests.mocks import mocks
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
-from wanna.core.services.notebook import ManagedNotebookService, NotebookService
+from wanna.core.models.notebook import NotebookModel
+from wanna.core.services.notebook import NotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
@@ -15,10 +16,9 @@ from wanna.core.utils.config_loader import load_config_from_yaml
     "wanna.core.services.notebook.NotebookServiceClient",
     mocks.MockNotebookServiceClient,
 )
-class TestNotebookService:
-    def setup(self) -> None:
-        self.project_id = "gcp-project"
-        self.zone = "us-east1-a"
+class TestNotebookService(unittest.TestCase):
+    project_id = "gcp-project"
+    zone = "us-east1-a"
 
     def test_list_running_instances(self):
         config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "default")
@@ -136,52 +136,7 @@ class TestNotebookService:
             in startup_script
         )
 
-
-@patch("wanna.core.services.notebook.ManagedNotebookServiceClient", mocks.MockManagedNotebookServiceClient)
-class TestManagedNotebookService:
-    def setup(self) -> None:
-        self.project_id = "your-gcp-project-id"
-        self.region = "europe-west1"
-
-    def test_list_running_instances(self):
-        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
-        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
-        running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.region)
-        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/minimum-setup" in running_notebooks
-        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/maximum-setup" in running_notebooks
-        assert f"projects/{self.project_id}/locations/{self.region}/runtimes/xyz" not in running_notebooks
-
-    def test_instance_exists(self):
-        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
-        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
-        should_exist = nb_service._instance_exists(
-            instance=ManagedNotebookModel.parse_obj(
-                {
-                    "project_id": self.project_id,
-                    "region": self.region,
-                    "name": "minimum-setup",
-                    "owner": "jacek.hebda@avast.com",
-                }
-            )
-        )
-        assert should_exist
-        should_not_exist = nb_service._instance_exists(
-            instance=ManagedNotebookModel.parse_obj(
-                {"project_id": self.project_id, "region": self.region, "name": "xyz", "owner": "jacek.hebda@avast.com"}
-            )
-        )
-        assert not should_not_exist
-
-    def test_validate_jupyterlab_state(self):
-        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
-        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
-        state_1 = nb_service._validate_jupyterlab_state(
-            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/minimum-setup",
-            state=Runtime.State.ACTIVE,
-        )
-        assert state_1
-        state_2 = nb_service._validate_jupyterlab_state(
-            instance_id=f"projects/{self.project_id}/locations/{self.region}/runtimes/maximum-setup",
-            state=Runtime.State.STOPPED,
-        )
-        assert state_2
+    def test_build(self):
+        config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
+        nb_service = NotebookService(config=config, workdir=Path("."))
+        assert nb_service.build() == 0

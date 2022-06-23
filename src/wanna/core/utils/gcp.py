@@ -2,7 +2,7 @@ import os
 import re
 import tarfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import google.auth
 from google.auth.exceptions import DefaultCredentialsError
@@ -17,6 +17,11 @@ from wanna.core.utils.credentials import get_credentials
 
 DEFAULT_VALIDATION_MODE = "remote"
 VALIDATION_MODE = os.environ.get("WANNA_VALIDATION_MODE", DEFAULT_VALIDATION_MODE)
+NETWORK_REGEX = (
+    "projects/((?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)"
+    "?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?)))/global/networks/"
+    "((?:[a-z](?:[-a-z0-9]*[a-z0-9])?))$"
+)
 
 
 def are_gcp_credentials_set() -> bool:
@@ -385,3 +390,21 @@ def is_gcs_path(path: str):
         bool
     """
     return path.startswith("gs://")
+
+
+def get_network_info(network: str) -> Optional[Tuple[str, str]]:
+    """
+    gets information about a network if set in long format
+    Args:
+        network: string to extract network info from
+        bucket_name:
+        blob_name:
+
+    Returns:
+        Tuple[str, str]
+    """
+    result = re.search(NETWORK_REGEX, network)
+    if result:
+        return result.group(1), result.group(2)
+
+    return None

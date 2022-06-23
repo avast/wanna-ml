@@ -53,26 +53,10 @@ Apart from the above, we offer additional parameters for you:
 - `metadata`- Custom metadata to apply to this instance
 - `gpu`- The hardware GPU accelerator used on this instance. 
 - `data_disk` - Data disk configuration to attach to this instance.
-- `network` - Currently unavailable
-- `subnet`- Currently unavailable
+- `subnet`- Subnetwork of a given network
 - `kernels` - Custom kernels given as links to container registry
 - `idle_shutdown` - True or false
 - `idle_shutdown_timeout` - Time in minutes, between 10 and 1440
-
-#### Connecting with VSCode
-1. Install Jupyter Extension 
-2. Create a new file with the type Jupyter notebook
-3. Select the Jupyter Server: local button in the global Status bar or run the 
-   Jupyter: Specify local or remote Jupyter server for connections command from the Command Palette (⇧⌘P).
-   
-4. Select option `Existing URL` and input `http://localhost:8080`
-5. You should be connected. If you get an error saying something like `'_xsrf' argument missing from POST.`,
-it is because the VSCode cannot start a python kernel in GCP. The current workaround is to manually start
-   a kernel at `http://localhost:8080` and then in the VSCode connect to the exiting kernel in the right upper corner.
-   
-
-A more detailed guide on setting a connection with VSCode to Jupyter can be found at https://code.visualstudio.com/docs/datascience/jupyter-notebooks.
-
 
 ### Example
 ```
