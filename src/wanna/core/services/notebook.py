@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import typer
 from google.api_core import exceptions
@@ -642,7 +642,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
         return f"https://{instance_info.access_config.proxy_uri}"
 
-    def _return_diff(self) -> Tuple[List[Any], List[Any]]:
+    def _return_diff(self) -> Tuple[List[str], List[ManagedNotebookModel]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
@@ -668,6 +668,18 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 not in existing_names
             ):
                 to_be_created.append(notebook)
+                print("================================")
+                print("================================")
+                print(type(notebook))
+                print("================================")
+                print(notebook)
+        print("================================")
+        print("================================")
+        print(type(to_be_created))
+        print("================================")
+        print(to_be_created)
+        print("================================")
+        print("================================")
         return to_be_deleted, to_be_created
 
     def sync(self, force) -> int:
@@ -680,7 +692,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         to_be_deleted, to_be_created = self._return_diff()
 
         if to_be_deleted:
-            to_be_deleted_str = "\n".join(["-" + item for item in to_be_deleted])
+            to_be_deleted_str = "\n".join(["- " + item for item in to_be_deleted])
             logger.user_info(f"Managed notebooks to be deleted:\n{to_be_deleted_str}")
             should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
             if should_delete:
@@ -688,11 +700,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                     with logger.user_spinner(f"Deleting {item}"):
                         deleted = self.notebook_client.delete_runtime(name=item)
                         deleted.result()
-            else:
-                return 0
 
         if to_be_created:
-            to_be_created_str = "\n".join(["-" + item.name for item in to_be_created])
+            to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
             logger.user_info(f"Managed notebooks to be created:\n{to_be_created_str}")
             should_create = True if force else typer.confirm("Are you sure you want to create them?")
             if should_create:

@@ -200,3 +200,8 @@ class TestManagedNotebookService:
         config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
         assert nb_service.sync(force=True) == 0
+
+    def test_return_diff(self):
+        config = load_config_from_yaml("samples/notebook/managed-notebook/wanna.yaml", "default")
+        nb_service = ManagedNotebookService(config=config, workdir=Path("."))
+        assert nb_service._return_diff() == ([], [])
