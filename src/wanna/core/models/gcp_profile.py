@@ -15,6 +15,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     bucket: str
     service_account: Optional[str]
     network: str
+    kms_key: Optional[str]
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)
