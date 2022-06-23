@@ -647,7 +647,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
         parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
-        active_runtimes = list(self.notebook_client.list_runtimes(parent=parent).runtimes)
+        active_runtimes = self.notebook_client.list_runtimes(parent=parent).runtimes
         wanna_names = [managednotebook.name for managednotebook in self.instances]
         existing_names = [str(runtime.name) for runtime in active_runtimes]
         to_be_deleted = []
