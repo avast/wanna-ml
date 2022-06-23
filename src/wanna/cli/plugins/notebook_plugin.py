@@ -187,6 +187,7 @@ class ManagedNotebookPlugin(BasePlugin):
     def sync(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
+        force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
     ) -> None:
         """
         Synchronize existing Managed Notebooks with wanna.yaml
@@ -199,7 +200,7 @@ class ManagedNotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
-        nb_service.sync()
+        nb_service.sync(force)
 
     @staticmethod
     def report(
