@@ -16,10 +16,6 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     service_account: Optional[str]
     network: str
     kms_key: Optional[str]
-    # Kms_key according to the docs:
-    # for instances projects/{project_id}/locations/{location}/keyRings/{key_ring_id}/cryptoKeys/{key_id}
-    # for runtimes projects/{PROJECT_ID}/locations/{REGION}/keyRings/{KEY_RING_NAME}/cryptoKeys/{KEY_NAME}
-    # Will require tests in order to figure out if they mean the same
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)
