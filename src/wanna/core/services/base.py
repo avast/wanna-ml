@@ -117,14 +117,14 @@ class BaseService(ABC, Generic[T]):
         organization = "?organizationId=676993294933"
 
         if instance_name == "all":
-            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
+            labels = f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
         elif instance_name not in [nb.name for nb in self.instances]:
             logger.user_error(
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
             )
             return
         else:
-            labels = f"labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource},wanna_name:{instance_name}"
+            labels = f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource},wanna_name:{instance_name}"
 
         link = base_url + labels + organization
         logger.user_info(f"Here is a link to your {wanna_resource} cost report:")

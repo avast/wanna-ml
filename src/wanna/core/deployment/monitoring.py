@@ -1,5 +1,5 @@
 import json
-from typing import Optional, cast
+from typing import Any, Dict, Optional, cast
 
 from google.cloud.exceptions import NotFound
 from google.cloud.logging import Client as LoggingClient
@@ -94,15 +94,16 @@ class MonitoringMixin(GCPCredentialsMixIn):
         else:
             client.create_alert_policy(name=f"projects/{resource.project}", alert_policy=alert_policy)
 
-    def upsert_log_metric(self, resource: LogMetricResource):
+    def upsert_log_metric(self, resource: LogMetricResource) -> Dict[str, Any]:
         client = LoggingClient(credentials=self.credentials)
         try:
-            client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
-        except NotFound as e:
-            print(e)
+            return client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
+        except NotFound:
             client.metrics_api.metric_create(
                 project=resource.project,
                 metric_name=resource.name,
                 filter_=resource.filter_,
                 description=resource.description,
             )
+            log_metric = client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
+            return log_metric
