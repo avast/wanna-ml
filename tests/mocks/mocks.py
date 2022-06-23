@@ -124,13 +124,19 @@ def mock_list_running_instances(project_id: str, region: str):
 class MockManagedNotebookServiceClient:
     def __init__(self):
         self.notebook_states = {"minimum-setup": Runtime.State.ACTIVE, "maximum-setup": Runtime.State.STOPPED}
+        self.wanna_project_name = "wanna-notebook-sample"
         self.project_id = "your-gcp-project-id"
         self.region = "europe-west1"
         self.owner = "jacek.hebda@avast.com"
         self.runtimes = [
             Runtime(
-                name=f"projects/{self.project_id}/locations/{self.region}/runtimes/{n}",
-                state=s,
+                {
+                    "name": f"projects/{self.project_id}/locations/{self.region}/runtimes/{n}",
+                    "state": s,
+                    "virtual_machine": {
+                        "virtual_machine_config": {"labels": {"wanna_project": self.wanna_project_name}}
+                    },
+                }
             )
             for n, s in self.notebook_states.items()
         ]

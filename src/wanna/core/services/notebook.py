@@ -647,9 +647,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
         parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
-        active_runtimes = self.notebook_client.list_runtimes(parent=parent).runtimes
+        active_runtimes = list(self.notebook_client.list_runtimes(parent=parent).runtimes)
         wanna_names = [managednotebook.name for managednotebook in self.instances]
-        existing_names = [runtime.name for runtime in active_runtimes]
+        existing_names = [str(runtime.name) for runtime in active_runtimes]
         to_be_deleted = []
         to_be_created = []
         """
@@ -658,7 +658,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         for runtime in active_runtimes:
             if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project.name:
                 if runtime.name.split("/")[-1] not in wanna_names:
-                    to_be_deleted.append(runtime.name)
+                    to_be_deleted.append(str(runtime.name))
         """
         Notebooks to be created
         """
@@ -668,21 +668,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 not in existing_names
             ):
                 to_be_created.append(notebook)
-                print("================================")
-                print("================================")
-                print(type(notebook))
-                print("================================")
-                print(notebook)
-        print("================================")
-        print("================================")
-        print(type(to_be_created))
-        print("================================")
-        print(to_be_created)
-        print("================================")
-        print("================================")
+
         return to_be_deleted, to_be_created
 
-    def sync(self, force) -> int:
+    def sync(self, force) -> None:
         """
         1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
         2. Does a diff between what is on GCP and what is on yaml
@@ -698,21 +687,19 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             if should_delete:
                 for item in to_be_deleted:
                     with logger.user_spinner(f"Deleting {item}"):
-                        deleted = self.notebook_client.delete_runtime(name=item)
-                        deleted.result()
+                        self.notebook_client.delete_runtime(name=item).result()
 
         if to_be_created:
             to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
             logger.user_info(f"Managed notebooks to be created:\n{to_be_created_str}")
             should_create = True if force else typer.confirm("Are you sure you want to create them?")
             if should_create:
-                for item in to_be_created:
-                    self._create_one_instance(item)
-            else:
-                return 0
+                # mypy inspects item is as str which obviously isn't hence the type: ignore
+                for item in to_be_created:  # type: ignore
+                    self._create_one_instance(item)  # type: ignore
+                    logger.user_info(f"Created {item.name}")  # type: ignore
 
         logger.user_info("Managed notebooks on GCP are in sync with wanna.yaml")
-        return 0
 
     def build(self) -> int:
         for instance in self.instances:

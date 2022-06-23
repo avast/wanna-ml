@@ -1,5 +1,5 @@
 wanna_project:
-  name: wanna-29
+  name: wanna-notebook-sample
   version: 1
   authors: ["john.doe@example.com", "jane.doe@example.com"]
 
@@ -13,7 +13,7 @@ gcp_profiles:
 managed_notebooks:
   - name: minimum-setup
     owner: jacek.hebda@avast.com
-    
+
   - name: maximum-setup
     owner: jacek.hebda@avast.com
     machine_type: n1-standard-1
