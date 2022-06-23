@@ -54,7 +54,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
             "user_labels": resource.labels,
             "conditions": [
                 {
-                    "display_name": "Failed scheduling",
+                    "display_name": "Error detected",
                     "condition_threshold": {
                         # https://issuetracker.google.com/issues/143436657?pli=1
                         # resource.type must be defined based on the resource type from log metric

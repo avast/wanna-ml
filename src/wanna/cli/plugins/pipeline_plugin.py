@@ -97,7 +97,7 @@ class PipelinePlugin(BasePlugin):
     def report(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("managed_notebook", "report"),
+        instance_name: str = instance_name_option("pipeline", "report"),
     ) -> None:
         """
         Displays a link to the cost report per wanna_project and optionally per instance name

@@ -10,7 +10,7 @@ gcp_profiles:
     region: europe-west1
     bucket: your-staging-bucket-name
     labels:
-    network: default
+    network: projects/your-gcp-project-id/global/networks/default
     service_account: wanna-dev@your-gcp-project-id.iam.gserviceaccount.com
 
 tensorboards:
