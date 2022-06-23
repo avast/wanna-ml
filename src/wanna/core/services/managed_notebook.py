@@ -6,6 +6,7 @@ from google.api_core import exceptions
 from google.cloud.notebooks_v1.services.managed_notebook_service import ManagedNotebookServiceClient
 from google.cloud.notebooks_v1.types import (
     CreateRuntimeRequest,
+    EncryptionConfig,
     LocalDisk,
     LocalDiskInitializeParams,
     Runtime,
@@ -68,6 +69,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
         localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
         localDisk = LocalDisk(initialize_params=localDiskParams)
+        encryption_config = (
+            EncryptionConfig(kms_key=self.config.gcp_profile.kms_key) if self.config.gcp_profile.kms_key else None
+        )
+
         # Accelerator
         if instance.gpu:
             runtimeAcceleratorConfig = RuntimeAcceleratorConfig(
@@ -99,11 +104,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         virtualMachineConfig = VirtualMachineConfig(
             machine_type=instance.machine_type,
             data_disk=localDisk,
+            encryption_config=encryption_config,
             labels=labels,
             accelerator_config=runtimeAcceleratorConfig,
             network=full_network,
             subnet=full_subnet,
-            # internal_ip_only=instance.internal_ip_only,
+            internal_ip_only=instance.internal_ip_only,
             tags=instance.tags,
             metadata=instance.metadata,
         )

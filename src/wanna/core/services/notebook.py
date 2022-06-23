@@ -211,6 +211,8 @@ class NotebookService(BaseService[NotebookModel]):
         boot_disk_size_gb = notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
         data_disk_type = notebook_instance.data_disk.disk_type if notebook_instance.data_disk else None
         data_disk_size_gb = notebook_instance.data_disk.size_gb if notebook_instance.data_disk else None
+        disk_encryption = "CMEK" if self.config.gcp_profile.kms_key else None
+        kms_key = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
 
         # service account and instance owners
         service_account = notebook_instance.service_account
@@ -255,6 +257,8 @@ class NotebookService(BaseService[NotebookModel]):
             service_account=service_account,
             tags=tags,
             labels=labels,
+            disk_encryption=disk_encryption,
+            kms_key=kms_key,
         )
 
         return CreateInstanceRequest(
