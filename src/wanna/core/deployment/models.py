@@ -80,6 +80,7 @@ class PipelineResource(GCPResource):
     compile_env_params: Dict[str, str]
     network: str
     notification_channels: List[NotificationChannelModel] = []
+    encryption_spec_key_name: Optional[str]
 
 
 JOB = TypeVar("JOB", bound=BaseCustomJobModel, covariant=True)  # dependency from wanna models

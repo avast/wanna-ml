@@ -171,7 +171,7 @@ class PipelineService(BaseService[PipelineModel]):
         }
         if pipeline_instance.labels:
             labels = {**pipeline_instance.labels, **labels}
-
+        encryption_spec_key_name = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
@@ -187,6 +187,7 @@ class PipelineService(BaseService[PipelineModel]):
                 if pipeline_instance.service_account
                 else self.config.gcp_profile.service_account
             ),
+            "encryption_spec_key_name": encryption_spec_key_name,
         }
 
         if tensorboard:
@@ -305,6 +306,7 @@ class PipelineService(BaseService[PipelineModel]):
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,
             notification_channels=channels,
+            encryption_spec_key_name=self.config.gcp_profile.kms_key,
         )
 
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)

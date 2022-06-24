@@ -11,6 +11,7 @@ PIPELINE_NETWORK = os.getenv("PIPELINE_NETWORK")
 PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
+ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
 
 
 def process_request(request):
@@ -50,6 +51,7 @@ def process_request(request):
         enable_caching=enable_caching,
         parameter_values=parameter_values,
         labels=PIPELINE_LABELS,
+        encryption_spec_key_name=ENCRYPTION_SPEC_KEY_NAME,
     )
 
     job.submit(service_account=PIPELINE_SERVICE_ACCOUNT, network=PIPELINE_NETWORK)
