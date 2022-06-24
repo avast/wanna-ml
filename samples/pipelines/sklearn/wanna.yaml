@@ -12,6 +12,7 @@ gcp_profiles:
     labels:
     network: projects/your-gcp-project-id/global/networks/default
     service_account: wanna-dev@your-gcp-project-id.iam.gserviceaccount.com
+    kms_key: "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key"
 
 tensorboards:
   - name: wanna-sample-pipeline-board

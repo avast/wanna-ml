@@ -188,7 +188,8 @@ class PipelineService(BaseService[PipelineModel]):
                 else self.config.gcp_profile.service_account
             ),
         }
-
+        if self.config.gcp_profile.kms_key:
+            pipeline_env_params["encryption_spec_key_name"] = self.config.gcp_profile.kms_key
         if tensorboard:
             pipeline_env_params["tensorboard"] = tensorboard
 
@@ -305,6 +306,7 @@ class PipelineService(BaseService[PipelineModel]):
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,
             notification_channels=channels,
+            encryption_spec_key_name=self.config.gcp_profile.kms_key,
         )
 
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
