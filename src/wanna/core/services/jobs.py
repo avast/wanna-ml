@@ -123,7 +123,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
                     model, image, tag = self.docker_service.get_image(docker_image_ref)
                     if model.build_type != ImageBuildType.provided_image:
                         tags = image.repo_tags if image and image.repo_tags else [tag]
-                        container_artifacts.append(ContainerArtifact(title=model.name, tags=tags))
+                        container_artifacts.append(ContainerArtifact(name=model.name, tags=tags))
 
             if self.push_mode.can_push_gcp_resources():
                 gcs_manifest_path = job_paths.get_gcs_job_wanna_manifest_path(version)
