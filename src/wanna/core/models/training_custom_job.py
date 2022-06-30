@@ -106,7 +106,7 @@ class BaseCustomJobModel(BaseInstanceModel):
         cls, values: Dict[str, Any]
     ) -> Dict[str, Any]:
         if not values.get("base_output_directory"):
-            values["base_output_directory"] = f"gs://{values.get('bucket')}/jobs/{values.get('name')}/outputs"
+            values["base_output_directory"] = f"gs://{values.get('bucket')}/wanna-jobs/{values.get('name')}/outputs"
         return values
 
     @root_validator(pre=False)

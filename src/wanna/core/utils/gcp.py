@@ -392,7 +392,7 @@ def is_gcs_path(path: str):
     return path.startswith("gs://")
 
 
-def get_network_info(network: str) -> Optional[Tuple[str, str]]:
+def get_network_info(network: Optional[str]) -> Optional[Tuple[str, str]]:
     """
     gets information about a network if set in long format
     Args:
@@ -403,8 +403,9 @@ def get_network_info(network: str) -> Optional[Tuple[str, str]]:
     Returns:
         Tuple[str, str]
     """
-    result = re.search(NETWORK_REGEX, network)
-    if result:
-        return result.group(1), result.group(2)
+    if network:
+        result = re.search(NETWORK_REGEX, network)
+        if result:
+            return result.group(1), result.group(2)
 
     return None

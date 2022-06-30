@@ -50,4 +50,4 @@ class TestTrainingCustomJobModel(unittest.TestCase):
                 "worker": {"container": {"docker_image_ref": "a"}},
             }
         )
-        assert model.base_output_directory == "gs://my-bucket/jobs/a/outputs"
+        assert model.base_output_directory == "gs://my-bucket/wanna-jobs/a/outputs"

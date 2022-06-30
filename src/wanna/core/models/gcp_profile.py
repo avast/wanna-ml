@@ -14,8 +14,10 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     labels: Optional[Dict[str, str]]
     bucket: str
     service_account: Optional[str]
-    network: str
+    network: str = "default"
     kms_key: Optional[str]
+    docker_repository: str = "wanna"
+    docker_registry: Optional[str]
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)

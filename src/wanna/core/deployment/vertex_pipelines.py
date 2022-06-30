@@ -17,7 +17,6 @@ from wanna.core.deployment.models import (
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.services.path_utils import PipelinePaths
-from wanna.core.utils.gcp import convert_project_id_to_project_number
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.time import get_timestamp
 
@@ -56,9 +55,6 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         override_params = load_yaml_path(extra_params, Path(".")) if extra_params else {}
         pipeline_params = {**resource.parameter_values, **override_params}
 
-        project_number = convert_project_id_to_project_number(resource.project)
-        network = f"projects/{project_number}/global/networks/{resource.network}"
-
         # Define Vertex AI Pipeline job
         pipeline_job = PipelineJob(
             display_name=resource.pipeline_name,
@@ -75,7 +71,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
 
         # submit pipeline job for execution
-        pipeline_job.submit(service_account=resource.service_account, network=network)
+        pipeline_job.submit(service_account=resource.service_account, network=resource.network)
 
         if sync:
             logger.user_info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
