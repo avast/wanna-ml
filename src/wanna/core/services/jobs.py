@@ -208,6 +208,14 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         }
         if job_model.labels:
             labels = {**job_model.labels, **labels}
+
+        network = self._get_resource_network(
+            project_id=self.config.gcp_profile.project_id,
+            push_mode=self.push_mode,
+            resource_network=job_model.network,
+            fallback_project_network=self.config.gcp_profile.network,
+        )
+
         return JobResource[CustomJobModel](
             name=job_model.name,
             project=job_model.project_id,
@@ -228,7 +236,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(job_model.tensorboard_ref)
             if job_model.tensorboard_ref
             else None,
-            network=job_model.network if job_model.network else self.config.gcp_profile.network,
+            network=network,
         )
 
     def _create_training_job_resource(
@@ -274,6 +282,13 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         else:
             raise ValueError(f"Job {job_model.name} worker must have `container` or `python_package` defined")
 
+        network = self._get_resource_network(
+            project_id=self.config.gcp_profile.project_id,
+            push_mode=self.push_mode,
+            resource_network=job_model.network,
+            fallback_project_network=self.config.gcp_profile.network,
+        )
+
         return JobResource[TrainingCustomJobModel](
             name=job_model.name,
             project=job_model.project_id,
@@ -284,7 +299,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(job_model.tensorboard_ref)
             if job_model.tensorboard_ref
             else None,
-            network=job_model.network if job_model.network else self.config.gcp_profile.network,
+            network=network,
         )
 
     def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> Tuple[str, WorkerPoolSpec]:

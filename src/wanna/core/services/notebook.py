@@ -8,6 +8,7 @@ from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceC
 from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage
 from waiting import wait
 
+from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.notebook import NotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
@@ -150,19 +151,25 @@ class NotebookService(BaseService[NotebookModel]):
         Returns:
             CreateInstanceRequest
         """
-        # Network
-        if notebook_instance.network:
-            full_network_name = f"projects/{notebook_instance.project_id}/global/networks/{notebook_instance.network}"
-        else:
-            full_network_name = None
 
-        if notebook_instance.subnet:
-            full_subnet_name = (
-                f"projects/{notebook_instance.project_id}/region/"
-                f"{notebook_instance.zone}/subnetworks/{notebook_instance.subnet}"
+        # Network
+        full_network_name = self._get_resource_network(
+            project_id=self.config.gcp_profile.project_id,
+            push_mode=PushMode.all,
+            resource_network=notebook_instance.network,
+            fallback_project_network=self.config.gcp_profile.network,
+            use_project_number=True,
+        )
+
+        full_subnet_name = (
+            self._get_resource_subnet(
+                full_network_name,
+                notebook_instance.subnet,
+                notebook_instance.zone,
             )
-        else:
-            full_subnet_name = None
+            if full_network_name
+            else None
+        )
 
         # GPU
         if notebook_instance.gpu:
@@ -259,6 +266,8 @@ class NotebookService(BaseService[NotebookModel]):
             labels=labels,
             disk_encryption=disk_encryption,
             kms_key=kms_key,
+            no_public_ip=notebook_instance.no_public_ip,
+            no_proxy_access=notebook_instance.no_proxy_access,
         )
 
         return CreateInstanceRequest(

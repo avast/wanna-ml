@@ -291,19 +291,19 @@ class TestPipelineService(unittest.TestCase):
         self.assertEqual(AlertPolicyServiceClient.list_alert_policies.call_count, 3)
         self.assertEqual(AlertPolicyServiceClient.create_alert_policy.call_count, 3)
 
-        push_network = pipeline_service._get_pipeline_network(
+        push_network = pipeline_service._get_resource_network(
             project_id="test-project-id",
             push_mode=PushMode.all,
-            pipeline_network="pipeline-network",
-            fallback_network="fallback-network",
+            resource_network="pipeline-network",
+            fallback_project_network="fallback-network",
         )
         self.assertEqual(push_network, "projects/123456789/global/networks/pipeline-network")
 
-        non_push_network = pipeline_service._get_pipeline_network(
+        non_push_network = pipeline_service._get_resource_network(
             project_id="test-project-id",
             push_mode=PushMode.containers,
-            pipeline_network=None,
-            fallback_network="fallback-network",
+            resource_network=None,
+            fallback_project_network="fallback-network",
         )
 
         self.assertEqual(non_push_network, "projects/test-project-id/global/networks/fallback-network")
