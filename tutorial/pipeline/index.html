@@ -1,0 +1,925 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.2.6">
+    
+    
+      
+        <title>WANNA Pipelines - WANNA ML</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.9d5733d3.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#wanna-ml-pipelines" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="WANNA ML" class="md-header__button md-logo" aria-label="WANNA ML" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WANNA ML
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              WANNA Pipelines
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avast/wanna-ml/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avast/wanna-ml
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="WANNA ML" class="md-nav__button md-logo" aria-label="WANNA ML" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    WANNA ML
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avast/wanna-ml/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avast/wanna-ml
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Tutorial
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Tutorial" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Tutorial
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Get Started
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project/" class="md-nav__link">
+        WANNA Project
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../profile/" class="md-nav__link">
+        WANNA Profile
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        WANNA Docker
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tensorboard/" class="md-nav__link">
+        WANNA Tensorboard
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebook/" class="md-nav__link">
+        WANNA Notebook
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../managed-notebook/" class="md-nav__link">
+        WANNA Managed Notebook
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../job/" class="md-nav__link">
+        WANNA Job
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          WANNA Pipeline
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        WANNA Pipeline
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-get-started" class="md-nav__link">
+    Tutorial Get started
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial Get started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-environment" class="md-nav__link">
+    Setup environment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initialize-wanna-project" class="md-nav__link">
+    Initialize WANNA project
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    Components
+  </a>
+  
+    <nav class="md-nav" aria-label="Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-first-component-for-data-prep" class="md-nav__link">
+    Create first component for data prep
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline" class="md-nav__link">
+    Pipeline
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-pipeline-in-dev-mode" class="md-nav__link">
+    Running the pipeline in dev mode
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/commands/" class="md-nav__link">
+        Plugins
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-get-started" class="md-nav__link">
+    Tutorial Get started
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial Get started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-environment" class="md-nav__link">
+    Setup environment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initialize-wanna-project" class="md-nav__link">
+    Initialize WANNA project
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    Components
+  </a>
+  
+    <nav class="md-nav" aria-label="Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-first-component-for-data-prep" class="md-nav__link">
+    Create first component for data prep
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline" class="md-nav__link">
+    Pipeline
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-pipeline-in-dev-mode" class="md-nav__link">
+    Running the pipeline in dev mode
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/avast/wanna-ml/edit/master/docs/tutorial/pipeline.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+
+<h1 id="wanna-ml-pipelines">WANNA ML Pipelines<a class="headerlink" href="#wanna-ml-pipelines" title="Permanent link">#</a></h1>
+<p>WANNA ML Pipelines aim at reducing the friction on development cycle to release whilst providing project organization for independent and testable components. It wrapps Kubeflow V2 pipelines with a build and deployment tools for managed GCP VertexAI ML Pipelines service. It has several utils and conventions to reduce boilerplate and speed up development.</p>
+<h2 id="tutorial-get-started">Tutorial Get started<a class="headerlink" href="#tutorial-get-started" title="Permanent link">#</a></h2>
+<p>In this tutorial we will go over several steps that will bootstrap and run a Vertex AI Pipeline(Kubeflow V2) through wanna cli.</p>
+<h3 id="setup-environment">Setup environment<a class="headerlink" href="#setup-environment" title="Permanent link">#</a></h3>
+<pre><code class="language-bash">
+# Login to GCP
+gcloud auth login
+
+# Auth against GCP docker registries
+gcloud auth configure-docker europe-west1-docker.pkg.dev 
+
+# Create python env
+conda create -n pipeline-tutorial python=3.8 poetry
+
+conda activate pipeline-tutorial
+
+pip install wanna-ml \
+    --index-url https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple \
+    --extra-index-url https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple
+
+
+</code></pre>
+<h3 id="initialize-wanna-project">Initialize WANNA project<a class="headerlink" href="#initialize-wanna-project" title="Permanent link">#</a></h3>
+<pre><code class="language-bash">wanna init --template blank
+</code></pre>
+<p>For this turorial we will be using Avast cloud-lab-304213 GCP project as it is available to everyone.</p>
+<p>Answer the following questions:</p>
+<pre><code class="language-bash">project_name [project_name]: pipeline_tutorial
+project_owner_fullname [project owner]:  
+project_owner_email [you@avast.com]: 
+project_version [0.0.0]: 
+project_description [Link to WANNA project page on CML]: 
+project_slug [project_name]: 
+gcp_project_id []: cloud-lab-304213
+gcp_service_account []: jacekhebdatest@cloud-lab-304213.iam.gserviceaccount.com
+gcp_bucket []: wanna-ml-west1-jh
+</code></pre>
+<p>Complete installation process</p>
+<pre><code class="language-bash">cd pipeline_tutorial
+
+poetry install
+</code></pre>
+<p>Build blank pipeline to check all is well in paradise</p>
+<pre><code class="language-bash">wanna pipeline build
+</code></pre>
+<h2 id="components">Components<a class="headerlink" href="#components" title="Permanent link">#</a></h2>
+<p>Now that we have a blank bootstraped Kubeflow V2 pipeline we need to add components. In this tutorial we choose to go with self contained components that are independent and testable. There is a recomended structure but it can be tedious to repeat every time and this is where <code>wanna</code> comes in to aliviate this boilerplate.</p>
+<h3 id="create-first-component-for-data-prep">Create first component for data prep<a class="headerlink" href="#create-first-component-for-data-prep" title="Permanent link">#</a></h3>
+<p>The first component we will create is a data component where we can do some data preparation for the rest of the pipeline</p>
+<pre><code class="language-bash">wanna components create --output-dir pipeline/components/
+</code></pre>
+<p>the output should be something like</p>
+<pre><code class="language-bash">
+component_name [component_name]: data
+component_author [component author]: Joao Da Silva
+component_author_email [you@avast.com]: joao.silva1@avast.com
+component_version [0.0.0]: 
+component_description [Describe your component]: data component for WANNA pipeline tutorial        
+component_url [Link to MLOps project page on CML]: 
+component_slug [data]: 
+component_docker_ref [data]: 
+Select component_framework:
+1 - base-cpu
+2 - base-cu110
+3 - base-cu113
+4 - pytorch-xla-1.11
+5 - pytorch-gpu-1.10
+6 - pytorch-gpu-1.11
+7 - sklearn-0.24
+8 - tf-cpu.2-6
+9 - tf-cpu.2-8
+10 - tf-gpu-slim.2-6
+11 - tf-gpu-slim.2-8
+12 - xgboost-cpu.1-1
+Choose from 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 [1]: 1
+</code></pre>
+<p>as a result you can see the following tree structure, which for the most part is a common python <code>lib</code> structure whith the exception of kubeflow's component.yaml</p>
+<pre><code class="language-bash">tree pipeline/components/data
+
+pipeline/components/data
+├── Dockerfile
+├── README.md
+├── component.yaml
+├── setup.py
+├── src
+│   └── data
+│       ├── __init__.py
+│       └── data.py
+└── tests
+    └── test_data.py
+
+4 directories, 9 files
+</code></pre>
+<p>You may also notice that a Dockerfile is present and here is where the python data <code>lib</code> is installed and executed. However we do need to add this Dockerfile to <code>wanna.yaml</code> so that wanna knows about it and can build it and export it.</p>
+<p>Update wanna <code>docker.images</code> yaml array with</p>
+<pre><code class="language-bash">images
+    - build_type: local_build_image
+      name: data
+      context_dir: pipeline/components/data/
+      dockerfile: pipeline/components/data/Dockerfile
+</code></pre>
+<p>and add the docker ref <code>data</code> into the pipeline in wanna.yaml so that wanna can link these and expose the docker tag and pipeline compine time. Update wanna.yamll path <code>pipelines[0].docker_image_ref</code> with <code>docker_image_ref: [data]</code>.</p>
+<p>It should now look like:</p>
+<pre><code class="language-bash">pipelines:
+  - name: pipeline-tutorial-pipeline
+    schedule:
+      cron: 2 * * * *
+    bucket: gs://wanna-tensorflow-sample-dev
+    pipeline_file: pipeline/pipeline.py
+    pipeline_params: pipeline/params.yaml
+    docker_image_ref: [&quot;data&quot;]
+    tensorboard_ref: pipeline-tutorial-board
+</code></pre>
+<p>Earlier I mentioned <code>expose the docker tag</code>, this means wanna exports every docker tag from <code>docker.images</code> array as <code>${NAME_DOCKER_URI}</code> so in this component you can see in the yaml <code>${DATA_DOCKER_URI}</code> which gets replaced at compile time, this way we have the possibility to have dynamic Kubeflow components versioned according to current pipeline release.</p>
+<p>Next we may wat to make this component part of our <code>poetry</code> build so that we can run tests, linter and whatnot from a single place.</p>
+<p>Lets edit our <code>pyproject.toml</code> as follows:</p>
+<pre><code class="language-toml">[tool.poetry.dependencies]
+python = &quot;&gt;=3.8,&lt;3.11&quot;
+data = {path = &quot;pipeline/components/data&quot;, develop=true}
+</code></pre>
+<blockquote>
+<p>from <code>poetry &gt;= 1.2</code> we  will be able to just run <code>poetry add pipeline/components/data --editable</code>.</p>
+</blockquote>
+<p>Let's install our data lib into the environment and run some</p>
+<pre><code class="language-bash">poetry lock &amp;&amp; poetry install
+</code></pre>
+<p>At this point running <code>python -m data.data --help</code> should show:</p>
+<pre><code>Usage: python -m data.data [OPTIONS]
+
+Options:
+  --project TEXT
+  --location TEXT
+  --experiment-name TEXT
+  --help                  Show this message and exit.
+</code></pre>
+<p>as well as a quick test <code>pytest -s pipeline/components/data</code> or go full scale with pre-commit hook <code>git init . &amp;&amp; git add . &amp;&amp; task build</code>. This will fail on <code>flake8</code> as expected, as we will be using the var which flake8 complains about.</p>
+<p>You can now see that you have a self contained component and testable, ready to be added to the kubeflow pipeline.</p>
+<h2 id="pipeline">Pipeline<a class="headerlink" href="#pipeline" title="Permanent link">#</a></h2>
+<p>WANNA template creates two files that allow to put together the Kubeflow V2 pipeline that will then be deployed to GCP Vertex AI Pipelines.</p>
+<p><code>pipeline/config.py</code> captures wanna compile time exposed environment variables and provides this as configuration to <code>pipeline/pipeline.py</code>.</p>
+<p>With that in mind let's add our data component to <code>pipeline.py</code>.</p>
+<p>First we imoprt wanna component loader that will replace ENV vars, namely the container</p>
+<pre><code class="language-python">
+from wanna.components.loader import load_wanna_component
+
+</code></pre>
+<p>Secondly we will load the actual component. <code>wanna_pipeline</code> function should now look like this:</p>
+<pre><code class="language-python">@dsl.pipeline(
+    # A name for the pipeline. Use to determine the pipeline Context.
+    name=cfg.PIPELINE_NAME,
+    pipeline_root=cfg.PIPELINE_ROOT
+)
+def wanna_pipeline(eval_acc_threshold: float):
+    pipeline_dir = Path(__file__).parent.resolve()
+
+    # ===================================================================
+    # Get pipeline result notification
+    # ===================================================================
+    exit_task = (
+        on_exit()
+        .set_display_name(&quot;On Exit Dummy Task&quot;)
+        .set_caching_options(False)
+    )
+
+    with dsl.ExitHandler(exit_task):
+        load_wanna_component(f&quot;{pipeline_dir}/components/data/component.yaml&quot;)(
+            experiment_name=cfg.MODEL_DISPLAY_NAME
+        ).set_display_name(&quot;Data prep&quot;)
+
+</code></pre>
+<p>now with everything in place, lets build the pipeline with <code>wanna pipeline build</code> or with <code>wanna pipeline build --quick</code> if you want to skip docker builds and just verify Kubeflow compiles and components have correct inputs and outputs connected.</p>
+<h3 id="running-the-pipeline-in-dev-mode">Running the pipeline in <code>dev</code> mode<a class="headerlink" href="#running-the-pipeline-in-dev-mode" title="Permanent link">#</a></h3>
+<p>When WANNA runs a pipeline from local it will,</p>
+<ol>
+<li>build &amp; push the component containers to Google Docker registry</li>
+<li>compile the kubeflow pipeline and upload to gcs the resulting pipeline json spec</li>
+<li>compile and upload to gcs wanna manifest that allows to run the pipeline from anywhere</li>
+<li>Trigger the pipeline run and print its dashboard url and running state</li>
+</ol>
+<p>Assuming we are on <code>✔ Compiling pipeline pipeline-tutorial-pipeline</code> succeeded we can now actually run the pipeline.</p>
+<pre><code class="language-bash">wanna pipeline run --name pipeline-tutorial-pipeline --params pipeline/params.yaml --version dev --sync
+</code></pre>
+<p>if all goes with the plan you should see something along the lines(we will be improving the stdout logging overtime):</p>
+<pre><code> Reading and validating wanna yaml config
+ℹ GCP profile 'default' will be used.
+✔ Skipping build for context_dir=pipeline/components/data, dockerfile=pipeline/components/data/Dockerfile and image europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/pipeline_tutorial/data:dev
+⠸ Compiling pipeline pipeline-tutorial-pipeline
+✔ Compiling pipeline pipeline-tutorial-pipeline
+✔ Pushing docker image europe-west1-docker.pkg.dev/cloud-lab-304213/wanna-samples/pipeline_tutorial/data:dev
+ℹ Uploading wanna running manifest to gs://wanna-ml-west1-jh/pipeline-root/pipeline-tutorial-pipeline/deployment/release/dev/wanna_manifest.json
+ℹ Uploading vertex ai pipeline spec to gs://wanna-ml-west1-jh/pipeline-root/pipeline-tutorial-pipeline/deployment/release/dev/pipeline_spec.json
+✔ Pushing pipeline pipeline-tutorial-pipeline
+⠦ Running pipeline pipeline-tutorial-pipeline in sync modeCreating PipelineJob
+⠋ Running pipeline pipeline-tutorial-pipeline in sync modePipelineJob created. Resource name: projects/968728188698/locations/europe-west1/pipelineJobs/pipeline-pipeline-tutorial-pipeline-20220524103650
+To use this PipelineJob in another session:
+pipeline_job = aiplatform.PipelineJob.get('projects/968728188698/locations/europe-west1/pipelineJobs/pipeline-pipeline-tutorial-pipeline-20220524103650')
+View Pipeline Job: https://console.cloud.google.com/vertex-ai/locations/europe-west1/pipelines/runs/pipeline-pipeline-tutorial-pipeline-20220524103650?project=968728188698
+ℹ Pipeline dashboard at https://console.cloud.google.com/vertex-ai/locations/europe-west1/pipelines/runs/pipeline-pipeline-tutorial-pipeline-20220524103650?project=968728188698.
+PipelineJob projects/968728188698/locations/europe-west1/pipelineJobs/pipeline-pipeline-tutorial-pipeline-20220524103650 current state: PipelineState.PIPELINE_STATE_RUNNING
+✔ Running pipeline pipeline-tutorial-pipeline in sync mode
+</code></pre>
+<p>You can clearly see the url to the Vertex AI dashboard where you can inspect the pipeline execution, logs, kubeflow inputs and outputs and any logged metadata.</p>
+<p>You may have noticed in above the line <code>Uploading wanna running manifest to gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/deployment/dev/manifests/wanna-manifest.json</code> in the logs.
+This means wanna publishes has its own pipeline manifest which allow us to run any pipeline version with any set of params.</p>
+<p>Let's try it:</p>
+<pre><code class="language-bash">echo &quot;eval_acc_threshold: 0.79&quot; &gt; pipeline/params.experiment.yaml
+
+wanna pipeline run --manifest gs://wanna-cloudlab-europe-west1/wanna-pipelines/wanna-sklearn-sample/deployment/dev/manifests/wanna-manifest.json --params pipeline/params.experiment.yaml  --sync
+</code></pre>
+<p>The above snippet will run the pipeline we published earlier with a new set of params. Each manifest version is pushed to <code>gs://${PIPELINE_BUCKET}/pipeline-root/${PIPELINE_NAME}/deployment/release/${VERSION}/wanna_manifest.json</code> so it's easy to trigger these pipelines.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../job/" class="md-footer__link md-footer__link--prev" aria-label="Previous: WANNA Job" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              WANNA Job
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../cli/commands/" class="md-footer__link md-footer__link--next" aria-label="Next: Plugins" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Plugins
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.5e67fbfe.min.js"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e87a5f81.min.js"></script>
+      
+    
+  </body>
+</html>
