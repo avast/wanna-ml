@@ -74,6 +74,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             tensorboard=manifest.tensorboard if manifest.tensorboard else None,
             network=manifest.network,
             sync=False,
+            encryption_spec_key_name=manifest.encryption_spec_key_name,
         )
 
         runable.wait_for_resource_creation()

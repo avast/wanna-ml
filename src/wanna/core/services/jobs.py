@@ -445,7 +445,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         Returns:
             Path: Path where resource manifest was saved to
         """
-        encryption_spec_key_name = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
+        encryption_spec_key_name = (
+            resource.encryption_spec_key_name if resource.encryption_spec_key_name else self.config.gcp_profile.kms_key
+        )
         json_dict = {
             "name": resource.name,
             "project": resource.project,
