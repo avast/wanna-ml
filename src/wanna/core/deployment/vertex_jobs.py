@@ -59,7 +59,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             runable = HyperparameterTuningJob(
                 display_name=manifest.job_config.name,
                 custom_job=custom_job,
-                metric_spec=manifest.job_config.hp_tuning.metrics.__dict__,
+                metric_spec=manifest.job_config.hp_tuning.metrics,
                 parameter_spec=parameter_spec,
                 max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
                 parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
@@ -108,13 +108,13 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
 
         if manifest.job_config.worker and manifest.job_config.worker.container:
             training_job = CustomContainerTrainingJob(
-                **manifest.job_payload,
                 model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+                **manifest.job_payload,
             )
         elif manifest.job_config.worker and manifest.job_config.worker.python_package:
             training_job = CustomPythonPackageTrainingJob(
-                **manifest.job_payload,
                 model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+                **manifest.job_payload,
             )  # type: ignore
         else:
             raise ValueError(
