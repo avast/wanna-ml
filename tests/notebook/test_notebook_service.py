@@ -61,7 +61,7 @@ class TestNotebookService(unittest.TestCase):
         instance = config.notebooks[0]
         instance.network = "little-hangleton"
         request = nb_service._create_instance_request(instance)
-        assert request.instance.network == f"projects/{config.gcp_profile.project_id}/global/networks/little-hangleton"
+        assert request.instance.network == "projects/123456789/global/networks/little-hangleton"
 
     def test_create_instance_request_network_subnet(self):
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
@@ -72,7 +72,7 @@ class TestNotebookService(unittest.TestCase):
         request = nb_service._create_instance_request(instance)
         assert (
             request.instance.subnet
-            == f"projects/{config.gcp_profile.project_id}/region/{config.gcp_profile.zone}/subnetworks/the-riddle-house"
+            == f"projects/123456789/regions/{config.gcp_profile.zone}/subnetworks/the-riddle-house"
         )
 
     def test_create_instance_request_gpu_config(self):

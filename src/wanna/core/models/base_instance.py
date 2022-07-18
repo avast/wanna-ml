@@ -13,7 +13,7 @@ class BaseInstanceModel(BaseModel, extra=Extra.ignore, validate_assignment=True)
     labels: Optional[Dict[str, str]]
     description: Optional[str]
     service_account: Optional[EmailStr]
-    network: Optional[str] = "default"
+    network: Optional[str]
     bucket: Optional[str]
     tags: Optional[List[str]]
     metadata: Optional[List[Dict[str, Any]]]

@@ -1,8 +1,10 @@
 from abc import ABC
-from typing import Generic, List, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
+from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.base_instance import BaseInstanceModel
+from wanna.core.utils.gcp import convert_project_id_to_project_number, get_network_info
 
 logger = get_logger(__name__)
 
@@ -129,3 +131,44 @@ class BaseService(ABC, Generic[T]):
         link = base_url + labels + organization
         logger.user_info(f"Here is a link to your {wanna_resource} cost report:")
         logger.user_success(f"{link}")
+
+    def _get_resource_network(
+        self,
+        project_id: str,
+        push_mode: PushMode,
+        resource_network: Optional[str],
+        fallback_project_network: str,
+        use_project_number: bool = True,
+    ) -> Optional[str]:
+        resource_network = resource_network if resource_network else fallback_project_network
+        if resource_network:
+            result = get_network_info(resource_network)
+            if result:
+                # long format network found
+                project_id, resource_network = result
+
+            # In certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
+            if push_mode.can_push_gcp_resources():
+                if not project_id.isdigit() and use_project_number:
+                    project_id = convert_project_id_to_project_number(project_id)
+
+            return f"projects/{project_id}/global/networks/{resource_network}"
+        else:
+            return None
+
+    def _get_resource_subnet(self, network: str, subnet: Optional[str], region: str):
+        if subnet:
+            # Assumes the full qualified path was provided in config
+            if "/" in subnet:
+                return subnet
+            else:
+                # Get the project id from the provided network and pass it to subnet
+                network_project_parts = network.split("/")
+                if len(network_project_parts) >= 2:
+                    network_project_id = network_project_parts[1]
+                else:
+                    network_project_id = network
+
+                return f"projects/{network_project_id}/regions/{region}/subnetworks/{subnet}"
+        else:
+            return None

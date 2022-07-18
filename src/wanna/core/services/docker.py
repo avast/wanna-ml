@@ -46,14 +46,18 @@ class DockerService:
     ):
         self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
+
         # Artifactory mirrors to different registry/projectid/repository combo
         registry_suffix = os.getenv("WANNA_DOCKER_REGISTRY_SUFFIX")
         self.docker_registry_suffix = f"{registry_suffix}/" if registry_suffix else ""
-
         self.docker_registry = (
-            os.getenv("WANNA_DOCKER_REGISTRY") or docker_model.registry or f"{gcp_profile.region}-docker.pkg.dev"
+            os.getenv("WANNA_DOCKER_REGISTRY")
+            or docker_model.registry
+            or gcp_profile.docker_registry
+            or f"{gcp_profile.region}-docker.pkg.dev"
         )
-        self.docker_repository = os.getenv("WANNA_DOCKER_REGISTRY_REPOSITORY") or docker_model.repository
+        docker_repository = os.getenv("WANNA_DOCKER_REGISTRY_REPOSITORY") or docker_model.repository
+        self.docker_repository = docker_repository if docker_repository else gcp_profile.docker_repository
         self.docker_project_id = os.getenv("WANNA_DOCKER_REGISTRY_PROJECT_ID") or gcp_profile.project_id
 
         self.version = version

@@ -26,7 +26,6 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.services.tensorboard import TensorboardService
-from wanna.core.utils.gcp import convert_project_id_to_project_number, get_network_info
 from wanna.core.utils.loaders import load_yaml_path
 
 logger = get_logger(__name__)
@@ -132,11 +131,18 @@ class PipelineService(BaseService[PipelineModel]):
 
         return push_tasks
 
+    @staticmethod
+    def get_pipeline_bucket(bucket: Optional[str], fallback_bucket: str):
+        if bucket:
+            return bucket if bucket.startswith("gs://") else f"gs://{bucket}"
+        else:
+            return f"gs://{fallback_bucket}"
+
     def deploy(self, instance_name: str, env: str):
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
             logger.user_info(f"Deploying {pipeline.name} version {self.version} to env {env}")
-            pipeline_bucket = pipeline.bucket if pipeline.bucket else f"gs://{self.config.gcp_profile.bucket}"
+            pipeline_bucket = PipelineService.get_pipeline_bucket(pipeline.bucket, self.config.gcp_profile.bucket)
             pipeline_paths = PipelinePaths(self.workdir, pipeline_bucket, pipeline_name=pipeline.name)
             manifest = PipelineService.read_manifest(
                 self.connector, pipeline_paths.get_gcs_wanna_manifest_path(self.version)
@@ -162,7 +168,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str,
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
         tensorboard: Optional[str],
-        network: str,
+        network: Optional[str],
     ):
 
         labels = {
@@ -181,17 +187,21 @@ class PipelineService(BaseService[PipelineModel]):
             "region": pipeline_instance.region,
             "pipeline_root": pipeline_paths.get_gcs_pipeline_root(),
             "pipeline_labels": json.dumps(labels),
-            "pipeline_network": network,
             "pipeline_service_account": (
                 pipeline_instance.service_account
                 if pipeline_instance.service_account
                 else self.config.gcp_profile.service_account
             ),
         }
+
         if self.config.gcp_profile.kms_key:
             pipeline_env_params["encryption_spec_key_name"] = self.config.gcp_profile.kms_key
+
         if tensorboard:
             pipeline_env_params["tensorboard"] = tensorboard
+
+        if network:
+            pipeline_env_params["pipeline_network"] = network
 
         # Export Pipeline wanna ENV params to be available during compilation
         pipeline_name_prefix = snakecase(f"{pipeline_instance.name}").upper()
@@ -214,22 +224,6 @@ class PipelineService(BaseService[PipelineModel]):
 
         return pipeline_env_params, pipeline_compile_params
 
-    def _get_pipeline_network(
-        self, project_id: str, push_mode: PushMode, pipeline_network: Optional[str], fallback_network: str
-    ) -> str:
-        pipeline_network = pipeline_network if pipeline_network else fallback_network
-        result = get_network_info(pipeline_network)
-        if result:
-            # long format network found
-            project_id, pipeline_network = result
-
-        # In certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
-        if push_mode.can_push_gcp_resources():
-            if not project_id.isdigit():
-                project_id = convert_project_id_to_project_number(project_id)
-
-        return f"projects/{project_id}/global/networks/{pipeline_network}"
-
     def _compile_one_instance(self, pipeline: PipelineModel) -> Path:
 
         image_tags = [
@@ -240,20 +234,20 @@ class PipelineService(BaseService[PipelineModel]):
         logger.user_info(text=f"Compiling pipeline {pipeline.name}")
 
         # Prep build dir
-        pipeline_paths = PipelinePaths(
-            self.workdir, pipeline.bucket or f"gs://{self.config.gcp_profile.bucket}", pipeline.name
-        )
+        pipeline_bucket = PipelineService.get_pipeline_bucket(pipeline.bucket, self.config.gcp_profile.bucket)
+        pipeline_paths = PipelinePaths(self.workdir, pipeline_bucket, pipeline.name)
+
         tensorboard = (
             self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
             if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()
             else None
         )
 
-        network = self._get_pipeline_network(
+        network = self._get_resource_network(
             project_id=pipeline.project_id,
             push_mode=self.push_mode,
-            pipeline_network=pipeline.network,
-            fallback_network=self.config.gcp_profile.network,
+            resource_network=pipeline.network,
+            fallback_project_network=self.config.gcp_profile.network,
         )
 
         # Collect kubeflow pipeline params for compilation
@@ -295,7 +289,7 @@ class PipelineService(BaseService[PipelineModel]):
             service_account=pipeline.service_account,
             network=network,
             pipeline_name=pipeline.name,
-            pipeline_bucket=pipeline.bucket,
+            pipeline_bucket=pipeline_bucket,
             pipeline_version=self.version,
             json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
             parameter_values=pipeline_params,

@@ -36,6 +36,8 @@ class NotebookModel(BaseInstanceModel):
     network: Optional[str]
     subnet: Optional[str]
     tensorboard_ref: Optional[str]
+    no_public_ip: bool = True
+    no_proxy_access: bool = False
 
     _machine_type = validator("machine_type")(validators.validate_machine_type)
 
