@@ -64,6 +64,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
                 max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
                 parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
                 search_algorithm=manifest.job_config.hp_tuning.search_algorithm,
+                encryption_spec_key_name=manifest.encryption_spec_key_name,
             )
         else:
             runable = custom_job  # type: ignore
@@ -74,7 +75,6 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             tensorboard=manifest.tensorboard if manifest.tensorboard else None,
             network=manifest.network,
             sync=False,
-            encryption_spec_key_name=manifest.encryption_spec_key_name,
         )
 
         runable.wait_for_resource_creation()
@@ -107,9 +107,15 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         """
 
         if manifest.job_config.worker and manifest.job_config.worker.container:
-            training_job = CustomContainerTrainingJob(**manifest.job_payload)
+            training_job = CustomContainerTrainingJob(
+                **manifest.job_payload,
+                model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+            )
         elif manifest.job_config.worker and manifest.job_config.worker.python_package:
-            training_job = CustomPythonPackageTrainingJob(**manifest.job_payload)  # type: ignore
+            training_job = CustomPythonPackageTrainingJob(
+                **manifest.job_payload,
+                model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+            )  # type: ignore
         else:
             raise ValueError(
                 "Wanna could not identify the type of job. Either container or python_package"
