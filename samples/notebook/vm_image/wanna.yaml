@@ -9,6 +9,8 @@ gcp_profiles:
     zone: europe-west1-b
     bucket: "your-staging-bucket-name"
     network: default
+    billing_id: "your-billing-id"
+    organization_id: "your-organization-id"
 
 notebooks:
   - name: wanna-notebook-vm

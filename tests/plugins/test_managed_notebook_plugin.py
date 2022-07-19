@@ -90,5 +90,7 @@ class TestManagedNotebookPlugin(unittest.TestCase):
             wanna_project="wanna-notebook-sample",
             wanna_resource="managed_notebook",
             gcp_project="your-gcp-project-id",
+            billing_id="your-billing-id",
+            organization_id="your-organization-id",
         )
         self.assertEqual(0, result.exit_code)

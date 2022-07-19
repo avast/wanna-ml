@@ -106,4 +106,6 @@ class JobPlugin(BasePlugin):
             wanna_project=config.wanna_project.name,
             wanna_resource="job",
             gcp_project=config.gcp_profile.project_id,
+            billing_id=config.gcp_profile.billing_id,
+            organization_id=config.gcp_profile.organization_id,
         )

@@ -110,13 +110,21 @@ class BaseService(ABC, Generic[T]):
 
         return instances
 
-    def report(self, instance_name: str, wanna_project: str, wanna_resource: str, gcp_project: str) -> None:
+    def report(
+        self,
+        instance_name: str,
+        wanna_project: str,
+        wanna_resource: str,
+        gcp_project: str,
+        billing_id: Optional[str],
+        organization_id: Optional[str],
+    ) -> None:
         """
         Sends a link to cost report
         Billing and Organization IDs are hard coded
         """
-        base_url = f"https://console.cloud.google.com/billing/0141C8-E9DEB5-FDB1A3/reports;projects={gcp_project}"
-        organization = "?organizationId=676993294933"
+        base_url = f"https://console.cloud.google.com/billing/{billing_id}/reports;projects={gcp_project}"
+        organization = f"?organizationId={organization_id}"
 
         if instance_name == "all":
             labels = f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
