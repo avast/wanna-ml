@@ -56,11 +56,14 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
                 param.var_name: self._create_hyperparameter_spec(param)
                 for param in manifest.job_config.hp_tuning.parameters
             }
+            metric_spec_dict = dict()
+            for key in manifest.job_config.hp_tuning.metrics:
+                metric_spec_dict[key] = str(manifest.job_config.hp_tuning.metrics[key])
 
             runable = HyperparameterTuningJob(
                 display_name=manifest.job_config.name,
                 custom_job=custom_job,
-                metric_spec=manifest.job_config.hp_tuning.metrics,
+                metric_spec=metric_spec_dict,
                 parameter_spec=parameter_spec,
                 max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
                 parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
