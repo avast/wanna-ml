@@ -86,7 +86,7 @@ HyperParamater = Annotated[
 
 
 class HyperparameterTuning(BaseModel):
-    metrics: Dict[str, Literal["minimize", "maximize"]]
+    metrics: Dict[str, str]
     parameters: List[HyperParamater]
     max_trial_count: int = 15
     parallel_trial_count: int = 3
