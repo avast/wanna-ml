@@ -18,8 +18,6 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     kms_key: Optional[str]
     docker_repository: str = "wanna"
     docker_registry: Optional[str]
-    billing_id: Optional[str]
-    organization_id: Optional[str]
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)

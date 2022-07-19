@@ -2,6 +2,8 @@ wanna_project:
   name: wanna-notebook-sample
   version: 1
   authors: ["john.doe@example.com", "jane.doe@example.com"]
+  billing_id: "your-billing-id"
+  organization_id: "your-organization-id"
 
 gcp_profiles:
   - profile_name: default
@@ -9,8 +11,6 @@ gcp_profiles:
     zone: europe-west1-b
     bucket: "your-staging-bucket-name"
     network: default
-    billing_id: "your-billing-id"
-    organization_id: "your-organization-id"
 
 notebooks:
   - name: wanna-notebook-vm
