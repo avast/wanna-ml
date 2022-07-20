@@ -10,6 +10,7 @@ from wanna_simple.components.data.get_data import get_data_op
 from wanna_simple.components.predictor import make_prediction_request
 from wanna_simple.components.trainer.eval_model import eval_model_op
 from wanna_simple.components.trainer.train_xgb_model import train_xgb_model_op
+from src.wanna.components.kubeflow.get_or_create_endpoint import get_or_create_endpoint
 
 
 @component(
@@ -108,13 +109,13 @@ def wanna_sklearn_sample(eval_acc_threshold: float):
             # create endpoint to deploy one or more models
             # An endpoint provides a service URL where the prediction requests are sent
             endpoint_create_task = (
-                aip_components.EndpointCreateOp(
+                get_or_create_endpoint(
                     project=cfg.PROJECT_ID,
                     location=cfg.REGION,
                     display_name=cfg.MODEL_NAME + "-model-endpoint",
                     labels=cfg.PIPELINE_LABELS,
                 )
-                .set_display_name("Create model endpoint")
+                .set_display_name("Get or create model endpoint")
                 .after(model_upload_task)
             )
 
