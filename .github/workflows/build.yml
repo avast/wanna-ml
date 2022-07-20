@@ -15,6 +15,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
+      - name: Run Changelog CI
+        uses: saadmk11/changelog-ci@v1.0.0
+        with:
+          config_file: changelog-ci-config.yaml
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
