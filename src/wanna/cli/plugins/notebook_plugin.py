@@ -117,6 +117,8 @@ class NotebookPlugin(BasePlugin):
             wanna_project=config.wanna_project.name,
             wanna_resource="notebook",
             gcp_project=config.gcp_profile.project_id,
+            billing_id=config.wanna_project.billing_id,
+            organization_id=config.wanna_project.organization_id,
         )
 
     @staticmethod

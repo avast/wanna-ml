@@ -120,5 +120,7 @@ class TestNotebookPlugin(unittest.TestCase):
             wanna_project="wanna-notebook-sample",
             wanna_resource="notebook",
             gcp_project="your-gcp-project-id",
+            billing_id="your-billing-id",
+            organization_id="your-organization-id",
         )
         self.assertEqual(0, result.exit_code)
