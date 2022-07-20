@@ -445,7 +445,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         Returns:
             Path: Path where resource manifest was saved to
         """
-
+        encryption_spec_key_name = (
+            resource.encryption_spec_key_name if resource.encryption_spec_key_name else self.config.gcp_profile.kms_key
+        )
         json_dict = {
             "name": resource.name,
             "project": resource.project,
@@ -455,6 +457,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             "job_payload": resource.job_payload,
             "tensorboard": resource.tensorboard,
             "network": resource.network,
+            "encryption_spec_key_name": encryption_spec_key_name,
         }
         json_dump = json.dumps(
             remove_nones(json_dict),

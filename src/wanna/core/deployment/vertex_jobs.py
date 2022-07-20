@@ -56,14 +56,19 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
                 param.var_name: self._create_hyperparameter_spec(param)
                 for param in manifest.job_config.hp_tuning.parameters
             }
+            metric_spec_dict = dict()
+            for key in manifest.job_config.hp_tuning.metrics:
+                metric_spec_dict[key] = str(manifest.job_config.hp_tuning.metrics[key])
+
             runable = HyperparameterTuningJob(
                 display_name=manifest.job_config.name,
                 custom_job=custom_job,
-                metric_spec=manifest.job_config.hp_tuning.metrics.__dict__,
+                metric_spec=metric_spec_dict,
                 parameter_spec=parameter_spec,
                 max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
                 parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
                 search_algorithm=manifest.job_config.hp_tuning.search_algorithm,
+                encryption_spec_key_name=manifest.encryption_spec_key_name,
             )
         else:
             runable = custom_job  # type: ignore
@@ -106,9 +111,15 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         """
 
         if manifest.job_config.worker and manifest.job_config.worker.container:
-            training_job = CustomContainerTrainingJob(**manifest.job_payload)
+            training_job = CustomContainerTrainingJob(
+                model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+                **manifest.job_payload,
+            )
         elif manifest.job_config.worker and manifest.job_config.worker.python_package:
-            training_job = CustomPythonPackageTrainingJob(**manifest.job_payload)  # type: ignore
+            training_job = CustomPythonPackageTrainingJob(
+                model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+                **manifest.job_payload,
+            )  # type: ignore
         else:
             raise ValueError(
                 "Wanna could not identify the type of job. Either container or python_package"
