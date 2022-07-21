@@ -10,7 +10,7 @@ from wanna_simple.components.data.get_data import get_data_op
 from wanna_simple.components.predictor import make_prediction_request
 from wanna_simple.components.trainer.eval_model import eval_model_op
 from wanna_simple.components.trainer.train_xgb_model import train_xgb_model_op
-from src.wanna.components.kubeflow.get_or_create_endpoint import get_or_create_endpoint
+from wanna.components.kubeflow.get_or_create_endpoint import get_or_create_endpoint
 
 
 @component(
