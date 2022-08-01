@@ -58,3 +58,4 @@ pipelines:
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]
     tensorboard_ref: wanna-sample-pipeline-board
+    sla_seconds: 86400
