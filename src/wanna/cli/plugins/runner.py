@@ -10,7 +10,7 @@ from wanna.cli.plugins.tensorboard_plugin import TensorboardPlugin
 
 class PluginRunner:
     def __init__(self) -> None:
-        self.app = typer.Typer()
+        self.app = typer.Typer(rich_markup_mode="rich", help="Complete MLOps framework for Vertex-AI")
 
         typers = [
             ("pipeline", PipelinePlugin()),
@@ -21,4 +21,4 @@ class PluginRunner:
             ("components", ComponentsPlugin()),
         ]
         for name, subcommand in typers:
-            self.app.add_typer(subcommand.app, name=name)
+            self.app.add_typer(subcommand.app, name=name, help=subcommand.__doc__)

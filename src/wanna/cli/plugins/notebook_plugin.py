@@ -12,7 +12,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 class NotebookPlugin(BasePlugin):
     """
-    Main entry point for managing Workbench Notebooks on Vertex AI
+    Create, delete and more operations for user-managed Workbench (Jupyter notebook).
     """
 
     def __init__(self) -> None:
@@ -107,7 +107,7 @@ class NotebookPlugin(BasePlugin):
         instance_name: str = instance_name_option("notebook", "report"),
     ) -> None:
         """
-        Displays a link to the cost report per wanna_project and optionally per instance name
+        Displays a link to the cost report per wanna_project and optionally per instance name.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()

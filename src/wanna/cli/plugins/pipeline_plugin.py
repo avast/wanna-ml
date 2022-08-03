@@ -16,6 +16,10 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 class PipelinePlugin(BasePlugin):
+    """
+    Plugin for building and deploying Vertex-AI ML Pipelines.
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.register_many(
@@ -37,6 +41,9 @@ class PipelinePlugin(BasePlugin):
         instance_name: str = instance_name_option("pipeline", "compile"),
         mode: PushMode = push_mode_option,
     ) -> None:
+        """
+        Create a manifest based on the wanna-ml config that can be later pushed, deployed or run.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
@@ -50,6 +57,9 @@ class PipelinePlugin(BasePlugin):
         instance_name: str = instance_name_option("pipeline", "push"),
         mode: PushMode = push_mode_option,
     ) -> None:
+        """
+        Build and push manifest to Cloud Storage.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
@@ -64,6 +74,10 @@ class PipelinePlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "deploy"),
     ) -> None:
+        """
+        Deploy the pipeline. Deploying means you can set a schedule and the pipeline will not be run only once,
+        but on regular basis.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
@@ -78,6 +92,9 @@ class PipelinePlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "run"),
     ) -> None:
+        """
+        Run the pipeline as specified in wanna-ml config. This command puts together build, push and run-manifest steps.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
@@ -91,6 +108,9 @@ class PipelinePlugin(BasePlugin):
         params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
+        """
+        Run the pipeline as specified in the wanna-ml manifest.
+        """
         PipelineService.run([manifest], extra_params=params, sync=sync)
 
     @staticmethod
@@ -100,7 +120,7 @@ class PipelinePlugin(BasePlugin):
         instance_name: str = instance_name_option("pipeline", "report"),
     ) -> None:
         """
-        Displays a link to the cost report per wanna_project and optionally per instance name
+        Displays a link to the cost report per wanna_project and optionally per instance name.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
