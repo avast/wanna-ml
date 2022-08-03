@@ -246,7 +246,7 @@ class PipelineService(BaseService[PipelineModel]):
         labels = {
             "wanna_name": pipeline.name,
             "wanna_resource": self.instance_type,
-            "wanna_sla": str(pipeline.sla_seconds),
+            "wanna_sla": str(pipeline.sla_hours),
         }
         if pipeline.labels:
             labels = {**pipeline.labels, **labels}

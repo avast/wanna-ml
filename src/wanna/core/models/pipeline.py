@@ -18,4 +18,4 @@ class PipelineModel(BaseInstanceModel):
     tensorboard_ref: Optional[str]
     network: Optional[str]
     notification_channels_ref: List[str] = []
-    sla_seconds: int = 60 * 60 * 24  # 24 hours
+    sla_hours: int = 24

@@ -69,7 +69,7 @@ class TestPipelineService(unittest.TestCase):
             """{"wanna_project": "pipeline-sklearn-example-1", """
             """"wanna_project_version": "1", "wanna_project_authors": "jane-doe", """
             """"wanna_name": "wanna-sklearn-sample", "wanna_resource": "pipeline", """
-            """"wanna_sla": "86400"}"""
+            """"wanna_sla": "24"}"""
         )
 
         # Check expected metadata
@@ -239,7 +239,7 @@ class TestPipelineService(unittest.TestCase):
                 "wanna_project_authors": "jane-doe",
                 "wanna_name": "wanna-sklearn-sample",
                 "wanna_resource": "pipeline",
-                "wanna_sla": "86400",
+                "wanna_sla": "24",
             },
             "environment_variables": {
                 "PROJECT_ID": "your-gcp-project-id",
