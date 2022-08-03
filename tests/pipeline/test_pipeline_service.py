@@ -21,6 +21,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 class TestPipelineService(unittest.TestCase):
+    maxDiff = None
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
     sample_pipeline_dir = parent / "samples" / "pipelines" / "sklearn"
@@ -31,7 +32,6 @@ class TestPipelineService(unittest.TestCase):
         self.zone = "us-east1-a"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)
         self.test_runner_dir.mkdir(parents=True, exist_ok=True)
-        self.maxDiff = None
         auth.default = MagicMock(
             return_value=(
                 None,
@@ -69,7 +69,7 @@ class TestPipelineService(unittest.TestCase):
             """{"wanna_project": "pipeline-sklearn-example-1", """
             """"wanna_project_version": "1", "wanna_project_authors": "jane-doe", """
             """"wanna_name": "wanna-sklearn-sample", "wanna_resource": "pipeline", """
-            """"wanna_sla": 86400}"""
+            """"wanna_sla": "86400"}"""
         )
 
         # Check expected metadata
@@ -237,6 +237,9 @@ class TestPipelineService(unittest.TestCase):
                 "wanna_project": "pipeline-sklearn-example-1",
                 "wanna_project_version": "1",
                 "wanna_project_authors": "jane-doe",
+                "wanna_name": "wanna-sklearn-sample",
+                "wanna_resource": "pipeline",
+                "wanna_sla": "86400",
             },
             "environment_variables": {
                 "PROJECT_ID": "your-gcp-project-id",
