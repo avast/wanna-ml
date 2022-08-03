@@ -25,12 +25,12 @@ class WannaRepositoryTemplate(str, Enum):
     blank = "blank"
 
 
-@app.command(name="version")
+@app.command(name="version", help="Print your current and latest available version")
 def version(ctx: typer.Context):
     perform_check()
 
 
-@app.command(name="init")
+@app.command(name="init", help="Initiate a new wanna-ml project from template.")
 def init(
     ctx: typer.Context,
     output_dir: Path = typer.Option(
