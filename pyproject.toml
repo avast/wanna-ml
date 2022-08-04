@@ -2,7 +2,7 @@
 authors = ["Joao Da Silva <joao.silva1@avast.com>", "Michal Mrazek <michal.mrazek@avast.com>"]
 description = "CLI tool for managing ML projects on Vertex AI"
 name = "wanna-ml"
-version = "0.0.0"
+version = "0.2.4"
 packages = [
     { include = "wanna", from = "src" },
 ]
@@ -90,6 +90,7 @@ taskipy = "^1.9.0"
 types-mock = "^4.0.12"
 types-pyyaml = "^6.0.5"
 types-requests = "^2.27.14"
+types-setuptools = "^63.2.3"
 xgboost = "^1.5.2"
 
 [tool.mypy]
