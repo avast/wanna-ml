@@ -9,15 +9,14 @@ logger = get_logger(__name__)
 
 PYPI_URL = "https://pypi.org/pypi/wanna-ml/json"
 UPDATE_MESSAGE = (
-    "If you used `pipx` to install Schnitzel CLI, use the following command:\n\n"
+    "If you used `pipx` to install WANNA CLI, use the following command:\n\n"
     "pipx upgrade wanna\n\n"
     f"Otherwise, use `pip install --upgrade {__package__}`"
     "(exact command will depend on your environment).\n\n"
 )
-# Version = Union[version.Version, version.LegacyVersion]
 
 
-def get_latest_version() -> str:  # Optional[Version]:
+def get_latest_version() -> str:
     try:
         resp = requests.get(PYPI_URL)
         resp.raise_for_status()
