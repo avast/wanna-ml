@@ -69,6 +69,7 @@ treelib = "^1.6.1"
 typer = "0.6.1"
 waiting = "^1.4.1"
 rich = "^12.5.1"
+types-setuptools = "^63.2.3"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
