@@ -16,6 +16,10 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 class JobPlugin(BasePlugin):
+    """
+    Plugin for building and deploying training jobs.
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.register_many(
@@ -35,6 +39,9 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("job", "build"),
     ) -> None:
+        """
+        Create a manifest based on the wanna-ml config that can be later pushed or run.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir)
@@ -48,6 +55,9 @@ class JobPlugin(BasePlugin):
         instance_name: str = instance_name_option("job", "push"),
         mode: PushMode = push_mode_option,
     ) -> None:
+        """
+        Build and push manifest to Cloud Storage.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version, push_mode=mode)
@@ -63,6 +73,9 @@ class JobPlugin(BasePlugin):
         hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the job in sync mode"),
     ) -> None:
+        """
+        Run the job as specified in wanna-ml config. This command puts together build, push and run-manifest steps.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version)
@@ -76,6 +89,9 @@ class JobPlugin(BasePlugin):
         hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
+        """
+        Run the job as specified in the wanna-ml manifest.
+        """
         JobService.run(manifests=[manifest], sync=sync, hp_params=hp_params)
 
     @staticmethod
@@ -84,6 +100,9 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("job", "stop"),
     ) -> None:
+        """
+        Stop a running job.
+        """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir)
@@ -96,7 +115,7 @@ class JobPlugin(BasePlugin):
         instance_name: str = instance_name_option("job", "report"),
     ) -> None:
         """
-        Displays a link to the cost report per wanna_project and optionally per job name
+        Displays a link to the cost report per wanna_project and optionally per job name.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
