@@ -1,9 +1,14 @@
 import atexit
+import json
+import os
+import zipfile
 from pathlib import Path
 from typing import Optional
 
+from google.cloud import logging
 from google.cloud.aiplatform import PipelineJob
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
+from google.cloud.functions_v1 import CloudFunctionsServiceClient
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import (
@@ -17,6 +22,8 @@ from wanna.core.deployment.models import (
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.services.path_utils import PipelinePaths
+from wanna.core.utils import templates
+from wanna.core.utils.gcp import is_gcs_path
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.time import get_timestamp
 
@@ -176,5 +183,106 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                 display_name=logging_policy_name,
                 labels=resource.labels,
                 notification_channels=channels,
+            )
+        )
+
+    def upsert_sink(self, resource: PipelineResource):
+        """Creates a sink to export logs to the given Cloud Storage bucket.
+        The filter determines which logs this sink matches and will be exported
+        to the destination.
+        """
+        logging_client = logging.Client()
+
+        destination = f"storage.googleapis.com/{resource.pipeline_bucket}"
+        filter_ = f"""
+        resource.type="aiplatform.googleapis.com/PipelineJob"
+        AND resource.labels.pipeline_job_id:"{resource.pipeline_name}
+        AND jsonPayload.state: "PIPELINE_STATE_RUNNING"
+        """
+        sink_name = f"{resource.pipeline_name}-sink"
+
+        sink = logging_client.sink(sink_name, filter_=filter_, destination=destination)
+
+        if sink.exists():
+            logger.user_error("Sink {} already exists.".format(sink.name))
+            return
+
+        sink.create()
+        logger.user_info("Created sink {}".format(sink.name))
+
+    def upsert_sla_cloud_function(self, resource: PipelineResource, version: str, env: str) -> None:
+        logger.user_info(
+            f"Deploying {resource.pipeline_name} SLA monitoring function with version {version} to env {env}"
+        )
+        parent = f"projects/{resource.project}/locations/{resource.location}"
+        local_functions_package = "package.zip"
+        functions_gcs_path_dir = f"{resource.pipeline_bucket}/functions"
+        functions_gcs_path = f"{functions_gcs_path_dir}/package.zip"
+        function_name = f"{resource.pipeline_name}-{env}"
+        function_path = f"{parent}/functions/{function_name}"
+
+        cloud_function = templates.render_template(
+            Path("sla_cloud_function.py"),
+            labels=json.dumps(resource.labels, separators=(",", ":")),
+        )
+
+        requirements = templates.render_template(Path("sla_cloud_function_requirements.txt"))
+
+        with zipfile.ZipFile(local_functions_package, "w") as z:
+            z.writestr("main.py", cloud_function)
+            z.writestr("requirements.txt", requirements)
+
+        if not is_gcs_path(functions_gcs_path_dir):
+            os.makedirs(functions_gcs_path_dir, exist_ok=True)
+
+        self.upload_file(str(local_functions_package), functions_gcs_path)
+
+        cf = CloudFunctionsServiceClient(credentials=self.credentials)
+
+        function = {
+            "name": function_path,
+            "description": f"wanna {resource.pipeline_name} function for {env} pipeline",
+            "source_archive_url": functions_gcs_path,
+            "entry_point": "main",
+            "runtime": "python39",
+            "event_trigger": {
+                "event_type": "providers/cloud.storage/eventTypes/object.change",
+                "resource": f"projects/{resource.project}/buckets/{resource.pipeline_bucket}",
+            },
+            "service_account_email": resource.service_account,
+            "labels": resource.labels,
+        }
+
+        cf.create_function({"location": parent, "function": function}).result()
+
+    def deploy_sla_function(self, resource: PipelineResource, version: str, env: str):
+
+        logging_metric_ref = f"{resource.pipeline_name}-cloud-function-errors"
+        gcp_resource_type = "cloud_function"
+
+        self.upsert_sink(resource)
+        self.upsert_sla_cloud_function(resource, version, env)
+        self.upsert_log_metric(
+            LogMetricResource(
+                name=logging_metric_ref,
+                project=resource.project,
+                location=resource.location,
+                filter_=f"""
+                severity >= WARNING
+                AND resource.labels.function_name="{resource.pipeline_name}-{env}"
+                """,
+                description=f"Log metric for {resource.pipeline_name}-{env} cloud function executions",
+            )
+        )
+        self.upsert_alert_policy(
+            AlertPolicyResource(
+                name=f"{resource.pipeline_name}-{env}-cloud-function-alert-policy",
+                project=resource.project,
+                location=resource.location,
+                logging_metric_type=logging_metric_ref,
+                resource_type=gcp_resource_type,
+                display_name=f"{resource.pipeline_name}-{env}-cloud-function-alert-policy",
+                labels=resource.labels,
+                notification_channels=resource.notification_channels,
             )
         )
