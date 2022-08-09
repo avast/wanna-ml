@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 
+from google.api_core.exceptions import AlreadyExists
 from google.cloud import logging
 from google.cloud.aiplatform import PipelineJob
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
@@ -186,6 +187,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             )
         )
 
+        self.upsert_sink(resource)
+        self.upsert_sla_function(resource, version, env)
+
     def upsert_sink(self, resource: PipelineResource):
         """Creates a sink to export logs to the given Cloud Storage bucket.
         The filter determines which logs this sink matches and will be exported
@@ -193,13 +197,12 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         """
         logging_client = logging.Client()
 
-        destination = f"storage.googleapis.com/{resource.pipeline_bucket}"
-        filter_ = f"""
-        resource.type="aiplatform.googleapis.com/PipelineJob"
-        AND resource.labels.pipeline_job_id:"{resource.pipeline_name}
-        AND jsonPayload.state: "PIPELINE_STATE_RUNNING"
+        destination = "storage.googleapis.com/" + f"{resource.pipeline_bucket}"[5:]
+        filter_ = f"""resource.type="aiplatform.googleapis.com/PipelineJob"
+        AND jsonPayload.pipelineName="{resource.pipeline_name}"
+        AND jsonPayload.state="PIPELINE_STATE_RUNNING"
         """
-        sink_name = f"{resource.pipeline_name}-sink"
+        sink_name = f"{resource.pipeline_name}-sink-{resource.pipeline_version}"
 
         sink = logging_client.sink(sink_name, filter_=filter_, destination=destination)
 
@@ -210,15 +213,17 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         sink.create()
         logger.user_info("Created sink {}".format(sink.name))
 
-    def upsert_sla_cloud_function(self, resource: PipelineResource, version: str, env: str) -> None:
+    def upsert_sla_function(self, resource: PipelineResource, version: str, env: str) -> None:
         logger.user_info(
             f"Deploying {resource.pipeline_name} SLA monitoring function with version {version} to env {env}"
         )
         parent = f"projects/{resource.project}/locations/{resource.location}"
-        local_functions_package = "package.zip"
-        functions_gcs_path_dir = f"{resource.pipeline_bucket}/functions"
-        functions_gcs_path = f"{functions_gcs_path_dir}/package.zip"
-        function_name = f"{resource.pipeline_name}-{env}"
+        local_functions_package = "sla.zip"
+        functions_gcs_path_dir = (
+            f"{resource.pipeline_bucket}/wanna-pipelines/{resource.pipeline_name}/deployment/{version}/functions"
+        )
+        functions_gcs_path = f"{functions_gcs_path_dir}/sla.zip"
+        function_name = f"{resource.pipeline_name}-{env}-{version}"
         function_path = f"{parent}/functions/{function_name}"
 
         cloud_function = templates.render_template(
@@ -247,42 +252,12 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             "runtime": "python39",
             "event_trigger": {
                 "event_type": "providers/cloud.storage/eventTypes/object.change",
-                "resource": f"projects/{resource.project}/buckets/{resource.pipeline_bucket}",
+                "resource": f"projects/{resource.project}/buckets/" + f"{resource.pipeline_bucket}"[5:],
             },
             "service_account_email": resource.service_account,
             "labels": resource.labels,
         }
-
-        cf.create_function({"location": parent, "function": function}).result()
-
-    def deploy_sla_function(self, resource: PipelineResource, version: str, env: str):
-
-        logging_metric_ref = f"{resource.pipeline_name}-cloud-function-errors"
-        gcp_resource_type = "cloud_function"
-
-        self.upsert_sink(resource)
-        self.upsert_sla_cloud_function(resource, version, env)
-        self.upsert_log_metric(
-            LogMetricResource(
-                name=logging_metric_ref,
-                project=resource.project,
-                location=resource.location,
-                filter_=f"""
-                severity >= WARNING
-                AND resource.labels.function_name="{resource.pipeline_name}-{env}"
-                """,
-                description=f"Log metric for {resource.pipeline_name}-{env} cloud function executions",
-            )
-        )
-        self.upsert_alert_policy(
-            AlertPolicyResource(
-                name=f"{resource.pipeline_name}-{env}-cloud-function-alert-policy",
-                project=resource.project,
-                location=resource.location,
-                logging_metric_type=logging_metric_ref,
-                resource_type=gcp_resource_type,
-                display_name=f"{resource.pipeline_name}-{env}-cloud-function-alert-policy",
-                labels=resource.labels,
-                notification_channels=resource.notification_channels,
-            )
-        )
+        try:
+            cf.create_function({"location": parent, "function": function}).result()
+        except (AlreadyExists):
+            logger.user_error(f"Function {function_name} already exists")
