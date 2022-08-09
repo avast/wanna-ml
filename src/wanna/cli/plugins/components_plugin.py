@@ -8,7 +8,7 @@ from wanna.components import template
 
 class ComponentsPlugin(BasePlugin):
     """
-    Main entry point for managing kubeflow components templated generation
+    Managing kubeflow components templated generation.
     """
 
     def __init__(self) -> None:
@@ -28,4 +28,7 @@ class ComponentsPlugin(BasePlugin):
             help="The output directory where wanna-ml repository will be created",
         )
     ) -> None:
+        """
+        Create a kubeflow component based on a template.
+        """
         template.apply(output_dir)

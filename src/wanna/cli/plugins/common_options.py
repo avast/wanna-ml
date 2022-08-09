@@ -9,7 +9,7 @@ profile_name_option = typer.Option(
     envvar="WANNA_GCP_PROFILE_NAME",
     help="Name of the GCP profile you want to use. "
     "Profiles are loaded from wanna-ml yaml config and "
-    "(optionally) from WANNA_GCP_PROFILE_PATH",
+    "(optionally) from this file too.",
 )
 
 wanna_file_option = typer.Option(

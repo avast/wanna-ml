@@ -11,7 +11,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 class TensorboardPlugin(BasePlugin):
     """
-    Main entry point for managing Vertex AI Tensorboards
+    Create, delete or list Tensorboard instances.
     """
 
     def __init__(self) -> None:
