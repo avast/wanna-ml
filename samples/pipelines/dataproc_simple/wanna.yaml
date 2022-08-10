@@ -2,16 +2,14 @@ wanna_project:
   name: kubeflow-dataproc
   version: 0.0.0
   authors: ["john.doe@example.com", "jane.doe@example.com"]
-
 gcp_profiles:
   - profile_name: default
-    project_id: "your-gcp-project-id"
+    project_id: cloud-lab-304213
     zone: europe-west1-b
-    bucket: "your-staging-bucket-name"
-    network: default
+    bucket: wanna-test-pipelines
     labels:
-    service_account: 
-
+    service_account: jacekhebdatest@cloud-lab-304213.iam.gserviceaccount.com
+    network: cloud-lab
 docker:
   images:
     # We dont currently support local build for dataproc images, in current version of serverless dataproc,
@@ -22,12 +20,12 @@ docker:
       image_url: eu.gcr.io/cloud-lab-304213/wanna-ml/pipelines/spark-pi:latest
   repository: wanna-samples
   cloud_build: true
-
 pipelines:
   - name: kubeflow-dataproc-pipeline
     schedule:
       cron: 2 * * * *
-    bucket: "your-staging-bucket-name"
+    bucket: wanna-test-pipelines
     pipeline_file: pipeline/pipeline.py
     pipeline_params: pipeline/params.yaml
     docker_image_ref: ["dataproc"]
+    sla_hours: 0.001

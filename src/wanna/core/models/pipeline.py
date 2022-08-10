@@ -18,4 +18,4 @@ class PipelineModel(BaseInstanceModel):
     tensorboard_ref: Optional[str]
     network: Optional[str]
     notification_channels_ref: List[str] = []
-    sla_hours: int = 24
+    sla_hours: float = 1.5
