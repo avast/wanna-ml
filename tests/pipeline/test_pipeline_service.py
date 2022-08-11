@@ -271,10 +271,6 @@ class TestPipelineService(unittest.TestCase):
             return_value=expected_manifest_json_path
         )
 
-        # logging.Client.sink.exists = MagicMock(return_value=False)
-        # logging.Client.sink.create = MagicMock()
-        # CloudFunctionsServiceClient.create_function = MagicMock()
-
         # Deploy the thing
         pipeline_service.deploy("all", env="local")
 
