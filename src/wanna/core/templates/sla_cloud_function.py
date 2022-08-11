@@ -26,7 +26,8 @@ def main(event, context):
 
         request = aiplatform_v1.GetPipelineJobRequest(name=name)
         pipeline = client.get_pipeline_job(request=request)
-        print(delta.total_seconds())
-        if delta.total_seconds() > 3600 * float(pipeline.labels["wanna_sla_hours"]):  # 60 seconds * 60 minutes
+        if delta.total_seconds() > 3600 * float(
+            pipeline.labels["wanna_sla_hours"].replace("_", ".")
+        ):  # 60 seconds * 60 minutes
             request = aiplatform_v1.CancelPipelineJobRequest(name=name)
             client.cancel_pipeline_job(request=request)

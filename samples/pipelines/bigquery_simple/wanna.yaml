@@ -25,4 +25,3 @@ pipelines:
     pipeline_file: pipeline/pipeline.py
     pipeline_params: pipeline/params.yaml
     docker_image_ref: []
-    sla_hours: 24.0

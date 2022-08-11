@@ -187,8 +187,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             )
         )
 
-        self.upsert_sink(resource)
-        self.upsert_sla_function(resource, version, env)
+        if "wanna_sla_hours" in resource.labels:
+            self.upsert_sink(resource)
+            self.upsert_sla_function(resource, version, env)
 
     def upsert_sink(self, resource: PipelineResource):
         """Creates a sink to export logs to the given Cloud Storage bucket.
@@ -251,7 +252,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             "entry_point": "main",
             "runtime": "python39",
             "event_trigger": {
-                "event_type": "providers/cloud.storage/eventTypes/object.change",
+                "event_type": "google.storage.object.finalize",
                 "resource": f"projects/{resource.project}/buckets/" + f"{resource.pipeline_bucket}"[5:],
             },
             "service_account_email": resource.service_account,

@@ -68,8 +68,7 @@ class TestPipelineService(unittest.TestCase):
         expected_pipeline_labels = (
             """{"wanna_project": "pipeline-sklearn-example-1", """
             """"wanna_project_version": "1", "wanna_project_authors": "jane-doe", """
-            """"wanna_resource_name": "wanna-sklearn-sample", "wanna_resource": "pipeline", """
-            """"wanna_sla_hours": "24.0"}"""
+            """"wanna_resource_name": "wanna-sklearn-sample", "wanna_resource": "pipeline"}"""
         )
 
         # Check expected metadata
@@ -239,7 +238,6 @@ class TestPipelineService(unittest.TestCase):
                 "wanna_project_authors": "jane-doe",
                 "wanna_resource_name": "wanna-sklearn-sample",
                 "wanna_resource": "pipeline",
-                "wanna_sla_hours": "24.0",
             },
             "environment_variables": {
                 "PROJECT_ID": "your-gcp-project-id",
@@ -273,9 +271,9 @@ class TestPipelineService(unittest.TestCase):
             return_value=expected_manifest_json_path
         )
 
-        logging.Client.sink.exists = MagicMock(return_value=False)
-        logging.Client.sink.create = MagicMock()
-        CloudFunctionsServiceClient.create_function = MagicMock()
+        # logging.Client.sink.exists = MagicMock(return_value=False)
+        # logging.Client.sink.create = MagicMock()
+        # CloudFunctionsServiceClient.create_function = MagicMock()
 
         # Deploy the thing
         pipeline_service.deploy("all", env="local")

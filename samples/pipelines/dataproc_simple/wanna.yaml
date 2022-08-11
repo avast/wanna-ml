@@ -28,4 +28,4 @@ pipelines:
     pipeline_file: pipeline/pipeline.py
     pipeline_params: pipeline/params.yaml
     docker_image_ref: ["dataproc"]
-    sla_hours: 0.001
+    sla_hours: 12
