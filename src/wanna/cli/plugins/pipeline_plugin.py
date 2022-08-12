@@ -86,7 +86,7 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def run(
         version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
-        params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
+        params: Path = typer.Option(None, "--params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
@@ -105,7 +105,7 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def run_manifest(
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
-        params: Path = typer.Option("params.yaml", "--params", "-p", help="Path to the params file in yaml format"),
+        params: Path = typer.Option(None, "--params", "-p", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
         """
