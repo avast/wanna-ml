@@ -72,7 +72,8 @@ class PipelineService(BaseService[PipelineModel]):
 
     def push(self, manifests: List[Path], local: bool = False) -> PushResult:
         return self.connector.push_artifacts(
-            self.docker_service.push_image, self._prepare_push(manifests, self.version, local)
+            self.docker_service.push_image,
+            self._prepare_push(manifests, self.version, local),
         )
 
     def _prepare_push(self, pipelines: List[Path], version: str, local: bool = False) -> List[PushTask]:
@@ -170,14 +171,6 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
         network: Optional[str],
     ):
-
-        labels = {
-            "wanna_name": pipeline_instance.name,
-            "wanna_resource": self.instance_type,
-        }
-        if pipeline_instance.labels:
-            labels = {**pipeline_instance.labels, **labels}
-
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
@@ -186,7 +179,7 @@ class PipelineService(BaseService[PipelineModel]):
             "bucket": pipeline_instance.bucket,
             "region": pipeline_instance.region,
             "pipeline_root": pipeline_paths.get_gcs_pipeline_root(),
-            "pipeline_labels": json.dumps(labels),
+            "pipeline_labels": json.dumps(pipeline_instance.labels),
             "pipeline_service_account": (
                 pipeline_instance.service_account
                 if pipeline_instance.service_account
@@ -250,6 +243,15 @@ class PipelineService(BaseService[PipelineModel]):
             fallback_project_network=self.config.gcp_profile.network,
         )
 
+        labels = {
+            "wanna_resource_name": pipeline.name,
+            "wanna_resource": self.instance_type,
+        }
+        if pipeline.sla_hours:
+            labels["wanna_sla_hours"] = str(pipeline.sla_hours).replace(".", "_")
+        if pipeline.labels:
+            labels = {**pipeline.labels, **labels}
+        pipeline.labels = labels
         # Collect kubeflow pipeline params for compilation
         pipeline_env_params, pipeline_params = self._export_pipeline_params(
             pipeline_paths, pipeline, self.version, image_tags, tensorboard, network

@@ -8,9 +8,9 @@ gcp_profiles:
     project_id: "your-gcp-project-id"
     zone: europe-west1-b
     bucket: "your-staging-bucket-name"
-    network: default
     labels:
-    service_account: 
+    service_account:
+    network: default
 
 docker:
   images:
