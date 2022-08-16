@@ -17,4 +17,6 @@ COPY samples samples
 COPY docker/run_jupyter.sh run_jupyter.sh
 RUN chmod +x run_jupyter.sh
 
+ENV SHELL=/bin/bash
+
 ENTRYPOINT ["/bin/bash"]
