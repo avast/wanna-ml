@@ -105,7 +105,7 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def run_manifest(
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
-        params: Path = typer.Option(None, "--params", "-p", help="Path to the params file in yaml format"),
+        params: Path = typer.Option(None, "--params", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
         """
