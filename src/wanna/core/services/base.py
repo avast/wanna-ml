@@ -147,7 +147,7 @@ class BaseService(ABC, Generic[T]):
         resource_network: Optional[str],
         fallback_project_network: str,
         use_project_number: bool = True,
-    ) -> Optional[str]:
+    ):
         resource_network = resource_network if resource_network else fallback_project_network
         if resource_network:
             result = get_network_info(resource_network)
@@ -164,19 +164,19 @@ class BaseService(ABC, Generic[T]):
         else:
             return None
 
-    def _get_resource_subnet(self, network: str, subnet: Optional[str], region: str):
+    def _get_resource_subnet(self, network: Optional[str], subnet: Optional[str], region: Optional[str]):
         if subnet:
             # Assumes the full qualified path was provided in config
             if "/" in subnet:
                 return subnet
             else:
                 # Get the project id from the provided network and pass it to subnet
-                network_project_parts = network.split("/")
-                if len(network_project_parts) >= 2:
-                    network_project_id = network_project_parts[1]
-                else:
-                    network_project_id = network
-
+                if network:
+                    network_project_parts = network.split("/")
+                    if len(network_project_parts) >= 2:
+                        network_project_id = network_project_parts[1]
+                    else:
+                        network_project_id = network
                 return f"projects/{network_project_id}/regions/{region}/subnetworks/{subnet}"
         else:
             return None
