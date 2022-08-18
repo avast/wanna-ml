@@ -70,7 +70,7 @@ class JobPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         version: str = typer.Option(..., "--version", "-v", help="Job version"),
         instance_name: str = instance_name_option("job", "run"),
-        hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
+        hp_params: Path = typer.Option(None, "--hp-params", "-hp", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the job in sync mode"),
     ) -> None:
         """
@@ -86,7 +86,7 @@ class JobPlugin(BasePlugin):
     @staticmethod
     def run_manifest(
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
-        hp_params: Path = typer.Option(None, "--hp-params", "-p", help="Path to the params file in yaml format"),
+        hp_params: Path = typer.Option(None, "--hp-params", "-hp", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
         """
