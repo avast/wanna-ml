@@ -63,12 +63,12 @@ class NotebookService(BaseService[NotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}")
-            deleted = self.notebook_client.delete_instance(
-                name=f"projects/{notebook_instance.project_id}/locations/"
-                f"{notebook_instance.zone}/instances/{notebook_instance.name}"
-            )
-            deleted.result()
+            with logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}"):
+                deleted = self.notebook_client.delete_instance(
+                    name=f"projects/{notebook_instance.project_id}/locations/"
+                    f"{notebook_instance.zone}/instances/{notebook_instance.name}"
+                )
+                deleted.result()
         else:
             logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",

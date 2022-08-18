@@ -92,7 +92,7 @@ component_author [component author]: Joao Da Silva
 component_author_email [you@avast.com]: joao.silva1@avast.com
 component_version [0.0.0]: 
 component_description [Describe your component]: data component for WANNA pipeline tutorial        
-component_url [Link to MLOps project page on CML]: 
+component_url [Link to MLOps project page]: 
 component_slug [data]: 
 component_docker_ref [data]: 
 Select component_framework:

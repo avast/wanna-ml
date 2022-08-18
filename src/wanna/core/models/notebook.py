@@ -10,7 +10,6 @@ from wanna.core.utils import validators
 
 class BucketMount(BaseModel, extra=Extra.forbid):
     bucket_name: str
-    bucket_dir: Path
     local_path: Path
 
     _bucket_name = validator("bucket_name")(validators.validate_bucket_name)
