@@ -160,15 +160,11 @@ class NotebookService(BaseService[NotebookModel]):
             fallback_project_network=self.config.gcp_profile.network,
             use_project_number=True,
         )
-
-        full_subnet_name = (
-            self._get_resource_subnet(
-                full_network_name,
-                notebook_instance.subnet,
-                notebook_instance.zone,
-            )
-            if full_network_name
-            else None
+        subnet = notebook_instance.subnet if notebook_instance.subnet else self.config.gcp_profile.subnet
+        full_subnet_name = self._get_resource_subnet(
+            full_network_name,
+            subnet,
+            notebook_instance.region,
         )
 
         # GPU
