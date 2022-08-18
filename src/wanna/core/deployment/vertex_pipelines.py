@@ -74,6 +74,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             labels=resource.labels,
             project=resource.project,
             location=resource.location,
+            encryption_spec_key_name=resource.encryption_spec_key_name,
         )
 
         VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
