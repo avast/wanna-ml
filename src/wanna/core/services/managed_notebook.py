@@ -82,7 +82,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             runtimeAcceleratorConfig = None
         # Network and subnetwork
         if instance.subnet:
-            full_network = f"projects/{instance.project_id}/regions/global/{instance.network}"
+            full_network = f"projects/{instance.project_id}/global/networks/{instance.network}"
             full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
         else:
             full_network = None

@@ -1,9 +1,15 @@
 import atexit
+import json
+import os
+import zipfile
 from pathlib import Path
 from typing import Optional
 
+from google.api_core.exceptions import AlreadyExists
+from google.cloud import logging
 from google.cloud.aiplatform import PipelineJob
 from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
+from google.cloud.functions_v1 import CloudFunctionsServiceClient
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import (
@@ -17,6 +23,8 @@ from wanna.core.deployment.models import (
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.services.path_utils import PipelinePaths
+from wanna.core.utils import templates
+from wanna.core.utils.gcp import is_gcs_path
 from wanna.core.utils.loaders import load_yaml_path
 from wanna.core.utils.time import get_timestamp
 
@@ -179,3 +187,79 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                 notification_channels=channels,
             )
         )
+
+        if "wanna_sla_hours" in resource.labels:
+            self.upsert_sink(resource)
+            self.upsert_sla_function(resource, version, env)
+
+    def upsert_sink(self, resource: PipelineResource):
+        """Creates a sink to export logs to the given Cloud Storage bucket.
+        The filter determines which logs this sink matches and will be exported
+        to the destination.
+        """
+        logging_client = logging.Client()
+
+        destination = "storage.googleapis.com/" + f"{resource.pipeline_bucket}"[5:]
+        filter_ = f"""resource.type="aiplatform.googleapis.com/PipelineJob"
+        AND jsonPayload.pipelineName="{resource.pipeline_name}"
+        AND jsonPayload.state="PIPELINE_STATE_RUNNING"
+        """
+        sink_name = f"{resource.pipeline_name}-sink-{resource.pipeline_version}"
+
+        sink = logging_client.sink(sink_name, filter_=filter_, destination=destination)
+
+        if sink.exists():
+            logger.user_error("Sink {} already exists.".format(sink.name))
+            return
+
+        sink.create()
+        logger.user_info("Created sink {}".format(sink.name))
+
+    def upsert_sla_function(self, resource: PipelineResource, version: str, env: str) -> None:
+        logger.user_info(
+            f"Deploying {resource.pipeline_name} SLA monitoring function with version {version} to env {env}"
+        )
+        parent = f"projects/{resource.project}/locations/{resource.location}"
+        local_functions_package = "sla.zip"
+        functions_gcs_path_dir = (
+            f"{resource.pipeline_bucket}/wanna-pipelines/{resource.pipeline_name}/deployment/{version}/functions"
+        )
+        functions_gcs_path = f"{functions_gcs_path_dir}/sla.zip"
+        function_name = f"{resource.pipeline_name}-{env}-{version}"
+        function_path = f"{parent}/functions/{function_name}"
+
+        cloud_function = templates.render_template(
+            Path("sla_cloud_function.py"),
+            labels=json.dumps(resource.labels, separators=(",", ":")),
+        )
+
+        requirements = templates.render_template(Path("sla_cloud_function_requirements.txt"))
+
+        with zipfile.ZipFile(local_functions_package, "w") as z:
+            z.writestr("main.py", cloud_function)
+            z.writestr("requirements.txt", requirements)
+
+        if not is_gcs_path(functions_gcs_path_dir):
+            os.makedirs(functions_gcs_path_dir, exist_ok=True)
+
+        self.upload_file(str(local_functions_package), functions_gcs_path)
+
+        cf = CloudFunctionsServiceClient(credentials=self.credentials)
+
+        function = {
+            "name": function_path,
+            "description": f"wanna {resource.pipeline_name} function for {env} pipeline",
+            "source_archive_url": functions_gcs_path,
+            "entry_point": "main",
+            "runtime": "python39",
+            "event_trigger": {
+                "event_type": "google.storage.object.finalize",
+                "resource": f"projects/{resource.project}/buckets/" + f"{resource.pipeline_bucket}"[5:],
+            },
+            "service_account_email": resource.service_account,
+            "labels": resource.labels,
+        }
+        try:
+            cf.create_function({"location": parent, "function": function}).result()
+        except (AlreadyExists):
+            logger.user_error(f"Function {function_name} already exists")
