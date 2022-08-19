@@ -72,7 +72,7 @@ class TestNotebookService(unittest.TestCase):
         request = nb_service._create_instance_request(instance)
         assert (
             request.instance.subnet
-            == f"projects/123456789/regions/{config.gcp_profile.zone}/subnetworks/the-riddle-house"
+            == f"projects/123456789/regions/{config.gcp_profile.region}/subnetworks/the-riddle-house"
         )
 
     def test_create_instance_request_gpu_config(self):

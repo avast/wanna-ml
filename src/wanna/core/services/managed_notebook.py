@@ -81,12 +81,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         else:
             runtimeAcceleratorConfig = None
         # Network and subnetwork
-        if instance.subnet:
-            full_network = f"projects/{instance.project_id}/regions/global/{instance.network}"
-            full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{instance.subnet}"
-        else:
-            full_network = None
-            full_subnet = None
+        network = instance.network if instance.network else self.config.gcp_profile.network
+        full_network = f"projects/{instance.project_id}/global/networks/{network}"
+        subnet = instance.subnet if instance.subnet else self.config.gcp_profile.subnet
+        full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{subnet}"
 
         # Post startup script
         if deploy and instance.tensorboard_ref:

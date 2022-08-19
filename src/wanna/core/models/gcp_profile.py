@@ -15,6 +15,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     bucket: str
     service_account: Optional[str]
     network: str = "default"
+    subnet: Optional[str]
     kms_key: Optional[str]
     docker_repository: str = "wanna"
     docker_registry: Optional[str]
