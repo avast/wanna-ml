@@ -45,7 +45,6 @@ notebooks:
       size_gb: 100
     bucket_mounts:
       - bucket_name: your-staging-bucket-name
-        local_path: /home/jupyter/mounted/gcs
     tensorboard_ref: wanna-sample-pipeline-board
 
 pipelines:
