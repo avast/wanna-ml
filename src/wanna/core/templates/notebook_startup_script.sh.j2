@@ -1,10 +1,41 @@
 #!/bin/bash
-
+{% if bucket_mount is not none %}
 {% for bucket_mount in bucket_mounts %}
 sudo su -c "mkdir -p {{ bucket_mount["local_path"] }}"
 sudo su -c "gcsfuse --implicit-dirs {{ ('--only-dir=' ~ bucket_mount["bucket_dir"]) if bucket_mount["bucket_dir"] }} {{ bucket_mount["bucket_name"] }} {{ bucket_mount["local_path"] }}"
 {% endfor %}
+{% endif %}
 
 {% if tensorboard_resource_name is not none %}
 export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}
+{% endif %}
+
+{% if idle_shutdown_timeout is not none %}
+sudo apt-get install bc
+threshold=0.1
+count=0
+wait_minutes={{idle_shutdown_timeout}}
+while true
+do
+
+  load=$(uptime | sed -e 's/.*load average: //g' | awk '{ print $1 }') # 1-minute average load
+  load="${load//,}" # remove trailing comma
+  res=$(echo $load'<'$threshold | bc -l)
+  if (( $res ))
+  then
+    echo "Idling.."
+    ((count+=1))
+  else
+    ((count=0))
+  fi
+  echo "Idle minutes count = $count"
+
+  if (( count>=wait_minutes ))
+  then
+    echo Shutting down
+    sudo poweroff
+  fi
+
+sleep 60
+done
 {% endif %}
