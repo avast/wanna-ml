@@ -47,9 +47,9 @@ For more information on the installation process and requirements, visit out [in
 ### Use Docker Image
 For your convenience, we have prepared a Docker image with everything you need to get started.
 ```bash
-docker pull michalmrazekavast/wanna-ml
+docker pull michalmrazek9/wanna-ml
 
-docker run -it michalmrazekavast/wanna-ml
+docker run -it michalmrazek9/wanna-ml
 
 $ wanna version
 ```
