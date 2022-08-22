@@ -228,6 +228,8 @@ class NotebookService(BaseService[NotebookModel]):
             "wanna_name": notebook_instance.name,
             "wanna_resource": self.instance_type,
         }
+        if instance_owner:
+            labels["wanna_owner"] = instance_owner
         if notebook_instance.labels:
             labels = {**notebook_instance.labels, **labels}
 
@@ -298,6 +300,7 @@ class NotebookService(BaseService[NotebookModel]):
             bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
             idle_shutdown_timeout=nb_instance.idle_shutdown_timeout,
+            idle_threshold=nb_instance.idle_threshold,
         )
         return startup_script
 

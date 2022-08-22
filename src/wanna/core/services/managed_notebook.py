@@ -58,10 +58,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             CreateRuntimeRequest
         """
         # Configuration of the managed notebook
-        labels = {
-            "wanna_name": instance.name,
-            "wanna_resource": self.instance_type,
-        }
+        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type, "wanna_owner": instance.owner}
         if instance.labels:
             labels = {**instance.labels, **labels}
         # Disks
