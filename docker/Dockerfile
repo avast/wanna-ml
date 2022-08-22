@@ -8,14 +8,11 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 ARG WANNA_VERSION
 RUN pip install wanna-ml==$WANNA_VERSION
 
-# Create wanna user
+# Create wanna folder
 WORKDIR /wanna
 
 # Copy samples
 COPY samples samples
-
-COPY docker/run_jupyter.sh run_jupyter.sh
-RUN chmod +x run_jupyter.sh
 
 ENV SHELL=/bin/bash
 

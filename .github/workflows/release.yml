@@ -55,7 +55,7 @@ jobs:
           push: true
           build-args: WANNA_VERSION=${{ env.GIT_TAG }}
           file: docker/Dockerfile
-          tags: michalmrazek9/wanna-ml:${{ env.GIT_TAG }},michalmrazek9t/wanna-ml:latest
+          tags: michalmrazek9/wanna-ml:${{ env.GIT_TAG }},michalmrazek9/wanna-ml:latest
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3
         with:
