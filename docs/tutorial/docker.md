@@ -9,8 +9,7 @@ date: 2022-04-06
 
 # WANNA Docker
 Multiple resources created by WANNA rely on Docker containers. We make it easy for you to
-build your images either locally or using GCP Cloud Build. However, the GCP Cloud Build will
-not be allowed to use in production.
+build your images either locally or using GCP Cloud Build.
 
 
 ### Types of docker images

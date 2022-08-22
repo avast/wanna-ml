@@ -1,8 +1,9 @@
 #!/bin/bash
 
 {% for bucket_mount in bucket_mounts %}
-sudo su -c "mkdir -p {{ bucket_mount["local_path"] }}"
-sudo su -c "gcsfuse --implicit-dirs {{ ('--only-dir=' ~ bucket_mount["bucket_dir"]) if bucket_mount["bucket_dir"] }} {{ bucket_mount["bucket_name"] }} {{ bucket_mount["local_path"] }}"
+sudo mkdir -p {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}
+sudo chmod -R 777 {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}
+sudo su - jupyter -c "gcsfuse --implicit-dirs {{ bucket_mount["bucket_name"] }} {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}"
 {% endfor %}
 
 {% if tensorboard_resource_name is not none %}

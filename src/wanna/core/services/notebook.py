@@ -63,12 +63,12 @@ class NotebookService(BaseService[NotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}")
-            deleted = self.notebook_client.delete_instance(
-                name=f"projects/{notebook_instance.project_id}/locations/"
-                f"{notebook_instance.zone}/instances/{notebook_instance.name}"
-            )
-            deleted.result()
+            with logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}"):
+                deleted = self.notebook_client.delete_instance(
+                    name=f"projects/{notebook_instance.project_id}/locations/"
+                    f"{notebook_instance.zone}/instances/{notebook_instance.name}"
+                )
+                deleted.result()
         else:
             logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
@@ -160,15 +160,11 @@ class NotebookService(BaseService[NotebookModel]):
             fallback_project_network=self.config.gcp_profile.network,
             use_project_number=True,
         )
-
-        full_subnet_name = (
-            self._get_resource_subnet(
-                full_network_name,
-                notebook_instance.subnet,
-                notebook_instance.zone,
-            )
-            if full_network_name
-            else None
+        subnet = notebook_instance.subnet if notebook_instance.subnet else self.config.gcp_profile.subnet
+        full_subnet_name = self._get_resource_subnet(
+            full_network_name,
+            subnet,
+            notebook_instance.region,
         )
 
         # GPU

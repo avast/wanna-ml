@@ -72,7 +72,7 @@ class TestNotebookService(unittest.TestCase):
         request = nb_service._create_instance_request(instance)
         assert (
             request.instance.subnet
-            == f"projects/123456789/regions/{config.gcp_profile.zone}/subnetworks/the-riddle-house"
+            == f"projects/123456789/regions/{config.gcp_profile.region}/subnetworks/the-riddle-house"
         )
 
     def test_create_instance_request_gpu_config(self):
@@ -131,10 +131,7 @@ class TestNotebookService(unittest.TestCase):
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
-        assert (
-            "gcsfuse --implicit-dirs --only-dir=data your-staging-bucket-name /home/jupyter/mounted/gcs"
-            in startup_script
-        )
+        assert "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name" in startup_script
 
     def test_build(self):
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")

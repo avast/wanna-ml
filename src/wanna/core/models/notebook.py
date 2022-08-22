@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
@@ -10,8 +9,7 @@ from wanna.core.utils import validators
 
 class BucketMount(BaseModel, extra=Extra.forbid):
     bucket_name: str
-    bucket_dir: Path
-    local_path: Path
+    mount_path: str = "/gcs"
 
     _bucket_name = validator("bucket_name")(validators.validate_bucket_name)
 
