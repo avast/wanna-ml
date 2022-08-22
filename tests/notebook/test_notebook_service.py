@@ -131,10 +131,7 @@ class TestNotebookService(unittest.TestCase):
         nb_service = NotebookService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
-        assert (
-            "gcsfuse --implicit-dirs --only-dir=data your-staging-bucket-name /home/jupyter/mounted/gcs"
-            in startup_script
-        )
+        assert "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name" in startup_script
 
     def test_build(self):
         config = load_config_from_yaml("samples/notebook/vm_image/wanna.yaml", "default")
