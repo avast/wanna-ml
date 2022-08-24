@@ -6,7 +6,7 @@ from yamlinclude import YamlIncludeConstructor
 
 
 def replace_environment_variables() -> None:
-    """Enable yaml loader to process the environment variables in the yaml."""
+    """Enable yaml loader to process the environment variables in the yaml file."""
     import os
     import re
 
@@ -17,15 +17,7 @@ def replace_environment_variables() -> None:
     def env_var_constructor(loader: Any, node: Any) -> Any:
         """Process environment variables found in the YAML."""
         value = loader.construct_scalar(node)
-        expanded_vars = os.path.expandvars(value)
-        if "$" in expanded_vars:
-            not_expanded = [w for w in expanded_vars.split() if "$" in w]
-            raise ValueError(
-                "Error when trying to expand the environment variables"
-                " in '{}'. Please make sure to also set these environment"
-                " variables: '{}'.".format(value, not_expanded)
-            )
-        return expanded_vars
+        return os.path.expandvars(value)
 
     yaml.add_constructor("!env_var", env_var_constructor)
 
