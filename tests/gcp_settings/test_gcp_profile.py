@@ -41,8 +41,9 @@ class TestWannaConfigModel:
         assert config.gcp_profile.bucket == "wanna-ml-prod"
         os.environ["WANNA_GCP_PROFILE_PATH"] = ""
 
-    @mock.patch.dict(os.environ, {"LABEL": "label_from_env_var"})
+    # @mock.patch.dict(os.environ, {"LABEL": "label_from_env_var"})
     def test_load_env_variable(self):
+        os.environ["LABEL"] = "label_from_env_var"
         config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "test")
         assert config.gcp_profile.labels["env_var"] == "label_from_env_var"
-        os.environ["LABEL"] = ""
+        # os.environ["LABEL"] = ""
