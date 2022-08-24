@@ -145,7 +145,7 @@ class BaseService(ABC, Generic[T]):
         project_id: str,
         push_mode: PushMode,
         resource_network: Optional[str],
-        fallback_project_network: str,
+        fallback_project_network: Optional[str],
         use_project_number: bool = True,
     ):
         resource_network = resource_network if resource_network else fallback_project_network
