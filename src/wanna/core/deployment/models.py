@@ -90,7 +90,7 @@ class JobResource(GCPResource, Generic[JOB]):
     job_payload: Dict[str, Any]
     image_refs: List[str] = []
     tensorboard: Optional[str]
-    network: str
+    network: Optional[str]
     job_config: JOB
     encryption_spec_key_name: Optional[str]
 
