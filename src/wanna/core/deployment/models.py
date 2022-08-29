@@ -92,7 +92,7 @@ class JobResource(GCPResource, Generic[JOB]):
     tensorboard: Optional[str]
     network: str
     job_config: JOB
-    encryption_spec_key_name: Optional[str]
+    encryption_spec: Optional[str]
 
 
 class PushArtifact(BaseModel):

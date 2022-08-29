@@ -91,7 +91,7 @@ class HyperparameterTuning(BaseModel):
     max_trial_count: int = 15
     parallel_trial_count: int = 3
     search_algorithm: Optional[Literal["grid", "random"]]
-    encryption_spec_key_name: Optional[str]
+    encryption_spec: Optional[str]
 
 
 class BaseCustomJobModel(BaseInstanceModel):
@@ -101,7 +101,7 @@ class BaseCustomJobModel(BaseInstanceModel):
     base_output_directory: Optional[str]
     tensorboard_ref: Optional[str]
     timeout_seconds: int = 60 * 60 * 24  # 24 hours
-    encryption_spec_key_name: Optional[str]
+    encryption_spec: Optional[Any]
 
     @root_validator(pre=False)
     def _set_base_output_directory_if_not_provided(  # pylint: disable=no-self-argument,no-self-use

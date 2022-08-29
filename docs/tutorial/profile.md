@@ -29,6 +29,9 @@ either `WANNA_GCP_PROFILE_NAME=my-profile-name` or `--profile=my-profile-name`.
 When the selected WANNA Profile is not found, we throw an error.
 
 ### WANNA Profile parameters
+
+::: wanna.core.models.gcp_profile.GCPProfileModel
+
 `wanna_profile` section of the yaml config consists of the following inputs:
 
 - `profile_name` - name of the WANNA GCP Profile, `default` will be used if not specified otherwise.

@@ -216,6 +216,10 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             fallback_project_network=self.config.gcp_profile.network,
         )
 
+        encryption_spec_key_name = (
+            job_model.encryption_spec if job_model.encryption_spec else self.config.gcp_profile.kms_key
+        )
+
         return JobResource[CustomJobModel](
             name=job_model.name,
             project=job_model.project_id,
@@ -237,6 +241,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             if job_model.tensorboard_ref
             else None,
             network=network,
+            encryption_spec=encryption_spec_key_name,
         )
 
     def _create_training_job_resource(
@@ -288,6 +293,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             resource_network=job_model.network,
             fallback_project_network=self.config.gcp_profile.network,
         )
+        encryption_spec_key_name = (
+            job_model.encryption_spec if job_model.encryption_spec else self.config.gcp_profile.kms_key
+        )
 
         return JobResource[TrainingCustomJobModel](
             name=job_model.name,
@@ -300,6 +308,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             if job_model.tensorboard_ref
             else None,
             network=network,
+            encryption_spec=encryption_spec_key_name,
         )
 
     def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> Tuple[str, WorkerPoolSpec]:
@@ -446,7 +455,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             Path: Path where resource manifest was saved to
         """
         encryption_spec_key_name = (
-            resource.encryption_spec_key_name if resource.encryption_spec_key_name else self.config.gcp_profile.kms_key
+            resource.encryption_spec if resource.encryption_spec else self.config.gcp_profile.kms_key
         )
         json_dict = {
             "name": resource.name,
@@ -457,7 +466,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             "job_payload": resource.job_payload,
             "tensorboard": resource.tensorboard,
             "network": resource.network,
-            "encryption_spec_key_name": encryption_spec_key_name,
+            "encryption_spec": str(encryption_spec_key_name),
         }
         json_dump = json.dumps(
             remove_nones(json_dict),

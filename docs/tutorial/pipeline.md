@@ -11,6 +11,7 @@ date: 2022-04-06
 
 WANNA ML Pipelines aim at reducing the friction on development cycle to release whilst providing project organization for independent and testable components. It wrapps Kubeflow V2 pipelines with a build and deployment tools for managed GCP VertexAI ML Pipelines service. It has several utils and conventions to reduce boilerplate and speed up development.
 
+::: wanna.core.models.pipeline.PipelineModel
 
 ## Tutorial Get started
 

@@ -11,6 +11,7 @@ date: 2022-04-06
 Multiple resources created by WANNA rely on Docker containers. We make it easy for you to
 build your images either locally or using GCP Cloud Build.
 
+::: wanna.core.models.docker.DockerBuildConfigModel
 
 ### Types of docker images
 We currently support three types of docker images:
