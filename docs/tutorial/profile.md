@@ -31,6 +31,8 @@ When the selected WANNA Profile is not found, we throw an error.
 ### WANNA Profile parameters
 
 ::: wanna.core.models.gcp_profile.GCPProfileModel
+    options:
+      members: false
 
 `wanna_profile` section of the yaml config consists of the following inputs:
 

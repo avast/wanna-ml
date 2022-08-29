@@ -11,9 +11,10 @@ date: 2022-04-06
 Multiple resources created by WANNA rely on Docker containers. We make it easy for you to
 build your images either locally or using GCP Cloud Build.
 
-::: wanna.core.models.docker.DockerBuildConfigModel
-
 ### Types of docker images
+
+::: wanna.core.models.docker.DockerImageModel
+
 We currently support three types of docker images:
 
 - `provided_image` - you supply a link to the docker image in the registry. We don't build anything,
@@ -56,19 +57,12 @@ and there is no need to push the images over the network. That makes it suitable
 However, building images in the cloud is not allowed for production.
 
 ### Build configuration
+
+::: wanna.core.models.docker.DockerBuildConfigModel
+
 When building locally, we offer you a way to set additional build parameters. These parameters
 must be specified in a separate yaml file in path `WANNA_DOCKER_BUILD_CONFIG`. If this is not set,
 it defaults to the `dockerbuild.yaml` in the working directory.
-
-You can set:
-
-- `build_args: Dict[str, str]` 
-- `labels: Dict[str, str]`
-- `network: Optional[str]`
-- `platforms: Optional[List[str]]`
-- `secrets: Union[str, List[str]]`
-- `ssh: Optional[str]`
-- `target: Optional[str]`
 
 These parameters refer to [standard docker build parameters](https://github.com/docker/buildx#buildx-bake-options-target).
   
@@ -90,6 +84,9 @@ RUN --mount=type=ssh,id=github git clone git@git.your.company.com:your_profile/y
 ```
 
 ### Parameters for docker section
+
+::: wanna.core.models.docker.DockerModel
+
 docker section takes following parameters:
 - `images` - list of docker images, see below
 - `repository`- GCP Artifact Registry repository for pushing images

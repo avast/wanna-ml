@@ -10,7 +10,9 @@ date: 2022-04-06
 # WANNA Job
 
 ::: wanna.core.models.training_custom_job.BaseCustomJobModel
-
+    options:
+      members: false
+      
 ## Hyper-parameter tuning
 
 ::: wanna.core.models.training_custom_job.HyperparameterTuning
