@@ -1,3 +1,4 @@
+import itertools
 from pathlib import Path
 from typing import List, Tuple
 
@@ -5,6 +6,7 @@ import typer
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.services.managed_notebook_service import ManagedNotebookServiceClient
 from google.cloud.notebooks_v1.types import (
+    ContainerImage,
     CreateRuntimeRequest,
     EncryptionConfig,
     LocalDisk,
@@ -22,6 +24,7 @@ from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.notebook import ManagedNotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.base import BaseService
+from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
 from wanna.core.utils.gcp import upload_string_to_gcs
@@ -45,8 +48,21 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         self.config = config
         self.bucket_name = config.gcp_profile.bucket
         self.tensorboard_service = TensorboardService(config=config)
+        self.docker_service = (
+            DockerService(
+                docker_model=config.docker,
+                gcp_profile=config.gcp_profile,
+                version=version,
+                work_dir=workdir,
+                wanna_project_name=config.wanna_project.name,
+            )
+            if config.docker
+            else None
+        )
 
-    def _create_runtime_request(self, instance: ManagedNotebookModel, deploy: bool = True) -> CreateRuntimeRequest:
+    def _create_runtime_request(
+        self, instance: ManagedNotebookModel, deploy: bool = True, skip_containers: bool = False
+    ) -> CreateRuntimeRequest:
         """
         Transform the information about desired managed-notebook from the model based on yaml config
         to the form suitable for GCP API.
@@ -113,9 +129,21 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         )
         virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
         # Runtime
+        kernels = []
+        if instance.kernel_docker_image_refs:
+            if not self.docker_service:
+                raise Exception("Docker params in wanna-ml config not defined")
+            for docker_image_ref in instance.kernel_docker_image_refs:
+                image_url = self.docker_service.build_container_and_get_image_url(
+                    docker_image_ref, skip_build=skip_containers
+                )
+                repository = image_url.partition(":")[0]
+                tag = image_url.partition(":")[-1]
+                kernels.append(ContainerImage(repository=repository, tag=tag))
+
         runtimeSoftwareConfig = RuntimeSoftwareConfig(
             {
-                "kernels": instance.kernels,
+                "kernels": kernels,
                 "post_startup_script": post_startup_script,
                 "idle_shutdown": instance.idle_shutdown,
                 "idle_shutdown_timeout": instance.idle_shutdown_timeout,
@@ -177,7 +205,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             else:
                 return
 
-        request = self._create_runtime_request(instance=instance, deploy=True)
+        skip_containers: bool = kwargs.get("skip_containers")  # type: ignore
+        request = self._create_runtime_request(instance=instance, deploy=True, skip_containers=skip_containers)
         with logger.user_spinner(f"Creating instance for {instance.name}"):
             nb_instance = self.notebook_client.create_runtime(request=request)
             instance_full_name = (
@@ -304,7 +333,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         return to_be_deleted, to_be_created
 
-    def sync(self, force) -> None:
+    def sync(self, force: bool, skip_containers: bool = False) -> None:
         """
         1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
         2. Does a diff between what is on GCP and what is on yaml
@@ -329,7 +358,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             if should_create:
                 # mypy inspects item is as str which obviously isn't hence the type: ignore
                 for item in to_be_created:  # type: ignore
-                    self._create_one_instance(item)  # type: ignore
+                    self._create_one_instance(item, skip_containers=skip_containers)  # type: ignore
                     logger.user_info(f"Created {item.name}")  # type: ignore
 
         logger.user_info("Managed notebooks on GCP are in sync with wanna.yaml")
@@ -339,3 +368,20 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             self._create_runtime_request(instance=instance, deploy=False)
         logger.user_success("Managed notebooks validation OK!")
         return 0
+
+    def push(self, instance_name: str):
+        instances = self._filter_instances_by_name(instance_name)
+
+        docker_image_refs = set(
+            itertools.chain(
+                *[instance.kernel_docker_image_refs for instance in instances if instance.kernel_docker_image_refs]
+            )
+        )
+        if docker_image_refs:
+            if self.docker_service:
+                for docker_image_ref in docker_image_refs:
+                    image_tag = self.docker_service.get_image(docker_image_ref=docker_image_ref)
+                    if image_tag[1]:
+                        self.docker_service.push_image(image_tag[1])
+            else:
+                raise Exception("Docker params in wanna-ml config not defined")

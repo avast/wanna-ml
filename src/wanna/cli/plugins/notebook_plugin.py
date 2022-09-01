@@ -5,7 +5,13 @@ from typing import Optional
 import typer
 
 from wanna.cli.plugins.base_plugin import BasePlugin
-from wanna.cli.plugins.common_options import instance_name_option, profile_name_option, wanna_file_option
+from wanna.cli.plugins.common_options import (
+    instance_name_option,
+    profile_name_option,
+    skip_containers_option,
+    wanna_file_option,
+)
+from wanna.core.deployment.models import PushMode
 from wanna.core.services.notebook import NotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
@@ -24,6 +30,8 @@ class NotebookPlugin(BasePlugin):
                 self.ssh,
                 self.report,
                 self.build,
+                self.push,
+                self.sync,
             ]
         )
 
@@ -47,6 +55,7 @@ class NotebookPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("notebook", "create"),
         owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
+        skip_containers: bool = skip_containers_option,
     ) -> None:
         """
         Create a User-Managed Workbench Notebook.
@@ -59,7 +68,7 @@ class NotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = NotebookService(config=config, workdir=workdir, owner=owner)
-        nb_service.create(instance_name)
+        nb_service.create(instance_name, skip_containers=skip_containers)
 
     @staticmethod
     def ssh(
@@ -133,3 +142,48 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = NotebookService(config=config, workdir=workdir)
         nb_service.build()
+
+    @staticmethod
+    def push(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("notebook", "push"),
+        mode: PushMode = typer.Option(
+            PushMode.containers,
+            "--mode",
+            "-m",
+            help="Notebook push mode, due to CI/CD not "
+            "allowing to push to docker registry from "
+            "GCP Agent, we need to split it. "
+            "Notebooks currently support only containers, as we do not create manifests as of now.",
+        ),
+    ) -> None:
+        """
+        Push docker containers. This command also builds the images.
+        """
+        assert mode == PushMode.containers, "Only containers are supported push mode as of now."
+
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service.push(instance_name)
+
+    @staticmethod
+    def sync(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
+        skip_containers: bool = skip_containers_option,
+    ) -> None:
+        """
+        Synchronize existing User-managed Notebooks with wanna.yaml
+
+        1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
+        2. Does a diff between what is on GCP and what is on yaml
+        3. Create the ones defined in yaml and missing in GCP
+        4. Delete the ones in GCP that are not in wanna.yaml
+        """
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service.sync(force=force, skip_containers=skip_containers)

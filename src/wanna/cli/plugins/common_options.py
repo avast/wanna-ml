@@ -26,6 +26,13 @@ push_mode_option: PushMode = typer.Option(
     "Use all for dev",
 )
 
+skip_containers_option = typer.Option(
+    False,
+    "--skip-containers",
+    help="Skip container building and pushing. "
+    "This assumes that the container is already prepared in Artifact Registry.",
+)
+
 
 def instance_name_option(instance_type: str, operation: str, help: str = None):
     return typer.Option(

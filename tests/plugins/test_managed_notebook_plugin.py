@@ -37,7 +37,7 @@ class TestManagedNotebookPlugin(unittest.TestCase):
             ],
         )
         ManagedNotebookService.create.assert_called_once()
-        ManagedNotebookService.create.assert_called_with("minimum-setup")
+        ManagedNotebookService.create.assert_called_with("minimum-setup", skip_containers=False)
 
         self.assertEqual(0, result.exit_code)
 

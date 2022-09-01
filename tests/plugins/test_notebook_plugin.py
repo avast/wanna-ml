@@ -37,7 +37,7 @@ class TestNotebookPlugin(unittest.TestCase):
             ],
         )
         NotebookService.create.assert_called_once()
-        NotebookService.create.assert_called_with("wanna-notebook-vm")
+        NotebookService.create.assert_called_with("wanna-notebook-vm", skip_containers=False)
 
         self.assertEqual(0, result.exit_code)
 

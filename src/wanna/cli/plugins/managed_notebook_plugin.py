@@ -4,7 +4,13 @@ from pathlib import Path
 import typer
 
 from wanna.cli.plugins.base_plugin import BasePlugin
-from wanna.cli.plugins.common_options import instance_name_option, profile_name_option, wanna_file_option
+from wanna.cli.plugins.common_options import (
+    instance_name_option,
+    profile_name_option,
+    skip_containers_option,
+    wanna_file_option,
+)
+from wanna.core.deployment.models import PushMode
 from wanna.core.services.managed_notebook import ManagedNotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
@@ -23,6 +29,7 @@ class ManagedNotebookPlugin(BasePlugin):
                 self.sync,
                 self.report,
                 self.build,
+                self.push,
             ]
         )
 
@@ -45,6 +52,7 @@ class ManagedNotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("managed_notebook", "create"),
+        skip_containers: bool = skip_containers_option,
     ) -> None:
         """
         Create a Managed Workbench Notebook.
@@ -57,13 +65,14 @@ class ManagedNotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
-        nb_service.create(instance_name)
+        nb_service.create(instance_name, skip_containers=skip_containers)
 
     @staticmethod
     def sync(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
+        skip_containers: bool = skip_containers_option,
     ) -> None:
         """
         Synchronize existing Managed Notebooks with wanna.yaml
@@ -76,7 +85,7 @@ class ManagedNotebookPlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
-        nb_service.sync(force)
+        nb_service.sync(force=force, skip_containers=skip_containers)
 
     @staticmethod
     def report(
@@ -111,3 +120,28 @@ class ManagedNotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.build()
+
+    @staticmethod
+    def push(
+        file: Path = wanna_file_option,
+        profile_name: str = profile_name_option,
+        instance_name: str = instance_name_option("notebook", "push"),
+        mode: PushMode = typer.Option(
+            PushMode.containers,
+            "--mode",
+            "-m",
+            help="Managed-Notebook push mode, due to CI/CD not "
+            "allowing to push to docker registry from "
+            "GCP Agent, we need to split it. "
+            "Notebooks currently support only containers, as we do not create manifests as of now.",
+        ),
+    ) -> None:
+        """
+        Push docker containers. This command also builds the images.
+        """
+        assert mode == PushMode.containers, "Only containers are supported push mode as of now."
+
+        config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+        workdir = pathlib.Path(file).parent.resolve()
+        nb_service = ManagedNotebookService(config=config, workdir=workdir)
+        nb_service.push(instance_name)
