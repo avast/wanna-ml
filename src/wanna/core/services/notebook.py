@@ -249,8 +249,7 @@ class NotebookService(BaseService[NotebookModel]):
             post_startup_script = None
 
         metadata = notebook_instance.metadata or {}
-        enable_monitoring = True
-        if enable_monitoring:
+        if notebook_instance.enable_monitoring:
             enable_monitoring_metadata = {
                 "enable-guest-attributes": "TRUE",
                 "report-system-health": "TRUE",

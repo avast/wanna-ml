@@ -34,6 +34,7 @@ class NotebookModel(BaseInstanceModel):
     network: Optional[str]
     subnet: Optional[str]
     tensorboard_ref: Optional[str]
+    enable_monitoring: bool = True
     no_public_ip: bool = True
     no_proxy_access: bool = False
 
