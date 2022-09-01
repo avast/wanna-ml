@@ -11,6 +11,8 @@ date: 2022-04-06
 We offer a simple way of managing Jupyter Notebooks on GCP, with multiple ways
 to set your environment, mount a GCS bucket, and more.
 
+::: wanna.core.models.notebook.NotebookModel
+
 ### Notebook Environments
 There are two distinct possibilities for your environment.
 

@@ -10,6 +10,8 @@ date: 2022-04-06
 # WANNA project
 WANNA project settings set some basic values about your project. 
 
+::: wanna.core.models.wanna_project.WannaProjectModel
+
 `wanna_project` section of the yaml config consists of the following inputs:
 
 - `name` - the name of the wanna project should be unique, this name will be used in the docker service 
