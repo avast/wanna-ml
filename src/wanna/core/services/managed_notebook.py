@@ -114,20 +114,6 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         else:
             post_startup_script = None
 
-        # VM
-        virtualMachineConfig = VirtualMachineConfig(
-            machine_type=instance.machine_type,
-            data_disk=localDisk,
-            encryption_config=encryption_config,
-            labels=labels,
-            accelerator_config=runtimeAcceleratorConfig,
-            network=full_network,
-            subnet=full_subnet,
-            internal_ip_only=instance.internal_ip_only,
-            tags=instance.tags,
-            metadata=instance.metadata,
-        )
-        virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
         # Runtime
         kernels = []
         if instance.kernel_docker_image_refs:
@@ -140,10 +126,24 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
                 kernels.append(ContainerImage(repository=repository, tag=tag))
+        # VM
+        virtualMachineConfig = VirtualMachineConfig(
+            machine_type=instance.machine_type,
+            container_images=kernels,
+            data_disk=localDisk,
+            encryption_config=encryption_config,
+            labels=labels,
+            accelerator_config=runtimeAcceleratorConfig,
+            network=full_network,
+            subnet=full_subnet,
+            internal_ip_only=instance.internal_ip_only,
+            tags=instance.tags,
+            metadata=instance.metadata,
+        )
+        virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
 
         runtimeSoftwareConfig = RuntimeSoftwareConfig(
             {
-                "kernels": kernels,
                 "post_startup_script": post_startup_script,
                 "idle_shutdown": instance.idle_shutdown,
                 "idle_shutdown_timeout": instance.idle_shutdown_timeout,
