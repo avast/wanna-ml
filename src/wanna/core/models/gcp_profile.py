@@ -38,7 +38,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     labels: Optional[Dict[str, str]]
     bucket: str
     service_account: Optional[str]
-    network: str = "default"
+    network: Optional[str]
     subnet: Optional[str]
     kms_key: Optional[str]
     docker_repository: str = "wanna"
