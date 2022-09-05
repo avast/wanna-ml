@@ -7,6 +7,29 @@ from wanna.core.utils.gcp import get_region_from_zone
 
 
 class GCPProfileModel(BaseModel, extra=Extra.forbid):
+    """
+    `wanna_profile` section of the yaml config consists of the following inputs:
+
+    - `profile_name` - name of the WANNA GCP Profile, `default` will be used if not specified otherwise.
+      You could use also for example `dev`, `prod`, or any other string.
+    - `project_id` - GCP project id.
+    - `zone` - (optional) GCP location zone.
+    - `region` - (optional) GCP location region. If the zone is set and the region not, we automatically
+      parse the region from the zone (e.g., zone `us-east1-c` automatically sets region `us-east1` if the region
+      is not supplied by the user).
+    - `labels` - (optional) GCP resource labels that will be added to all GCP resources you create with this profile.
+      By default, we also add a few labels based on `wanna_project` section.
+    - `bucket` - (optional) GCS Bucket that can later be used in uploading manifests, storing logs, and so on depending
+      on the resource type.
+    - `service_account` - (optional) GCP service account that will be used by the created resources.
+    If not specified, usually the default service account for each resource type is used.
+    - network - VPC network for
+    - subnet - (optional)
+    - kms_key - (optional)
+    - docker_repository -
+    - docker_registry - (optional)
+    """
+
     profile_name: str
     project_id: str
     zone: Optional[str]
