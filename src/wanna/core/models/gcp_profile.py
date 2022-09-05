@@ -23,11 +23,12 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
       on the resource type.
     - `service_account` - (optional) GCP service account that will be used by the created resources.
     If not specified, usually the default service account for each resource type is used.
-    - network - VPC network for
-    - subnet - (optional)
-    - kms_key - (optional)
-    - docker_repository -
-    - docker_registry - (optional)
+    - `network` - Google Cloud VPC network name
+    - `subnet` - (optional) Google Cloud VPC subnetwork name
+    - `kms_key` - (optional) Customer managed enryption key given in format
+    projects/{project_id}/locations/{region}/keyRings/{key_ring_id}/cryptoKeys/{key_id}
+    - `docker_repository` - Wanna Docker Repository
+    - `docker_registry` - (optional) Wanna Docker Registry, usually in format {region}-docker.pkg.dev
     """
 
     profile_name: str
