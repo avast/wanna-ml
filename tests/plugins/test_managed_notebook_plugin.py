@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from tests.mocks import mocks
 from wanna.cli.plugins.managed_notebook_plugin import ManagedNotebookPlugin
+from wanna.core.deployment.models import PushMode
 from wanna.core.services.managed_notebook import ManagedNotebookService
 
 
@@ -37,7 +38,7 @@ class TestManagedNotebookPlugin(unittest.TestCase):
             ],
         )
         ManagedNotebookService.create.assert_called_once()
-        ManagedNotebookService.create.assert_called_with("minimum-setup", skip_containers=False)
+        ManagedNotebookService.create.assert_called_with("minimum-setup", push_mode=PushMode.all)
 
         self.assertEqual(0, result.exit_code)
 
@@ -93,4 +94,39 @@ class TestManagedNotebookPlugin(unittest.TestCase):
             billing_id="your-billing-id",
             organization_id="your-organization-id",
         )
+        self.assertEqual(0, result.exit_code)
+
+    def test_managed_notebook_sync_cli(self):
+        ManagedNotebookService.sync = MagicMock()
+
+        result = self.runner.invoke(
+            self.plugin.app,
+            [
+                "sync",
+                "--file",
+                self.wanna_path,
+                "--profile",
+                "default",
+                "--force",
+            ],
+        )
+        ManagedNotebookService.sync.assert_called_once()
+        ManagedNotebookService.sync.assert_called_with(force=True, push_mode=PushMode.all)
+
+        self.assertEqual(0, result.exit_code)
+
+    def test_managed_notebook_push_cli(self):
+        ManagedNotebookService.push = MagicMock()
+
+        result = self.runner.invoke(
+            self.plugin.app,
+            [
+                "push",
+                "--file",
+                self.wanna_path,
+            ],
+        )
+        ManagedNotebookService.push.assert_called_once()
+        ManagedNotebookService.push.assert_called_with(instance_name="all")
+
         self.assertEqual(0, result.exit_code)

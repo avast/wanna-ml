@@ -20,17 +20,9 @@ push_mode_option: PushMode = typer.Option(
     PushMode.all,
     "--mode",
     "-m",
-    help="Pipeline push mode, due to CI/CD not "
-    "allowing to push to docker registry from "
-    "GCP Agent, we need to split it. "
+    help="Push mode, this is useful if you want to "
+    "push containers in one step and deploy instances in other."
     "Use all for dev",
-)
-
-skip_containers_option = typer.Option(
-    False,
-    "--skip-containers",
-    help="Skip container building and pushing. "
-    "This assumes that the container is already prepared in Artifact Registry.",
 )
 
 

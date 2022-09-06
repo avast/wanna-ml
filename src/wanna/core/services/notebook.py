@@ -1,7 +1,7 @@
 import itertools
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import typer
 from google.api_core import exceptions
@@ -98,10 +98,8 @@ class NotebookService(BaseService[NotebookModel]):
                 self._delete_one_instance(instance)
             else:
                 return
-        skip_containers: bool = kwargs.get("skip_containers")  # type: ignore
-        instance_request = self._create_instance_request(
-            notebook_instance=instance, deploy=True, skip_containers=skip_containers
-        )
+        push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
+        instance_request = self._create_instance_request(notebook_instance=instance, deploy=True, push_mode=push_mode)
         with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
@@ -146,7 +144,7 @@ class NotebookService(BaseService[NotebookModel]):
         return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
 
     def _create_instance_request(
-        self, notebook_instance: NotebookModel, deploy: bool = True, skip_containers: bool = False
+        self, notebook_instance: NotebookModel, deploy: bool = True, push_mode: PushMode = PushMode.all
     ) -> CreateInstanceRequest:
         """
         Transform the information about desired notebook from our NotebookModel model (based on yaml config)
@@ -188,7 +186,7 @@ class NotebookService(BaseService[NotebookModel]):
         if notebook_instance.environment.docker_image_ref:
             if self.docker_service:
                 image_url = self.docker_service.build_container_and_get_image_url(
-                    notebook_instance.environment.docker_image_ref, skip_build=skip_containers
+                    notebook_instance.environment.docker_image_ref, push_mode=push_mode
                 )
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
@@ -424,7 +422,7 @@ class NotebookService(BaseService[NotebookModel]):
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
 
-    def _return_diff(self) -> Tuple[List[Dict[str, str]], List[NotebookModel]]:
+    def _return_diff(self) -> Tuple[List[NotebookModel], List[NotebookModel]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists user-managed notebooks to be deleted and created.
         """
@@ -438,10 +436,14 @@ class NotebookService(BaseService[NotebookModel]):
         agg_list = instance_client.aggregated_list(request=request)
         gcp_instances = itertools.chain(*[resp.instances for zone, resp in agg_list if resp.instances])
 
-        active_notebooks = [{"name": i.name, "zone": i.zone.split("/")[-1]} for i in gcp_instances]
-        wanna_notebooks = [{"name": i.name, "zone": i.zone, "model": i} for i in self.instances]
-        active_notebook_names = [n.get("name") for n in active_notebooks]
-        wanna_notebook_names = [n.get("name") for n in wanna_notebooks]
+        active_notebooks = [
+            NotebookModel.parse_obj(
+                {"name": i.name, "zone": i.zone.split("/")[-1], "project_id": self.config.gcp_profile.project_id}
+            )
+            for i in gcp_instances
+        ]
+        active_notebook_names = [n.name for n in active_notebooks]
+        wanna_notebook_names = [n.name for n in self.instances]
 
         to_be_deleted = []
         to_be_created = []
@@ -449,7 +451,7 @@ class NotebookService(BaseService[NotebookModel]):
         Notebooks to be deleted
         """
         for active_notebook in active_notebooks:
-            if active_notebook.get("name") not in wanna_notebook_names:
+            if active_notebook.name not in wanna_notebook_names:
                 to_be_deleted.append(active_notebook)
         """
         Notebooks to be created
@@ -458,34 +460,3 @@ class NotebookService(BaseService[NotebookModel]):
             if wanna_notebook.name not in active_notebook_names:
                 to_be_created.append(wanna_notebook)
         return to_be_deleted, to_be_created
-
-    def sync(self, force: bool, skip_containers: bool = False) -> None:
-        """
-        1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
-        2. Does a diff between what is on GCP and what is on yaml
-        3. Delete the ones in GCP that are not in wanna.yaml
-        4. Create the ones defined in yaml and missing in GCP
-        """
-        to_be_deleted, to_be_created = self._return_diff()
-
-        if to_be_deleted:
-            to_be_deleted_str = "\n".join(["- " + item["name"] for item in to_be_deleted])
-            logger.user_info(f"Notebooks to be deleted:\n{to_be_deleted_str}")
-            should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
-            if should_delete:
-                for notebook in to_be_deleted:
-                    with logger.user_spinner(f"Deleting {notebook.get('name')}"):
-                        self.notebook_client.delete_instance(
-                            name=f"projects/{self.config.gcp_profile.project_id}/locations/"
-                            f"{notebook.get('zone')}/instances/{notebook.get('name')}"
-                        ).result()
-
-        if to_be_created:
-            to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
-            logger.user_info(f"Notebooks to be created:\n{to_be_created_str}")
-            should_create = True if force else typer.confirm("Are you sure you want to create them?")
-            if should_create:
-                for item in to_be_created:
-                    self._create_one_instance(item, skip_containers=skip_containers)
-
-        logger.user_info("Notebooks on GCP are in sync with wanna.yaml")

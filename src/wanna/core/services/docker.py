@@ -11,6 +11,7 @@ from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, 
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
+from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.docker import (
     DockerBuildConfigModel,
@@ -345,14 +346,14 @@ class DockerService:
             for version in versions
         ]
 
-    def build_container_and_get_image_url(self, docker_image_ref: str, skip_build: bool = False) -> str:
-        if skip_build:
+    def build_container_and_get_image_url(self, docker_image_ref: str, push_mode: PushMode = PushMode.all) -> str:
+        if push_mode == PushMode.quick:
             docker_image_model = self.find_image_model_by_name(docker_image_ref)
             tags = self.construct_image_tag(image_name=docker_image_model.name)
             image_url = tags[0]
         else:
             image_tag = self.get_image(docker_image_ref=docker_image_ref)
-            if image_tag[1]:
+            if len(image_tag) > 1 and image_tag[1]:
                 self.push_image(image_tag[1])
             image_url = image_tag[2]
         return image_url

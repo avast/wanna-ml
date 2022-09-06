@@ -20,6 +20,7 @@ from google.cloud.notebooks_v1.types import (
 )
 from waiting import wait
 
+from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.notebook import ManagedNotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
@@ -61,7 +62,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         )
 
     def _create_runtime_request(
-        self, instance: ManagedNotebookModel, deploy: bool = True, skip_containers: bool = False
+        self, instance: ManagedNotebookModel, deploy: bool = True, push_mode: PushMode = PushMode.all
     ) -> CreateRuntimeRequest:
         """
         Transform the information about desired managed-notebook from the model based on yaml config
@@ -120,9 +121,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             if not self.docker_service:
                 raise Exception("Docker params in wanna-ml config not defined")
             for docker_image_ref in instance.kernel_docker_image_refs:
-                image_url = self.docker_service.build_container_and_get_image_url(
-                    docker_image_ref, skip_build=skip_containers
-                )
+                image_url = self.docker_service.build_container_and_get_image_url(docker_image_ref, push_mode=push_mode)
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
                 kernels.append(ContainerImage(repository=repository, tag=tag))
@@ -205,8 +204,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             else:
                 return
 
-        skip_containers: bool = kwargs.get("skip_containers")  # type: ignore
-        request = self._create_runtime_request(instance=instance, deploy=True, skip_containers=skip_containers)
+        push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
+        request = self._create_runtime_request(instance=instance, deploy=True, push_mode=push_mode)
         with logger.user_spinner(f"Creating instance for {instance.name}"):
             nb_instance = self.notebook_client.create_runtime(request=request)
             instance_full_name = (
@@ -304,14 +303,15 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
         return f"https://{instance_info.access_config.proxy_uri}"
 
-    def _return_diff(self) -> Tuple[List[str], List[ManagedNotebookModel]]:
+    def _return_diff(self) -> Tuple[List[ManagedNotebookModel], List[ManagedNotebookModel]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
-        parent = f"projects/{self.config.gcp_profile.project_id}/locations/{self.config.gcp_profile.region}"
+        location = self.config.gcp_profile.region
+        parent = f"projects/{self.config.gcp_profile.project_id}/locations/{location}"
         active_runtimes = self.notebook_client.list_runtimes(parent=parent).runtimes
-        wanna_names = [managednotebook.name for managednotebook in self.instances]
-        existing_names = [str(runtime.name) for runtime in active_runtimes]
+        wanna_notebook_names = [managednotebook.name for managednotebook in self.instances]
+        active_notebook_names = [str(runtime.name) for runtime in active_runtimes]
         to_be_deleted = []
         to_be_created = []
         """
@@ -319,49 +319,28 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         """
         for runtime in active_runtimes:
             if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project.name:
-                if runtime.name.split("/")[-1] not in wanna_names:
-                    to_be_deleted.append(str(runtime.name))
+                if runtime.name.split("/")[-1] not in wanna_notebook_names:
+                    to_be_deleted.append(
+                        ManagedNotebookModel.parse_obj(
+                            {
+                                "name": str(runtime.name).split("/")[-1],
+                                "region": location,
+                                "project_id": self.config.gcp_profile.project_id,
+                                "owner": "wanna-to-be-deleted",
+                            }
+                        )
+                    )
         """
         Notebooks to be created
         """
         for notebook in self.instances:
             if (
                 f"projects/{notebook.project_id}/locations/{notebook.region}/runtimes/{notebook.name}"
-                not in existing_names
+                not in active_notebook_names
             ):
                 to_be_created.append(notebook)
 
         return to_be_deleted, to_be_created
-
-    def sync(self, force: bool, skip_containers: bool = False) -> None:
-        """
-        1. Reads current notebooks where label is defined per field wanna_project.name in wanna.yaml
-        2. Does a diff between what is on GCP and what is on yaml
-        3. Delete the ones in GCP that are not in wanna.yaml
-        4. Create the ones defined in yaml and missing in GCP
-        """
-        to_be_deleted, to_be_created = self._return_diff()
-
-        if to_be_deleted:
-            to_be_deleted_str = "\n".join(["- " + item for item in to_be_deleted])
-            logger.user_info(f"Managed notebooks to be deleted:\n{to_be_deleted_str}")
-            should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
-            if should_delete:
-                for item in to_be_deleted:
-                    with logger.user_spinner(f"Deleting {item}"):
-                        self.notebook_client.delete_runtime(name=item).result()
-
-        if to_be_created:
-            to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
-            logger.user_info(f"Managed notebooks to be created:\n{to_be_created_str}")
-            should_create = True if force else typer.confirm("Are you sure you want to create them?")
-            if should_create:
-                # mypy inspects item is as str which obviously isn't hence the type: ignore
-                for item in to_be_created:  # type: ignore
-                    self._create_one_instance(item, skip_containers=skip_containers)  # type: ignore
-                    logger.user_info(f"Created {item.name}")  # type: ignore
-
-        logger.user_info("Managed notebooks on GCP are in sync with wanna.yaml")
 
     def build(self) -> int:
         for instance in self.instances:
