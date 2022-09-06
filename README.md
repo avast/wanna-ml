@@ -45,13 +45,18 @@ Install using `pip install -U wanna-ml`.
 For more information on the installation process and requirements, visit out [installation page in documentation](https://avast.github.io/wanna-ml/installation)
 
 ### Use Docker Image
-For your convenience, we have prepared a Docker image with everything you need to get started.
+For your convenience, we have prepared a Docker image with everything you need to get started (gcloud, wanna-ml and docker client).
 ```bash
 docker pull michalmrazek9/wanna-ml
 
 docker run -it michalmrazek9/wanna-ml
 
 $ wanna version
+```
+
+If you also want to build and push docker images from inside of our docker image, use this volume:
+```bash
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock michalmrazek9/wanna-ml
 ```
 
 ### Authentication
