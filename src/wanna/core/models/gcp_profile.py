@@ -27,6 +27,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     - `subnet` - [str] (optional) Google Cloud VPC subnetwork name
     - `kms_key` - [str] (optional) Customer managed enryption key given in format
       projects/{project_id}/locations/{region}/keyRings/{key_ring_id}/cryptoKeys/{key_id}
+      If you get an error, please grant the Service Account with the Cloud KMS CryptoKey Encrypter/Decrypter role
     - `docker_repository` - [str] Wanna Docker Repository
     - `docker_registry` - [str] (optional) Wanna Docker Registry, usually in format {region}-docker.pkg.dev
     """
