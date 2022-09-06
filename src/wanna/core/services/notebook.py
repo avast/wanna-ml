@@ -1,9 +1,11 @@
+import itertools
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import typer
 from google.api_core import exceptions
+from google.cloud import compute_v1
 from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage
 from waiting import wait
@@ -96,7 +98,8 @@ class NotebookService(BaseService[NotebookModel]):
                 self._delete_one_instance(instance)
             else:
                 return
-        instance_request = self._create_instance_request(notebook_instance=instance, deploy=True)
+        push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
+        instance_request = self._create_instance_request(notebook_instance=instance, deploy=True, push_mode=push_mode)
         with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
             nb_instance = self.notebook_client.create_instance(instance_request)
             instance_full_name = (
@@ -140,7 +143,9 @@ class NotebookService(BaseService[NotebookModel]):
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
         return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
 
-    def _create_instance_request(self, notebook_instance: NotebookModel, deploy: bool = True) -> CreateInstanceRequest:
+    def _create_instance_request(
+        self, notebook_instance: NotebookModel, deploy: bool = True, push_mode: PushMode = PushMode.all
+    ) -> CreateInstanceRequest:
         """
         Transform the information about desired notebook from our NotebookModel model (based on yaml config)
         to the form suitable for GCP API.
@@ -180,18 +185,16 @@ class NotebookService(BaseService[NotebookModel]):
         # Environment
         if notebook_instance.environment.docker_image_ref:
             if self.docker_service:
-                vm_image = None
-                image_tag = self.docker_service.get_image(
-                    docker_image_ref=notebook_instance.environment.docker_image_ref
+                image_url = self.docker_service.build_container_and_get_image_url(
+                    notebook_instance.environment.docker_image_ref, push_mode=push_mode
                 )
-                if image_tag[1]:
-                    self.docker_service.push_image(image_tag[1])
-                repository = image_tag[2].partition(":")[0]
-                tag = image_tag[2].partition(":")[-1]
+                repository = image_url.partition(":")[0]
+                tag = image_url.partition(":")[-1]
                 container_image = ContainerImage(
                     repository=repository,
                     tag=tag,
                 )
+                vm_image = None
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
         elif notebook_instance.environment.vm_image:
@@ -243,6 +246,15 @@ class NotebookService(BaseService[NotebookModel]):
         else:
             post_startup_script = None
 
+        metadata = notebook_instance.metadata or {}
+        if notebook_instance.enable_monitoring:
+            enable_monitoring_metadata = {
+                "enable-guest-attributes": "TRUE",
+                "report-system-health": "TRUE",
+                "report-notebook-metrics": "TRUE",
+                "install-monitoring-agent": "TRUE",
+            }
+            metadata = {**metadata, **enable_monitoring_metadata}
         instance = Instance(
             vm_image=vm_image,
             container_image=container_image,
@@ -258,6 +270,7 @@ class NotebookService(BaseService[NotebookModel]):
             post_startup_script=post_startup_script,
             instance_owners=instance_owners,
             service_account=service_account,
+            metadata=metadata,
             tags=tags,
             labels=labels,
             disk_encryption=disk_encryption,
@@ -393,3 +406,57 @@ class NotebookService(BaseService[NotebookModel]):
             self._create_instance_request(notebook_instance=instance, deploy=False)
         logger.user_success("Notebooks validation OK!")
         return 0
+
+    def push(self, instance_name: str):
+        instances = self._filter_instances_by_name(instance_name)
+
+        docker_image_refs = set(
+            [instance.environment.docker_image_ref for instance in instances if instance.environment.docker_image_ref]
+        )
+        if docker_image_refs:
+            if self.docker_service:
+                for docker_image_ref in docker_image_refs:
+                    image_tag = self.docker_service.get_image(docker_image_ref=docker_image_ref)
+                    if image_tag[1]:
+                        self.docker_service.push_image(image_tag[1])
+            else:
+                raise Exception("Docker params in wanna-ml config not defined")
+
+    def _return_diff(self) -> Tuple[List[NotebookModel], List[NotebookModel]]:
+        """
+        Figuring out the diff between GCP and wanna.yaml. Lists user-managed notebooks to be deleted and created.
+        """
+        # We list compute instances and not notebooks, because with notebooks you cannot list instances in all zones.
+        # So instead we list all Compute Engine instances with notebook labels
+        instance_client = compute_v1.InstancesClient()
+        request = compute_v1.AggregatedListInstancesRequest(
+            filter=f"(labels.wanna_resource:notebook) (labels.wanna_project:{self.wanna_project.name})"
+        )
+        request.project = self.config.gcp_profile.project_id
+        agg_list = instance_client.aggregated_list(request=request)
+        gcp_instances = itertools.chain(*[resp.instances for zone, resp in agg_list if resp.instances])
+
+        active_notebooks = [
+            NotebookModel.parse_obj(
+                {"name": i.name, "zone": i.zone.split("/")[-1], "project_id": self.config.gcp_profile.project_id}
+            )
+            for i in gcp_instances
+        ]
+        active_notebook_names = [n.name for n in active_notebooks]
+        wanna_notebook_names = [n.name for n in self.instances]
+
+        to_be_deleted = []
+        to_be_created = []
+        """
+        Notebooks to be deleted
+        """
+        for active_notebook in active_notebooks:
+            if active_notebook.name not in wanna_notebook_names:
+                to_be_deleted.append(active_notebook)
+        """
+        Notebooks to be created
+        """
+        for wanna_notebook in self.instances:
+            if wanna_notebook.name not in active_notebook_names:
+                to_be_created.append(wanna_notebook)
+        return to_be_deleted, to_be_created

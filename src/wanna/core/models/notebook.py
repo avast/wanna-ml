@@ -34,6 +34,7 @@ class NotebookModel(BaseInstanceModel):
     network: Optional[str]
     subnet: Optional[str]
     tensorboard_ref: Optional[str]
+    enable_monitoring: bool = True
     no_public_ip: bool = True
     no_proxy_access: bool = False
 
@@ -46,7 +47,7 @@ class ManagedNotebookModel(BaseInstanceModel):
     machine_type: Optional[str] = "n1-standard-4"
     gpu: Optional[GPU]
     data_disk: Optional[Disk]
-    kernels: Optional[List[str]]
+    kernel_docker_image_refs: Optional[List[str]]
     tensorboard_ref: Optional[str]
     network: Optional[str]
     subnet: Optional[str]

@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from tests.mocks import mocks
 from wanna.cli.plugins.notebook_plugin import NotebookPlugin
+from wanna.core.deployment.models import PushMode
 from wanna.core.services.notebook import NotebookService
 
 
@@ -37,7 +38,7 @@ class TestNotebookPlugin(unittest.TestCase):
             ],
         )
         NotebookService.create.assert_called_once()
-        NotebookService.create.assert_called_with("wanna-notebook-vm")
+        NotebookService.create.assert_called_with("wanna-notebook-vm", push_mode=PushMode.all)
 
         self.assertEqual(0, result.exit_code)
 
@@ -123,4 +124,39 @@ class TestNotebookPlugin(unittest.TestCase):
             billing_id="your-billing-id",
             organization_id="your-organization-id",
         )
+        self.assertEqual(0, result.exit_code)
+
+    def test_notebook_sync_cli(self):
+        NotebookService.sync = MagicMock()
+
+        result = self.runner.invoke(
+            self.plugin.app,
+            [
+                "sync",
+                "--file",
+                self.wanna_path,
+                "--profile",
+                "default",
+                "--force",
+            ],
+        )
+        NotebookService.sync.assert_called_once()
+        NotebookService.sync.assert_called_with(force=True, push_mode=PushMode.all)
+
+        self.assertEqual(0, result.exit_code)
+
+    def test_notebook_push_cli(self):
+        NotebookService.push = MagicMock()
+
+        result = self.runner.invoke(
+            self.plugin.app,
+            [
+                "push",
+                "--file",
+                self.wanna_path,
+            ],
+        )
+        NotebookService.push.assert_called_once()
+        NotebookService.push.assert_called_with(instance_name="all")
+
         self.assertEqual(0, result.exit_code)

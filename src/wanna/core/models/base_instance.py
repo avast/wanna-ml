@@ -16,7 +16,7 @@ class BaseInstanceModel(BaseModel, extra=Extra.ignore, validate_assignment=True)
     network: Optional[str]
     bucket: Optional[str]
     tags: Optional[List[str]]
-    metadata: Optional[List[Dict[str, Any]]]
+    metadata: Optional[Dict[str, Any]]
 
     _project_id = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _zone = validator("zone", allow_reuse=True)(validators.validate_zone)
