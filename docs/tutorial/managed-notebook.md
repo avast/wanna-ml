@@ -12,6 +12,8 @@ date: 2022-06-03
 It offers a simple way of deploying Jupyter Notebooks on GCP, with minimum environment
 set up, automatic mount of all GCS buckets in the project, connection do Dataproc clusters and more.
 
+::: wanna.core.models.notebook.ManagedNotebookModel
+
 ### Obligatory fields
 - `name`- Custom name for this instance
 - `owner` - Currently only the owner will be able to access the notebook
