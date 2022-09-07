@@ -403,7 +403,7 @@ class NotebookService(BaseService[NotebookModel]):
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_instance_request(notebook_instance=instance, deploy=False)
+            self._create_instance_request(notebook_instance=instance, deploy=False, push_mode=PushMode.manifests)
         logger.user_success("Notebooks validation OK!")
         return 0
 

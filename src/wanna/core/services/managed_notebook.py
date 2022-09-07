@@ -344,7 +344,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_runtime_request(instance=instance, deploy=False)
+            self._create_runtime_request(instance=instance, deploy=False, push_mode=PushMode.manifests)
         logger.user_success("Managed notebooks validation OK!")
         return 0
 

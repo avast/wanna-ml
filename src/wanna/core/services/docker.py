@@ -348,10 +348,16 @@ class DockerService:
 
     def build_container_and_get_image_url(self, docker_image_ref: str, push_mode: PushMode = PushMode.all) -> str:
         if push_mode == PushMode.quick:
+            # only get image tag
             docker_image_model = self.find_image_model_by_name(docker_image_ref)
             tags = self.construct_image_tag(image_name=docker_image_model.name)
             image_url = tags[0]
+        elif push_mode == PushMode.manifests:
+            # only build image
+            image_tag = self.get_image(docker_image_ref=docker_image_ref)
+            image_url = image_tag[2]
         else:
+            # build image and push
             image_tag = self.get_image(docker_image_ref=docker_image_ref)
             if len(image_tag) > 1 and image_tag[1]:
                 self.push_image(image_tag[1])
