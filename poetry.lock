@@ -1087,6 +1087,17 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "mkautodoc"
+version = "0.2.0"
+description = "AutoDoc for MarkDown"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Markdown = "*"
+
+[[package]]
 name = "mkdocs"
 version = "1.2.4"
 description = "Project documentation with Markdown."
@@ -2087,7 +2098,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.11"
-content-hash = "4bae9a0a61710ef4ac2ea739b030979c1d019e54978a43e8a0eead2ccb5f209d"
+content-hash = "ff563c501a926ba49287b96a40ac1763832fe85a5c5ca91918af36f14a3fc825"
 
 [metadata.files]
 absl-py = []
@@ -2173,6 +2184,7 @@ markdown = []
 markupsafe = []
 mccabe = []
 mergedeep = []
+mkautodoc = []
 mkdocs = []
 mkdocs-autorefs = []
 mkdocs-click = []

@@ -67,10 +67,12 @@ nav:
 
 plugins:
 - search
-- mkdocstrings
 
 markdown_extensions:
     - mkdocs-typer
     - mkdocs-click
+    - admonition
+    - codehilite
+    - mkautodoc
     - toc:
         permalink: "#"

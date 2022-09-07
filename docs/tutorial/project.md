@@ -11,14 +11,7 @@ date: 2022-04-06
 WANNA project settings set some basic values about your project. 
 
 ::: wanna.core.models.wanna_project.WannaProjectModel
-
-`wanna_project` section of the yaml config consists of the following inputs:
-
-- `name` - the name of the wanna project should be unique, this name will be used in the docker service 
-  for naming docker images and in labeling GCP resources. Hence it can be used also for budget monitoring.
-- `version` - Currently used only in labeling GCP resources, we expect to introduce new API versions 
-  and then this parameter will gain more importance. 
-- `authors` - List of email addresses, currently used only in GCP resource labeling but soon also in monitoring.
+    :docstring:
 
 ### Example
 
