@@ -78,7 +78,16 @@ class TestManagedNotebookService(unittest.TestCase):
         nb_service = ManagedNotebookService(config=config, workdir=Path("."))
 
         assert nb_service._return_diff() == (
-            ["projects/your-gcp-project-id/locations/europe-west1/runtimes/minimum-setup"],
+            [
+                ManagedNotebookModel.parse_obj(
+                    {
+                        "project_id": "your-gcp-project-id",
+                        "region": "europe-west1",
+                        "name": "minimum-setup",
+                        "owner": "wanna-to-be-deleted",
+                    }
+                )
+            ],
             [],
         )
 
