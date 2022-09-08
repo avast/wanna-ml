@@ -77,7 +77,9 @@ class ManagedNotebookModel(BaseInstanceModel):
     - `network` - [str] (optional) Overrides network from the `gcp_profile` segment
     - `tags`- [Dict[str, str]] (optional) Tags to apply to this instance
     - `metadata`- [str] (optional) Custom metadata to apply to this instance
-    - `owner` - [str] Currently only the owner will be able to access the notebook
+    - `owner` - [str] This can be either a single user email address and that would be the only one
+      able to access the notebook. Or service account and then everyone who has the iam.serviceAccounts.actAs
+      permission on the specified service account will be able to connect.
     - `machine_type` - [str] (optional) GCP Compute Engine machine type
     - `gpu`- [GPU] (optional) The hardware GPU accelerator used on this instance.
     - `data_disk` - [Disk] (optional) Data disk configuration to attach to this instance.
