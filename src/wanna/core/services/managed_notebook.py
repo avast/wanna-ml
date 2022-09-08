@@ -148,9 +148,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 "idle_shutdown_timeout": instance.idle_shutdown_timeout,
             }
         )
-        runtimeAccessConfig = RuntimeAccessConfig(
-            access_type=RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER, runtime_owner=instance.owner
+        access_type = (
+            RuntimeAccessConfig.RuntimeAccessType.SERVICE_ACCOUNT
+            if instance.owner.endswith("gserviceaccount.com")
+            else RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER
         )
+        runtimeAccessConfig = RuntimeAccessConfig(access_type=access_type, runtime_owner=instance.owner)
         runtime = Runtime(
             access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
         )
