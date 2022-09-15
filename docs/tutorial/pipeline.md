@@ -193,6 +193,7 @@ You can now see that you have a self contained component and testable, ready to 
 ## Pipeline
 
 ::: wanna.core.models.pipeline.PipelineModel
+    :docstring:
 
 WANNA template creates two files that allow to put together the Kubeflow V2 pipeline that will then be deployed to GCP Vertex AI Pipelines.
 

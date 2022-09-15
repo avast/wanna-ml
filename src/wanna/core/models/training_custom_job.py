@@ -86,6 +86,17 @@ HyperParamater = Annotated[
 
 
 class HyperparameterTuning(BaseModel):
+    """
+    - `metrics` - Dictionary of type [str, Literal["minimize", "maximize"]]
+    - `parameters` - List[HyperParamater] defined per var_name, type, min, max, scale
+    - `max_trial_count` - [int] defaults to 15
+    - `parallel_trial_count` - [int] defaults to 3
+    - `search_algorithm` - [str] (optional) Can be "grid" or "random"
+    - `encryption_spec` - [str] (optional) The Cloud KMS resource identifier. Has the form:
+    projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key
+    The key needs to be in the same region as where the compute resource is created
+    """
+
     metrics: Dict[str, Literal["minimize", "maximize"]]
     parameters: List[HyperParamater]
     max_trial_count: int = 15
@@ -95,6 +106,27 @@ class HyperparameterTuning(BaseModel):
 
 
 class BaseCustomJobModel(BaseInstanceModel):
+    """
+    - `name` - [str] Custom name for this instance
+    - `project_id' - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
+    - `zone` - [str] (optional) Overrides zone from the `gcp_profile` segment
+    - `region` - [str] (optional) Overrides region from the `gcp_profile` segment
+    - `labels`- [Dict[str, str]] (optional) Custom labels to apply to this instance
+    - `service_account` - [str] (optional) Overrides service account from the `gcp_profile` segment
+    - `network` - [str] (optional) Overrides network from the `gcp_profile` segment
+    - `tags`- [Dict[str, str]] (optional) Tags to apply to this instance
+    - `metadata`- [str] (optional) Custom metadata to apply to this instance
+    - `enable_web_access` - [bool] Whether you want Vertex AI to enable interactive shell access
+    to training containers. Default is False
+    - `bucket` - [str] Overrides bucket from the `gcp_profile` segment
+    - `base_output_directory` - [str] (optional) Path to where outputs will be saved
+    - `tensorboard_ref` - [str] (optional) Name of the Vertex AI Experiment
+    - `timeout_seconds` - [int] Job timeout. Defaults to 60 * 60 * 24 s = 24 hours
+    - `encryption_spec`- [str] (optional) The Cloud KMS resource identifier. Has the form:
+    projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key
+    The key needs to be in the same region as where the compute resource is created
+    """
+
     region: str
     enable_web_access: bool = False
     bucket: str
