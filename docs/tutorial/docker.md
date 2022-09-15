@@ -13,8 +13,6 @@ build your images either locally or using GCP Cloud Build.
 
 ### Types of docker images
 
-::: wanna.core.models.docker.DockerImageModel
-
 We currently support three types of docker images:
 
 - `provided_image` - you supply a link to the docker image in the registry. We don't build anything,
@@ -58,8 +56,6 @@ However, building images in the cloud is not allowed for production.
 
 ### Build configuration
 
-::: wanna.core.models.docker.DockerBuildConfigModel
-
 When building locally, we offer you a way to set additional build parameters. These parameters
 must be specified in a separate yaml file in path `WANNA_DOCKER_BUILD_CONFIG`. If this is not set,
 it defaults to the `dockerbuild.yaml` in the working directory.
@@ -86,33 +82,19 @@ RUN --mount=type=ssh,id=github git clone git@git.your.company.com:your_profile/y
 ### Parameters for docker section
 
 ::: wanna.core.models.docker.DockerModel
-
-docker section takes following parameters:
-- `images` - list of docker images, see below
-- `repository`- GCP Artifact Registry repository for pushing images
-- `registry`- (optional) GCP Artifact Registry, when not set it defaults to `{gcp_profile.region}-docker.pkg.dev`
-- `cloud_build` - `false` (default) to build locally, `true` to use GCP Cloud Build  
-
+    :docstring:
 
 #### Provided image parameters:
-- `build_type: provided_image`
-- `name` - this will later be used in `docker_image_ref` in other resources
-- `image_url` - link to the image
+::: wanna.core.models.docker.ProvidedImageModel
+    :docstring:
 
 #### Local build image parameters:
-- `build_type: local_build_image`
-- `name` - this will later be used in `docker_image_ref` in other resources
-- `build_args` - (optional) docker build args
-- `context_dir` - Path to the docker build context directory
-- `dockerfile` - Path to the Dockerfile
+::: wanna.core.models.docker.LocalBuildImageModel
+    :docstring:
 
 #### Notebook ready image:
-- `build_type: notebook_ready_image`
-- `name` - this will later be used in `docker_image_ref` in other resources
-- `build_args` - (optional) docker build args
-- `base_image` - (optional) base notebook docker image, you can check available images [here](https://cloud.google.com/deep-learning-vm/docs/images)
-  when not set, it defaults to standard base CPU notebook.
-- `requirements_txt` - Path to the `requirements.txt` file
+::: wanna.core.models.docker.NotebookReadyImageModel
+    :docstring:
 
 
 ### Roles and permissions
