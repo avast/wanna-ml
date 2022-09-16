@@ -1,13 +1,16 @@
 #!/bin/bash
 {% if bucket_mounts is not none %}
+
 {% for bucket_mount in bucket_mounts %}
-sudo su -c "mkdir -p {{ bucket_mount["local_path"] }}"
-sudo su -c "gcsfuse --implicit-dirs {{ ('--only-dir=' ~ bucket_mount["bucket_dir"]) if bucket_mount["bucket_dir"] }} {{ bucket_mount["bucket_name"] }} {{ bucket_mount["local_path"] }}"
+sudo mkdir -p {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}
+sudo chmod -R 777 {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}
+sudo su - jupyter -c "gcsfuse --implicit-dirs {{ bucket_mount["bucket_name"] }} {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}"
 {% endfor %}
 {% endif %}
 
 {% if tensorboard_resource_name is not none %}
-export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}
+echo '#!/bin/bash' | sudo tee /etc/profile.d/myenvvars.sh
+echo 'export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}' | sudo tee -a /etc/profile.d/myenvvars.sh
 {% endif %}
 
 {% if idle_shutdown_timeout is not none %}
@@ -41,6 +44,6 @@ elif states=={'idle'}:
 
 EOF
 
-crontab -l | { cat; echo "*/10 * * * * /usr/conda/bin/python /shutdown_check.py"; } | crontab -
+crontab -l | { cat; echo "*/10 * * * * /opt/conda/bin/python /shutdown_check.py"; } | crontab -
 
 {% endif %}

@@ -1,5 +1,7 @@
 from abc import ABC
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, List, Optional, Tuple, TypeVar
+
+import typer
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -145,7 +147,7 @@ class BaseService(ABC, Generic[T]):
         project_id: str,
         push_mode: PushMode,
         resource_network: Optional[str],
-        fallback_project_network: str,
+        fallback_project_network: Optional[str],
         use_project_number: bool = True,
     ):
         resource_network = resource_network if resource_network else fallback_project_network
@@ -180,3 +182,36 @@ class BaseService(ABC, Generic[T]):
                 return f"projects/{network_project_id}/regions/{region}/subnetworks/{subnet}"
         else:
             return None
+
+    def _return_diff(self) -> Tuple[List[T], List[T]]:
+        """
+        Abstract class.
+        """
+        ...
+
+    def sync(self, force: bool, push_mode: PushMode = PushMode.all) -> None:
+        """
+        1. Reads current instances where label is defined per field wanna_project.name in wanna.yaml
+        2. Does a diff between what is on GCP and what is on yaml
+        3. Delete the ones in GCP that are not in wanna.yaml
+        4. Create the ones defined in yaml and missing in GCP
+        """
+        to_be_deleted, to_be_created = self._return_diff()  # pylint: disable=assignment-from-no-return
+
+        if to_be_deleted:
+            to_be_deleted_str = "\n".join(["- " + item.name for item in to_be_deleted])
+            logger.user_info(f"{self.instance_type.capitalize()}s to be deleted:\n{to_be_deleted_str}")
+            should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
+            if should_delete:
+                for notebook in to_be_deleted:
+                    self._delete_one_instance(notebook)
+
+        if to_be_created:
+            to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
+            logger.user_info(f"{self.instance_type.capitalize()}s to be created:\n{to_be_created_str}")
+            should_create = True if force else typer.confirm("Are you sure you want to create them?")
+            if should_create:
+                for notebook in to_be_created:
+                    self._create_one_instance(notebook, push_mode=push_mode)
+
+        logger.user_info(f"{self.instance_type.capitalize()}s on GCP are in sync with wanna.yaml")

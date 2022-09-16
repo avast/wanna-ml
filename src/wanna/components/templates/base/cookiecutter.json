@@ -4,7 +4,7 @@
   "component_author_email": "you@avast.com",
   "component_version": "0.0.0",
   "component_description": "Describe your component",
-  "component_url": "Link to MLOps project page on CML",
+  "component_url": "Link to MLOps project page",
   "component_slug": "{{cookiecutter.component_name|lower|replace('-', '_')|replace(' ', '_')}}",
   "component_docker_ref": "{{cookiecutter.component_slug}}",
   "component_framework": [

@@ -12,9 +12,8 @@ date: 2022-06-03
 It offers a simple way of deploying Jupyter Notebooks on GCP, with minimum environment
 set up, automatic mount of all GCS buckets in the project, connection do Dataproc clusters and more.
 
-### Obligatory fields
-- `name`- Custom name for this instance
-- `owner` - Currently only the owner will be able to access the notebook
+::: wanna.core.models.notebook.ManagedNotebookModel
+    :docstring:
 
 ### Dataproc clusters and metastore
 If you want to run Spark jobs on a Dataproc cluster and also have a Hive Metastore service available
@@ -43,20 +42,6 @@ tutorial on this tool can be found [here](https://cloud.google.com/vertex-ai/doc
 
 If you set the `tensorboard_ref` in the WANNA yaml config, we will export the tensorboard resource name
 as `AIP_TENSORBOARD_LOG_DIR`.
-
-### Additional notebook parameters
-Apart from the above, we offer additional parameters for you:
-
-- `machine_type` - GCP Compute Engine machine type 
-- `tags` - GCP Compute Engine tags to add to the runtime
-- `labels`- Custom labels to apply to this instance
-- `metadata`- Custom metadata to apply to this instance
-- `gpu`- The hardware GPU accelerator used on this instance. 
-- `data_disk` - Data disk configuration to attach to this instance.
-- `subnet`- Subnetwork of a given network
-- `kernels` - Custom kernels given as links to container registry
-- `idle_shutdown` - True or false
-- `idle_shutdown_timeout` - Time in minutes, between 10 and 1440
 
 ### Example
 ```

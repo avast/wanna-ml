@@ -11,7 +11,6 @@ date: 2022-04-06
 
 WANNA ML Pipelines aim at reducing the friction on development cycle to release whilst providing project organization for independent and testable components. It wrapps Kubeflow V2 pipelines with a build and deployment tools for managed GCP VertexAI ML Pipelines service. It has several utils and conventions to reduce boilerplate and speed up development.
 
-
 ## Tutorial Get started
 
 In this tutorial we will go over several steps that will bootstrap and run a Vertex AI Pipeline(Kubeflow V2) through wanna cli.
@@ -92,7 +91,7 @@ component_author [component author]: Joao Da Silva
 component_author_email [you@avast.com]: joao.silva1@avast.com
 component_version [0.0.0]: 
 component_description [Describe your component]: data component for WANNA pipeline tutorial        
-component_url [Link to MLOps project page on CML]: 
+component_url [Link to MLOps project page]: 
 component_slug [data]: 
 component_docker_ref [data]: 
 Select component_framework:
@@ -192,6 +191,9 @@ as well as a quick test `pytest -s pipeline/components/data` or go full scale wi
 You can now see that you have a self contained component and testable, ready to be added to the kubeflow pipeline.
 
 ## Pipeline
+
+::: wanna.core.models.pipeline.PipelineModel
+    :docstring:
 
 WANNA template creates two files that allow to put together the Kubeflow V2 pipeline that will then be deployed to GCP Vertex AI Pipelines.
 

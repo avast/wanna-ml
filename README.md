@@ -10,10 +10,10 @@
 
 <p align="center">
 <a href="https://github.com/avast/wanna-ml/actions/workflows/build.yml" target="_blank">
-    <img src="https://github.com/avast/wanna-ml/actions/workflows/build.yml/badge.svg" alt="Test">
+    <img src="https://github.com/avast/wanna-ml/actions/workflows/build.yml/badge.svg" alt="Build">
 </a>
-<a href="https://github.com/avast/wanna-ml/actions/workflows/deploy_new_version.yml" target="_blank">
-    <img src="https://github.com/avast/wanna-ml/actions/workflows/deploy_new_version.yml/badge.svg" alt="Publish">
+<a href="https://github.com/avast/wanna-ml/actions/workflows/release.yml" target="_blank">
+    <img src="https://github.com/avast/wanna-ml/actions/workflows/release.yml/badge.svg" alt="Release">
 </a>
 <a href="https://codecov.io/gh/avast/wanna-ml" target="_blank">
     <img src="https://codecov.io/gh/avast/wanna-ml/branch/master/graph/badge.svg?token=TAFWK4GJPR" alt="Coverage">
@@ -43,6 +43,16 @@ See the [documentation](https://avast.github.io/wanna-ml/) for more details.
 Install using `pip install -U wanna-ml`.
 
 For more information on the installation process and requirements, visit out [installation page in documentation](https://avast.github.io/wanna-ml/installation)
+
+### Use Docker Image
+For your convenience, we have prepared a Docker image with everything you need to get started.
+```bash
+docker pull michalmrazek9/wanna-ml
+
+docker run -it michalmrazek9/wanna-ml
+
+$ wanna version
+```
 
 ### Authentication
 WANNA-ML relies on `gcloud` for user authentication. 

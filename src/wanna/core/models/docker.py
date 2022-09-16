@@ -34,6 +34,14 @@ class BaseDockerImageModel(BaseModel, extra=Extra.forbid, validate_assignment=Tr
 
 
 class LocalBuildImageModel(BaseDockerImageModel):
+    """
+    - `build_type` - [str] "local_build_image"
+    - `name` - [str] This will later be used in `docker_image_ref` in other resources
+    - `build_args` [Dict[str, str]] - (optional) docker build args
+    - `context_dir` [Path] - Path to the docker build context directory
+    - `dockerfile` [Path] - Path to the Dockerfile
+    """
+
     build_type: Literal[ImageBuildType.local_build_image]
     build_args: Optional[Dict[str, str]]
     context_dir: Path
@@ -41,11 +49,27 @@ class LocalBuildImageModel(BaseDockerImageModel):
 
 
 class ProvidedImageModel(BaseDockerImageModel):
+    """
+    - `build_type` - [str] "provided_image"
+    - `name` - [str] This will later be used in `docker_image_ref` in other resources
+    - `image_url` - [str] URL link to the image
+    """
+
     build_type: Literal[ImageBuildType.provided_image]
     image_url: str
 
 
 class NotebookReadyImageModel(BaseDockerImageModel):
+    """
+    - `build_type` - [str] "notebook_ready_image"
+    - `name` - [str] This will later be used in `docker_image_ref` in other resources
+    - `build_args` [Dict[str, str]] - (optional) docker build args
+    - `base_image` [str] - (optional) base notebook docker image, you can check
+    available images https://cloud.google.com/deep-learning-vm/docs/images
+      when not set, it defaults to standard base CPU notebook.
+    - `requirements_txt` [Path] - Path to the `requirements.txt` file containing python packages that will be installed
+    """
+
     build_type: Literal[ImageBuildType.notebook_ready_image]
     build_args: Optional[Dict[str, str]]
     base_image: str = "gcr.io/deeplearning-platform-release/base-cpu"
@@ -56,6 +80,15 @@ DockerImageModel = Union[LocalBuildImageModel, ProvidedImageModel, NotebookReady
 
 
 class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+    """
+    - `images`- [List[Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]]] Docker images
+    that will be used in wanna-ml resources
+    - `repository` - [str] (optional) GCP Artifact Registry repository for pushing images
+    - `registry` - [str] (optional) GCP Artifact Registry, when not set it defaults
+    to `{gcp_profile.region}-docker.pkg.dev`
+    - `cloud_build` - [str] (optional) `false` (default) to build locally, `true` to use GCP Cloud Build
+    """
+
     images: List[DockerImageModel] = []
     repository: Optional[str]
     registry: Optional[str]

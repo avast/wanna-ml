@@ -9,9 +9,14 @@ date: 2022-04-06
 
 # WANNA Job
 
-
-
+::: wanna.core.models.training_custom_job.BaseCustomJobModel
+    :docstring:
+      
 ## Hyper-parameter tuning
+
+::: wanna.core.models.training_custom_job.HyperparameterTuning
+    :docstring:
+
 A custom job can be simply converted to a hyper-parameter tuning job just by adding 
 one extra parameter called `hp_tuning`. This will start a series of jobs (instead of just one job) 
 and try to find the best combination of hyper-parameters in regard to a target variable that you specify.

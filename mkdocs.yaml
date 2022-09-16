@@ -71,5 +71,8 @@ plugins:
 markdown_extensions:
     - mkdocs-typer
     - mkdocs-click
+    - admonition
+    - codehilite
+    - mkautodoc
     - toc:
         permalink: "#"

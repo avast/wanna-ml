@@ -16,11 +16,8 @@ or you can use them similarly to docker images as a dependency of other resource
 Tensorboards are automatically created when needed and used when already existing.
 
 ### Tensorboard parameters
-Tensorboards take only two parameters:
-
-- `name` - name of the tensorboard, not to confuse with resource name (name=`my-tensorboard`,
-  resource name=`projects/{project}/locations/{location}/tensorboards/{tensorboard_id}/`)
-- `region` - GCP location
+::: wanna.core.models.tensorboard.TensorboardModel
+    :docstring:
 
 ### Example
 ```

@@ -11,6 +11,7 @@ from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, 
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
+from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.docker import (
     DockerBuildConfigModel,
@@ -194,14 +195,8 @@ class DockerService:
         build_args = self.build_config.dict() if self.build_config else {}
 
         if isinstance(docker_image_model, NotebookReadyImageModel):
-            image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
-                registry=self.docker_registry,
-                project=self.docker_project_id,
-                repository=self.docker_repository,
-                image_name=image_name,
-                versions=[self.version, "latest"],
-                registry_suffix=self.docker_registry_suffix,
+                image_name=docker_image_model.name,
             )
             template_path = Path("notebook_template.Dockerfile")
             shutil.copy2(
@@ -214,14 +209,8 @@ class DockerService:
                 context_dir, file_path=file_path, tags=tags, docker_image_ref=docker_image_ref, **build_args
             )
         elif isinstance(docker_image_model, LocalBuildImageModel):
-            image_name = f"{self.wanna_project_name}/{docker_image_model.name}"
             tags = self.construct_image_tag(
-                registry=self.docker_registry,
-                project=self.docker_project_id,
-                repository=self.docker_repository,
-                image_name=image_name,
-                versions=[self.version, "latest"],
-                registry_suffix=self.docker_registry_suffix,
+                image_name=docker_image_model.name,
             )
             file_path = self.work_dir / docker_image_model.dockerfile
             context_dir = self.work_dir / docker_image_model.context_dir
@@ -338,29 +327,42 @@ class DockerService:
         """
         docker.image.remove(image, force=force, prune=prune)
 
-    @staticmethod
     def construct_image_tag(
-        registry: str,
-        project: str,
-        repository: str,
+        self,
         image_name: str,
-        registry_suffix: str,
-        versions: List[str] = ["latest"],
     ):
         """
         Construct full image tag.
         Args:
-            registry:
-            project:
-            repository:
             image_name:
-            versions:
 
         Returns:
             List of full image tag
         """
+        versions = [self.version, "latest"]
+        return [
+            f"{self.docker_registry}/{self.docker_registry_suffix}{self.docker_project_id}/"
+            f"{self.docker_repository}/{self.wanna_project_name}/{image_name}:{version}"
+            for version in versions
+        ]
 
-        return [f"{registry}/{registry_suffix}{project}/{repository}/{image_name}:{version}" for version in versions]
+    def build_container_and_get_image_url(self, docker_image_ref: str, push_mode: PushMode = PushMode.all) -> str:
+        if push_mode == PushMode.quick:
+            # only get image tag
+            docker_image_model = self.find_image_model_by_name(docker_image_ref)
+            tags = self.construct_image_tag(image_name=docker_image_model.name)
+            image_url = tags[0]
+        elif push_mode == PushMode.manifests:
+            # only build image
+            image_tag = self.get_image(docker_image_ref=docker_image_ref)
+            image_url = image_tag[2]
+        else:
+            # build image and push
+            image_tag = self.get_image(docker_image_ref=docker_image_ref)
+            if len(image_tag) > 1 and image_tag[1]:
+                self.push_image(image_tag[1])
+            image_url = image_tag[2]
+        return image_url
 
     @staticmethod
     def _jinja_render_dockerfile(

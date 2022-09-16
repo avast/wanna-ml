@@ -68,7 +68,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
                 max_trial_count=manifest.job_config.hp_tuning.max_trial_count,
                 parallel_trial_count=manifest.job_config.hp_tuning.parallel_trial_count,
                 search_algorithm=manifest.job_config.hp_tuning.search_algorithm,
-                encryption_spec_key_name=manifest.encryption_spec_key_name,
+                encryption_spec_key_name=manifest.encryption_spec,
             )
         else:
             runable = custom_job  # type: ignore
@@ -112,12 +112,14 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
 
         if manifest.job_config.worker and manifest.job_config.worker.container:
             training_job = CustomContainerTrainingJob(
-                model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+                training_encryption_spec_key_name=manifest.encryption_spec,
+                model_encryption_spec_key_name=manifest.encryption_spec,
                 **manifest.job_payload,
             )
         elif manifest.job_config.worker and manifest.job_config.worker.python_package:
             training_job = CustomPythonPackageTrainingJob(
-                model_encryption_spec_key_name=manifest.encryption_spec_key_name,
+                training_encryption_spec_key_name=manifest.encryption_spec,
+                model_encryption_spec_key_name=manifest.encryption_spec,
                 **manifest.job_payload,
             )  # type: ignore
         else:
