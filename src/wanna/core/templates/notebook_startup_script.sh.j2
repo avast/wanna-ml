@@ -11,31 +11,36 @@ export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}
 {% endif %}
 
 {% if idle_shutdown_timeout is not none %}
-sudo apt-get install bc
-threshold={{idle_threshold}}/100
-count=0
-wait_minutes={{idle_shutdown_timeout}}
-while true
-do
 
-  load=$(uptime | sed -e 's/.*load average: //g' | awk '{ print $1 }') # 1-minute average load
-  load="${load//,}" # remove trailing comma
-  res=$(echo $load'<'$threshold | bc -l)
-  if (( $res ))
-  then
-    echo "Idling.."
-    ((count+=1))
-  else
-    ((count=0))
-  fi
-  echo "Idle minutes count = $count"
+cat > /shutdown_check.py <<EOF
+import requests
+from datetime import datetime
+import os
 
-  if (( count>=wait_minutes ))
-  then
-    echo Shutting down
-    sudo poweroff
-  fi
+datetime_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+idle_shutdown_timeout = {{idle_shutdown_timeout}}*60 # seconds
 
-sleep 60
-done
+status = requests.get("http://localhost:8080/api/status").json()
+notebook_started = datetime.strptime(status["started"], datetime_format)
+
+if (datetime.now() - notebook_started).total_seconds() < idle_shutdown_timeout:
+    # grace period after the notebook start
+    os._exit(0)
+
+kernels = requests.get("http://localhost:8080/api/kernels").json()
+states = {kernel["execution_state"] for kernel in kernels}
+
+if not states:
+    # No kernels
+    os.system('sudo poweroff')
+elif states=={'idle'}:
+    # only idle kernels
+    last_activity = datetime.strptime(max([kernel["last_activity"] for kernel in kernels]), datetime_format)
+    if (datetime.now() - last_activity).total_seconds() > idle_shutdown_timeout:
+        os.system('sudo poweroff')
+
+EOF
+
+crontab -l | { cat; echo "*/10 * * * * /usr/conda/bin/python /shutdown_check.py"; } | crontab -
+
 {% endif %}

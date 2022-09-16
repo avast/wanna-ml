@@ -300,7 +300,6 @@ class NotebookService(BaseService[NotebookModel]):
             bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
             idle_shutdown_timeout=nb_instance.idle_shutdown_timeout,
-            idle_threshold=nb_instance.idle_threshold,
         )
         return startup_script
 

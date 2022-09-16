@@ -39,7 +39,6 @@ class NotebookModel(BaseInstanceModel):
     no_public_ip: bool = True
     no_proxy_access: bool = False
     idle_shutdown_timeout: Optional[int]
-    idle_threshold: Optional[int] = 10
 
     _machine_type = validator("machine_type")(validators.validate_machine_type)
 
