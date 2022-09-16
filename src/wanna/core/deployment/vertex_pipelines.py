@@ -262,4 +262,4 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         try:
             cf.create_function({"location": parent, "function": function}).result()
         except (AlreadyExists):
-            logger.user_error(f"Function {function_name} already exists")
+            logger.user_error(f"Function {function_name} already exists, no need to re-deploy")

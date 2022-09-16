@@ -45,6 +45,8 @@ class NotebookModel(BaseInstanceModel):
     - `tensorboard_ref` - [str] (optional) Reference to Vertex Experimetes
     - `no_public_ip` - [bool] (optional) Public or private (default) IP address
     - `no_proxy_access` - [bool] (optional) If true, the notebook instance will not register with the proxy
+    - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440. After this time of inactivity,
+    notebook will be stopped. If the parameter is not set, we don't do anything.
     """
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
@@ -62,6 +64,7 @@ class NotebookModel(BaseInstanceModel):
     enable_monitoring: bool = True
     no_public_ip: bool = True
     no_proxy_access: bool = False
+    idle_shutdown_timeout: Optional[int]
 
     _machine_type = validator("machine_type")(validators.validate_machine_type)
 
