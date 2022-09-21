@@ -5,9 +5,10 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from caseconverter import kebabcase
 from checksumdir import dirhash
+from google.api_core.client_options import ClientOptions
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
-from google.cloud.devtools.cloudbuild_v1.types import Build, BuildStep, Source, StorageSource
+from google.cloud.devtools.cloudbuild_v1.types import Build, BuildOptions, BuildStep, Source, StorageSource
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
@@ -25,7 +26,7 @@ from wanna.core.models.docker import (
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.gcp import make_tarfile, upload_file_to_gcs
+from wanna.core.utils.gcp import convert_project_id_to_project_number, make_tarfile, upload_file_to_gcs
 from wanna.core.utils.templates import render_template
 
 logger = get_logger(__name__)
@@ -70,6 +71,8 @@ class DockerService:
         self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
         self.build_config = self._read_build_config(self.docker_build_config_path)
         self.cloud_build = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", docker_model.cloud_build)
+        self.cloud_build_workerpool = docker_model.cloud_build_workerpool
+        self.cloud_build_workerpool_location = docker_model.cloud_build_workerpool_location or self.location
         self.bucket = gcp_profile.bucket
         self.quick_mode = quick_mode
         assert self.cloud_build or self._is_docker_client_active(), DockerClientException(
@@ -282,16 +285,32 @@ class DockerService:
 
         timeout = Duration()
         timeout.seconds = 7200
+        if self.cloud_build_workerpool:
+            project_number = convert_project_id_to_project_number(self.project_id)
+            options = BuildOptions(
+                pool=BuildOptions.PoolOption(
+                    name=f"projects/{project_number}/locations/{self.cloud_build_workerpool_location}"
+                    f"/workerPools/{self.cloud_build_workerpool}"
+                )
+            )
+            api_endpoint = f"{self.cloud_build_workerpool_location}-cloudbuild.googleapis.com"
+        else:
+            options = None
+            api_endpoint = "cloudbuild.googleapis.com"
+
         build = Build(
             source=Source(storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)),
             steps=[steps],
             images=tags,
             timeout=timeout,
+            options=options,
         )
         # TODO: make sure credentials does come from global scope
-        client = CloudBuildClient(credentials=get_credentials())
+
+        client = CloudBuildClient(
+            credentials=get_credentials(), client_options=ClientOptions(api_endpoint=api_endpoint)
+        )
         request = cloudbuild_v1.CreateBuildRequest(
-            # parent=f"projects/{self.project_id}/locations/{self.location}",
             project_id=self.project_id,
             build=build,
         )
