@@ -466,7 +466,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             "job_payload": resource.job_payload,
             "tensorboard": resource.tensorboard,
             "network": resource.network,
-            "encryption_spec": str(encryption_spec_key_name),
+            "encryption_spec": encryption_spec_key_name,
         }
         json_dump = json.dumps(
             remove_nones(json_dict),
