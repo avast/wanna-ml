@@ -87,12 +87,17 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     - `registry` - [str] (optional) GCP Artifact Registry, when not set it defaults
     to `{gcp_profile.region}-docker.pkg.dev`
     - `cloud_build` - [str] (optional) `false` (default) to build locally, `true` to use GCP Cloud Build
+    - `cloud_build_workerpool` - [str] (optional) Name of the GCP Cloud Build workerpool if you want to use one
+    - `cloud_build_workerpool_location` - [str] (optional) Location of the GCP Cloud Build workerpool. Must be specified
+    if cloud_build_workerpool is set.
     """
 
     images: List[DockerImageModel] = []
     repository: Optional[str]
     registry: Optional[str]
     cloud_build: bool = False
+    cloud_build_workerpool: Optional[str]
+    cloud_build_workerpool_location: Optional[str]
 
 
 class DockerBuildResult(BaseModel, extra=Extra.forbid):
