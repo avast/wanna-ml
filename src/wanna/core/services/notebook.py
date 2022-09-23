@@ -19,6 +19,7 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
+from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
 
 logger = get_logger(__name__)
@@ -262,7 +263,7 @@ class NotebookService(BaseService[NotebookModel]):
             "wanna_resource": self.instance_type,
         }
         if instance_owner:
-            labels["wanna_owner"] = instance_owner
+            labels["wanna_owner"] = email_fixer(instance_owner)
         if notebook_instance.labels:
             labels = {**notebook_instance.labels, **labels}
 

@@ -1,4 +1,5 @@
 from abc import ABC
+from threading import Thread
 from typing import Generic, List, Optional, Tuple, TypeVar
 
 import typer
@@ -204,7 +205,8 @@ class BaseService(ABC, Generic[T]):
             should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
             if should_delete:
                 for notebook in to_be_deleted:
-                    self._delete_one_instance(notebook)
+                    t = Thread(target=self._delete_one_instance, args=(notebook,))
+                    t.start()
 
         if to_be_created:
             to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
@@ -212,6 +214,7 @@ class BaseService(ABC, Generic[T]):
             should_create = True if force else typer.confirm("Are you sure you want to create them?")
             if should_create:
                 for notebook in to_be_created:
-                    self._create_one_instance(notebook, push_mode=push_mode)
+                    t = Thread(target=self._create_one_instance, args=(notebook,), kwargs={push_mode: push_mode})
+                    t.start()
 
         logger.user_info(f"{self.instance_type.capitalize()}s on GCP are in sync with wanna.yaml")
