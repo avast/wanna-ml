@@ -43,6 +43,9 @@ class NotebookModel(BaseInstanceModel):
     - `bucket_mounts` - [List[BucketMount]] (optional) List of buckets to be accessible from the notebook
     - `subnet`- [str] (optional) Subnetwork of a given network
     - `tensorboard_ref` - [str] (optional) Reference to Vertex Experimetes
+    - `enable_monitoring` - [bool] (optional) Reports system health and notebook metrics to Cloud Monitoring
+    - `collaborative` - [bool] (optional) Enable JupyterLab realtime collaboration
+    https://jupyterlab.readthedocs.io/en/stable/user/rtc.html
     - `no_public_ip` - [bool] (optional) Public or private (default) IP address
     - `no_proxy_access` - [bool] (optional) If true, the notebook instance will not register with the proxy
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440. After this time of inactivity,
@@ -62,6 +65,7 @@ class NotebookModel(BaseInstanceModel):
     subnet: Optional[str]
     tensorboard_ref: Optional[str]
     enable_monitoring: bool = True
+    collaborative: bool = False
     no_public_ip: bool = True
     no_proxy_access: bool = False
     idle_shutdown_timeout: Optional[int]
