@@ -47,6 +47,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)
+    _ = validator("labels", allow_reuse=True)(validators.validate_labels)
 
     @root_validator(pre=True)
     def parse_region_from_zone(cls, values):  # pylint: disable=no-self-argument,no-self-use
