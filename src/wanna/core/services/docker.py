@@ -122,7 +122,7 @@ class DockerService:
                     context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
                 )
                 project = convert_project_id_to_project_number(self.project_id)
-                build_id = str(op.operation).partition("builds/")[2].partition("?")[0]
+                build_id = op.metadata.build.id
                 link = f"https://console.cloud.google.com/cloud-build/builds/{build_id}?project={project}"
                 try:
                     op.result()
