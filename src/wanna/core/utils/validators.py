@@ -155,7 +155,7 @@ def validate_project_id(project_id: str) -> str:
 
 
 def validate_labels(labels: Dict[str, str]) -> Dict[str, str]:
-    for key, value in labels:
+    for key, value in labels.items():
         if not re.match(r"^[a-z]{1}[a-z0-9_-]{0,62}$", key) or not re.match(r"^[a-z0-9_-]{0,63}$", value):
             raise ValueError(
                 "Invalid custom label!"
