@@ -122,11 +122,13 @@ class BaseService(ABC, Generic[T]):
         organization_id: Optional[str],
     ) -> None:
         """
-        Sends a link to cost report
-        Billing and Organization IDs are hard coded
+        Displays a link to the Google Cloud cost report
         """
+        if not billing_id or not organization_id:
+            logger.user_error("Billing and Organization IDs are needed. Please provide them in wanna.yaml")
+            return None
+
         base_url = f"https://console.cloud.google.com/billing/{billing_id}/reports;projects={gcp_project}"
-        organization = f"?organizationId={organization_id}"
 
         if instance_name == "all":
             labels = f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
@@ -134,11 +136,11 @@ class BaseService(ABC, Generic[T]):
             logger.user_error(
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
             )
-            return
+            return None
         else:
             labels = f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource},wanna_name:{instance_name}"
 
-        link = base_url + labels + organization
+        link = base_url + labels + f"?organizationId={organization_id}"
         logger.user_info(f"Here is a link to your {wanna_resource} cost report:")
         logger.user_success(f"{link}")
 
