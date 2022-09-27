@@ -122,11 +122,12 @@ class DockerService:
                     context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
                 )
                 project = convert_project_id_to_project_number(self.project_id)
-                # build_id = op.metadata.build.id
-                base = "https://console.cloud.google.com/cloud-build"
-                build_id = str(op.operation).partition(base)[2].partition(r"\\")[0]
-                print(build_id)
-                link = f"https://console.cloud.google.com/cloud-build/builds/{build_id}?project={project}"
+                build_id = op.metadata.build.id
+                base = "https://console.cloud.google.com/cloud-build/builds"
+                if self.cloud_build_workerpool:
+                    link = base + f";region={self.cloud_build_workerpool_location}/{build_id}?project={project}"
+                else:
+                    link = base + f"/{build_id}?project={project}"
                 try:
                     op.result()
                     self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
