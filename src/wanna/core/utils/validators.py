@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import Dict
 
 from cron_validator import CronValidator
 from google.api_core import exceptions
@@ -151,3 +152,15 @@ def validate_project_id(project_id: str) -> str:
             "Cannot end with a hyphen."
         )
     return project_id
+
+
+def validate_labels(labels: Dict[str, str]) -> Dict[str, str]:
+    for key, value in labels.items():
+        if not re.match(r"^[a-z]{1}[a-z0-9_-]{0,62}$", key) or not re.match(r"^[a-z0-9_-]{0,63}$", value):
+            raise ValueError(
+                "Invalid custom label!"
+                "Keys and values can contain only lowercase letters, numeric characters,"
+                "underscores, and dashes. Max length is 63 characters."
+                "https://cloud.google.com/compute/docs/labeling-resources#requirements"
+            )
+    return labels
