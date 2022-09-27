@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from caseconverter import kebabcase
 from checksumdir import dirhash
 from google.api_core.client_options import ClientOptions
+from google.api_core.operation import Operation
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
 from google.cloud.devtools.cloudbuild_v1.types import Build, BuildOptions, BuildStep, Source, StorageSource
@@ -117,10 +118,21 @@ class DockerService:
         if should_build and not self.quick_mode:
             if self.cloud_build:
                 logger.user_info(text=f"Building {docker_image_ref} docker image in GCP Cloud build")
-                self._build_image_on_gcp_cloud_build(
+                op = self._build_image_on_gcp_cloud_build(
                     context_dir=context_dir, file_path=file_path, docker_image_ref=docker_image_ref, tags=tags
                 )
-                self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
+                project = convert_project_id_to_project_number(self.project_id)
+                build_id = op.metadata.build.id
+                base = "https://console.cloud.google.com/cloud-build/builds"
+                if self.cloud_build_workerpool:
+                    link = base + f";region={self.cloud_build_workerpool_location}/{build_id}?project={project}"
+                else:
+                    link = base + f"/{build_id}?project={project}"
+                try:
+                    op.result()
+                    self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
+                except:
+                    raise Exception(f"Build failed. Here is a link to the logs: {link}")
                 return None
             else:
                 logger.user_info(text=f"Building {docker_image_ref} docker image locally with {build_args}")
@@ -264,7 +276,7 @@ class DockerService:
 
     def _build_image_on_gcp_cloud_build(
         self, context_dir: Path, file_path: Path, tags: List[str], docker_image_ref: str
-    ) -> None:
+    ) -> Operation:
         """
         Build a docker container in GCP Cloud Build and push the images to registry.
         Folder context_dir is tarred, uploaded to GCS and then used to building.
@@ -314,8 +326,7 @@ class DockerService:
             project_id=self.project_id,
             build=build,
         )
-        res = client.create_build(request=request)
-        res.result()
+        return client.create_build(request=request)
 
     def push_image(self, image_or_tags: Union[Image, List[str]], quiet: bool = False) -> None:
         """

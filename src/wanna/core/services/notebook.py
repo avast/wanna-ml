@@ -292,6 +292,10 @@ class NotebookService(BaseService[NotebookModel]):
                 "install-monitoring-agent": "TRUE",
             }
             metadata = {**metadata, **enable_monitoring_metadata}
+        if notebook_instance.collaborative:
+            collaborative_metadata = {"use-collaborative": "true"}
+            metadata = {**metadata, **collaborative_metadata}
+
         instance = Instance(
             vm_image=vm_image,
             container_image=container_image,
