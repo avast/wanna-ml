@@ -20,6 +20,10 @@ def add_labels(instance_dict: Dict[str, Any], new_labels: Dict[str, str]) -> Dic
     return instance_dict
 
 
+def email_fixer(email: str) -> str:
+    return email.replace(".", "-").replace("@", "_at_")
+
+
 def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
     """
     Get the default labels (GCP labels) that will be used with all instances based on wanna_project info.
@@ -32,9 +36,7 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
     return {
         "wanna_project": wanna_project.name,
         "wanna_project_version": str(wanna_project.version).replace(".", "__"),
-        "wanna_project_authors": "_".join(
-            [author.partition("@")[0].replace(".", "-") for author in wanna_project.authors]
-        ),
+        "wanna_project_authors": "_".join([email_fixer(author.partition("@")[0]) for author in wanna_project.authors]),
     }
 
 
