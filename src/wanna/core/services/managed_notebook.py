@@ -28,6 +28,7 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
+from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import upload_string_to_gcs
 
 logger = get_logger(__name__)
@@ -75,7 +76,11 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             CreateRuntimeRequest
         """
         # Configuration of the managed notebook
-        labels = {"wanna_name": instance.name, "wanna_resource": self.instance_type, "wanna_owner": instance.owner}
+        labels = {
+            "wanna_name": instance.name,
+            "wanna_resource": self.instance_type,
+            "wanna_owner": email_fixer(instance.owner),
+        }
         if instance.labels:
             labels = {**instance.labels, **labels}
         # Disks
