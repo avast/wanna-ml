@@ -1,35 +1,38 @@
 import logging
-import sys
 from typing import cast
 
-import typer
-from halo import Halo
+from rich.console import Console
+from rich.live import Live
+
+if Console().encoding == "utf-8":
+    in_progress_sign = ":hourglass_flowing_sand:"
+    error_sign = ":x:"
+    done_sign = ":white_check_mark:"
+    info_sign = ":information_source:"
+else:
+    in_progress_sign = "(in progress)"
+    error_sign = "(error)"
+    done_sign = "(done)"
+    info_sign = "(info)"
 
 
-class Spinner(Halo):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.is_tty = sys.stdout.isatty()
+class Spinner(Live):
+    def __init__(self, text: str, **kwargs):
+        self.text = text
+        super().__init__(text, **kwargs)
 
-    def __enter__(self):
-        """Starts the spinner on a separate thread. For use in context managers.
-        The spinner is actually started only in the interactive terminal (tty),
-        if the environment is output only, we only print the start and end of the process.
-
-        Returns
-        -------
-        self
-        """
-        return self.start() if self.is_tty else self.info()
+    def __enter__(self) -> Live:
+        self.update(f"{in_progress_sign} {self.text}")
+        self.start(refresh=self._renderable is not None)
+        return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         """Stops the spinner. For use in context managers."""
         if exception_value:
-            self.text_color = typer.colors.RED
-            self.fail()
+            self.update(f"{error_sign} {self.text}")
         else:
-            self.text_color = typer.colors.GREEN
-            self.succeed()
+            self.update(f"{done_sign} {self.text}")
+        self.stop()
 
 
 class WannaLogger(logging.Logger):
@@ -44,22 +47,20 @@ class WannaLogger(logging.Logger):
         super().__init__(*args, **kwargs)
         # Set the logging config here if needed
         logging.basicConfig()
+        self.console = Console()
+
+    def user_error(self, text) -> None:
+        self.console.print(f"{error_sign} {text}", style="bold red")
+
+    def user_info(self, text) -> None:
+        self.console.print(f"{info_sign} {text}")
+
+    def user_success(self, text) -> None:
+        self.console.print(f"{done_sign} {text}")
 
     @staticmethod
-    def user_error(text, fg: str = typer.colors.RED, *args, **kwargs) -> None:
-        typer.secho(f"✖ {text}", fg=fg, *args, **kwargs)
-
-    @staticmethod
-    def user_info(text, *args, **kwargs) -> None:
-        typer.secho(f"ℹ {text}", *args, **kwargs)
-
-    @staticmethod
-    def user_success(text, fg: str = typer.colors.GREEN, *args, **kwargs) -> None:
-        typer.secho(f"✔ {text}", fg=fg, *args, **kwargs)
-
-    @staticmethod
-    def user_spinner(text, *args, **kwargs) -> Spinner:
-        return Spinner(text=text, *args, **kwargs)
+    def user_spinner(text, **kwargs) -> Spinner:
+        return Spinner(text=text, **kwargs)
 
 
 def get_logger(name: str) -> WannaLogger:
