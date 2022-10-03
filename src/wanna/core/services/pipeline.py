@@ -200,7 +200,7 @@ class PipelineService(BaseService[PipelineModel]):
         pipeline_name_prefix = snakecase(f"{pipeline_instance.name}").upper()
         for key, value in pipeline_env_params.items():
             env_name = snakecase(f"{pipeline_name_prefix}_{key.upper()}").upper()
-            os.environ[env_name] = value
+            os.environ[env_name] = str(value)
 
         for (docker_image_model, _, tag) in images:
             env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI").upper()

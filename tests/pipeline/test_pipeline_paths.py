@@ -42,4 +42,4 @@ class TestPipelineService(unittest.TestCase):
             wanna_manifest_file,
             str(self.pipeline_build_dir / "wanna-pipelines/sklearn/deployment/test/manifests/wanna-manifest.json"),
         )
-        self.assertEqual(pipeline_root, str(self.pipeline_build_dir / "wanna-pipelines/sklearn/executions") + "/")
+        self.assertEqual(pipeline_root, str(self.pipeline_build_dir / "wanna-pipelines/sklearn/executions"))

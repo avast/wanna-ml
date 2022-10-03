@@ -92,8 +92,14 @@ class TestPipelineService(unittest.TestCase):
             ),
             DockerBuildResult(name="serve", tags=expected_serve_docker_tags, build_type=ImageBuildType.provided_image),
         ]
-        expected_json_spec_path = self.pipeline_build_dir.joinpath(
-            "wanna-pipelines", "wanna-sklearn-sample", "deployment", "test", "manifests", "pipeline-spec.json"
+        expected_json_spec_path = (
+            self.pipeline_build_dir
+            / "wanna-pipelines"
+            / "wanna-sklearn-sample"
+            / "deployment"
+            / "test"
+            / "manifests"
+            / "pipeline-spec.json"
         )
 
         # Mock PipelineService
