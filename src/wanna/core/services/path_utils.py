@@ -39,7 +39,8 @@ class JobPaths:
         return self._get_gcs_job_manifests_path(self.gcs_job_path, version)
 
     def get_local_job_wanna_manifest_path(self, version: str) -> str:
-        return f"{self.get_local_job_manifest_path(version)}/{self.job_manifest_filename}"
+        path = Path(self.get_local_job_manifest_path(version)) / self.job_manifest_filename
+        return str(path)
 
     def get_gcs_job_wanna_manifest_path(self, version: str) -> str:
         return f"{self.get_gcs_job_manifest_path(version)}/{self.job_manifest_filename}"
