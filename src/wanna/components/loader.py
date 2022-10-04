@@ -10,5 +10,4 @@ def load_wanna_component(path: Union[Path, str]):
     with open(str(path), "r") as f:
         t = Template(f.read())
         component = t.safe_substitute(os.environ)
-        print(component)
         return comp.load_component_from_text(component)

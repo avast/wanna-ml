@@ -96,7 +96,6 @@ class TestGCPConnector(unittest.TestCase):
         CloudFunctionsServiceClient.get_function = MagicMock()
         CloudFunctionsServiceClient.update_function = MagicMock()
 
-        print(resource)
         function_path, function_url = self.connector.upsert_cloud_function(
             resource=resource, version=self.version, env=self.env
         )
