@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from string import Template
 from typing import Union
 
 import kfp.components as comp
@@ -7,5 +8,7 @@ import kfp.components as comp
 
 def load_wanna_component(path: Union[Path, str]):
     with open(str(path), "r") as f:
-        component = os.path.expandvars(f.read())
+        t = Template(f.read())
+        component = t.safe_substitute(os.environ)
+        print(component)
         return comp.load_component_from_text(component)

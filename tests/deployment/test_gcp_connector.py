@@ -56,12 +56,11 @@ class TestGCPConnector(unittest.TestCase):
         )
 
     def test_upsert_cloud_function(self):
-        resource_root = self.build_dir / "deployment"
-        os.makedirs(resource_root, exist_ok=True)
+        resource_root = "gs://wanna-ml/deployment/dev"
         resource = CloudFunctionResource(
             name="test-function",
             build_dir=self.build_dir,
-            resource_root=str(resource_root),
+            resource_root=resource_root,
             resource_function_template="scheduler_cloud_function.py",
             resource_requirements_template="scheduler_cloud_function_requirements.txt",
             template_vars={},
@@ -77,7 +76,7 @@ class TestGCPConnector(unittest.TestCase):
         expected_function = {
             "name": expected_function_name,
             "description": "wanna test-function function for test pipeline",
-            "source_archive_url": str(resource_root / "functions/package.zip"),
+            "source_archive_url": f"{resource_root}/functions/package.zip",
             "entry_point": "process_request",
             "runtime": "python39",
             "https_trigger": {
@@ -97,6 +96,7 @@ class TestGCPConnector(unittest.TestCase):
         CloudFunctionsServiceClient.get_function = MagicMock()
         CloudFunctionsServiceClient.update_function = MagicMock()
 
+        print(resource)
         function_path, function_url = self.connector.upsert_cloud_function(
             resource=resource, version=self.version, env=self.env
         )
