@@ -213,7 +213,7 @@ class TestPipelineService(unittest.TestCase):
 
         # === Deploy ===
         parent = "projects/your-gcp-project-id/locations/europe-west1"
-        local_cloud_functions_package = f"{release_path}/functions/package.zip"
+        local_cloud_functions_package = release_path / "functions" / "package.zip"
         copied_cloud_functions_package = (
             "gs://your-staging-bucket-name/"
             "wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"

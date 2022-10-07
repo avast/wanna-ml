@@ -25,5 +25,13 @@ class TestJobService(unittest.TestCase):
         )
         self.assertEqual(
             wanna_local_manifest_file,
-            f"{self.job_build_dir}/wanna-jobs/custom-job-with-containers/deployment/test/manifests/job-manifest.json",
+            str(
+                self.job_build_dir
+                / "wanna-jobs"
+                / "custom-job-with-containers"
+                / "deployment"
+                / "test"
+                / "manifests"
+                / "job-manifest.json"
+            ),
         )
