@@ -1,6 +1,7 @@
 import itertools
 import subprocess
 from pathlib import Path
+from threading import Thread
 from typing import List, Optional, Tuple
 
 import typer
@@ -56,6 +57,34 @@ class NotebookService(BaseService[NotebookModel]):
         self.owner = owner
         self.tensorboard_service = TensorboardService(config=config)
 
+    def create(self, instance_name: str, **kwargs) -> None:
+        """
+        Create an instance with name "name" based on wanna-ml config.
+
+        Args:
+            instance_name: The name of the only instance from wanna-ml config that should be created.
+                  Set to "all" to create everything from wanna-ml yaml configuration.
+        """
+        instances = self._filter_instances_by_name(instance_name)
+
+        for instance in instances:
+            t = Thread(target=self._create_one_instance, args=(instance,), kwargs={**kwargs})
+            t.start()
+
+    def delete(self, instance_name: str) -> None:
+        """
+        Delete an instance with name "name" based on wanna-ml config if exists on GCP.
+
+        Args:
+            instance_name: The name of the only instance from wanna-ml config that should be deleted.
+                  Set to "all" to create all from configuration.
+        """
+        instances = self._filter_instances_by_name(instance_name)
+
+        for instance in instances:
+            t = Thread(target=self._delete_one_instance, args=(instance,))
+            t.start()
+
     def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
         """
         Delete one notebook instance. This assumes that it has been already verified that notebook exists.
@@ -66,12 +95,13 @@ class NotebookService(BaseService[NotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            with logger.user_spinner(f"Deleting {self.instance_type} {notebook_instance.name}"):
-                deleted = self.notebook_client.delete_instance(
-                    name=f"projects/{notebook_instance.project_id}/locations/"
-                    f"{notebook_instance.zone}/instances/{notebook_instance.name}"
-                )
-                deleted.result()
+            logger.user_info(f"Deleting {self.instance_type} {notebook_instance.name} ...")
+            deleted = self.notebook_client.delete_instance(
+                name=f"projects/{notebook_instance.project_id}/locations/"
+                f"{notebook_instance.zone}/instances/{notebook_instance.name}"
+            )
+            deleted.result()
+            logger.user_success(f"Deleted {self.instance_type} {notebook_instance.name}")
         else:
             logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
@@ -101,20 +131,20 @@ class NotebookService(BaseService[NotebookModel]):
                 return
         push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
         instance_request = self._create_instance_request(notebook_instance=instance, deploy=True, push_mode=push_mode)
-        with logger.user_spinner(f"Creating underlying compute engine instance for {instance.name}"):
-            nb_instance = self.notebook_client.create_instance(instance_request)
-            instance_full_name = (
-                nb_instance.result().name
-            )  # .result() waits for compute engine behind the notebook to start
-        with logger.user_spinner("Starting JupyterLab"):
-            wait(
-                lambda: self._validate_jupyterlab_state(instance_full_name, Instance.State.ACTIVE),
-                timeout_seconds=450,
-                sleep_seconds=20,
-                waiting_for="Starting JupyterLab in your instance",
-            )
-            jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        logger.user_success(f"JupyterLab started at {jupyterlab_link}")
+        logger.user_info(f"Creating underlying compute engine instance for {instance.name} ...")
+        nb_instance = self.notebook_client.create_instance(instance_request)
+        instance_full_name = (
+            nb_instance.result().name
+        )  # .result() waits for compute engine behind the notebook to start
+        logger.user_info(f"Starting JupyterLab for {instance.name} ...")
+        wait(
+            lambda: self._validate_jupyterlab_state(instance_full_name, Instance.State.ACTIVE),
+            timeout_seconds=450,
+            sleep_seconds=20,
+            waiting_for="Starting JupyterLab in your instance",
+        )
+        jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
+        logger.user_success(f"JupyterLab for {instance.name} started at {jupyterlab_link}")
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
