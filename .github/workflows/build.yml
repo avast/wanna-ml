@@ -6,9 +6,9 @@ on:
     branches: master
 
 jobs:
-  build:
+  build-ubuntu:
+    name: Build ubuntu
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -25,3 +25,21 @@ jobs:
           poetry run task build
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v2
+
+  build-windows:
+    name: Build windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Build
+        run: |
+          poetry run task build
