@@ -135,7 +135,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{subnet}"
 
         # Post startup script
-        if deploy and instance.tensorboard_ref:
+        if deploy and (instance.tensorboard_ref or instance.env):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,

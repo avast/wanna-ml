@@ -1,6 +1,12 @@
 #!/bin/bash
-{% if bucket_mounts is not none %}
 
+{% if env is not none %}
+{% for key, value in env.items() %}
+echo 'export {{ key }}={{ value }}' 
+{% endfor %}
+{% endif %}
+
+{% if bucket_mounts is not none %}
 {% for bucket_mount in bucket_mounts %}
 sudo mkdir -p {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}
 sudo chmod -R 777 {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}

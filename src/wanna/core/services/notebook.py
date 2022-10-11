@@ -272,6 +272,7 @@ class NotebookService(BaseService[NotebookModel]):
             notebook_instance.bucket_mounts
             or notebook_instance.tensorboard_ref
             or notebook_instance.idle_shutdown_timeout
+            or notebook_instance.env
         ):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
