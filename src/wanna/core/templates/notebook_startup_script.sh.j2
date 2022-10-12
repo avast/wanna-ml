@@ -1,8 +1,9 @@
 #!/bin/bash
 
 {% if env_vars is not none %}
+echo '#!/bin/bash' | sudo tee /etc/profile.d/myenvvars.sh
 {% for key, value in env_vars.items() %}
-echo 'export {{ key }}={{ value }}' 
+echo 'export {{ key }}={{ value }}' | sudo tee -a /etc/profile.d/myenvvars.sh
 {% endfor %}
 {% endif %}
 
