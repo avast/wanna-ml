@@ -54,6 +54,7 @@ class NotebookModel(BaseInstanceModel):
     After creation, any changes (including deletion) made to the data disk contents will be synced to the GCS location
     It’s recommended that you enable object versioning for the selected location so you can restore accidentally
     deleted or overwritten files. To prevent sync conflicts, avoid assigning the same location to multiple instances.
+    Works only for non-Docker notebooks!
     """
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
