@@ -50,6 +50,10 @@ class NotebookModel(BaseInstanceModel):
     - `no_proxy_access` - [bool] (optional) If true, the notebook instance will not register with the proxy
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440. After this time of inactivity,
     notebook will be stopped. If the parameter is not set, we don't do anything.
+    - `backup` - [str] (optional) Name of the bucket where a data backup is copied (no 'gs://' needed in the name).
+    After creation, any changes (including deletion) made to the data disk contents will be synced to the GCS location
+    It’s recommended that you enable object versioning for the selected location so you can restore accidentally
+    deleted or overwritten files. To prevent sync conflicts, avoid assigning the same location to multiple instances.
     """
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
@@ -69,6 +73,7 @@ class NotebookModel(BaseInstanceModel):
     no_public_ip: bool = True
     no_proxy_access: bool = False
     idle_shutdown_timeout: Optional[int]
+    backup: Optional[str]
 
     _machine_type = validator("machine_type")(validators.validate_machine_type)
 
