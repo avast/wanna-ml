@@ -1,7 +1,7 @@
 #!/bin/bash
 
-{% if env is not none %}
-{% for key, value in env.items() %}
+{% if env_vars is not none %}
+{% for key, value in env_vars.items() %}
 echo 'export {{ key }}={{ value }}' 
 {% endfor %}
 {% endif %}
