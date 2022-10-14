@@ -128,7 +128,7 @@ def wanna_sklearn_sample(eval_acc_threshold: float):
             # so it can serve online predictions
             model_deploy_task = aip_components.ModelDeployOp(
                 endpoint=endpoint_create_task.outputs["endpoint"],
-                model=model_upload_task.outputs["model"],
+                model=model_upload_task.outputs["model"].ignore_type(),
                 deployed_model_display_name=cfg.MODEL_NAME,
                 dedicated_resources_machine_type=cfg.SERVING_MACHINE_TYPE,
                 dedicated_resources_min_replica_count=cfg.SERVING_MIN_REPLICA_COUNT,

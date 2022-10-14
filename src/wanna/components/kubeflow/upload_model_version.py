@@ -16,14 +16,19 @@ def upload_model_version(
     display_name: str,
     serving_container_image_uri: str,
     artifact_uri: str,
-    model: dsl.Output[dsl.Artifact],
+    model: dsl.Output[dsl.Model],
+    model_output_path: dsl.OutputPath(str),  # type: ignore
     labels: Dict[str, str] = {},
     version_aliases: List[str] = None,
     metadata: List[str] = None,
     model_description: str = None,
     version_description: str = None,
 ):
-
+    """
+    Creates a new model in Vertex-AI Model Registry. If multiple models with same display_name
+    already exist, it will take the one with latest update_time and create only new version.
+    """
+    import json
     import logging
 
     from google.api_core.client_options import ClientOptions
@@ -75,3 +80,6 @@ def upload_model_version(
 
     model.uri = vertex_uri_prefix + new_model_resource_name
     model.metadata = {"resourceName": new_model_resource_name}
+
+    with open(model_output_path, "w") as output_file:
+        output_file.write(json.dumps(model.__dict__))
