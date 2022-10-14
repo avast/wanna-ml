@@ -339,10 +339,7 @@ class NotebookService(BaseService[NotebookModel]):
         Returns:
             startup_script
         """
-        if self.config.gcp_profile.env_vars:
-            env_vars = self.config.gcp_profile.env_vars
-        else:
-            env_vars = dict()
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
         if nb_instance.env_vars:
             env_vars = {**env_vars, **nb_instance.env_vars}
 

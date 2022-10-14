@@ -99,7 +99,6 @@ class ManagedNotebookModel(BaseInstanceModel):
     - `idle_shutdown` - [bool] (optional) Turning off the notebook after the timeout, can be
       true (default) or false
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
-    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to the notebook
     """
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
@@ -114,4 +113,3 @@ class ManagedNotebookModel(BaseInstanceModel):
     internal_ip_only: Optional[bool] = True
     idle_shutdown: Optional[bool]
     idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440)
-    env_vars: Optional[Dict[str, str]]

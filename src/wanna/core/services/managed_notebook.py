@@ -135,7 +135,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{subnet}"
 
         # Post startup script
-        if deploy and (instance.tensorboard_ref or self.config.gcp_profile.env_vars or instance.env_vars):
+        if deploy and instance.tensorboard_ref:
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
@@ -297,13 +297,6 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         Returns:
             startup_script
         """
-        if self.config.gcp_profile.env_vars:
-            env_vars = self.config.gcp_profile.env_vars
-        else:
-            env_vars = dict()
-        if nb_instance.env_vars:
-            env_vars = {**env_vars, **nb_instance.env_vars}
-
         if nb_instance.tensorboard_ref:
             tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                 nb_instance.tensorboard_ref
@@ -314,7 +307,6 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
             tensorboard_resource_name=tensorboard_resource_name,
-            env_vars=env_vars,
         )
         return startup_script
 

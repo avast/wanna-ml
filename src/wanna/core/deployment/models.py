@@ -93,6 +93,7 @@ class JobResource(GCPResource, Generic[JOB]):
     network: Optional[str]
     job_config: JOB
     encryption_spec: Optional[str]
+    environment_variables: Optional[Dict[str, str]]
 
 
 class PushArtifact(BaseModel):

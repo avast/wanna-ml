@@ -30,7 +30,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
       If you get an error, please grant the Service Account with the Cloud KMS CryptoKey Encrypter/Decrypter role
     - `docker_repository` - [str] Wanna Docker Repository
     - `docker_registry` - [str] (optional) Wanna Docker Registry, usually in format {region}-docker.pkg.dev
-    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to all the notebooks
+    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to all the notebooks and custom jobs
     """
 
     profile_name: str
