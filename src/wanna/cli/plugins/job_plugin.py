@@ -8,6 +8,7 @@ from wanna.cli.plugins.common_options import (
     instance_name_option,
     profile_name_option,
     push_mode_option,
+    version_option,
     wanna_file_option,
 )
 from wanna.core.deployment.models import PushMode
@@ -51,7 +52,7 @@ class JobPlugin(BasePlugin):
     def push(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        version: str = typer.Option(..., "--version", "-v", help="Job version"),
+        version: str = version_option(instance_type="job"),
         instance_name: str = instance_name_option("job", "push"),
         mode: PushMode = push_mode_option,
     ) -> None:
@@ -68,7 +69,7 @@ class JobPlugin(BasePlugin):
     def run(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        version: str = typer.Option(..., "--version", "-v", help="Job version"),
+        version: str = version_option(instance_type="job"),
         instance_name: str = instance_name_option("job", "run"),
         hp_params: Path = typer.Option(None, "--hp-params", "-hp", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the job in sync mode"),

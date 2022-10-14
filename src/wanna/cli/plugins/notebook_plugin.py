@@ -9,6 +9,7 @@ from wanna.cli.plugins.common_options import (
     instance_name_option,
     profile_name_option,
     push_mode_option,
+    version_option,
     wanna_file_option,
 )
 from wanna.core.deployment.models import PushMode
@@ -58,6 +59,7 @@ class NotebookPlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("notebook", "create"),
         owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
+        version: str = version_option(instance_type="notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:
         """
@@ -70,7 +72,7 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        nb_service = NotebookService(config=config, workdir=workdir, owner=owner)
+        nb_service = NotebookService(config=config, workdir=workdir, owner=owner, version=version)
         nb_service.create(instance_name, push_mode=mode)
 
     @staticmethod
@@ -137,13 +139,14 @@ class NotebookPlugin(BasePlugin):
     def build(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
+        version: str = version_option(instance_type="notebook"),
     ) -> None:
         """
         Validates build of notebooks as they are defined in wanna.yaml
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service = NotebookService(config=config, workdir=workdir, version=version)
         nb_service.build()
 
     @staticmethod
@@ -151,6 +154,7 @@ class NotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("notebook", "push"),
+        version: str = version_option(instance_type="notebook"),
         mode: PushMode = typer.Option(
             PushMode.containers,
             "--mode",
@@ -170,7 +174,7 @@ class NotebookPlugin(BasePlugin):
 
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service = NotebookService(config=config, workdir=workdir, version=version)
         nb_service.push(instance_name=instance_name)
 
     @staticmethod
@@ -178,6 +182,7 @@ class NotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
+        version: str = version_option(instance_type="notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:
         """
@@ -190,5 +195,5 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service = NotebookService(config=config, workdir=workdir, version=version)
         nb_service.sync(force=force, push_mode=mode)

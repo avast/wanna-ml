@@ -35,3 +35,7 @@ def instance_name_option(instance_type: str, operation: str, help: str = None):
         or f"Specify only one {instance_type} from your wanna-ml yaml configuration to {operation}. "
         f"Choose 'all' to {operation} all {instance_type}s.",
     )
+
+
+def version_option(instance_type: str):
+    return typer.Option("dev", "--version", "-v", help=f"{instance_type} version")

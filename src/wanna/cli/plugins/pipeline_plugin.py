@@ -8,6 +8,7 @@ from wanna.cli.plugins.common_options import (
     instance_name_option,
     profile_name_option,
     push_mode_option,
+    version_option,
     wanna_file_option,
 )
 from wanna.core.deployment.models import PushMode
@@ -35,7 +36,7 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def build(
-        version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
+        version: str = version_option(instance_type="pipeline"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "compile"),
@@ -51,7 +52,7 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def push(
-        version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
+        version: str = version_option(instance_type="pipeline"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "push"),
@@ -68,7 +69,7 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def deploy(
-        version: str = typer.Option(..., "--version", "-v", help="Pipeline version"),
+        version: str = version_option(instance_type="pipeline"),
         env: str = typer.Option("local", "--env", "-e", help="Pipeline env"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
@@ -85,7 +86,7 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def run(
-        version: str = typer.Option("dev", "--version", "-v", help="Pipeline version"),
+        version: str = version_option(instance_type="pipeline notebook"),
         params: Path = typer.Option(None, "--params", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
         file: Path = wanna_file_option,
