@@ -11,6 +11,7 @@ from wanna_simple.components.predictor import make_prediction_request
 from wanna_simple.components.trainer.eval_model import eval_model_op
 from wanna_simple.components.trainer.train_xgb_model import train_xgb_model_op
 from wanna.components.kubeflow.get_or_create_endpoint import get_or_create_endpoint
+from wanna.components.kubeflow.upload_model_version import upload_model_version
 
 
 @component(
@@ -91,15 +92,16 @@ def wanna_sklearn_sample(eval_acc_threshold: float):
             # ===================================================================
             # upload model to vertex ai
             model_upload_task = (
-                aip_components.ModelUploadOp(
+                upload_model_version(
                     project=cfg.PROJECT_ID,
-                    display_name=cfg.MODEL_DISPLAY_NAME,
+                    display_name=cfg.MODEL_NAME,
                     location=cfg.REGION,
                     serving_container_image_uri=cfg.SERVE_IMAGE_URI,
                     labels=cfg.PIPELINE_LABELS,
                     artifact_uri=train_op.outputs["model_artifact_path"],
+                    version_aliases=["candidatemodel", "default"]
                 )
-                .set_display_name("Upload model")
+                .set_display_name("Upload model version")
                 .after(eval_op)
             )
 
@@ -126,7 +128,7 @@ def wanna_sklearn_sample(eval_acc_threshold: float):
             # so it can serve online predictions
             model_deploy_task = aip_components.ModelDeployOp(
                 endpoint=endpoint_create_task.outputs["endpoint"],
-                model=model_upload_task.outputs["model"],
+                model=model_upload_task.outputs["model"].ignore_type(),
                 deployed_model_display_name=cfg.MODEL_NAME,
                 dedicated_resources_machine_type=cfg.SERVING_MACHINE_TYPE,
                 dedicated_resources_min_replica_count=cfg.SERVING_MIN_REPLICA_COUNT,
