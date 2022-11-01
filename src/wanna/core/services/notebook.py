@@ -297,6 +297,9 @@ class NotebookService(BaseService[NotebookModel]):
         if notebook_instance.collaborative:
             collaborative_metadata = {"use-collaborative": "true"}
             metadata = {**metadata, **collaborative_metadata}
+        if notebook_instance.backup:
+            backup_metadata = {"gcs-data-bucket": notebook_instance.backup}
+            metadata = {**metadata, **backup_metadata}
 
         instance = Instance(
             vm_image=vm_image,

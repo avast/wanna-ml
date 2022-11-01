@@ -9,9 +9,13 @@ from google.cloud.monitoring_v3 import (
     NotificationChannel,
     NotificationChannelServiceClient,
 )
+from waiting import wait
 
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
 from wanna.core.deployment.models import AlertPolicyResource, LogMetricResource, NotificationChannelResource
+from wanna.core.loggers.wanna_logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class MonitoringMixin(GCPCredentialsMixIn):
@@ -105,5 +109,11 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 filter_=resource.filter_,
                 description=resource.description,
             )
-            log_metric = client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
-            return log_metric
+            with logger.user_spinner(f"Creating log metric: {resource.name}"):
+                wait(
+                    lambda: client.metrics_api.metric_get(project=resource.project, metric_name=resource.name),
+                    timeout_seconds=120,
+                    sleep_seconds=5,
+                    waiting_for="Log metric",
+                )
+            return client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
