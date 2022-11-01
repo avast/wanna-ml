@@ -125,6 +125,7 @@ class BaseCustomJobModel(BaseInstanceModel):
     - `encryption_spec`- [str] (optional) The Cloud KMS resource identifier. Has the form:
     projects/my-project/locations/my-region/keyRings/my-kr/cryptoKeys/my-key
     The key needs to be in the same region as where the compute resource is created
+    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to the job
     """
 
     region: str
@@ -134,6 +135,7 @@ class BaseCustomJobModel(BaseInstanceModel):
     tensorboard_ref: Optional[str]
     timeout_seconds: int = 60 * 60 * 24  # 24 hours
     encryption_spec: Optional[Any]
+    env_vars: Optional[Dict[str, str]]
 
     @root_validator(pre=False)
     def _set_base_output_directory_if_not_provided(  # pylint: disable=no-self-argument,no-self-use

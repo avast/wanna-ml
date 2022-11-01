@@ -272,6 +272,8 @@ class NotebookService(BaseService[NotebookModel]):
             notebook_instance.bucket_mounts
             or notebook_instance.tensorboard_ref
             or notebook_instance.idle_shutdown_timeout
+            or self.config.gcp_profile.env_vars
+            or notebook_instance.env_vars
         ):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
@@ -340,17 +342,23 @@ class NotebookService(BaseService[NotebookModel]):
         Returns:
             startup_script
         """
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
+        if nb_instance.env_vars:
+            env_vars = {**env_vars, **nb_instance.env_vars}
+
         if nb_instance.tensorboard_ref:
             tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                 nb_instance.tensorboard_ref
             )
         else:
             tensorboard_resource_name = None
+
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
             bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
             idle_shutdown_timeout=nb_instance.idle_shutdown_timeout,
+            env_vars=env_vars,
         )
         return startup_script
 

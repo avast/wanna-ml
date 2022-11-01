@@ -303,6 +303,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             )
         else:
             tensorboard_resource_name = None
+
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
             tensorboard_resource_name=tensorboard_resource_name,

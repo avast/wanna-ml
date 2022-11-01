@@ -1,6 +1,13 @@
 #!/bin/bash
-{% if bucket_mounts is not none %}
 
+{% if env_vars is not none %}
+echo '#!/bin/bash' | sudo tee /etc/profile.d/myenvvars.sh
+{% for key, value in env_vars.items() %}
+echo 'export {{ key }}={{ value }}' | sudo tee -a /etc/profile.d/myenvvars.sh
+{% endfor %}
+{% endif %}
+
+{% if bucket_mounts is not none %}
 {% for bucket_mount in bucket_mounts %}
 sudo mkdir -p {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}
 sudo chmod -R 777 {{ bucket_mount["mount_path"] }}/{{ bucket_mount["bucket_name"] }}

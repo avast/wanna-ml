@@ -219,7 +219,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         encryption_spec_key_name = (
             job_model.encryption_spec if job_model.encryption_spec else self.config.gcp_profile.kms_key
         )
-
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
+        if job_model.env_vars:
+            env_vars = {**env_vars, **job_model.env_vars}
         return JobResource[CustomJobModel](
             name=job_model.name,
             project=job_model.project_id,
@@ -242,6 +244,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             else None,
             network=network,
             encryption_spec=encryption_spec_key_name,
+            environment_variables=env_vars,
         )
 
     def _create_training_job_resource(
@@ -296,7 +299,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         encryption_spec_key_name = (
             job_model.encryption_spec if job_model.encryption_spec else self.config.gcp_profile.kms_key
         )
-
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
+        if job_model.env_vars:
+            env_vars = {**env_vars, **job_model.env_vars}
         return JobResource[TrainingCustomJobModel](
             name=job_model.name,
             project=job_model.project_id,
@@ -309,6 +314,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             else None,
             network=network,
             encryption_spec=encryption_spec_key_name,
+            environment_variables=env_vars,
         )
 
     def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> Tuple[str, WorkerPoolSpec]:
@@ -457,6 +463,9 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         encryption_spec_key_name = (
             resource.encryption_spec if resource.encryption_spec else self.config.gcp_profile.kms_key
         )
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
+        if resource.environment_variables:
+            env_vars = {**env_vars, **resource.environment_variables}
         json_dict = {
             "name": resource.name,
             "project": resource.project,
@@ -467,6 +476,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             "tensorboard": resource.tensorboard,
             "network": resource.network,
             "encryption_spec": encryption_spec_key_name,
+            "environment_variables": env_vars,
         }
         json_dump = json.dumps(
             remove_nones(json_dict),

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
 
@@ -50,6 +50,7 @@ class NotebookModel(BaseInstanceModel):
     - `no_proxy_access` - [bool] (optional) If true, the notebook instance will not register with the proxy
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440. After this time of inactivity,
     notebook will be stopped. If the parameter is not set, we don't do anything.
+    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to the notebook
     - `backup` - [str] (optional) Name of the bucket where a data backup is copied (no 'gs://' needed in the name).
     After creation, any changes (including deletion) made to the data disk contents will be synced to the GCS location
     It’s recommended that you enable object versioning for the selected location so you can restore accidentally
@@ -74,6 +75,7 @@ class NotebookModel(BaseInstanceModel):
     no_public_ip: bool = True
     no_proxy_access: bool = False
     idle_shutdown_timeout: Optional[int]
+    env_vars: Optional[Dict[str, str]]
     backup: Optional[str]
 
     _machine_type = validator("machine_type")(validators.validate_machine_type)
