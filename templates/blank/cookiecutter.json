@@ -1,0 +1,13 @@
+{
+    "project_name": "project_name",
+    "project_owner_fullname": "project owner",
+    "project_owner_email": "you@avast.com",
+    "project_version": "0.0.0",
+    "project_description": "Link to MLOps project page",
+    "project_slug": "{{cookiecutter.project_name|lower|replace('_', '-')|replace(' ', '-')}}",
+    "project_repo_name": "mlops/{{cookiecutter.project_slug}}",
+    "gcp_project_id": "your-gcp-project-id",
+    "gcp_service_account": "",
+    "gcp_artifact_registry_repository": "",
+    "gcp_bucket": "your-staging-bucket-name"
+}
