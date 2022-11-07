@@ -135,7 +135,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             version=version,
         )
 
-        if resource.schedule:
+        if resource.trigger:
             pipeline_spec_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
             body = {
                 "pipeline_spec_uri": pipeline_spec_path,

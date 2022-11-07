@@ -12,7 +12,7 @@ from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
 from pydantic import BaseModel, EmailStr, Extra
 from pydantic.generics import GenericModel
 
-from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.pipeline_trigger import CloudSchedulerModel, GCSNotificationModel
 from wanna.core.models.docker import DockerBuildResult
 from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.training_custom_job import BaseCustomJobModel
@@ -33,6 +33,10 @@ class NotificationChannelResource(GCPResource):
     config: Dict[str, str]
     labels: Dict[str, str]
 
+
+class GCSNotificationResource(GCPResource):
+    gcs_notification: GCSNotificationModel
+    body: Dict[str, Any]
 
 class CloudSchedulerResource(GCPResource):
     cloud_scheduler: CloudSchedulerModel

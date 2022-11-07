@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field
 
 from wanna.core.models.base_instance import BaseInstanceModel
-from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.pipeline_trigger import PipelineTriggerModel
 
 
 class PipelineModel(BaseInstanceModel):
@@ -35,7 +35,7 @@ class PipelineModel(BaseInstanceModel):
     pipeline_function: Optional[str]
     pipeline_params: Union[Path, Dict[str, Any], None]
     docker_image_ref: List[str] = []
-    schedule: Optional[CloudSchedulerModel]
+    trigger: Optional[PipelineTriggerModel]
     tensorboard_ref: Optional[str]
     network: Optional[str]
     notification_channels_ref: List[str] = []

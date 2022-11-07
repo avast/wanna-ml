@@ -1,0 +1,37 @@
+wanna_project:
+  name: wanna-pii
+  version: 0.0.0
+  billing_id: "0141C8-E9DEB5-FDB1A3"
+  organization_id: "avast.com"
+  authors:
+    - joao.silva1@avast.com
+
+gcp_profiles:
+  - profile_name: default
+    project_id: ppd-wanna-wanna-a9
+    zone: europe-west1-b
+    bucket: wanna-pii-dev
+    labels:
+    network: projects/981769406988/global/networks/vpc-network
+    subnet: projects/pcp-wanna-vpc-a9/regions/europe-west1/subnetworks/wanna-default
+    service_account: sa-wanna-pii-dev@ppd-wanna-wanna-a9.iam.gserviceaccount.com
+
+docker:
+  images:
+    - build_type: provided_image
+      name: custom_pip_image
+      image_url: europe-west1-docker.pkg.dev/ppd-wanna-wanna-a9/wanna-dev/wanna-pii/custom_pip_image:latest
+  cloud_build: true
+  cloud_build_workerpool: avast-vpc-pool
+  cloud_build_workerpool_location: europe-west1
+  repository: wanna-dev
+
+managed_notebooks:
+  - name: wanna-notebook-25
+    owner: michal.mrazek@avast.com
+    kernel_docker_image_refs: [custom_pip_image]
+
+notebooks:
+  - name: wanna-notebook-53
+    environment:
+      docker_image_ref: custom_pip_image

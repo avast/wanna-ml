@@ -1,0 +1,3 @@
+--index-url "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple/"
+--extra-index-url "https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple/"
+google-cloud-dlp

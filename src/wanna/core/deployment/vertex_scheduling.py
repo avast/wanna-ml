@@ -16,6 +16,7 @@ from wanna.core.deployment.models import (
     CloudFunctionResource,
     CloudSchedulerResource,
     LogMetricResource,
+GCSNotificationResource
 )
 from wanna.core.deployment.monitoring import MonitoringMixin
 from wanna.core.loggers.wanna_logger import get_logger
@@ -52,10 +53,16 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             },
         }
 
+        pubsub_target = {
+            "topic_name": f"projects/${resource.project}/topics/wanna-test-trigger",
+            "data": json.dumps(resource.body, separators=(",", ":")).encode(),
+        }
+
         job = {
             "name": job_name,
             "description": f"wanna {resource.name} scheduler for  {env} pipeline",
-            "http_target": http_target,
+            # "http_target": http_target,
+            "pubsub_target": pubsub_target,
             "schedule": resource.cloud_scheduler.cron,
             "time_zone": resource.cloud_scheduler.timezone,
             # TODO: "retry_config" ,
@@ -136,8 +143,12 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             "source_archive_url": functions_gcs_path,
             "entry_point": "process_request",
             "runtime": "python39",
-            "https_trigger": {
-                "url": function_url,
+           # "https_trigger": {
+           #     "url": function_url,
+           # },
+            "event_trigger": {
+                "event_type": "providers/cloud.pubsub/eventTypes/topic.publish",
+                "resource": f"projects/${resource.project}/topics/wanna-test-trigger"
             },
             "service_account_email": resource.service_account,
             "labels": resource.labels,
@@ -185,3 +196,6 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             function_path,
             function_url,
         )
+    def upsert_gcs_notification(self, gcs_notification: GCSNotificationResource,
+                                version: str, env: str):
+        ...
