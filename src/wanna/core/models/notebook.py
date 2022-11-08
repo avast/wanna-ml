@@ -34,7 +34,7 @@ class NotebookModel(BaseInstanceModel):
     - `metadata`- [str] (optional) Custom metadata to apply to this instance
     - `machine_type` - [str] (optional) GCP Compute Engine machine type
     - `environment` [NotebookEnvironment] (optional) Notebook Environment defined by a docker image reference
-    - `instance_owner` - [str] (optional) Currently supports one owner only. If not specified, all of the service
+    - `owner` - [str] (optional) Currently supports one owner only. If not specified, all of the service
       account users of your VM instance’s service account can use the instance.
       If specified, only the owner will be able to access the notebook.
     - `gpu`- [GPU] (optional) The hardware GPU accelerator used on this instance.
@@ -62,7 +62,7 @@ class NotebookModel(BaseInstanceModel):
     zone: str
     machine_type: str = "n1-standard-4"
     environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
-    instance_owner: Optional[EmailStr]
+    owner: Optional[EmailStr]
     gpu: Optional[GPU]
     boot_disk: Optional[Disk]
     data_disk: Optional[Disk]

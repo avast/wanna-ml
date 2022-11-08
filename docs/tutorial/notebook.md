@@ -118,7 +118,7 @@ A more detailed guide on setting a connection with VSCode to Jupyter can be foun
 notebooks:
   - name: wanna-notebook-trial
     service_account:
-    instance_owner: 
+    owner: 
     machine_type: n1-standard-4
     labels:
       notebook_usecase: wanna-notebook-sample-simple-pip

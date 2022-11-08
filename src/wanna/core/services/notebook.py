@@ -253,7 +253,7 @@ class NotebookService(BaseService[NotebookModel]):
 
         # service account and instance owners
         service_account = notebook_instance.service_account
-        instance_owner = self.owner or notebook_instance.instance_owner
+        instance_owner = self.owner or notebook_instance.owner
         instance_owners = [instance_owner] if instance_owner else None
 
         # labels and tags
