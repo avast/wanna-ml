@@ -67,7 +67,7 @@ class TestPipelineService(unittest.TestCase):
 
         expected_pipeline_labels = (
             """{"wanna_project": "pipeline-sklearn-example-1", """
-            """"wanna_project_version": "1", "wanna_project_authors": "jane-doe", """
+            """"wanna_project_version": "1", "wanna_project_authors": "jane-doe", "author": "jane-doe", """
             """"wanna_resource_name": "wanna-sklearn-sample", "wanna_resource": "pipeline"}"""
         )
 
@@ -236,6 +236,7 @@ class TestPipelineService(unittest.TestCase):
                 "wanna_project": "pipeline-sklearn-example-1",
                 "wanna_project_version": "1",
                 "wanna_project_authors": "jane-doe",
+                "author": "jane-doe",
                 "wanna_resource_name": "wanna-sklearn-sample",
                 "wanna_resource": "pipeline",
             },
