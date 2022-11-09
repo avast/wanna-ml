@@ -21,7 +21,6 @@ class TestInitTemplates:
 
     def _test_template(self, template_name: str):
         result_dir = cookiecutter("https://github.com/avast/wanna-ml.git",
-                                  checkout="michal/init_new",
                                   directory=f"templates/{template_name}",
                                   no_input=True,
                                   overwrite_if_exists=True,
