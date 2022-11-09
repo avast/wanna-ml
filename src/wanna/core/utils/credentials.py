@@ -2,6 +2,7 @@ import functools
 import os
 from typing import Optional
 
+import gcloud_config_helper
 from google import auth
 from google.auth import impersonated_credentials
 from google.auth.credentials import Credentials
@@ -36,3 +37,8 @@ def get_credentials() -> Optional[Credentials]:
             "`gcloud auth application-default login`"
         )
         exit(1)
+
+
+def get_gcloud_user() -> str:
+    credentials, project = gcloud_config_helper.default()
+    return credentials.properties.get("core", {}).get("account", "unidentified")
