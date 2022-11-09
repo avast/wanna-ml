@@ -84,6 +84,15 @@ def mock_deployment_get_credentials():
 
 
 @pytest.fixture(scope="session", autouse=True)
+def mock_get_gcloud_user():
+    with mock.patch(
+        "wanna.core.utils.config_enricher.get_gcloud_user",
+        mocks.mock_get_gcloud_user,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="session", autouse=True)
 def mock_pipeline_get_project_id():
     with mock.patch(
         "wanna.core.services.base.convert_project_id_to_project_number",
