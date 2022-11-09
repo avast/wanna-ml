@@ -1,0 +1,47 @@
+wanna_project:
+  name: {{ cookiecutter.project_slug }}
+  version: {{ cookiecutter.project_version }}
+  authors: [{{ cookiecutter.project_owner_email }}]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: {{ cookiecutter.gcp_project_id }}
+    zone: europe-west1-b
+    bucket: {{ cookiecutter.gcp_bucket }}
+    labels:
+    service_account: {{ cookiecutter.gcp_service_account }}
+
+tensorboards:
+  - name: {{ cookiecutter.project_slug }}-board
+
+docker:
+  images:
+    - build_type: local_build_image
+      name: train
+      context_dir: notebook/train
+      dockerfile: notebook/train/Dockerfile
+
+    - build_type: provided_image
+      name: serve
+      image_url: europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest
+  repository: {{ cookiecutter.gcp_artifact_registry_repository }}
+
+notebooks:
+  - name: {{ cookiecutter.project_slug }}-notebook
+    instance_owner: {{ cookiecutter.gcp_service_account }}
+    machine_type: n1-standard-4
+    labels:
+      notebook_usecase: {{ cookiecutter.project_slug }}
+    environment:
+      docker_image_ref: train
+    tensorboard_ref: {{ cookiecutter.project_slug }}-board
+
+pipelines:
+  - name: {{ cookiecutter.project_slug }}-pipeline
+    schedule:
+      cron: 2 * * * *
+    bucket: gs://{{ cookiecutter.gcp_bucket }}
+    pipeline_file: pipeline/pipeline.py
+    pipeline_params: pipeline/params.yaml
+    docker_image_ref: ["train", "serve"]
+    tensorboard_ref: {{ cookiecutter.project_slug }}-board
