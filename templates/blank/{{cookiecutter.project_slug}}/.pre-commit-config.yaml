@@ -1,5 +1,4 @@
 files: \.py
-exclude: (samples/|src/wanna/components/templates|templates/)
 repos:
   - repo: local
     hooks:
@@ -20,15 +19,12 @@ repos:
           "--line-length=120",
           "--target-version", "py38"
         ]
-#        files: \.py
         language: python
         verbose: false
       - id: flake8
         name: flake8
         entry: poetry run flake8
         language: python
-#        files: \.py
-        #exclude: ""
         args: [
           "--max-line-length=120",
           "--extend-ignore=E203,E712,E722,W503,W605"
@@ -43,7 +39,6 @@ repos:
         name: pylint
         entry: poetry run pylint
         language: python
-#        files: \.py
         args: [
           "--enable-all-extensions",
           "--errors-only",
@@ -61,7 +56,6 @@ repos:
         name: mypy
         entry: poetry run mypy
         language: python
-#        files: \.py
         args: [
           "--ignore-missing-imports"
         ]
@@ -70,7 +64,7 @@ repos:
         name: pytest
         entry: poetry run pytest
         language: python
-        args: ["-W", "ignore", "-s", "--cov=src", "--cov-append"]
+        args: ["-W", "ignore", "-s"]
         always_run: true
         pass_filenames: false
         verbose: true

@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_project import WannaProjectModel
+from wanna.core.utils.credentials import get_gcloud_user
 
 
 def add_labels(instance_dict: Dict[str, Any], new_labels: Dict[str, str]) -> Dict[str, Any]:
@@ -37,6 +38,7 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
         "wanna_project": wanna_project.name,
         "wanna_project_version": str(wanna_project.version).replace(".", "__"),
         "wanna_project_authors": "_".join([email_fixer(author.partition("@")[0]) for author in wanna_project.authors]),
+        "author": email_fixer(get_gcloud_user()),
     }
 
 

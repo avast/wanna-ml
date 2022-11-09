@@ -105,6 +105,10 @@ def mock_convert_project_id_to_project_number(project_id):
     return 123456789
 
 
+def mock_get_gcloud_user():
+    return "jane-doe"
+
+
 def mock_upload_file(any, src, dest):
     return None
 

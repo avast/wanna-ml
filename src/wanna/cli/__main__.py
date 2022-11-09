@@ -47,12 +47,9 @@ def init(
         show_choices=True,
     ),
 ):
-    repository_templates = {
-        WannaRepositoryTemplate.sklearn.value: "https://github.com/avast/wanna-ml-cookiecutter",
-        WannaRepositoryTemplate.blank.value: "https://github.com/avast/wanna-blank-cookiecutter",
-    }
-    repository_template_url = repository_templates.get(template)
-    result_dir = cookiecutter(repository_template_url, output_dir=output_dir)
+    result_dir = cookiecutter(
+        "https://github.com/avast/wanna-ml", directory=f"templates/{template}", output_dir=output_dir
+    )
     logger.user_success(f"Repo initiated at {result_dir}")
 
 
