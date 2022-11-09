@@ -9,7 +9,7 @@ gcp_profiles:
   - profile_name: default
     project_id: "your-gcp-project-id"
     region: europe-west1
-    bucket: "test-jaroslav-koutnik"
+    bucket: "your-staging-bucket-name"
     network: default
 
 managed_notebooks:
