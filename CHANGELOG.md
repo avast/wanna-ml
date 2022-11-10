@@ -9,3 +9,7 @@
 
 ## Version 0.2.1 ##
 * Initial OSS release
+
+
+## Version 0.2.2 ##
+* Test Github release
