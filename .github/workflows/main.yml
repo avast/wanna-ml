@@ -23,36 +23,26 @@ jobs:
             [
               {
                 "type": "header",
-                "text": {
-                  "text": "${{ github.event.release.tag_name}} is published!"
-                }
+                "text":"${{ github.event.release.tag_name}} is published!"
               },
               {
                 "type": "section",
-                "text": {
-
-                  "text": "*Author:*\n${{ github.actor }}"
-                }
+                "text":  "*Author:*\n${{ github.actor }}"
+                
               },
                {
                 "type": "section",
-                "text": {
-
-                  "text": "*Information:*"
-                }
+                "text":  "*Information:*"
+                
               },
               {
                 "type": "section",
-                "text": {
-
-                  "text": ${{ toJSON(github.event.release.body) }}
-                }
+                "text": ${{ toJSON(github.event.release.body) }}
+                
               },
               {
                 "type": "section",
-                "text": {
-
-                  "text": "${{ github.event.release.html_url }}"
-                }
+                "text":  "${{ github.event.release.html_url }}"
+                
               }
             ]
