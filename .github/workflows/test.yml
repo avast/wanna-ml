@@ -1,4 +1,8 @@
-- name: Slack Notification
+  name: Slack Notification
+  on:
+   release:
+    types: [published]
+   workflow_dispatch:
   uses: tokorom/action-slack-incoming-webhook@main
   env:
     INCOMING_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
