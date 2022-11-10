@@ -12,4 +12,4 @@
 
 
 ## Version 0.2.2 ##
-* Test Github release
+* Test Github releases
