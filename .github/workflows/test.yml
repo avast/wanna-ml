@@ -4,17 +4,8 @@ on:
   push:
     branches:
       - master
-      - test
 
 jobs:
-  # unit tests
-  units:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - run: npm ci
-    - run: npm test
-
   # test action works running from the graph  
   test:
     runs-on: ubuntu-latest
