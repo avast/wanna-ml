@@ -1,6 +1,15 @@
-- name: Slack Notification
-  uses: tokorom/action-slack-incoming-webhook@main
+  name: Slack Notification
+  on:
+    pull_request:
+    push:
+      branches: master
+  jobs:
+    steps:
+      name: test
+      runs-on: ubuntu-latest
+      steps:
+      - uses: tokorom/action-slack-incoming-webhook@main
+      - name: test
   env:
     INCOMING_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  with:
-    text: Hello, Slack!
+ 
