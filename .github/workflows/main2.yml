@@ -4,7 +4,7 @@
     push:
       branches: master
   jobs:
-    steps:
+    test:
       name: test
       runs-on: ubuntu-latest
       steps:
