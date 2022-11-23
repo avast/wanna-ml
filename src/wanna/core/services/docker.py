@@ -71,7 +71,7 @@ class DockerService:
         self.location = gcp_profile.region
         self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
         self.build_config = self._read_build_config(self.docker_build_config_path)
-        self.cloud_build = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", docker_model.cloud_build)
+        self.cloud_build = self._get_cloud_build(docker_model.cloud_build)
         self.cloud_build_workerpool = docker_model.cloud_build_workerpool
         self.cloud_build_workerpool_location = docker_model.cloud_build_workerpool_location or self.location
         self.bucket = gcp_profile.bucket
@@ -79,6 +79,15 @@ class DockerService:
         assert self.cloud_build or self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli with local docker build"
         )
+
+    def _get_cloud_build(self, fallback: bool) -> bool:
+        cloud_build_override = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", None)
+        if cloud_build_override in ["False", "false", "0"]:
+            return False
+        elif cloud_build_override in ["True", "true", "1"]:
+            return True
+        else:
+            return fallback
 
     def _read_build_config(self, config_path: Union[Path, str]) -> Union[DockerBuildConfigModel, None]:
         """
