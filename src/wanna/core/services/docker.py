@@ -81,6 +81,17 @@ class DockerService:
         )
 
     def _get_cloud_build(self, fallback: bool) -> bool:
+        """
+        Reads the WANNA_DOCKER_BUILD_IN_CLOUD env var to allow the .
+        option to override GCP cloud build setting from on-prem
+        build systsems.
+
+        Args:
+            fallback: the fallback config, the actualy config from yaml
+
+        Returns:
+            bool
+        """
         cloud_build_override = os.getenv("WANNA_DOCKER_BUILD_IN_CLOUD", None)
         if cloud_build_override in ["False", "false", "0"]:
             return False
