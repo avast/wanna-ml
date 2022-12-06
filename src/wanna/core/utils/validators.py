@@ -8,9 +8,8 @@ from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
 
 from wanna.core.utils.credentials import get_credentials
+from wanna.core.utils.env import gcp_access_allowed
 from wanna.core.utils.gcp import (
-    DEFAULT_VALIDATION_MODE,
-    VALIDATION_MODE,
     get_available_compute_image_families,
     get_available_compute_machine_types,
     get_available_regions,
@@ -64,7 +63,7 @@ def validate_network_name(network_name):
 
 
 def validate_bucket_name(bucket_name):
-    if VALIDATION_MODE == DEFAULT_VALIDATION_MODE:
+    if gcp_access_allowed:
         try:
             _ = StorageClient(credentials=get_credentials()).get_bucket(bucket_name)
         except exceptions.NotFound:

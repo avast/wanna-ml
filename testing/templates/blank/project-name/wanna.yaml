@@ -1,0 +1,29 @@
+wanna_project:
+  name: project-name
+  version: 0.0.0
+  authors: [you@avast.com]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: your-gcp-project-id
+    zone: europe-west1-b
+    bucket: your-staging-bucket-name
+    labels:
+    service_account: 
+
+tensorboards:
+  - name: project-name-board
+
+docker:
+  images: []
+  repository: 
+
+pipelines:
+  - name: project-name-pipeline
+    schedule:
+      cron: 2 * * * *
+    bucket: gs://your-staging-bucket-name
+    pipeline_file: pipeline/pipeline.py
+    pipeline_params: pipeline/params.yaml
+    docker_image_ref: []
+    tensorboard_ref: project-name-board
