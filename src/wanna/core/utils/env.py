@@ -1,4 +1,3 @@
-import functools
 import os
 from typing import Optional
 
@@ -23,8 +22,7 @@ def get_env_bool(value: Optional[str], fallback: bool) -> bool:
         return fallback
 
 
-@functools.lru_cache(maxsize=1)
-def _gcp_access_allowed():
+def _gcp_access_allowed(env_var="WANNA_GCP_ACCESS_ALLOWED"):
     """
     Based on WANNA_GCP_ACCESS_ALLOWED env var checks if wanna can access GCP
     required for on-prem build environments without access to GCP
@@ -32,8 +30,8 @@ def _gcp_access_allowed():
     Returns:
         bool if wanna can access GCP apis
     """
-    allowed = get_env_bool(os.environ.get("WANNA_GCP_ACCESS_ALLOWED"), True)
-    logger.user_info(f"WANNA GCP access {'NOT ' if allowed else ''}allowed")
+    allowed = get_env_bool(os.environ.get(env_var), True)
+    logger.user_info(f"WANNA GCP access {'NOT ' if not allowed else ''}allowed")
     return allowed
 
 
