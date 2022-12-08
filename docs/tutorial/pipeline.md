@@ -29,10 +29,7 @@ conda create -n pipeline-tutorial python=3.8 poetry
 
 conda activate pipeline-tutorial
 
-pip install wanna-ml \
-    --index-url https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-remote/simple \
-    --extra-index-url https://artifactory.ida.avast.com/artifactory/api/pypi/pypi-local/simple
-
+pip install wanna-ml
 
 ```
 
