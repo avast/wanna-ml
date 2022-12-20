@@ -72,6 +72,7 @@ class DockerService:
         self.location = gcp_profile.region
         self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
         self.build_config = self._read_build_config(self.docker_build_config_path)
+        self.cloud_build_timeout = docker_model.cloud_build_timeout
         self.cloud_build = gcp_access_allowed and docker_model.cloud_build
         self.cloud_build_workerpool = docker_model.cloud_build_workerpool
         self.cloud_build_workerpool_location = docker_model.cloud_build_workerpool_location or self.location
@@ -297,7 +298,7 @@ class DockerService:
         steps = BuildStep(name="gcr.io/cloud-builders/docker", args=["build", ".", "-f", dockerfile] + tags_args)
 
         timeout = Duration()
-        timeout.seconds = 7200
+        timeout.seconds = self.cloud_build_timeout
         if self.cloud_build_workerpool:
             project_number = convert_project_id_to_project_number(self.project_id)
             options = BuildOptions(
