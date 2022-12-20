@@ -86,6 +86,7 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     - `repository` - [str] (optional) GCP Artifact Registry repository for pushing images
     - `registry` - [str] (optional) GCP Artifact Registry, when not set it defaults
     to `{gcp_profile.region}-docker.pkg.dev`
+    - `cloud_build_timeout` - [int] `12000` how many seconds before cloud build timeout
     - `cloud_build` - [str] (optional) `false` (default) to build locally, `true` to use GCP Cloud Build
     - `cloud_build_workerpool` - [str] (optional) Name of the GCP Cloud Build workerpool if you want to use one
     - `cloud_build_workerpool_location` - [str] (optional) Location of the GCP Cloud Build workerpool. Must be specified
@@ -95,6 +96,7 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     images: List[DockerImageModel] = []
     repository: Optional[str]
     registry: Optional[str]
+    cloud_build_timeout: int = 12000
     cloud_build: bool = False
     cloud_build_workerpool: Optional[str]
     cloud_build_workerpool_location: Optional[str]
