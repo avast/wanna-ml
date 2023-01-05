@@ -93,7 +93,9 @@ class PipelinePlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "run"),
         mode: PushMode = push_mode_option,
-        cached: bool = typer.Option(True, "--cached", help="Kubeflow pipeline cache configuration"),
+        skip_execution_cache: bool = typer.Option(
+            False, "--skip-execution-cache", help="Kubeflow pipeline cache configuration"
+        ),
     ) -> None:
         """
         Run the pipeline as specified in wanna-ml config. This command puts together build, push and run-manifest steps.
@@ -101,7 +103,11 @@ class PipelinePlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(
-            config=config, workdir=workdir, version=version, push_mode=mode, kubeflow_pipeline_caching=cached
+            config=config,
+            workdir=workdir,
+            version=version,
+            push_mode=mode,
+            kubeflow_pipeline_caching=skip_execution_cache,
         )
         manifests = pipeline_service.build(instance_name)
         pipeline_service.push(manifests, local=False)
