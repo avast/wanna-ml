@@ -70,7 +70,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             template_path=str(resource.json_spec_path),
             pipeline_root=resource.pipeline_root,
             parameter_values=pipeline_params,
-            enable_caching=True,
+            enable_caching=resource.enable_caching,
             labels=resource.labels,
             project=resource.project,
             location=resource.location,
@@ -140,6 +140,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             body = {
                 "pipeline_spec_uri": pipeline_spec_path,
                 "parameter_values": resource.parameter_values,
+                "enable_caching": resource.enable_caching,
             }  # TODO extend with execution_date(now) ?
 
             self.upsert_cloud_scheduler(

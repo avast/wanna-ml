@@ -259,8 +259,13 @@ class DockerService:
         excluded_files = list(set(excluded_files))
         return dirhash(directory, "sha256", excluded_files=excluded_files, excluded_extensions=["pyc", "md"])
 
+    def _get_cache_path(self, hash_cache_dir: Path):
+        version = kebabcase(self.version)
+        os.makedirs(hash_cache_dir, exist_ok=True)
+        return hash_cache_dir / f"{kebabcase(self.docker_repository)}-{version}-cache.sha256"
+
     def _should_build_by_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path) -> bool:
-        cache_file = hash_cache_dir / f"{self.docker_repository}-cache.sha256"
+        cache_file = self._get_cache_path(hash_cache_dir)
         sha256hash = self._get_dirhash(context_dir)
         if cache_file.exists():
             with open(cache_file, "r") as f:
@@ -270,8 +275,7 @@ class DockerService:
             return True
 
     def _write_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path):
-        os.makedirs(hash_cache_dir, exist_ok=True)
-        cache_file = hash_cache_dir / f"{kebabcase(self.docker_repository)}-cache.sha256"
+        cache_file = self._get_cache_path(hash_cache_dir)
         sha256hash = self._get_dirhash(context_dir)
         with open(cache_file, "w") as f:
             f.write(sha256hash)

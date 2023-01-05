@@ -137,6 +137,7 @@ class TestPipelineService(unittest.TestCase):
             load=True,
         )
 
+        self.assertEqual(pipeline_meta.enable_caching, False)
         self.assertEqual(pipeline_meta.compile_env_params, expected_compile_env_params)
         self.assertEqual(Path(pipeline_meta.json_spec_path), expected_json_spec_path)
         self.assertEqual(pipeline_meta.parameter_values, expected_parameter_values)

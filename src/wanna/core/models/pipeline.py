@@ -27,6 +27,7 @@ class PipelineModel(BaseInstanceModel):
     - `notification_channels_ref` - [List[str]] (optional) List of names of notificartins channel described
     by a model: (name: str, type: Literal["email"], emails: List[EmailStr])
     - `sla_hours` - [float] (optional) Time after which the running pipeline gets stopped
+    - `enable_caching` - [bool] enable KubeFlow pipeline execution caching
     """
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
@@ -40,3 +41,4 @@ class PipelineModel(BaseInstanceModel):
     network: Optional[str]
     notification_channels_ref: List[str] = []
     sla_hours: Optional[float]
+    enable_caching: bool = True
