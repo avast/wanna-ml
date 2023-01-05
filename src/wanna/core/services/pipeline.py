@@ -39,6 +39,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str = "dev",
         push_mode: PushMode = PushMode.all,
         connector: VertexConnector[PipelineResource] = VertexConnector[PipelineResource](),
+        kubeflow_pipeline_caching: Optional[bool] = None,
     ):
         super().__init__(
             instance_type="pipeline",
@@ -58,6 +59,7 @@ class PipelineService(BaseService[PipelineModel]):
             wanna_project_name=self.config.wanna_project.name,
             quick_mode=push_mode.is_quick_mode(),
         )
+        self.kubeflow_pipeline_caching = kubeflow_pipeline_caching
         self.notification_channels = {channel.name: channel for channel in self.config.notification_channels}
 
     def build(self, instance_name: str) -> List[Path]:
@@ -295,7 +297,7 @@ class PipelineService(BaseService[PipelineModel]):
             pipeline_version=self.version,
             json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
             parameter_values=pipeline_params,
-            enable_caching=True,
+            enable_caching=self.kubeflow_pipeline_caching or pipeline.enable_caching,
             labels=pipeline.labels,
             pipeline_root=pipeline_env_params.get("pipeline_root"),
             schedule=pipeline.schedule,
