@@ -38,7 +38,6 @@ def perform_check() -> None:
         )
         logger.user_info(
             UPDATE_MESSAGE,
-            fg="yellow",
         )
     else:
         logger.user_success(f"Your wanna cli is up to date with {latest_version}")
