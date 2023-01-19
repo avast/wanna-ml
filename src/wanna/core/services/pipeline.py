@@ -297,7 +297,7 @@ class PipelineService(BaseService[PipelineModel]):
             pipeline_version=self.version,
             json_spec_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
             parameter_values=pipeline_params,
-            enable_caching=self.kubeflow_pipeline_caching or pipeline.enable_caching,
+            enable_caching=self.kubeflow_pipeline_caching and pipeline.enable_caching or False,
             labels=pipeline.labels,
             pipeline_root=pipeline_env_params.get("pipeline_root"),
             schedule=pipeline.schedule,

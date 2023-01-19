@@ -102,12 +102,13 @@ class PipelinePlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
+        kubeflow_pipeline_caching = not skip_execution_cache
         pipeline_service = PipelineService(
             config=config,
             workdir=workdir,
             version=version,
             push_mode=mode,
-            kubeflow_pipeline_caching=skip_execution_cache,
+            kubeflow_pipeline_caching=kubeflow_pipeline_caching,
         )
         manifests = pipeline_service.build(instance_name)
         pipeline_service.push(manifests, local=False)
