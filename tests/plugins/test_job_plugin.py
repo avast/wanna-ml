@@ -111,6 +111,11 @@ class TestJobPlugin(unittest.TestCase):
                 "--sync",
                 "--hp-params",
                 str(self.sample_job_dir / "hp-params.yaml"),
+                "python",
+                "-m",
+                "magic.module",
+                "--dataset",
+                "gs://..",
             ],
         )
         self.assertEqual(0, result.exit_code)
@@ -129,10 +134,14 @@ class TestJobPlugin(unittest.TestCase):
                 "default",
                 "--version",
                 "test",
+                "python",
+                "-m",
+                "magic.module",
+                "--dataset",
+                "gs://..",
             ],
         )
         self.assertEqual(0, result.exit_code)
-        # VertexConnector[JobResource[TrainingCustomJobModel]].run_training_job.
 
     def test_job_run_manifest_cli(self):
 
@@ -147,6 +156,11 @@ class TestJobPlugin(unittest.TestCase):
                 "--sync",
                 "--hp-params",
                 str(self.sample_job_dir / "hp-params.yaml"),
+                "python",
+                "-m",
+                "magic.module",
+                "--dataset",
+                "gs://..",
             ],
         )
 
@@ -154,6 +168,8 @@ class TestJobPlugin(unittest.TestCase):
             manifests=[str(self.sample_job_dir / "wanna.yaml")],
             sync=True,
             hp_params=self.sample_job_dir / "hp-params.yaml",
+            command_override=["python", "-m", "magic.module"],
+            args_override=["--dataset", "gs://.."],
         )
 
         self.assertEqual(0, result.exit_code)

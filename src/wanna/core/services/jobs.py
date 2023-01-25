@@ -152,18 +152,43 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         manifests: List[str],
         sync: bool = True,
         hp_params: Optional[Path] = None,
+        command_override: Optional[List[str]] = None,
+        args_override: Optional[List[Union[str, float, int]]] = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
         Args:
             manifests (List[str]): WANNA JobManifests to be executed
             sync (bool): Allows to run the job in async vs sync mode
-            hp_params:
+            hp_params: path with yaml hp_params for the job
+            command_override: override default command from wanna.yaml.
+                allows for quickly run a job with multiple commands permutations
+            args_override:
+                allows for quickly run a job with different args
 
         """
+
         for manifest_path in manifests:
             connector = VertexConnector[JobResource[JOB]]()
             manifest = JobService.read_manifest(connector, manifest_path)
+
+            if isinstance(manifest.job_config, TrainingCustomJobModel):
+                if args_override:
+                    manifest.job_config.worker.args = args_override
+
+                if manifest.job_config.worker.container and command_override:
+                    manifest.job_config.worker.container.command = command_override
+                    manifest.job_payload["command"] = command_override
+
+                if manifest.job_config.worker.python_package and command_override:
+                    manifest.job_config.worker.python_package.module_name = " ".join(command_override)
+                    manifest.job_payload["python_module_name"] = " ".join(command_override)
+
+            elif isinstance(manifest.job_config, CustomJobModel):
+                logger.user_info(
+                    "command and args override is not supported in CustomJobModel jobs with multiple workers"
+                )
+
             aiplatform.init(location=manifest.job_config.region, project=manifest.job_config.project_id)
 
             if isinstance(manifest.job_config, CustomJobModel):
@@ -432,7 +457,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
 
         Args:
             manifest_path (Path): Manifest path to be loaded
-            connector VertexConnector[JobResource[JOB]]() connector to read manifest
+            connector VertexConnector[JobResource[JOB]]: connector to read manifest
 
         Returns:
             JobManifest: Parsed and loaded JobManifest
