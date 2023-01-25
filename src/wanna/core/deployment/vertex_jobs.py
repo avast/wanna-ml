@@ -85,15 +85,15 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         runable_id = runable.resource_name.split("/")[-1]
 
         if sync:
-            with logger.user_spinner(f"Running job {manifest.job_config.name} in sync mode") as s:
-                s.info(
+            with logger.user_spinner(f"Running job {manifest.job_config.name} in sync mode"):
+                logger.user_info(
                     f"Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
                 )
                 custom_job.wait()
         else:
-            with logger.user_spinner(f"Running job {manifest.job_config.name} in async mode") as s:
-                s.info(
+            with logger.user_spinner(f"Running job {manifest.job_config.name} in async mode"):
+                logger.user_info(
                     f"Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{runable_id}?project={manifest.job_config.project_id}"  # noqa
                 )
@@ -128,9 +128,9 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
                 "must be set on the owrker"
             )
 
-        with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job") as s:
+        with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job"):
 
-            s.info(f"Outputs will be saved to {manifest.job_config.base_output_directory}")
+            logger.user_info(f"Outputs will be saved to {manifest.job_config.base_output_directory}")
             training_job.run(
                 machine_type=manifest.job_config.worker.machine_type,
                 accelerator_type=manifest.job_config.worker.gpu.accelerator_type
@@ -169,17 +169,17 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         if sync:
             training_job.wait_for_resource_creation()
             job_id = training_job.resource_name.split("/")[-1]
-            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in sync mode") as s:
-                s.info(
+            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in sync mode"):
+                logger.user_info(
                     "Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
                 )
                 training_job.wait()
         else:
-            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in async mode") as s:
+            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in async mode"):
                 training_job.wait_for_resource_creation()
                 job_id = training_job.resource_name.split("/")[-1]
-                s.info(
+                logger.user_info(
                     f"Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
                 )

@@ -1,5 +1,6 @@
 import pathlib
 from pathlib import Path
+from typing import List, Tuple, Union
 
 import typer
 
@@ -27,8 +28,8 @@ class JobPlugin(BasePlugin):
             [
                 self.build,
                 self.push,
-                self.run,
-                self.run_manifest,
+                (self.run, {"allow_extra_args": True, "ignore_unknown_options": True}),
+                (self.run_manifest, {"allow_extra_args": True, "ignore_unknown_options": True}),
                 self.stop,
                 self.report,
             ]
@@ -67,6 +68,7 @@ class JobPlugin(BasePlugin):
 
     @staticmethod
     def run(
+        ctx: typer.Context,
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         version: str = version_option(instance_type="job"),
@@ -77,15 +79,20 @@ class JobPlugin(BasePlugin):
         """
         Run the job as specified in wanna-ml config. This command puts together build, push and run-manifest steps.
         """
+
+        args, command = JobPlugin._extract_job_overrides(ctx.args)
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
         job_service = JobService(config=config, workdir=workdir, version=version)
         manifests = job_service.build(instance_name)
         job_service.push(manifests, local=False)
-        JobService.run([str(p) for p in manifests], sync=sync, hp_params=hp_params)
+        JobService.run(
+            [str(p) for p in manifests], sync=sync, hp_params=hp_params, command_override=command, args_override=args
+        )
 
     @staticmethod
     def run_manifest(
+        ctx: typer.Context,
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
         hp_params: Path = typer.Option(None, "--hp-params", "-hp", help="Path to the params file in yaml format"),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
@@ -93,7 +100,10 @@ class JobPlugin(BasePlugin):
         """
         Run the job as specified in the wanna-ml manifest.
         """
-        JobService.run(manifests=[manifest], sync=sync, hp_params=hp_params)
+        args, command = JobPlugin._extract_job_overrides(ctx.args)
+        JobService.run(
+            manifests=[manifest], sync=sync, hp_params=hp_params, command_override=command, args_override=args
+        )
 
     @staticmethod
     def stop(
@@ -129,3 +139,15 @@ class JobPlugin(BasePlugin):
             billing_id=config.wanna_project.billing_id,
             organization_id=config.wanna_project.organization_id,
         )
+
+    @staticmethod
+    def _extract_job_overrides(extra_args: List[str]) -> Tuple[List[Union[str, float, int]], List[str]]:
+        args: List[Union[str, float, int]] = []
+        command = []
+        for extra_arg in extra_args:
+            if extra_arg.startswith("--") or args:
+                args.append(extra_arg)
+            else:
+                command.append(extra_arg)
+
+        return args, command
