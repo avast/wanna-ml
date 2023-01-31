@@ -44,5 +44,8 @@ def get_credentials() -> Optional[Credentials]:
 
 
 def get_gcloud_user() -> str:
-    credentials, project = gcloud_config_helper.default()
-    return credentials.properties.get("core", {}).get("account", "unidentified")
+    if gcp_access_allowed:
+        credentials, project = gcloud_config_helper.default()
+        return credentials.properties.get("core", {}).get("account", "unidentified")
+
+    return "no-gcp-access-not-allowed"
