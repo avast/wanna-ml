@@ -75,19 +75,19 @@ class BaseService(ABC, Generic[T]):
         """
         Abstract class. Should delete one instance based on one model (eg. delete one notebook).
         """
-        ...
+        raise NotImplementedError
 
     def _create_one_instance(self, instance: T, **kwargs) -> None:
         """
         Abstract class. Should create one instance based on one model (eg. create one notebook).
         """
-        ...
+        raise NotImplementedError
 
     def _stop_one_instance(self, instance: T) -> None:
         """
         Abstract class. Should stop one instance based on one model (eg. stop one job).
         """
-        ...
+        raise NotImplementedError
 
     def _filter_instances_by_name(self, instance_name: str) -> List[T]:
         """
@@ -190,7 +190,7 @@ class BaseService(ABC, Generic[T]):
         """
         Abstract class.
         """
-        ...
+        raise NotImplementedError
 
     def sync(self, force: bool, push_mode: PushMode = PushMode.all) -> None:
         """

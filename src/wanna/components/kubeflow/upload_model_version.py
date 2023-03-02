@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from kfp.v2 import dsl
 
@@ -6,8 +6,8 @@ from kfp.v2 import dsl
 @dsl.component(
     base_image="python:3.9",
     packages_to_install=[
-        "google-cloud-pipeline-components==1.0.14",
-        "google-cloud-aiplatform==1.15.1",
+        "google-cloud-pipeline-components==1.0.39",
+        "google-cloud-aiplatform==1.22.1",
     ],
 )
 def upload_model_version(
@@ -19,10 +19,10 @@ def upload_model_version(
     model: dsl.Output[dsl.Model],
     model_output_path: dsl.OutputPath(str),  # type: ignore
     labels: Dict[str, str] = {},
-    version_aliases: List[str] = None,
-    metadata: List[str] = None,
-    model_description: str = None,
-    version_description: str = None,
+    version_aliases: List[str] = [],
+    metadata: List[str] = [],
+    model_description: Optional[str] = None,
+    version_description: Optional[str] = None,
 ):
     """
     Creates a new model in Vertex-AI Model Registry. If multiple models with same display_name
@@ -63,9 +63,12 @@ def upload_model_version(
     vertex_model.container_spec = aiplatform_v1.types.ModelContainerSpec()
     vertex_model.container_spec.image_uri = serving_container_image_uri
     vertex_model.artifact_uri = artifact_uri
-    vertex_model.version_aliases = version_aliases
-    vertex_model.description = model_description
-    vertex_model.version_description = version_description
+    if version_aliases:
+        vertex_model.version_aliases = version_aliases
+    if model_description:
+        vertex_model.description = model_description
+    if version_description:
+        vertex_model.version_description = version_description
     vertex_model.labels = labels
     vertex_model.metadata = metadata
 

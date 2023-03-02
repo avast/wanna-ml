@@ -27,6 +27,7 @@ from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.loaders import load_yaml_path
+from wanna.core.utils.time import update_time_template
 
 logger = get_logger(__name__)
 
@@ -217,7 +218,7 @@ class PipelineService(BaseService[PipelineModel]):
         else:
             pipeline_compile_params = {}
 
-        return pipeline_env_params, pipeline_compile_params
+        return pipeline_env_params, update_time_template(pipeline_compile_params)
 
     def _compile_one_instance(self, pipeline: PipelineModel) -> Path:
 
@@ -316,10 +317,10 @@ class PipelineService(BaseService[PipelineModel]):
         return PipelineResource.parse_obj(connector.read(path))
 
     def _delete_one_instance(self, instance: PipelineModel) -> None:
-        pass
+        raise NotImplementedError
 
     def _create_one_instance(self, instance: PipelineModel, **kwargs) -> None:
-        pass
+        raise NotImplementedError
 
     def _instance_exists(self, instance: PipelineModel) -> bool:
-        pass
+        raise NotImplementedError

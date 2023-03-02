@@ -1,8 +1,10 @@
 # Generated file do not change
 import json
 import os
+from typing import Dict, Any
 
 from google.cloud import aiplatform
+from jinja2 import Environment
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 REGION = os.getenv("REGION")
@@ -12,6 +14,18 @@ PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
+
+_jinja_env = Environment(extensions=["jinja2_time.TimeExtension"])
+
+
+def _update_time_template(params: Dict[str, Any]):
+
+    for k, v in params.items():
+        if isinstance(v, str):
+            v = _jinja_env.from_string(v).render()
+        params[k] = v
+
+    return params
 
 
 def process_request(request):
@@ -35,7 +49,7 @@ def process_request(request):
     request_json = json.loads(request_str)
 
     pipeline_spec_uri = request_json["pipeline_spec_uri"]
-    parameter_values = request_json["parameter_values"]
+    parameter_values = _update_time_template(request_json["parameter_values"])
     enable_caching = request_json.get("enable_caching", False)
 
     aiplatform.init(
@@ -54,5 +68,8 @@ def process_request(request):
         encryption_spec_key_name=ENCRYPTION_SPEC_KEY_NAME,
     )
 
-    job.submit(service_account=PIPELINE_SERVICE_ACCOUNT, network=PIPELINE_NETWORK)
+    job.submit(service_account=PIPELINE_SERVICE_ACCOUNT,
+               network=PIPELINE_NETWORK,
+               experiment="{{manifest.pipeline_name}}")
+
     return "Job submitted"

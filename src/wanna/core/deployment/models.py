@@ -1,5 +1,7 @@
 import sys
 
+from wanna.core.models.training_custom_job import JobModelTypeAlias
+
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
@@ -15,7 +17,6 @@ from pydantic.generics import GenericModel
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
 from wanna.core.models.notification_channel import NotificationChannelModel
-from wanna.core.models.training_custom_job import BaseCustomJobModel
 
 
 class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, arbitrary_types_allowed=True):
@@ -83,7 +84,8 @@ class PipelineResource(GCPResource):
     encryption_spec_key_name: Optional[str]
 
 
-JOB = TypeVar("JOB", bound=BaseCustomJobModel, covariant=True)  # dependency from wanna models
+# BaseCustomJobModel
+JOB = TypeVar("JOB", bound=JobModelTypeAlias)  # dependency from wanna models
 
 
 class JobResource(GCPResource, Generic[JOB]):

@@ -10,26 +10,19 @@ from google.cloud.aiplatform_v1.types import ContainerSpec, DiskSpec, MachineSpe
 from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
 from google.protobuf.json_format import MessageToDict
 
-from wanna.core.deployment.models import (
-    JOB,
-    ContainerArtifact,
-    JobResource,
-    PathArtifact,
-    PushMode,
-    PushResult,
-    PushTask,
-)
+from wanna.core.deployment.models import ContainerArtifact, JobResource, PathArtifact, PushMode, PushResult, PushTask
 from wanna.core.deployment.vertex_connector import VertexConnector
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.docker import ImageBuildType
 from wanna.core.models.training_custom_job import (
     CustomJobModel,
     HyperparameterTuning,
+    JobModelTypeAlias,
     TrainingCustomJobModel,
     WorkerPoolModel,
 )
 from wanna.core.models.wanna_config import WannaConfigModel
-from wanna.core.services.base import BaseService
+from wanna.core.services.base import BaseService, T
 from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import JobPaths
 from wanna.core.services.tensorboard import TensorboardService
@@ -39,14 +32,14 @@ from wanna.core.utils.loaders import load_yaml_path
 logger = get_logger(__name__)
 
 
-class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
+class JobService(BaseService[JobModelTypeAlias]):
     def __init__(
         self,
         config: WannaConfigModel,
         workdir: Path,
         version: str = "dev",
         push_mode: PushMode = PushMode.all,
-        connector: VertexConnector[JobResource[JOB]] = VertexConnector[JobResource[JOB]](),
+        connector: VertexConnector[JobResource[JobModelTypeAlias]] = VertexConnector[JobResource[JobModelTypeAlias]](),
     ):
         """
         Service to build, push, deploy and run Vertex AI custom jobs
@@ -169,7 +162,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         """
 
         for manifest_path in manifests:
-            connector = VertexConnector[JobResource[JOB]]()
+            connector = VertexConnector[JobResource[JobModelTypeAlias]]()
             manifest = JobService.read_manifest(connector, manifest_path)
 
             if isinstance(manifest.job_config, TrainingCustomJobModel):
@@ -393,7 +386,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         )
 
     @staticmethod
-    def _create_list_jobs_filter_expr(states: List[PipelineState], job_name: str = None) -> str:
+    def _create_list_jobs_filter_expr(states: List[PipelineState], job_name: Optional[str] = None) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
         Args:
@@ -408,7 +401,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
             filter_expr = filter_expr + f' AND display_name="{job_name}"'
         return filter_expr
 
-    def _list_jobs(self, states: List[PipelineState], job_name: str = None) -> List[CustomTrainingJob]:
+    def _list_jobs(self, states: List[PipelineState], job_name: Optional[str] = None) -> List[CustomTrainingJob]:
         """
         List all custom jobs with given project_id, region with given states.
 
@@ -449,7 +442,7 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
 
     @staticmethod
     def read_manifest(
-        connector: VertexConnector[JobResource[JOB]],
+        connector: VertexConnector[JobResource[JobModelTypeAlias]],
         manifest_path: str,
     ) -> Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]]:
         """
@@ -511,3 +504,12 @@ class JobService(BaseService[Union[CustomJobModel, TrainingCustomJobModel]]):
         self.connector.write(local_manifest_path, json_dump)
 
         return local_manifest_path
+
+    def _delete_one_instance(self, instance: T) -> None:
+        raise NotImplementedError
+
+    def _create_one_instance(self, instance: T, **kwargs) -> None:
+        raise NotImplementedError
+
+    def _return_diff(self) -> Tuple[List[T], List[T]]:
+        raise NotImplementedError

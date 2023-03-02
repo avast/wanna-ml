@@ -178,3 +178,6 @@ class CustomJobModel(BaseCustomJobModel):
 class TrainingCustomJobModel(BaseCustomJobModel):
     worker: WorkerPoolModel
     reduction_server: Optional[ReductionServerModel]
+
+
+JobModelTypeAlias = Union[CustomJobModel, TrainingCustomJobModel]

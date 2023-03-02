@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from kfp.v2 import dsl
 
@@ -6,8 +6,8 @@ from kfp.v2 import dsl
 @dsl.component(
     base_image="python:3.9",
     packages_to_install=[
-        "google-cloud-pipeline-components==1.0.14",
-        "google-cloud-aiplatform==1.15.1",
+        "google-cloud-pipeline-components==1.0.39",
+        "google-cloud-aiplatform==1.22.1",
     ],
 )
 def get_or_create_endpoint(
@@ -16,7 +16,7 @@ def get_or_create_endpoint(
     display_name: str,
     endpoint: dsl.Output[dsl.Artifact],
     labels: Dict[str, str] = {},
-    network: str = None,
+    network: Optional[str] = None,
 ):
 
     import logging
@@ -52,7 +52,8 @@ def get_or_create_endpoint(
         endpoint_model = aiplatform_v1.Endpoint()
         endpoint_model.display_name = display_name
         endpoint_model.labels = labels
-        endpoint_model.network = network
+        if network:
+            endpoint_model.network = network
         request = aiplatform_v1.CreateEndpointRequest(
             parent=f"projects/{project}/locations/{location}",
             endpoint=endpoint_model,

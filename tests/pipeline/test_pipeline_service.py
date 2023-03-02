@@ -3,6 +3,7 @@ import shutil
 import unittest
 from pathlib import Path
 
+import arrow
 from google import auth
 from google.cloud import aiplatform, logging, scheduler_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
@@ -85,7 +86,8 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_service_account": "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com",
             "encryption_spec_key_name": "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key",
         }
-        expected_parameter_values = {"eval_acc_threshold": 0.87}
+
+        expected_parameter_values = {"eval_acc_threshold": 0.87, "start_date": f"{arrow.utcnow().format('YYYY/MM/DD')}"}
         expected_images = [
             DockerBuildResult(
                 name="train", tags=[expected_train_docker_tags[0]], build_type=ImageBuildType.local_build_image
