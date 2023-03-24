@@ -287,7 +287,7 @@ def parse_image_name_family(name: str) -> Dict[str, Any]:
 
 
 def get_available_compute_image_families(
-    project: str, image_filter: str = None, family_must_contain: str = None
+    project: str, image_filter: Optional[str] = None, family_must_contain: Optional[str] = None
 ) -> List[Dict[str, str]]:
     """
     List available Compute Engine VM image families.

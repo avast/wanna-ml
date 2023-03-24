@@ -1,2 +1,3 @@
 #is_hp_tuning_enabled: "n"
 eval_acc_threshold: 0.87
+start_date: "{% now 'utc', '%Y/%m/%d' %}"

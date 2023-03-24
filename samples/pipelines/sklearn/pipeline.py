@@ -42,7 +42,7 @@ def slack_notification(slack_channel: str, status: str):
     name=cfg.PIPELINE_NAME,
     pipeline_root=cfg.PIPELINE_ROOT
 )
-def wanna_sklearn_sample(eval_acc_threshold: float):
+def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
 
     # ===================================================================
     # Get pipeline result notification

@@ -26,7 +26,7 @@ from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.utils import templates
 from wanna.core.utils.gcp import is_gcs_path
 from wanna.core.utils.loaders import load_yaml_path
-from wanna.core.utils.time import get_timestamp
+from wanna.core.utils.time import get_timestamp, update_time_template
 
 logger = get_logger(__name__)
 
@@ -52,6 +52,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         extra_params: Optional[Path],
         sync: bool = True,
     ) -> None:
+
         mode = "sync mode" if sync else "fire-forget mode"
 
         logger.user_info(f"Running pipeline {resource.pipeline_name} in {mode}")
@@ -62,6 +63,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         # Apply override with cli provided params file
         override_params = load_yaml_path(extra_params, Path(".")) if extra_params else {}
         pipeline_params = {**resource.parameter_values, **override_params}
+        pipeline_params = update_time_template(pipeline_params)
 
         # Define Vertex AI Pipeline job
         pipeline_job = PipelineJob(
@@ -80,7 +82,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
 
         # submit pipeline job for execution
-        pipeline_job.submit(service_account=resource.service_account, network=resource.network)
+        pipeline_job.submit(
+            service_account=resource.service_account, network=resource.network, experiment=resource.pipeline_name
+        )
 
         if sync:
             logger.user_info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
