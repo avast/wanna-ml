@@ -37,6 +37,9 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def build(
         version: str = version_option(instance_type="pipeline"),
+        params: Path = typer.Option(
+            None, "--params", envvar="WANNA_ENV_PIPELINE_PARAMS", help="Path to the params file in yaml format"
+        ),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "compile"),
@@ -48,11 +51,14 @@ class PipelinePlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
-        pipeline_service.build(instance_name)
+        pipeline_service.build(instance_name, params)
 
     @staticmethod
     def push(
         version: str = version_option(instance_type="pipeline"),
+        params: Path = typer.Option(
+            None, "--params", envvar="WANNA_ENV_PIPELINE_PARAMS", help="Path to the params file in yaml format"
+        ),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "push"),
@@ -64,7 +70,7 @@ class PipelinePlugin(BasePlugin):
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
         pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
-        manifests = pipeline_service.build(instance_name)
+        manifests = pipeline_service.build(instance_name, params)
         pipeline_service.push(manifests)
 
     @staticmethod
@@ -87,7 +93,9 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def run(
         version: str = version_option(instance_type="pipeline notebook"),
-        params: Path = typer.Option(None, "--params", help="Path to the params file in yaml format"),
+        params: Path = typer.Option(
+            None, "--params", envvar="WANNA_ENV_PIPELINE_PARAMS", help="Path to the params file in yaml format"
+        ),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
@@ -116,7 +124,9 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def run_manifest(
         manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
-        params: Path = typer.Option(None, "--params", help="Path to the params file in yaml format"),
+        params: Path = typer.Option(
+            None, "--params", envvar="WANNA_ENV_PIPELINE_PARAMS", help="Path to the params file in yaml format"
+        ),
         sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
         """

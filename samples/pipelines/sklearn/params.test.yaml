@@ -1,2 +1,2 @@
-eval_acc_threshold: 0.87
+eval_acc_threshold: 0.95
 start_date: "{% now 'utc', '%Y/%m/%d' %}"

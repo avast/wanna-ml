@@ -26,6 +26,7 @@ class TestPipelineService(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     test_runner_dir = parent / ".build" / "test_pipeline_service"
     sample_pipeline_dir = parent / "samples" / "pipelines" / "sklearn"
+    test_pipeline_params_override_dir = sample_pipeline_dir / "params.test.yaml"
     pipeline_build_dir = sample_pipeline_dir / "build"
 
     def setup(self) -> None:
@@ -87,7 +88,7 @@ class TestPipelineService(unittest.TestCase):
             "encryption_spec_key_name": "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key",
         }
 
-        expected_parameter_values = {"eval_acc_threshold": 0.87, "start_date": f"{arrow.utcnow().format('YYYY/MM/DD')}"}
+        expected_parameter_values = {"eval_acc_threshold": 0.95, "start_date": f"{arrow.utcnow().format('YYYY/MM/DD')}"}
         expected_images = [
             DockerBuildResult(
                 name="train", tags=[expected_train_docker_tags[0]], build_type=ImageBuildType.local_build_image
@@ -128,7 +129,9 @@ class TestPipelineService(unittest.TestCase):
 
         # === Build ===
         # Get compile result metadata
-        pipelines = pipeline_service.build("wanna-sklearn-sample")
+        pipelines = pipeline_service.build(
+            instance_name="wanna-sklearn-sample", pipeline_params_path=self.test_pipeline_params_override_dir
+        )
         manifest_path = pipelines[0]
         pipeline_meta = PipelineService.read_manifest(pipeline_service.connector, str(manifest_path))
 
