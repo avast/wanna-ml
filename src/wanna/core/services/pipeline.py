@@ -63,15 +63,17 @@ class PipelineService(BaseService[PipelineModel]):
         self.kubeflow_pipeline_caching = kubeflow_pipeline_caching
         self.notification_channels = {channel.name: channel for channel in self.config.notification_channels}
 
-    def build(self, instance_name: str) -> List[Path]:
+    def build(self, instance_name: str, pipeline_params_path: Optional[Path] = None) -> List[Path]:
         """
         Create an instance with name "name" based on wanna-ml config.
         Args:
             instance_name: The name of the only instance from wanna-ml config that should be created.
                   Set to "all" to create everything from wanna-ml yaml configuration.
+            pipeline_params_path: Path with Kubeflow pipeline params,
+                if present will override one from wanna.yaml
         """
         instances = self._filter_instances_by_name(instance_name)
-        return [self._compile_one_instance(instance) for instance in instances]
+        return [self._compile_one_instance(instance, pipeline_params_path) for instance in instances]
 
     def push(self, manifests: List[Path], local: bool = False) -> PushResult:
         return self.connector.push_artifacts(
@@ -173,6 +175,7 @@ class PipelineService(BaseService[PipelineModel]):
         images: List[Tuple[DockerImageModel, Optional[Image], str]],
         tensorboard: Optional[str],
         network: Optional[str],
+        pipeline_params_path: Optional[Path] = None,
     ):
         # Prepare env params to be exported
         pipeline_env_params = {
@@ -210,17 +213,21 @@ class PipelineService(BaseService[PipelineModel]):
             os.environ[env_name] = tag
 
         # Collect pipeline compile params from wanna config
-        if pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, Path):
-            pipeline_params_path = (self.workdir / pipeline_instance.pipeline_params).resolve()
+        if pipeline_params_path:
+            pipeline_params_path = (self.workdir / pipeline_params_path).resolve()
             pipeline_compile_params = load_yaml_path(pipeline_params_path, self.workdir)
-        elif pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, dict):
-            pipeline_compile_params = pipeline_instance.pipeline_params
         else:
-            pipeline_compile_params = {}
+            if pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, Path):
+                pipeline_params_path = (self.workdir / pipeline_instance.pipeline_params).resolve()
+                pipeline_compile_params = load_yaml_path(pipeline_params_path, self.workdir)
+            elif pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, dict):
+                pipeline_compile_params = pipeline_instance.pipeline_params
+            else:
+                pipeline_compile_params = {}
 
         return pipeline_env_params, update_time_template(pipeline_compile_params)
 
-    def _compile_one_instance(self, pipeline: PipelineModel) -> Path:
+    def _compile_one_instance(self, pipeline: PipelineModel, pipeline_params_path: Optional[Path] = None) -> Path:
 
         image_tags = [
             self.docker_service.get_image(docker_image_ref=docker_image_ref)
@@ -257,7 +264,7 @@ class PipelineService(BaseService[PipelineModel]):
         pipeline.labels = labels
         # Collect kubeflow pipeline params for compilation
         pipeline_env_params, pipeline_params = self._export_pipeline_params(
-            pipeline_paths, pipeline, self.version, image_tags, tensorboard, network
+            pipeline_paths, pipeline, self.version, image_tags, tensorboard, network, pipeline_params_path
         )
 
         # Compile kubeflow V2 Pipeline
