@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from wanna.core.utils.env import _gcp_access_allowed, get_env_bool
+from wanna.core.utils.env import _gcp_access_allowed, _should_validate, get_env_bool
 
 
 class TestEnvUtilsModel(unittest.TestCase):
@@ -21,3 +21,14 @@ class TestEnvUtilsModel(unittest.TestCase):
 
         os.environ["WANNA_GCP_ACCESS_ALLOWED"] = "True"
         self.assertEqual(_gcp_access_allowed(), True)
+
+    def test_gcp_should_validate_env(self):
+
+        # Ensure GCP validation are disabled due to `WANNA_GCP_VALIDATION_DISABLED` env
+        self.assertEqual(_should_validate(), True)
+
+        os.environ["WANNA_GCP_VALIDATION_DISABLED"] = "False"
+        self.assertEqual(_should_validate(), False)
+
+        os.environ["WANNA_GCP_VALIDATION_DISABLED"] = "True"
+        self.assertEqual(_should_validate(), True)

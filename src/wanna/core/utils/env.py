@@ -36,3 +36,25 @@ def _gcp_access_allowed(env_var="WANNA_GCP_ACCESS_ALLOWED"):
 
 
 gcp_access_allowed = _gcp_access_allowed()
+
+
+def _should_validate(env_var="WANNA_GCP_VALIDATION_DISABLED"):
+    """
+    Based on WANNA_GCP_VALIDATION_DISABLED env var checks if wanna should
+    run remote validations that access GCP APIs.
+
+    This is mostly to improve development experience, as it can be slow to allways
+    run remote validations
+
+    Returns:
+        bool if wanna can access GCP apis
+    """
+    validate = get_env_bool(os.environ.get(env_var), True)
+    if validate:
+        logger.user_info("WANNA remote validation is enabled")
+    else:
+        logger.user_info("WANNA remote validation is disabled")
+    return validate
+
+
+should_validate = gcp_access_allowed and _should_validate()
