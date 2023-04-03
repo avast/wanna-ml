@@ -14,7 +14,7 @@ from google.cloud.compute_v1.types import ListImagesRequest
 from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.env import gcp_access_allowed
+from wanna.core.utils.env import should_validate
 
 NETWORK_REGEX = (
     "projects/((?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)"
@@ -59,8 +59,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
     Returns:
         list of available machine types
     """
-    # TODO: remove once we can push to teamcity via GCP
-    if gcp_access_allowed:
+    if should_validate:
         response = MachineTypesClient(credentials=get_credentials()).list(project=project_id, zone=zone)
         machine_types = [mtype.name for mtype in response.items]
     else:
@@ -204,7 +203,7 @@ def get_available_zones(project_id: str) -> List[str]:
         list of available zones
     """
 
-    if gcp_access_allowed:
+    if should_validate:
         response = ZonesClient(credentials=get_credentials()).list(project=project_id)
         return [zone.name for zone in response.items]
     else:
@@ -232,7 +231,7 @@ def get_available_regions(project_id: str) -> List[str]:
     Returns:
         list of available regions
     """
-    if gcp_access_allowed:
+    if should_validate:
         response = RegionsClient(credentials=get_credentials()).list(project=project_id)
         return [region.name for region in response.items]
     else:
