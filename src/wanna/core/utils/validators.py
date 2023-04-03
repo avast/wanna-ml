@@ -8,7 +8,7 @@ from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
 
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.env import gcp_access_allowed
+from wanna.core.utils.env import should_validate
 from wanna.core.utils.gcp import (
     get_available_compute_image_families,
     get_available_compute_machine_types,
@@ -63,7 +63,7 @@ def validate_network_name(network_name):
 
 
 def validate_bucket_name(bucket_name):
-    if gcp_access_allowed:
+    if should_validate:
         try:
             _ = StorageClient(credentials=get_credentials()).get_bucket(bucket_name)
         except exceptions.NotFound:
@@ -75,34 +75,36 @@ def validate_bucket_name(bucket_name):
 
 
 def validate_vm_image(cls, v):
-    framework = v.get("framework")
-    version = v.get("version")
-    os = v.get("os")
-    available_image_families = get_available_compute_image_families(
-        project="deeplearning-platform-release",
-        image_filter="(-deprecated:*)",
-        family_must_contain="notebook",
-    )
-    available_frameworks = set(i.get("framework") for i in available_image_families)
-    if framework not in available_frameworks:
-        raise ValueError(f"VM Image framework {framework} not available. Choose one of: {available_frameworks}")
-
-    available_versions = set(i.get("version") for i in available_image_families if i.get("framework") == framework)
-    if version not in available_versions:
-        raise ValueError(
-            f"VM Image version {version} not available for {framework}. Choose one of: {available_versions}"
+    if should_validate:
+        framework = v.get("framework")
+        version = v.get("version")
+        os = v.get("os")
+        available_image_families = get_available_compute_image_families(
+            project="deeplearning-platform-release",
+            image_filter="(-deprecated:*)",
+            family_must_contain="notebook",
         )
+        available_frameworks = set(i.get("framework") for i in available_image_families)
+        if framework not in available_frameworks:
+            raise ValueError(f"VM Image framework {framework} not available. Choose one of: {available_frameworks}")
 
-    if os:
-        available_os = set(
-            i.get("os")
-            for i in available_image_families
-            if i.get("framework") == framework and i.get("version") == version
-        )
-        if os not in available_os:
+        available_versions = set(i.get("version") for i in available_image_families if i.get("framework") == framework)
+        if version not in available_versions:
             raise ValueError(
-                f"VM Image OS {os} not available for {framework} and version {version}. Choose one of: {available_os}"
+                f"VM Image version {version} not available for {framework}. Choose one of: {available_versions}"
             )
+
+        if os:
+            available_os = set(
+                i.get("os")
+                for i in available_image_families
+                if i.get("framework") == framework and i.get("version") == version
+            )
+            if os not in available_os:
+                raise ValueError(
+                    f"VM Image OS {os} not available for {framework} and version {version}. "
+                    f"Choose one of: {available_os}"
+                )
 
     return v
 
