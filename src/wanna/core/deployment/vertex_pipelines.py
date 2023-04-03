@@ -82,9 +82,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
 
         # submit pipeline job for execution
-        pipeline_job.submit(
-            service_account=resource.service_account, network=resource.network, experiment=resource.pipeline_name
-        )
+        experiment = resource.experiment if resource.experiment else f"{resource.pipeline_name}-experiment"
+
+        pipeline_job.submit(service_account=resource.service_account, network=resource.network, experiment=experiment)
 
         if sync:
             logger.user_info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")

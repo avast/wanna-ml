@@ -11,6 +11,7 @@ REGION = os.getenv("REGION")
 PIPELINE_ROOT = os.getenv("PIPELINE_ROOT")
 PIPELINE_NETWORK = os.getenv("PIPELINE_NETWORK")
 PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
+PIPELINE_EXPERIMENT = os.getenv("PIPELINE_EXPERIMENT")
 PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
@@ -29,10 +30,6 @@ def _update_time_template(params: Dict[str, Any]):
 
 
 def process_request(request):
-    # TODO: from wanna.sdk.pipeline import runner
-    # runner.run(path_to_manifest)
-    # runner.run(version, env)
-
     """Processes the incoming HTTP request.
 
     Args:
@@ -55,6 +52,7 @@ def process_request(request):
     aiplatform.init(
         project=PROJECT_ID,
         location=REGION,
+        experiment=PIPELINE_EXPERIMENT
     )
 
     job = aiplatform.PipelineJob(
@@ -70,6 +68,6 @@ def process_request(request):
 
     job.submit(service_account=PIPELINE_SERVICE_ACCOUNT,
                network=PIPELINE_NETWORK,
-               experiment="{{manifest.pipeline_name}}")
+               experiment=PIPELINE_EXPERIMENT)
 
     return "Job submitted"

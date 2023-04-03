@@ -86,6 +86,7 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_network": "projects/123456789/global/networks/default",
             "pipeline_service_account": "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com",
             "encryption_spec_key_name": "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key",
+            "pipeline_experiment": "wanna-sample-experiment",
         }
 
         expected_parameter_values = {"eval_acc_threshold": 0.95, "start_date": f"{arrow.utcnow().format('YYYY/MM/DD')}"}
@@ -258,6 +259,7 @@ class TestPipelineService(unittest.TestCase):
                 "PIPELINE_SERVICE_ACCOUNT": "wanna-dev@your-gcp-project-id.iam.gserviceaccount.com",
                 "TENSORBOARD": "projects/123456789/locations/europe-west4/tensorboards/123456789",
                 "ENCRYPTION_SPEC_KEY_NAME": "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key",
+                "PIPELINE_EXPERIMENT": "wanna-sample-experiment",
             },
         }
 

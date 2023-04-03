@@ -82,6 +82,7 @@ class PipelineResource(GCPResource):
     network: str
     notification_channels: List[NotificationChannelModel] = []
     encryption_spec_key_name: Optional[str]
+    experiment: Optional[str]
 
 
 # BaseCustomJobModel

@@ -57,3 +57,4 @@ pipelines:
     docker_image_ref: ["train", "serve"]
     tensorboard_ref: wanna-sample-pipeline-board
     enable_caching: false
+    experiment: "wanna-sample-experiment"
