@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
@@ -42,3 +42,17 @@ class PipelineModel(BaseInstanceModel):
     notification_channels_ref: List[str] = []
     sla_hours: Optional[float]
     enable_caching: bool = True
+    experiment: Optional[str]
+
+    @root_validator(pre=True)
+    def set_experiment(cls, values):  # pylint: disable=no-self-argument,no-self-use
+        """
+        In some cases, the zone is defined and region not.
+        Region can be easily parsed from zone.
+        """
+        experiment = values.get("experiment")
+        name = values.get("name")
+        if not experiment and name:
+            values["experiment"] = f"{name}-experiment"
+
+        return values

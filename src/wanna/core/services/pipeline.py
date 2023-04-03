@@ -191,6 +191,7 @@ class PipelineService(BaseService[PipelineModel]):
                 if pipeline_instance.service_account
                 else self.config.gcp_profile.service_account
             ),
+            "pipeline_experiment": pipeline_instance.experiment,
         }
 
         if self.config.gcp_profile.kms_key:
@@ -313,6 +314,7 @@ class PipelineService(BaseService[PipelineModel]):
             compile_env_params=pipeline_env_params,
             notification_channels=channels,
             encryption_spec_key_name=self.config.gcp_profile.kms_key,
+            experiment=pipeline.experiment,
         )
 
         manifest_path = pipeline_paths.get_local_wanna_manifest_path(self.version)
