@@ -298,8 +298,12 @@ class DockerService:
         make_tarfile(context_dir, tar_filename)
         blob_name = os.path.relpath(tar_filename, self.work_dir)
         blob = upload_file_to_gcs(filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name)
-        tags_args = " ".join([f"-t {t}" for t in tags]).split()
-        steps = BuildStep(name="gcr.io/cloud-builders/docker", args=["build", ".", "-f", dockerfile] + tags_args)
+        tags_args = " ".join([f"--destination={t}" for t in tags]).split()
+
+        steps = BuildStep(
+            name="gcr.io/kaniko-project/executor:latest",
+            args=tags_args + ["--cache=true", "--dockerfile", dockerfile],
+        )
 
         timeout = Duration()
         timeout.seconds = self.cloud_build_timeout
@@ -319,12 +323,12 @@ class DockerService:
         build = Build(
             source=Source(storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)),
             steps=[steps],
-            images=tags,
+            # Issue with kaniko builder, images wont show in cloud build artifact column in UI
+            # https://github.com/GoogleCloudPlatform/cloud-builders-community/issues/212
+            # images=tags,
             timeout=timeout,
             options=options,
         )
-        # TODO: make sure credentials does come from global scope
-
         client = CloudBuildClient(
             credentials=get_credentials(), client_options=ClientOptions(api_endpoint=api_endpoint)
         )
@@ -339,7 +343,8 @@ class DockerService:
         Push a docker image to the registry (image must have tags)
         If you are in the cloud_build mode, nothing is pushed, images already live in cloud.
         Args:
-            image: image to push
+            :param image_or_tags:
+            :param quiet:
         """
         if not self.cloud_build:
             tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
