@@ -319,11 +319,11 @@ class DockerService:
         else:
             options = None
             api_endpoint = "cloudbuild.googleapis.com"
-        Build.artifacts
+
         build = Build(
             source=Source(storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)),
             steps=[steps],
-            # Issue with kaniko builder
+            # Issue with kaniko builder, images wont show in cloud build artifact column in UI
             # https://github.com/GoogleCloudPlatform/cloud-builders-community/issues/212
             # images=tags,
             timeout=timeout,
