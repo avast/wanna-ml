@@ -292,10 +292,11 @@ class NotebookService(BaseService[NotebookModel]):
                 "report-system-health": "TRUE",
                 "report-notebook-metrics": "TRUE",
                 "install-monitoring-agent": "TRUE",
+                "enable-extended-ui": "TRUE",
             }
             metadata = {**metadata, **enable_monitoring_metadata}
         if notebook_instance.collaborative:
-            collaborative_metadata = {"use-collaborative": "true"}
+            collaborative_metadata = {"use-collaborative": "TRUE"}
             metadata = {**metadata, **collaborative_metadata}
         if notebook_instance.backup:
             backup_metadata = {"gcs-data-bucket": notebook_instance.backup}
