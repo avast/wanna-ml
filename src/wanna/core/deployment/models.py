@@ -79,7 +79,7 @@ class PipelineResource(GCPResource):
     schedule: Optional[CloudSchedulerModel]
     docker_refs: List[DockerBuildResult]
     compile_env_params: Dict[str, str]
-    network: str
+    network: Optional[str]
     notification_channels: List[NotificationChannelModel] = []
     encryption_spec_key_name: Optional[str]
     experiment: Optional[str]
