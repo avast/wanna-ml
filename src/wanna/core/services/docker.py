@@ -295,9 +295,9 @@ class DockerService:
         """
 
         dockerfile = os.path.relpath(file_path, context_dir)
-        tar_filename = self.work_dir / f"build/docker/{docker_image_ref}.tar.gz"
+        tar_filename = self.work_dir / "build" / "docker" / f"{docker_image_ref}.tar.gz"
         make_tarfile(context_dir, tar_filename)
-        blob_name = os.path.relpath(tar_filename, self.work_dir)
+        blob_name = os.path.relpath(tar_filename, self.work_dir).replace("\\", "/")
         blob = upload_file_to_gcs(filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name)
         tags_args = " ".join([f"--destination={t}" for t in tags]).split()
 
