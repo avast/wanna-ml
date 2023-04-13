@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from caseconverter import kebabcase
 from checksumdir import dirhash
 from google.api_core.client_options import ClientOptions
+from google.api_core.future.polling import DEFAULT_POLLING
 from google.api_core.operation import Operation
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
@@ -307,6 +308,11 @@ class DockerService:
 
         timeout = Duration()
         timeout.seconds = self.cloud_build_timeout
+
+        # Set the pooling timeout to self.cloud_build_timeout seconds
+        # since often large GPUs builds exceed the 900s limit
+        DEFAULT_POLLING._timeout = self.cloud_build_timeout
+
         if self.cloud_build_workerpool:
             project_number = convert_project_id_to_project_number(self.project_id)
             options = BuildOptions(
