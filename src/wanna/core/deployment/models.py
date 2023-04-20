@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 from wanna.core.models.training_custom_job import JobModelTypeAlias
 
@@ -8,10 +9,9 @@ else:
     from typing_extensions import Literal
 
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
 
-from pydantic import BaseModel, EmailStr, Extra
+from pydantic import BaseModel, Extra
 from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
@@ -23,7 +23,7 @@ class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, ar
     name: str
     project: str
     location: str
-    service_account: Optional[EmailStr]
+    service_account: Optional[str] = None
 
     def get_base_resource(self):
         return self.dict()
@@ -50,7 +50,7 @@ class CloudFunctionResource(GCPResource):
     template_vars: Dict[str, Any]
     env_params: Dict[str, str]
     labels: Dict[str, str]
-    network: str
+    network: Optional[str] = None
     notification_channels: List[str]
 
 

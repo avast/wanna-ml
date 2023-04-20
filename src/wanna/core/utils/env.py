@@ -38,7 +38,7 @@ def _gcp_access_allowed(env_var="WANNA_GCP_ACCESS_ALLOWED"):
 gcp_access_allowed = _gcp_access_allowed()
 
 
-def _should_validate(env_var="WANNA_GCP_VALIDATION_DISABLED"):
+def _should_validate(env_var="WANNA_GCP_DISABLE_REMOTE_VALIDATION"):
     """
     Based on WANNA_GCP_VALIDATION_DISABLED env var checks if wanna should
     run remote validations that access GCP APIs.
@@ -57,4 +57,24 @@ def _should_validate(env_var="WANNA_GCP_VALIDATION_DISABLED"):
     return validate
 
 
+def _cloud_build_access_allowed(env_var="WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED") -> bool:
+    """
+    Based on WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED env var checks if wanna should
+    overwrite cloud build config in wanna.yaml
+
+    This is required for when CI/CD pipeline infra does not allow to build containers
+    on GCP
+
+    Returns:
+        bool if wanna builds can access GCP Cloud Build service
+    """
+    allowed = get_env_bool(os.environ.get(env_var), True)
+    if allowed:
+        logger.user_info("WANNA cloud build access is enabled")
+    else:
+        logger.user_info("WANNA cloud build access is disabled")
+    return allowed
+
+
+cloud_build_access_allowed = _cloud_build_access_allowed()
 should_validate = gcp_access_allowed and _should_validate()

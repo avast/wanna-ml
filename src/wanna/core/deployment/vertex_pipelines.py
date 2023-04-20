@@ -94,21 +94,23 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str
     ) -> None:
 
+        pipeline_service_account = (
+            resource.schedule.service_account
+            if resource.schedule and resource.schedule.service_account
+            else resource.service_account
+        )
+
         base_resource = {
             "project": resource.project,
             "location": resource.location,
-            "service_account": (
-                resource.schedule.service_account
-                if resource.schedule and resource.schedule.service_account
-                else resource.service_account
-            ),
+            "service_account": str(pipeline_service_account),
         }
 
         # Create notification channels
         channels = []
         for config in resource.notification_channels:
             for email in config.emails:
-                channel_config = {"email_address": email}
+                channel_config = {"email_address": str(email)}
                 name = email.split("@")[0].replace(".", "-")
                 channel = self.upsert_notification_channel(
                     resource=NotificationChannelResource(

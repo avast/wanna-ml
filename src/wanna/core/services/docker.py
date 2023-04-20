@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 from caseconverter import kebabcase
-from checksumdir import dirhash
+from dirhash import dirhash
 from google.api_core.client_options import ClientOptions
 from google.api_core.future.polling import DEFAULT_POLLING
 from google.api_core.operation import Operation
@@ -28,7 +28,7 @@ from wanna.core.models.docker import (
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.env import gcp_access_allowed
+from wanna.core.utils.env import cloud_build_access_allowed, gcp_access_allowed
 from wanna.core.utils.gcp import convert_project_id_to_project_number, make_tarfile, upload_file_to_gcs
 from wanna.core.utils.templates import render_template
 
@@ -74,7 +74,10 @@ class DockerService:
         self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
         self.build_config = self._read_build_config(self.docker_build_config_path)
         self.cloud_build_timeout = docker_model.cloud_build_timeout
-        self.cloud_build = gcp_access_allowed and docker_model.cloud_build
+        self.cloud_build = (
+            False if not gcp_access_allowed or not cloud_build_access_allowed else docker_model.cloud_build
+        )
+
         self.cloud_build_workerpool = docker_model.cloud_build_workerpool
         self.cloud_build_workerpool_location = docker_model.cloud_build_workerpool_location or self.location
         self.bucket = gcp_profile.bucket
@@ -249,16 +252,16 @@ class DockerService:
 
     def _get_dirhash(self, directory: Path):
         dockerignore = directory / ".dockerignore"
-        excluded_files = [f"{directory}/component.yaml", f"{directory}/tests/"]
+        ignore = []
 
         if dockerignore.exists():
             with open(dockerignore, "r") as f:
                 lines = f.readlines()
-                new_files = list(map(lambda ignore: f"{directory}/{ignore.rstrip()}", lines))
-                excluded_files += new_files
+                ignore += [
+                    ignore.rstrip() for ignore in lines if not ignore.startswith("#") and not ignore.strip() == ""
+                ]
 
-        excluded_files = list(set(excluded_files))
-        return dirhash(directory, "sha256", excluded_files=excluded_files, excluded_extensions=["pyc", "md"])
+        return dirhash(directory, "sha256", ignore=set(ignore))
 
     def _get_cache_path(self, hash_cache_dir: Path):
         version = kebabcase(self.version)
@@ -270,7 +273,7 @@ class DockerService:
         sha256hash = self._get_dirhash(context_dir)
         if cache_file.exists():
             with open(cache_file, "r") as f:
-                old_hash = f.read()
+                old_hash = f.read().replace("\n", "")
                 return old_hash != sha256hash
         else:
             return True

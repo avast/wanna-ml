@@ -217,7 +217,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         self,
         job_model: CustomJobModel,
     ) -> JobResource[CustomJobModel]:
-        image_refs, worker_pool_specs = list(
+        image_refs, worker_pool_specs = set(
             zip(*[self._create_worker_pool_spec(worker) for worker in job_model.workers])
         )
         labels = {
@@ -254,8 +254,7 @@ class JobService(BaseService[JobModelTypeAlias]):
                 "labels": labels,
                 "staging_bucket": job_model.bucket,
             },
-            image_refs=set(image_refs),
-            # TODO, create TFBoard at runtime and allow for runtime gcp_profile switch
+            image_refs=list(image_refs),
             # during `run` calls, this means changing TensorboardService init
             tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(job_model.tensorboard_ref)
             if job_model.tensorboard_ref

@@ -298,7 +298,7 @@ class PipelineService(BaseService[PipelineModel]):
         deployment_manifest = PipelineResource(
             name=f"pipeline {pipeline.name}",
             project=pipeline.project_id,
-            location=pipeline.region,
+            location=pipeline.region if pipeline.region else self.config.gcp_profile.region,
             service_account=pipeline.service_account,
             network=network,
             pipeline_name=pipeline.name,
