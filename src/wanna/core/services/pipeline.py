@@ -1,3 +1,4 @@
+import importlib
 import json
 import os
 from pathlib import Path
@@ -5,6 +6,7 @@ from typing import List, Optional, Tuple
 
 from caseconverter import snakecase
 from google.cloud import aiplatform
+from kfp.v2.compiler import Compiler
 from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 
@@ -269,14 +271,33 @@ class PipelineService(BaseService[PipelineModel]):
         )
 
         # Compile kubeflow V2 Pipeline
-        compile_pyfile(
-            pyfile=str(self.workdir / pipeline.pipeline_file),
-            function_name=pipeline.pipeline_function,
-            pipeline_parameters=pipeline_params,
-            package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
-            type_check=True,
-            use_experimental=False,
-        )
+        if pipeline.pipeline_function and not pipeline.pipeline_file:
+            # This branch implies that the pipeline_function is
+            # a python import path. ex: module1.module2.function
+            mod_name, func_name = pipeline.pipeline_function.rsplit(".", 1)
+            module = importlib.import_module(mod_name)
+            logger.user_info(f"Using Compiler.compile with function {pipeline.pipeline_function}")
+            func = getattr(module, func_name)
+            Compiler().compile(
+                pipeline_func=func,
+                pipeline_parameters=pipeline_params,
+                package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
+                type_check=True,
+            )
+        elif pipeline.pipeline_file:
+            # Get the file
+            pyfile = str(self.workdir / pipeline.pipeline_file)
+            logger.user_info(f"Using kfp compile_pyfile with {pyfile}")
+            compile_pyfile(
+                pyfile=pyfile,
+                function_name=pipeline.pipeline_function,
+                pipeline_parameters=pipeline_params,
+                package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
+                type_check=True,
+                use_experimental=False,
+            )
+        else:
+            raise ValueError("Can not compile kfp pipeline, " "pipeline_file or pipeline_function must be set.")
 
         docker_refs = [
             DockerBuildResult(

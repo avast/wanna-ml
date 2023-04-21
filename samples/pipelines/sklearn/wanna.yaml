@@ -52,7 +52,7 @@ pipelines:
     schedule:
       cron: 2 * * * *
     bucket: gs://your-staging-bucket-name
-    pipeline_file: pipeline.py
+    pipeline_function: "wanna_simple.pipeline.wanna_sklearn_sample"
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]
     tensorboard_ref: wanna-sample-pipeline-board

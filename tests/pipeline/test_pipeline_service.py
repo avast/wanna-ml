@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import unittest
 from pathlib import Path
 
@@ -28,6 +29,9 @@ class TestPipelineService(unittest.TestCase):
     sample_pipeline_dir = parent / "samples" / "pipelines" / "sklearn"
     test_pipeline_params_override_dir = sample_pipeline_dir / "params.test.yaml"
     pipeline_build_dir = sample_pipeline_dir / "build"
+
+    # Add sample_pipeline_dir to Python path to simulate the usage of venv containing the sample project
+    sys.path.insert(0, str(sample_pipeline_dir.absolute()))
 
     def setup(self) -> None:
         self.project_id = "gcp-project"

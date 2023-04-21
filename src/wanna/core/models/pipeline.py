@@ -32,7 +32,7 @@ class PipelineModel(BaseInstanceModel):
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     zone: str
-    pipeline_file: str
+    pipeline_file: Optional[str]
     pipeline_function: Optional[str]
     pipeline_params: Union[Path, Dict[str, Any], None]
     docker_image_ref: List[str] = []
@@ -47,12 +47,22 @@ class PipelineModel(BaseInstanceModel):
     @root_validator(pre=True)
     def set_experiment(cls, values):  # pylint: disable=no-self-argument,no-self-use
         """
-        In some cases, the zone is defined and region not.
-        Region can be easily parsed from zone.
+        Set default pipeline experiment name based on pipeline name
         """
         experiment = values.get("experiment")
         name = values.get("name")
         if not experiment and name:
             values["experiment"] = f"{name}-experiment"
 
+        return values
+
+    @root_validator(pre=False)
+    def validate_pipeline_function(cls, values):  # pylint: disable=no-self-argument,no-self-use
+        """
+        Validate that at least one of pipeline_function or pipeline_file are present
+        """
+        pipeline_function = values.get("pipeline_function")
+        pipeline_file = values.get("pipeline_file")
+        if not pipeline_function and not pipeline_file:
+            raise ValueError("pipeline_function or pipeline_file must be set")
         return values
