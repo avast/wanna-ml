@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from wanna.core.utils.env import _gcp_access_allowed, _should_validate, get_env_bool
+from wanna.core.utils.env import _cloud_build_access_allowed, _gcp_access_allowed, _should_validate, get_env_bool
 
 
 class TestEnvUtilsModel(unittest.TestCase):
@@ -27,8 +27,19 @@ class TestEnvUtilsModel(unittest.TestCase):
         # Ensure GCP validation are disabled due to `WANNA_GCP_VALIDATION_DISABLED` env
         self.assertEqual(_should_validate(), True)
 
-        os.environ["WANNA_GCP_VALIDATION_DISABLED"] = "False"
+        os.environ["WANNA_GCP_DISABLE_REMOTE_VALIDATION"] = "False"
         self.assertEqual(_should_validate(), False)
 
-        os.environ["WANNA_GCP_VALIDATION_DISABLED"] = "True"
+        os.environ["WANNA_GCP_DISABLE_REMOTE_VALIDATION"] = "True"
         self.assertEqual(_should_validate(), True)
+
+    def test_cloud_build_access_allowed(self):
+
+        # Ensure GCP validation are disabled due to `WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED` env
+        self.assertEqual(_cloud_build_access_allowed(), True)
+
+        os.environ["WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED"] = "False"
+        self.assertEqual(_cloud_build_access_allowed(), False)
+
+        os.environ["WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED"] = "True"
+        self.assertEqual(_cloud_build_access_allowed(), True)

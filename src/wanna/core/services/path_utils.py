@@ -78,10 +78,10 @@ class PipelinePaths:
         path = f"{self.gcs_pipeline_path}/deployment/{version}/manifests"
         return path
 
-    def get_local_pipeline_deployment_path(self, version: str) -> str:
+    def get_local_pipeline_deployment_path(self, version: str) -> Path:
         path = self.local_pipeline_path / "deployment" / version
         os.makedirs(path, exist_ok=True)
-        return str(path)
+        return path
 
     def get_gcs_pipeline_deployment_path(self, version: str) -> str:
         path = f"{self.gcs_pipeline_path}/deployment/{version}"

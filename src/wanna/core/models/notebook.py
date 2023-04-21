@@ -15,8 +15,8 @@ class BucketMount(BaseModel, extra=Extra.forbid):
 
 
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
-    vm_image: Optional[VMImage]
-    docker_image_ref: Optional[str]
+    vm_image: Optional[VMImage] = None
+    docker_image_ref: Optional[str] = None
 
     _ = root_validator()(validators.validate_only_one_must_be_set)
 
