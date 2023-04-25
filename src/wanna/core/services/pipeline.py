@@ -29,7 +29,6 @@ from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.loaders import load_yaml_path
-from wanna.core.utils.time import update_time_template
 
 logger = get_logger(__name__)
 
@@ -228,7 +227,7 @@ class PipelineService(BaseService[PipelineModel]):
             else:
                 pipeline_compile_params = {}
 
-        return pipeline_env_params, update_time_template(pipeline_compile_params)
+        return pipeline_env_params, pipeline_compile_params
 
     def _compile_one_instance(self, pipeline: PipelineModel, pipeline_params_path: Optional[Path] = None) -> Path:
 
