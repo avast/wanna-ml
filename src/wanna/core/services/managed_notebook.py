@@ -108,10 +108,23 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         labels = {
             "wanna_name": instance.name,
             "wanna_resource": self.instance_type,
-            "wanna_owner": email_fixer(instance.owner),
         }
+
+        notebook_owner = instance.owner or self.config.gcp_profile.service_account
+
+        if notebook_owner:
+            labels["wanna_owner"] = email_fixer(notebook_owner)
+            access_type = (
+                RuntimeAccessConfig.RuntimeAccessType.SERVICE_ACCOUNT
+                if notebook_owner.endswith("gserviceaccount.com")
+                else RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER
+            )
+        else:
+            access_type = None
+
         if instance.labels:
             labels = {**instance.labels, **labels}
+
         # Disks
         disk_type = instance.data_disk.disk_type if instance.data_disk else None
         disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
@@ -130,9 +143,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             runtimeAcceleratorConfig = None
         # Network and subnetwork
         network = instance.network if instance.network else self.config.gcp_profile.network
-        full_network = f"projects/{instance.project_id}/global/networks/{network}"
         subnet = instance.subnet if instance.subnet else self.config.gcp_profile.subnet
-        full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{subnet}"
+        full_network = None
+        full_subnet = None
+        if network and subnet:
+            full_network = f"projects/{instance.project_id}/global/networks/{network}"
+            full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{subnet}"
 
         # Post startup script
         if deploy and instance.tensorboard_ref:
@@ -179,11 +195,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 "idle_shutdown_timeout": instance.idle_shutdown_timeout,
             }
         )
-        access_type = (
-            RuntimeAccessConfig.RuntimeAccessType.SERVICE_ACCOUNT
-            if instance.owner.endswith("gserviceaccount.com")
-            else RuntimeAccessConfig.RuntimeAccessType.SINGLE_USER
-        )
+
         runtimeAccessConfig = RuntimeAccessConfig(access_type=access_type, runtime_owner=instance.owner)
         runtime = Runtime(
             access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
@@ -249,7 +261,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         logger.user_info(f"Starting JupyterLab for {instance.name} ...")
         wait(
             lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
-            timeout_seconds=450,
+            timeout_seconds=120,
             sleep_seconds=20,
             waiting_for="Starting JupyterLab in your instance",
         )
