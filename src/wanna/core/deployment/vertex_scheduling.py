@@ -63,9 +63,10 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         }
 
         try:
-            job = client.get_job({"name": job_name})
-            logger.user_info(f"Found {job.name} cloud scheduler job, updating it")
-            client.update_job({"job": job})
+            _ = client.get_job({"name": job_name})
+            logger.user_info(f"Found {job_name} cloud scheduler job, updating it")
+            client.update_job({"job": job, "update_mask": {"paths": ["schedule", "http_target", "time_zone"]}})
+
         except NotFound:
             # Does not exist let's create it
             logger.user_info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
