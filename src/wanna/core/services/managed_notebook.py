@@ -209,7 +209,6 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         runtime = Runtime(
             access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
         )
-        print(runtime)
 
         # Create runtime request
         return CreateRuntimeRequest(
