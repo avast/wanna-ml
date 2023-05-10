@@ -128,8 +128,8 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         # Disks
         disk_type = instance.data_disk.disk_type if instance.data_disk else None
         disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
-        localDiskParams = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
-        localDisk = LocalDisk(initialize_params=localDiskParams)
+        local_disk_params = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
+        local_disk = LocalDisk(initialize_params=local_disk_params)
         encryption_config = (
             EncryptionConfig(kms_key=self.config.gcp_profile.kms_key) if self.config.gcp_profile.kms_key else None
         )
@@ -141,14 +141,21 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             )
         else:
             runtimeAcceleratorConfig = None
+
         # Network and subnetwork
-        network = instance.network if instance.network else self.config.gcp_profile.network
+        full_network = self._get_resource_network(
+            project_id=self.config.gcp_profile.project_id,
+            push_mode=PushMode.all,
+            resource_network=instance.network,
+            fallback_project_network=self.config.gcp_profile.network,
+            use_project_number=False,
+        )
         subnet = instance.subnet if instance.subnet else self.config.gcp_profile.subnet
-        full_network = None
-        full_subnet = None
-        if network and subnet:
-            full_network = f"projects/{instance.project_id}/global/networks/{network}"
-            full_subnet = f"projects/{instance.project_id}/regions/{instance.region}/subnetworks/{subnet}"
+        full_subnet = self._get_resource_subnet(
+            full_network,
+            subnet,
+            instance.region,
+        )
 
         # Post startup script
         if deploy and instance.tensorboard_ref:
@@ -162,7 +169,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         else:
             post_startup_script = None
 
-        # Runtime
+        # Runtime kernels
         kernels = []
         if instance.kernel_docker_image_refs:
             if not self.docker_service:
@@ -172,11 +179,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
                 kernels.append(ContainerImage(repository=repository, tag=tag))
+
         # VM
         virtualMachineConfig = VirtualMachineConfig(
             machine_type=instance.machine_type,
             container_images=kernels,
-            data_disk=localDisk,
+            data_disk=local_disk,
             encryption_config=encryption_config,
             labels=labels,
             accelerator_config=runtimeAcceleratorConfig,
@@ -193,13 +201,16 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
                 "post_startup_script": post_startup_script,
                 "idle_shutdown": instance.idle_shutdown,
                 "idle_shutdown_timeout": instance.idle_shutdown_timeout,
+                "enable_health_monitoring": True,
             }
         )
 
-        runtimeAccessConfig = RuntimeAccessConfig(access_type=access_type, runtime_owner=instance.owner)
+        runtimeAccessConfig = RuntimeAccessConfig(access_type=access_type, runtime_owner=notebook_owner)
         runtime = Runtime(
             access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
         )
+        print(runtime)
+
         # Create runtime request
         return CreateRuntimeRequest(
             parent=f"projects/{instance.project_id}/locations/{instance.region}",
@@ -261,7 +272,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         logger.user_info(f"Starting JupyterLab for {instance.name} ...")
         wait(
             lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
-            timeout_seconds=120,
+            timeout_seconds=450,
             sleep_seconds=20,
             waiting_for="Starting JupyterLab in your instance",
         )
