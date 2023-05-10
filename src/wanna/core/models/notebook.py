@@ -108,7 +108,7 @@ class ManagedNotebookModel(BaseInstanceModel):
     """
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
-    owner: str
+    owner: Optional[str]
     machine_type: Optional[str] = "n1-standard-4"
     gpu: Optional[GPU]
     data_disk: Optional[Disk]
@@ -116,6 +116,6 @@ class ManagedNotebookModel(BaseInstanceModel):
     tensorboard_ref: Optional[str]
     network: Optional[str]
     subnet: Optional[str]
-    internal_ip_only: Optional[bool] = True
-    idle_shutdown: Optional[bool]
-    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440)
+    internal_ip_only: bool = True
+    idle_shutdown: bool = True
+    idle_shutdown_timeout: int = Field(ge=10, le=1440, default=180)
