@@ -3,9 +3,9 @@ import json
 import os
 from typing import Dict, Any
 
+import pendulum
 from google.cloud import aiplatform
 from jinja2 import Environment
-import pendulum
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 REGION = os.getenv("REGION")
@@ -18,9 +18,7 @@ PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
 
 _jinja_env = Environment()
-_jinja_env.globals.update(modules={
-    "pendulum": pendulum
-})
+_jinja_env.globals.update(modules={"pendulum": pendulum})
 
 
 def _update_time_template(params: Dict[str, Any]):
