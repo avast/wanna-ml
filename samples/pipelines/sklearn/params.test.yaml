@@ -1,2 +1,2 @@
 eval_acc_threshold: 0.95
-start_date: "{% now 'utc', '%Y/%m/%d' %}"
+start_date: "{{ modules.pendulum.now().in_timezone('UTC').subtract(days=1).format('YYYY/MM/DD') }}"
