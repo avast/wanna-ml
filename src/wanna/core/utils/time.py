@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import Any, Dict
 
+import pendulum
 from jinja2 import Environment
 
-_jinja_env = Environment(extensions=["jinja2_time.TimeExtension"])
+_jinja_env = Environment()
+_jinja_env.globals.update(modules={"pendulum": pendulum})
 
 
 def get_timestamp():

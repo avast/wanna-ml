@@ -92,7 +92,10 @@ class TestPipelineService(unittest.TestCase):
             "pipeline_experiment": "wanna-sample-experiment",
         }
 
-        expected_parameter_values = {"eval_acc_threshold": 0.95, "start_date": """{% now 'utc', '%Y/%m/%d' %}"""}
+        expected_parameter_values = {
+            "eval_acc_threshold": 0.95,
+            "start_date": """{{ modules.pendulum.now().in_timezone('UTC').subtract(days=1).format('YYYY/MM/DD') }}""",
+        }
         expected_images = [
             DockerBuildResult(
                 name="train", tags=[expected_train_docker_tags[0]], build_type=ImageBuildType.local_build_image
