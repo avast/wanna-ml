@@ -15,15 +15,45 @@ from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 
 class TestGCPConnector(unittest.TestCase):
     common_resource_fields = {
-        "project": "test_notification_channel",
+        "project": "test-gcp-connector",
         "location": "europe-west-1",
-        "service_account": "wanna-dev@yourproject.iam.gserviceaccount.com",
+        "service_account": "wanna-dev@test-gcp-connector.iam.gserviceaccount.com",
     }
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     build_dir = parent / "build"
     version = "test"
     env = "test"
     connector = VertexConnector[Any]()
+
+    def test_upsert_pubsub_notification_channel(self):
+        notification_channel_resource = NotificationChannelResource(
+            name="test_pubsub_notification_channel",
+            type_="pubsub",
+            config={"topic": "projects/test-gcp-connector/topics/project"},
+            labels={},
+            **self.common_resource_fields,
+        )
+
+        expected_notification_channel = NotificationChannel(
+            type_="pubsub",
+            display_name="test_pubsub_notification_channel",
+            description="",
+            labels={"topic": "projects/test-gcp-connector/topics/project"},
+            user_labels={},
+            verification_status=NotificationChannel.VerificationStatus.VERIFIED,
+            enabled=True,
+        )
+
+        NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
+        NotificationChannelServiceClient.create_notification_channel = MagicMock()
+        self.connector.upsert_notification_channel(notification_channel_resource)
+
+        NotificationChannelServiceClient.list_notification_channels.assert_called_with(
+            name="projects/test-gcp-connector"
+        )
+        NotificationChannelServiceClient.create_notification_channel.assert_called_with(
+            name="projects/test-gcp-connector", notification_channel=expected_notification_channel
+        )
 
     def test_upsert_notification_channel(self):
         notification_channel_resource = NotificationChannelResource(
@@ -49,10 +79,10 @@ class TestGCPConnector(unittest.TestCase):
         self.connector.upsert_notification_channel(notification_channel_resource)
 
         NotificationChannelServiceClient.list_notification_channels.assert_called_with(
-            name="projects/test_notification_channel"
+            name="projects/test-gcp-connector"
         )
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
-            name="projects/test_notification_channel", notification_channel=expected_notification_channel
+            name="projects/test-gcp-connector", notification_channel=expected_notification_channel
         )
 
     def test_upsert_cloud_function(self):
@@ -70,9 +100,7 @@ class TestGCPConnector(unittest.TestCase):
             notification_channels=["projects/"],
             **self.common_resource_fields,
         )
-        expected_function_name = (
-            "projects/test_notification_channel/locations/europe-west-1/functions/test-function-test"
-        )
+        expected_function_name = "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
         expected_function = {
             "name": expected_function_name,
             "description": "wanna test-function function for test pipeline",
@@ -80,9 +108,9 @@ class TestGCPConnector(unittest.TestCase):
             "entry_point": "process_request",
             "runtime": "python39",
             "https_trigger": {
-                "url": "https://europe-west-1-test_notification_channel.cloudfunctions.net/test-function-test",
+                "url": "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test",
             },
-            "service_account_email": "wanna-dev@yourproject.iam.gserviceaccount.com",
+            "service_account_email": "wanna-dev@test-gcp-connector.iam.gserviceaccount.com",
             "labels": {},
             "environment_variables": {},
         }
@@ -101,15 +129,13 @@ class TestGCPConnector(unittest.TestCase):
         )
 
         self.assertEqual(
-            function_path, "projects/test_notification_channel/locations/europe-west-1/functions/test-function-test"
+            function_path, "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
         )
-        self.assertEqual(
-            function_url, "https://europe-west-1-test_notification_channel.cloudfunctions.net/test-function-test"
-        )
+        self.assertEqual(function_url, "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test")
 
         # Check cloudfunctions sdk methos were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_called_with(
-            {"name": "projects/test_notification_channel/locations/europe-west-1/functions/test-function-test"}
+            {"name": "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"}
         )
         CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
 
@@ -118,8 +144,8 @@ class TestGCPConnector(unittest.TestCase):
 
     def test_upsert_cloud_scheduler(self):
         function_refs = (
-            "projects/test_notification_channel/locations/europe-west-1/functions/test-function-test",
-            "https://europe-west-1-test_notification_channel.cloudfunctions.net/test-function-test",
+            "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test",
+            "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test",
         )
         resource = CloudSchedulerResource(
             name="test-cloud-scheduler-job",
@@ -144,7 +170,7 @@ class TestGCPConnector(unittest.TestCase):
             function=function_refs, resource=resource, version=self.version, env=self.env
         )
 
-        job_name = "projects/test_notification_channel/locations/europe-west-1/jobs/test-cloud-scheduler-job-test"
+        job_name = "projects/test-gcp-connector/locations/europe-west-1/jobs/test-cloud-scheduler-job-test"
         scheduler_v1.CloudSchedulerClient.get_job.assert_called_once()
         scheduler_v1.CloudSchedulerClient.update_job.assert_called_once()
         scheduler_v1.CloudSchedulerClient.get_job.assert_called_with({"name": job_name})
