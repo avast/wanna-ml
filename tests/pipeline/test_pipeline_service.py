@@ -8,7 +8,7 @@ from google import auth
 from google.cloud import aiplatform, logging, scheduler_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
 from google.cloud.functions_v1.services.cloud_functions_service import CloudFunctionsServiceClient
-from google.cloud.monitoring_v3 import AlertPolicyServiceClient
+from google.cloud.monitoring_v3 import AlertPolicyServiceClient, NotificationChannel, NotificationChannelServiceClient
 from mock import patch
 from mock.mock import MagicMock
 
@@ -270,6 +270,10 @@ class TestPipelineService(unittest.TestCase):
         }
 
         # Set Mocks
+        NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
+        NotificationChannelServiceClient.create_notification_channel = MagicMock(
+            return_value=NotificationChannel(name="projects/[PROJECT_ID_OR_NUMBER]/notificationChannels/[CHANNEL_ID]")
+        )
         AlertPolicyServiceClient.list_alert_policies = MagicMock(return_value=[])
         AlertPolicyServiceClient.update_alert_policy = MagicMock()
         AlertPolicyServiceClient.create_alert_policy = MagicMock()
@@ -297,6 +301,24 @@ class TestPipelineService(unittest.TestCase):
             {"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}
         )
         CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
+        NotificationChannelServiceClient.create_notification_channel.assert_called_with(
+            name="projects/your-gcp-project-id",
+            notification_channel=NotificationChannel(
+                type_="pubsub",
+                display_name="wanna-sample-pipeline-pubsub-channel-wanna-alert-topic-channel",
+                labels={"topic": "projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"},
+                user_labels={
+                    "wanna_project": "pipeline-sklearn-example-1",
+                    "wanna_project_version": "1",
+                    "wanna_project_authors": "jane-doe",
+                    "author": "jane-doe",
+                    "wanna_resource_name": "wanna-sklearn-sample",
+                    "wanna_resource": "pipeline",
+                },
+                verification_status=NotificationChannel.VerificationStatus.VERIFIED,
+                enabled=True,
+            ),
+        )
 
         # Assert Cloud Scheduler calls
         expected_job_name = expected_function_name

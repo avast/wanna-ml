@@ -17,6 +17,12 @@ gcp_profiles:
 tensorboards:
   - name: wanna-sample-pipeline-board
 
+notification_channels:
+  - type: pubsub
+    name: wanna-sample-pipeline-pubsub-channel
+    topics:
+      - wanna-sample-pipeline-pubsub-channel
+
 docker:
   images:
     - build_type: local_build_image
@@ -58,3 +64,5 @@ pipelines:
     tensorboard_ref: wanna-sample-pipeline-board
     enable_caching: false
     experiment: "wanna-sample-experiment"
+    notification_channels_ref:
+      - wanna-sample-pipeline-pubsub-channel

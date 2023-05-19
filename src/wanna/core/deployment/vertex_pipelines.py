@@ -22,6 +22,7 @@ from wanna.core.deployment.models import (
 )
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
+from wanna.core.models.notification_channel import EmailNotificationChannel, PubSubNotificationChannel
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.utils import templates
 from wanna.core.utils.gcp import is_gcs_path
@@ -109,19 +110,38 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         # Create notification channels
         channels = []
         for config in resource.notification_channels:
-            for email in config.emails:
-                channel_config = {"email_address": str(email)}
-                name = email.split("@")[0].replace(".", "-")
-                channel = self.upsert_notification_channel(
-                    resource=NotificationChannelResource(
-                        type_=config.type,
-                        name=f"{name}-wanna-email-channel",
-                        config=channel_config,
-                        labels=resource.labels,
-                        **base_resource,
+            if isinstance(config, EmailNotificationChannel):
+                for email in config.emails:
+                    channel_config = {"email_address": str(email)}
+                    name = email.split("@")[0].replace(".", "-")
+                    channel = self.upsert_notification_channel(
+                        resource=NotificationChannelResource(
+                            type_=config.type,
+                            description=config.description,
+                            name=f"{name}-wanna-email-channel",
+                            config=channel_config,
+                            labels=resource.labels,
+                            **base_resource,
+                        )
                     )
-                )
-                channels.append(channel.name)
+                    channels.append(channel.name)
+            elif isinstance(config, PubSubNotificationChannel):
+                for topic in config.topics:
+                    project_id = resource.compile_env_params.get("project_id")
+                    channel_config = {"topic": f"projects/{project_id}/topics/{topic}"}
+                    channel = self.upsert_notification_channel(
+                        resource=NotificationChannelResource(
+                            type_=config.type,
+                            description=config.description,
+                            name=f"{topic}-wanna-alert-topic-channel",
+                            config=channel_config,
+                            labels=resource.labels,
+                            **base_resource,
+                        )
+                    )
+                    channels.append(channel.name)
+            else:
+                raise ValueError(f"Validation error notification config {config} can't be handled by wanna-ml")
 
         function = self.upsert_cloud_function(
             resource=CloudFunctionResource(

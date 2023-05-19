@@ -38,7 +38,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
             notification_channel = NotificationChannel(
                 type_=resource.type_,
                 display_name=resource.name,
-                description="",
+                description=resource.description,
                 labels=resource.config,
                 user_labels=resource.labels,
                 verification_status=NotificationChannel.VerificationStatus.VERIFIED,

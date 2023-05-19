@@ -30,9 +30,10 @@ class GCPResource(GenericModel, extra=Extra.forbid, validate_assignment=True, ar
 
 
 class NotificationChannelResource(GCPResource):
-    type_: Literal["email"]
+    type_: Literal["email", "pubsub"]
     config: Dict[str, str]
     labels: Dict[str, str]
+    description: Optional[str]
 
 
 class CloudSchedulerResource(GCPResource):
