@@ -38,9 +38,9 @@ def _gcp_access_allowed(env_var="WANNA_GCP_ACCESS_ALLOWED"):
 gcp_access_allowed = _gcp_access_allowed()
 
 
-def _should_validate(env_var="WANNA_GCP_DISABLE_REMOTE_VALIDATION"):
+def _should_validate(env_var="WANNA_GCP_ENABLE_REMOTE_VALIDATION"):
     """
-    Based on WANNA_GCP_DISABLE_REMOTE_VALIDATION env var checks if wanna should
+    Based on WANNA_GCP_ENABLE_REMOTE_VALIDATION env var checks if wanna should
     run remote validations that access GCP APIs.
 
     This is mostly to improve development experience, as it can be slow to allways

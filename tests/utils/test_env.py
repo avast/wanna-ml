@@ -27,10 +27,10 @@ class TestEnvUtilsModel(unittest.TestCase):
         # Ensure GCP validation are disabled due to `WANNA_GCP_VALIDATION_DISABLED` env
         self.assertEqual(_should_validate(), True)
 
-        os.environ["WANNA_GCP_DISABLE_REMOTE_VALIDATION"] = "False"
+        os.environ["WANNA_GCP_ENABLE_REMOTE_VALIDATION"] = "False"
         self.assertEqual(_should_validate(), False)
 
-        os.environ["WANNA_GCP_DISABLE_REMOTE_VALIDATION"] = "True"
+        os.environ["WANNA_GCP_ENABLE_REMOTE_VALIDATION"] = "True"
         self.assertEqual(_should_validate(), True)
 
     def test_cloud_build_access_allowed(self):
