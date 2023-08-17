@@ -10,8 +10,8 @@ logger = get_logger(__name__)
 PYPI_URL = "https://pypi.org/pypi/wanna-ml/json"
 UPDATE_MESSAGE = (
     "If you used `pipx` to install WANNA CLI, use the following command:\n\n"
-    "pipx upgrade wanna\n\n"
-    f"Otherwise, use `pip install --upgrade {__package__}`"
+    "pipx upgrade wanna-ml\n\n"
+    f"Otherwise, use `pip install --upgrade wanna-ml`"
     "(exact command will depend on your environment).\n\n"
 )
 
