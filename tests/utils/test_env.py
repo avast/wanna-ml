@@ -23,7 +23,6 @@ class TestEnvUtilsModel(unittest.TestCase):
         self.assertEqual(_gcp_access_allowed(), True)
 
     def test_gcp_should_validate_env(self):
-
         # Ensure GCP validation are disabled due to `WANNA_GCP_VALIDATION_DISABLED` env
         self.assertEqual(_should_validate(), True)
 
@@ -34,7 +33,6 @@ class TestEnvUtilsModel(unittest.TestCase):
         self.assertEqual(_should_validate(), True)
 
     def test_cloud_build_access_allowed(self):
-
         # Ensure GCP validation are disabled due to `WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED` env
         self.assertEqual(_cloud_build_access_allowed(), True)
 

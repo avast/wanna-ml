@@ -49,7 +49,6 @@ class TestPipelineService(unittest.TestCase):
 
     @patch("wanna.core.services.docker.docker")
     def test_run_pipeline(self, docker_mock):
-
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 

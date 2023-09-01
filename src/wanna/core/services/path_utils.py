@@ -5,7 +5,6 @@ from caseconverter import kebabcase
 
 
 class JobPaths:
-
     job_manifest_filename = "job-manifest.json"
 
     def __init__(self, workdir: Path, bucket: str, job_name: str):
@@ -47,7 +46,6 @@ class JobPaths:
 
 
 class PipelinePaths:
-
     json_spec_filename = "pipeline-spec.json"
     wanna_manifest_filename = "wanna-manifest.json"
     job_manifest_filename = "job-manifest.json"

@@ -77,7 +77,6 @@ class TestNotebookPlugin(unittest.TestCase):
         self.assertEqual(0, result.exit_code)
 
     def test_notebook_ssh_cli_failure(self):
-
         result = self.runner.invoke(
             self.plugin.app,
             [

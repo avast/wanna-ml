@@ -53,7 +53,6 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         extra_params: Optional[Path],
         sync: bool = True,
     ) -> None:
-
         mode = "sync mode" if sync else "fire-forget mode"
 
         logger.user_info(f"Running pipeline {resource.pipeline_name} in {mode}")
@@ -94,7 +93,6 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
     def deploy_pipeline(
         self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str
     ) -> None:
-
         pipeline_service_account = (
             resource.schedule.service_account
             if resource.schedule and resource.schedule.service_account
@@ -288,5 +286,5 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         }
         try:
             cf.create_function({"location": parent, "function": function}).result()
-        except (AlreadyExists):
+        except AlreadyExists:
             logger.user_error(f"Function {function_name} already exists, no need to re-deploy")

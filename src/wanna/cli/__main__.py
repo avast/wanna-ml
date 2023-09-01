@@ -20,7 +20,7 @@ runner = PluginRunner()
 app = runner.app
 
 
-class WannaRepositoryTemplate(str, Enum):
+class WannaRepositoryTemplate(Enum):
     sklearn = "sklearn"
     blank = "blank"
 

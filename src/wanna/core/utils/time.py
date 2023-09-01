@@ -13,7 +13,6 @@ def get_timestamp():
 
 
 def update_time_template(params: Dict[str, Any]):
-
     for k, v in params.items():
         if isinstance(v, str):
             v = _jinja_env.from_string(v).render()

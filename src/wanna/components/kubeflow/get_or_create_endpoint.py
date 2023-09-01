@@ -6,8 +6,8 @@ from kfp.v2 import dsl
 @dsl.component(
     base_image="python:3.9",
     packages_to_install=[
-        "google-cloud-pipeline-components==1.0.39",
-        "google-cloud-aiplatform==1.22.1",
+        "google-cloud-pipeline-components==2.5.0",
+        "google-cloud-aiplatform==1.35.0",
     ],
 )
 def get_or_create_endpoint(
@@ -18,7 +18,6 @@ def get_or_create_endpoint(
     labels: Dict[str, str] = {},
     network: Optional[str] = None,
 ):
-
     import logging
 
     from google.api_core.client_options import ClientOptions
