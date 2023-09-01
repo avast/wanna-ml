@@ -186,13 +186,16 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             container_images=kernels,
             data_disk=local_disk,
             encryption_config=encryption_config,
-            labels=labels,
             accelerator_config=runtimeAcceleratorConfig,
             network=full_network,
             subnet=full_subnet,
             internal_ip_only=instance.internal_ip_only,
             tags=instance.tags,
-            metadata=instance.metadata,
+            # Currently creating managed notebooks with metadata or labels fails
+            # we need to disable this for the time being, until labels is added Runtime proto
+            # as it's now available on the rest interface
+            # metadata=instance.metadata,
+            # labels=labels,
         )
         virtualMachine = VirtualMachine(virtual_machine_config=virtualMachineConfig)
 
