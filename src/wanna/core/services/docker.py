@@ -118,7 +118,6 @@ class DockerService:
     def _build_image(
         self, context_dir, file_path: Path, tags: List[str], docker_image_ref: str, **build_args
     ) -> Union[Image, None]:
-
         should_build = self._should_build_by_context_dir_checksum(self.build_dir / docker_image_ref, context_dir)
 
         if should_build and not self.quick_mode:

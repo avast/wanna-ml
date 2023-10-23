@@ -51,7 +51,6 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         custom_job = CustomJob(**manifest.job_payload)
 
         if manifest.job_config.hp_tuning:
-
             parameter_spec = {
                 param.var_name: self._create_hyperparameter_spec(param)
                 for param in manifest.job_config.hp_tuning.parameters
@@ -129,7 +128,6 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             )
 
         with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job"):
-
             logger.user_info(f"Outputs will be saved to {manifest.job_config.base_output_directory}")
             training_job.run(
                 machine_type=manifest.job_config.worker.machine_type,

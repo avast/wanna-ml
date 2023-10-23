@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 from caseconverter import snakecase
 from google.cloud import aiplatform
 from kfp.v2.compiler import Compiler
-from kfp.v2.compiler.main import compile_pyfile
 from python_on_whales import Image
 
 from wanna.core.deployment.artifacts_push import PushResult
@@ -210,7 +209,7 @@ class PipelineService(BaseService[PipelineModel]):
             env_name = snakecase(f"{pipeline_name_prefix}_{key.upper()}").upper()
             os.environ[env_name] = str(value)
 
-        for (docker_image_model, _, tag) in images:
+        for docker_image_model, _, tag in images:
             env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI").upper()
             os.environ[env_name] = tag
 
@@ -230,7 +229,6 @@ class PipelineService(BaseService[PipelineModel]):
         return pipeline_env_params, pipeline_compile_params
 
     def _compile_one_instance(self, pipeline: PipelineModel, pipeline_params_path: Optional[Path] = None) -> Path:
-
         image_tags = [
             self.docker_service.get_image(docker_image_ref=docker_image_ref)
             for docker_image_ref in pipeline.docker_image_ref
@@ -282,18 +280,6 @@ class PipelineService(BaseService[PipelineModel]):
                 pipeline_parameters=pipeline_params,
                 package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
                 type_check=True,
-            )
-        elif pipeline.pipeline_file:
-            # Get the file
-            pyfile = str(self.workdir / pipeline.pipeline_file)
-            logger.user_info(f"Using kfp compile_pyfile with {pyfile}")
-            compile_pyfile(
-                pyfile=pyfile,
-                function_name=pipeline.pipeline_function,
-                pipeline_parameters=pipeline_params,
-                package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
-                type_check=True,
-                use_experimental=False,
             )
         else:
             raise ValueError("Can not compile kfp pipeline, " "pipeline_file or pipeline_function must be set.")

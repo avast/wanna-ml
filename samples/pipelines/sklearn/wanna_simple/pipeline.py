@@ -1,9 +1,10 @@
 # ignore: import-error
 # pylint: disable = no-value-for-parameter
 
-from google_cloud_pipeline_components import aiplatform as aip_components
-from kfp.v2 import dsl
-from kfp.v2.dsl import component
+from google_cloud_pipeline_components.v1.endpoint.deploy_model.component import model_deploy
+
+from kfp import dsl
+from kfp.dsl import component
 
 import wanna_simple.config as cfg
 from wanna_simple.components.data.get_data import get_data_op
@@ -70,7 +71,7 @@ def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
         # ===================================================================
         # simple model training directly in component
         # kfp.components.load_component_from_file()
-        train_op = train_xgb_model_op(dataset_op.outputs["dataset_train"])
+        train_op = train_xgb_model_op(dataset=dataset_op.outputs["dataset_train"])
 
         # ===================================================================
         # eval model
@@ -126,9 +127,9 @@ def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
             # ===================================================================
             # deploy models to endpoint to associates physical resources with the model
             # so it can serve online predictions
-            model_deploy_task = aip_components.ModelDeployOp(
+            model_deploy_task = model_deploy(
                 endpoint=endpoint_create_task.outputs["endpoint"],
-                model=model_upload_task.outputs["model"].ignore_type(),
+                model=model_upload_task.outputs["model"],
                 deployed_model_display_name=cfg.MODEL_NAME,
                 dedicated_resources_machine_type=cfg.SERVING_MACHINE_TYPE,
                 dedicated_resources_min_replica_count=cfg.SERVING_MIN_REPLICA_COUNT,

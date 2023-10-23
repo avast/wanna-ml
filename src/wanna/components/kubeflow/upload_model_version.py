@@ -1,13 +1,14 @@
 from typing import Dict, List, Optional
 
-from kfp.v2 import dsl
+from google_cloud_pipeline_components.types.artifact_types import VertexModel
+from kfp import dsl
 
 
 @dsl.component(
     base_image="python:3.9",
     packages_to_install=[
-        "google-cloud-pipeline-components==1.0.39",
-        "google-cloud-aiplatform==1.22.1",
+        "google-cloud-pipeline-components==2.3.0",
+        "google-cloud-aiplatform==1.31.0",
     ],
 )
 def upload_model_version(
@@ -16,7 +17,7 @@ def upload_model_version(
     display_name: str,
     serving_container_image_uri: str,
     artifact_uri: str,
-    model: dsl.Output[dsl.Model],
+    model: dsl.Output[VertexModel],
     model_output_path: dsl.OutputPath(str),  # type: ignore
     labels: Dict[str, str] = {},
     version_aliases: List[str] = [],

@@ -1,10 +1,9 @@
 import os
-from cookiecutter.main import cookiecutter
 import shutil
+from pathlib import Path
 
-import unittest
+from cookiecutter.main import cookiecutter
 
-from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.cli.__main__ import WannaRepositoryTemplate
 from wanna.core.utils.config_loader import load_config_from_yaml
 
@@ -25,7 +24,8 @@ class TestInitTemplates:
                                   no_input=True,
                                   overwrite_if_exists=True,
                                   output_dir=os.path.join("testing", "templates", template_name))
-        config = load_config_from_yaml(os.path.join(result_dir, "wanna.yaml"), "default")
+
+        _ = load_config_from_yaml(Path(os.path.join(result_dir, "wanna.yaml")), "default")
 
     def test_templates(self):
         for template in self.template_names:

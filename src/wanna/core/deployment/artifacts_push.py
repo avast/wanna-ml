@@ -28,7 +28,6 @@ class ArtifactsPushMixin(IOMixin):
         results: PushResult = []
 
         for push_task in push_tasks:
-
             push_containers(container_artifacts=push_task.container_artifacts)
             push_manifests(manifest_artifacts=push_task.manifest_artifacts)
             push_json(artifacts=push_task.json_artifacts)
