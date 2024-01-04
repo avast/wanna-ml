@@ -22,7 +22,7 @@ jobs:
           poetry install
       - name: Build
         run: |
-          poetry run task build
+          poetry run pytest
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v2
 
@@ -42,4 +42,4 @@ jobs:
           poetry install
       - name: Build
         run: |
-          poetry run task build
+          poetry run pytest

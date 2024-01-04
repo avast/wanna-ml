@@ -1,7 +1,8 @@
-from tests.mocks import mocks
 from wanna.core.models.tensorboard import TensorboardModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.tensorboard import TensorboardService
+
+from tests.mocks import mocks
 
 
 class TestTensorboardService:
@@ -12,10 +13,14 @@ class TestTensorboardService:
             "_list_running_instances",
             mocks.mock_list_running_instances,
         )
-        tb = TensorboardModel.parse_obj({"name": "tb1", "project_id": "gcp-project", "region": "europe-west4"})
+        tb = TensorboardModel.parse_obj(
+            {"name": "tb1", "project_id": "gcp-project", "region": "europe-west4"}
+        )
         found = tb_service._find_existing_tensorboard_by_model(instance=tb)
         assert found is not None, ""
-        tb = TensorboardModel.parse_obj({"name": "tb13", "project_id": "gcp-project", "region": "europe-west4"})
+        tb = TensorboardModel.parse_obj(
+            {"name": "tb13", "project_id": "gcp-project", "region": "europe-west4"}
+        )
         found = tb_service._find_existing_tensorboard_by_model(instance=tb)
         assert found is None, ""
 

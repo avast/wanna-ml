@@ -2,11 +2,10 @@
 # pylint: disable = no-value-for-parameter
 from pathlib import Path
 
-import config as cfg
+from . import config as cfg
+from google_cloud_pipeline_components.v1.bigquery import BigqueryQueryJobOp
 from kfp.v2 import dsl
 from kfp.v2.dsl import component
-
-from google_cloud_pipeline_components.v1.bigquery import BigqueryQueryJobOp
 
 
 @component(

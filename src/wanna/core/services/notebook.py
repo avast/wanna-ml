@@ -8,7 +8,12 @@ import typer
 from google.api_core import exceptions
 from google.cloud import compute_v1
 from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
-from google.cloud.notebooks_v1.types import ContainerImage, CreateInstanceRequest, Instance, VmImage
+from google.cloud.notebooks_v1.types import (
+    ContainerImage,
+    CreateInstanceRequest,
+    Instance,
+    VmImage,
+)
 from waiting import wait
 
 from wanna.core.deployment.models import PushMode
@@ -20,7 +25,10 @@ from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
-from wanna.core.utils.gcp import construct_vm_image_family_from_vm_image, upload_string_to_gcs
+from wanna.core.utils.gcp import (
+    construct_vm_image_family_from_vm_image,
+    upload_string_to_gcs,
+)
 
 logger = get_logger(__name__)
 
@@ -68,7 +76,9 @@ class NotebookService(BaseService[NotebookModel]):
         instances = self._filter_instances_by_name(instance_name)
 
         for instance in instances:
-            t = Thread(target=self._create_one_instance, args=(instance,), kwargs={**kwargs})
+            t = Thread(
+                target=self._create_one_instance, args=(instance,), kwargs={**kwargs}
+            )
             t.start()
 
     def delete(self, instance_name: str) -> None:
@@ -95,13 +105,17 @@ class NotebookService(BaseService[NotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            logger.user_info(f"Deleting {self.instance_type} {notebook_instance.name} ...")
+            logger.user_info(
+                f"Deleting {self.instance_type} {notebook_instance.name} ..."
+            )
             deleted = self.notebook_client.delete_instance(
                 name=f"projects/{notebook_instance.project_id}/locations/"
                 f"{notebook_instance.zone}/instances/{notebook_instance.name}"
             )
             deleted.result()
-            logger.user_success(f"Deleted {self.instance_type} {notebook_instance.name}")
+            logger.user_success(
+                f"Deleted {self.instance_type} {notebook_instance.name}"
+            )
         else:
             logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
@@ -123,28 +137,40 @@ class NotebookService(BaseService[NotebookModel]):
         """
         exists = self._instance_exists(instance)
         if exists:
-            logger.user_info(f"Instance {instance.name} already exists in location {instance.zone}")
-            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
+            logger.user_info(
+                f"Instance {instance.name} already exists in location {instance.zone}"
+            )
+            should_recreate = typer.confirm(
+                "Are you sure you want to delete it and start a new?"
+            )
             if should_recreate:
                 self._delete_one_instance(instance)
             else:
                 return
         push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
-        instance_request = self._create_instance_request(notebook_instance=instance, deploy=True, push_mode=push_mode)
-        logger.user_info(f"Creating underlying compute engine instance for {instance.name} ...")
+        instance_request = self._create_instance_request(
+            notebook_instance=instance, deploy=True, push_mode=push_mode
+        )
+        logger.user_info(
+            f"Creating underlying compute engine instance for {instance.name} ..."
+        )
         nb_instance = self.notebook_client.create_instance(instance_request)
         instance_full_name = (
             nb_instance.result().name
         )  # .result() waits for compute engine behind the notebook to start
         logger.user_info(f"Starting JupyterLab for {instance.name} ...")
         wait(
-            lambda: self._validate_jupyterlab_state(instance_full_name, Instance.State.ACTIVE),
+            lambda: self._validate_jupyterlab_state(
+                instance_full_name, Instance.State.ACTIVE
+            ),
             timeout_seconds=450,
             sleep_seconds=20,
             waiting_for="Starting JupyterLab in your instance",
         )
         jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        logger.user_success(f"JupyterLab for {instance.name} started at {jupyterlab_link}")
+        logger.user_success(
+            f"JupyterLab for {instance.name} started at {jupyterlab_link}"
+        )
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
@@ -158,7 +184,9 @@ class NotebookService(BaseService[NotebookModel]):
             instance_names: List of the full names on notebook instances (this includes project_id, and zone)
 
         """
-        instances = self.notebook_client.list_instances(parent=f"projects/{project_id}/locations/{location}")
+        instances = self.notebook_client.list_instances(
+            parent=f"projects/{project_id}/locations/{location}"
+        )
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
@@ -172,10 +200,15 @@ class NotebookService(BaseService[NotebookModel]):
             True if exists, False if not
         """
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
-        return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
+        return full_instance_name in self._list_running_instances(
+            instance.project_id, instance.zone
+        )
 
     def _create_instance_request(
-        self, notebook_instance: NotebookModel, deploy: bool = True, push_mode: PushMode = PushMode.all
+        self,
+        notebook_instance: NotebookModel,
+        deploy: bool = True,
+        push_mode: PushMode = PushMode.all,
     ) -> CreateInstanceRequest:
         """
         Transform the information about desired notebook from our NotebookModel model (based on yaml config)
@@ -196,7 +229,11 @@ class NotebookService(BaseService[NotebookModel]):
             fallback_project_network=self.config.gcp_profile.network,
             use_project_number=True,
         )
-        subnet = notebook_instance.subnet if notebook_instance.subnet else self.config.gcp_profile.subnet
+        subnet = (
+            notebook_instance.subnet
+            if notebook_instance.subnet
+            else self.config.gcp_profile.subnet
+        )
         full_subnet_name = self._get_resource_subnet(
             full_network_name,
             subnet,
@@ -244,12 +281,26 @@ class NotebookService(BaseService[NotebookModel]):
                 " Something went wrong during model validation"
             )
         # Disks
-        boot_disk_type = notebook_instance.boot_disk.disk_type if notebook_instance.boot_disk else None
-        boot_disk_size_gb = notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
-        data_disk_type = notebook_instance.data_disk.disk_type if notebook_instance.data_disk else None
-        data_disk_size_gb = notebook_instance.data_disk.size_gb if notebook_instance.data_disk else None
+        boot_disk_type = (
+            notebook_instance.boot_disk.disk_type
+            if notebook_instance.boot_disk
+            else None
+        )
+        boot_disk_size_gb = (
+            notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
+        )
+        data_disk_type = (
+            notebook_instance.data_disk.disk_type
+            if notebook_instance.data_disk
+            else None
+        )
+        data_disk_size_gb = (
+            notebook_instance.data_disk.size_gb if notebook_instance.data_disk else None
+        )
         disk_encryption = "CMEK" if self.config.gcp_profile.kms_key else None
-        kms_key = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
+        kms_key = (
+            self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
+        )
 
         # service account and instance owners
         service_account = notebook_instance.service_account
@@ -343,13 +394,19 @@ class NotebookService(BaseService[NotebookModel]):
         Returns:
             startup_script
         """
-        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
+        env_vars = (
+            self.config.gcp_profile.env_vars
+            if self.config.gcp_profile.env_vars
+            else dict()
+        )
         if nb_instance.env_vars:
             env_vars = {**env_vars, **nb_instance.env_vars}
 
         if nb_instance.tensorboard_ref:
-            tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                nb_instance.tensorboard_ref
+            tensorboard_resource_name = (
+                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                    nb_instance.tensorboard_ref
+                )
             )
         else:
             tensorboard_resource_name = None
@@ -377,7 +434,9 @@ class NotebookService(BaseService[NotebookModel]):
         try:
             instance_info = self.notebook_client.get_instance(name=instance_id)
         except exceptions.NotFound:
-            raise exceptions.NotFound(f"Notebook {instance_id} was not found.") from None
+            raise exceptions.NotFound(
+                f"Notebook {instance_id} was not found."
+            ) from None
         return instance_info.state == state
 
     def _get_jupyterlab_link(self, instance_id: str) -> str:
@@ -392,7 +451,9 @@ class NotebookService(BaseService[NotebookModel]):
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return f"https://{instance_info.proxy_uri}"
 
-    def _ssh(self, notebook_instance: NotebookModel, run_in_background: bool, local_port: int) -> None:
+    def _ssh(
+        self, notebook_instance: NotebookModel, run_in_background: bool, local_port: int
+    ) -> None:
         """
         SSH connect to the notebook instance if the instance is already started.
 
@@ -446,17 +507,25 @@ class NotebookService(BaseService[NotebookModel]):
         else:
             if instance_name in [notebook.name for notebook in self.config.notebooks]:
                 self._ssh(
-                    [notebook for notebook in self.config.notebooks if notebook.name == instance_name][0],
+                    [
+                        notebook
+                        for notebook in self.config.notebooks
+                        if notebook.name == instance_name
+                    ][0],
                     run_in_background,
                     local_port,
                 )
             else:
                 logger.user_error(f"No notebook {instance_name} found")
-                raise ValueError(f"Notebook {instance_name} does not exists in configuration")
+                raise ValueError(
+                    f"Notebook {instance_name} does not exists in configuration"
+                )
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_instance_request(notebook_instance=instance, deploy=False, push_mode=PushMode.manifests)
+            self._create_instance_request(
+                notebook_instance=instance, deploy=False, push_mode=PushMode.manifests
+            )
         logger.user_success("Notebooks validation OK!")
         return 0
 
@@ -464,12 +533,18 @@ class NotebookService(BaseService[NotebookModel]):
         instances = self._filter_instances_by_name(instance_name)
 
         docker_image_refs = set(
-            [instance.environment.docker_image_ref for instance in instances if instance.environment.docker_image_ref]
+            [
+                instance.environment.docker_image_ref
+                for instance in instances
+                if instance.environment.docker_image_ref
+            ]
         )
         if docker_image_refs:
             if self.docker_service:
                 for docker_image_ref in docker_image_refs:
-                    image_tag = self.docker_service.get_image(docker_image_ref=docker_image_ref)
+                    image_tag = self.docker_service.get_image(
+                        docker_image_ref=docker_image_ref
+                    )
                     if image_tag[1]:
                         self.docker_service.push_image(image_tag[1])
             else:
@@ -487,11 +562,17 @@ class NotebookService(BaseService[NotebookModel]):
         )
         request.project = self.config.gcp_profile.project_id
         agg_list = instance_client.aggregated_list(request=request)
-        gcp_instances = itertools.chain(*[resp.instances for zone, resp in agg_list if resp.instances])
+        gcp_instances = itertools.chain(
+            *[resp.instances for zone, resp in agg_list if resp.instances]
+        )
 
         active_notebooks = [
             NotebookModel.parse_obj(
-                {"name": i.name, "zone": i.zone.split("/")[-1], "project_id": self.config.gcp_profile.project_id}
+                {
+                    "name": i.name,
+                    "zone": i.zone.split("/")[-1],
+                    "project_id": self.config.gcp_profile.project_id,
+                }
             )
             for i in gcp_instances
         ]

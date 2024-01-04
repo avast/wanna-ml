@@ -1,5 +1,5 @@
 [tool.poetry]
-authors = ["Joao Da Silva <joao.silva1@avast.com>", "Michal Mrazek <michal.mrazek@avast.com>"]
+authors = ["Joao Da Silva <joao.dasilvacunha@gendigital.com>"]
 description = "CLI tool for managing ML projects on Vertex AI"
 name = "wanna-ml"
 version = "0.0.0"
@@ -29,53 +29,49 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-[tool.poetry.extras]
-test = ["pytest"]
-
 [tool.poetry.dependencies]
+python = ">=3.8.1,<3.12.0"
+kfp = "^2.4.0"
+google-cloud-aiplatform = "^1.38.1"
+google-cloud-build = "^3.22.0"
+google-cloud-compute = "^1.15.0"
+google-cloud-functions = "^1.14.0"
+google-cloud-logging = "^3.9.0"
+google-cloud-monitoring = "^2.18.0"
+google-cloud-notebooks = "^1.9.0"
+google-cloud-scheduler = "^2.12.0"
+google-cloud-storage = "^2.14.0"
+gcloud-config-helper = "^0.3.1"
 case-converter = "^1.1.0"
-cookiecutter = "^2.4.0"
+cookiecutter = "^2.5.0"
 cron-validator = "^1.0.8"
 dirhash = "^0.2.1"
-email-validator = "^2.1.0"
-emoji = "^2.8.0"
+email-validator = "^2.1.0.post1"
+emoji = "^2.9.0"
 gitpython = "^3.1.40"
-google-api-core = "^2.12.0"
-google-cloud-aiplatform = "^1.35.0"
-google-cloud-build = "^3.20.1"
-google-cloud-compute = "^1.14.1"
-google-cloud-functions = "^1.13.3"
-google-cloud-logging = "^3.8.0"
-google-cloud-monitoring = "^2.16.0"
-google-cloud-notebooks = "^1.8.1"
-google-cloud-pipeline-components = "^2.5.0"
-google-cloud-resource-manager = "^1.10.4"
-google-cloud-scheduler = "^2.11.2"
-google-cloud-storage = "^2.12.0"
-gcloud-config-helper = "^0.3.1"
 halo = "^0.0.31"
 Jinja2 = "^3.1.2"
-kfp = "^2.3.0"
 pathvalidate = "^3.2.0"
-pydantic = "^1.10.5"
-python = ">=3.8.1,<3.11"
-python-on-whales = "^0.65.0"
-pyyaml-include = "^1.3.1"
+pydantic = "^1.10.13"
+python-on-whales = "^0.68.0"
+pyyaml-include = "^1.3.2"
 PyYAML = "^6.0.1"
 smart-open = {extras = ["gcs"], version = "^6.4.0"}
 treelib = "^1.7.0"
 typer = "0.9.0"
 waiting = "^1.4.1"
-rich = "^13.6.0"
+rich = "^13.7.0"
 scandir = [
     {version = "^1.10.0", platform="win32" }
 ]
 pendulum = "^2.1.2"
 
-[tool.poetry.dev-dependencies]
-black = "^23.10.0"
-flake8 = "^6.1.0"
-isort = "^5.12.0"
+[tool.poetry.group.samples.dependencies]
+google-cloud-pipeline-components = "^2.8.0"
+xgboost = "^2.0.3"
+scikit-learn = "^1.3.2"
+
+[tool.poetry.group.dev.dependencies]
 mkdocs-click = "^0.8.1"
 mkdocs-material = "^9.4.6"
 mkdocs-typer = "^0.0.3"
@@ -84,23 +80,75 @@ mkdocstrings-python = "^1.7.3"
 mkautodoc = "^0.2.0"
 markdown = "^3.5"
 mock = "^5.1.0"
-mypy = "^1.6.1"
-pre-commit = "^3.5.0"
-pylint = "^3.0.2"
-pylint-pydantic = "^0.3.0"
+mypy = "^1.5.1"
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
+pytest-ruff = "^0.2.1"
+pytest-mypy = "^0.10.3"
 pytest-mock = "^3.12.0"
-taskipy = "^1.12.0"
-types-mock = "^5.1.0.2"
+poethepoet = "^0.22.0"
+black = "^23.7.0"
+types-mock = "^5.1.0.3"
 types-pyyaml = "^6.0.12"
 types-requests = "^2.31.0"
 types-setuptools = "^68.2.0"
-scikit-learn = "^1.2.1"
-xgboost = "^1.7.4"
+pre-commit = "^2.19.0"
+
+[tool.pytest.ini_options]
+addopts = """
+    --verbose
+    --ruff
+    --mypy
+    --cov-report term
+    --cov-report xml:coverage.xml
+    --cov=src
+    --durations=0
+    --ignore=src/wanna/components/templates
+    --ignore=templates
+    --ignore=samples
+    """
+filterwarnings = [
+    "error",
+    "ignore::UserWarning", # note the use of single quote below to denote "raw" strings in TOML
+    'ignore::DeprecationWarning',
+    'ignore::SyntaxWarning',
+    'ignore::ResourceWarning',
+]
+
+[tool.poe.tasks]
+_black = "black ."
+_ruff = "ruff --select I --fix ."
+format-code = ["_black", "_ruff"]
+docs-deploy = "mkdocs gh-deploy --force"
+docs-serve = "mkdocs serve"
+
+[tool.ruff]
+line-length = 99
+show-source = true
+select = ["E", "F", "I", "PERF", "ARG"]
+ignore = [
+    "E1", # handled by Black
+    "E4", # handled by Black
+    "E5", # handled by Black
+    "E722",
+    "PERF401"
+]
+extend-exclude = [
+    "**pb2.py",
+    "**pb2.pyi",
+    "src/wanna/components/templates/**",
+    "samples/**",
+    "templates/blank/**",
+    "templates/sklearn/**"
+]
 
 [tool.mypy]
-exclude = "src/wanna/components/templates"
+exclude = [
+    "src/wanna/components/templates/**",
+    "templates/blank/**",
+    "templates/sklearn/**",
+    "samples/pipelines/"
+]
 follow_imports = "silent"
 strict = true
 strict_optional = true
@@ -110,32 +158,8 @@ disallow_any_generics = true
 implicit_reexport = true
 ignore_missing_imports = true
 
-[tool.'mypy-google.*']
-ignore_missing_imports = true
-
-[tool.pylint.'MESSAGES CONTROL']
-extension-pkg-whitelist = "pydantic"
-
 [tool.poetry.scripts]
 wanna = "wanna.cli.__main__:wanna"
-
-[tool.pytest.ini_options]
-addopts = "--verbose -s --cov-report term --cov-report xml:coverage.xml --cov=src --durations=0 --ignore=src/wanna/components/templates"
-filterwarnings = [
-    "error",
-    "ignore::UserWarning", # note the use of single quote below to denote "raw" strings in TOML
-    'ignore::DeprecationWarning',
-    'ignore::SyntaxWarning',
-    'ignore::ResourceWarning',
-]
-
-[tool.taskipy.tasks]
-docs-deploy = "mkdocs gh-deploy --force"
-docs-serve = "mkdocs serve"
-build = "pre-commit run --all-files"
-pre_build = "pre-commit install"
-mypy = "mypy ./src"
-lint = "pylint ./src"
 
 [tool.black]
 extend-ignore = "E203"

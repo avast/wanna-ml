@@ -1,7 +1,12 @@
 import os
 import unittest
 
-from wanna.core.utils.env import _cloud_build_access_allowed, _gcp_access_allowed, _should_validate, get_env_bool
+from wanna.core.utils.env import (
+    _cloud_build_access_allowed,
+    _gcp_access_allowed,
+    _should_validate,
+    get_env_bool,
+)
 
 
 class TestEnvUtilsModel(unittest.TestCase):

@@ -15,7 +15,11 @@ profile_name_option = typer.Option(
 )
 
 wanna_file_option = typer.Option(
-    "wanna.yaml", "--file", "-f", envvar="WANNA_FILE", help="Path to the wanna-ml yaml configuration"
+    "wanna.yaml",
+    "--file",
+    "-f",
+    envvar="WANNA_FILE",
+    help="Path to the wanna-ml yaml configuration",
 )
 
 push_mode_option: PushMode = typer.Option(
@@ -28,7 +32,9 @@ push_mode_option: PushMode = typer.Option(
 )
 
 
-def instance_name_option(instance_type: str, operation: str, help: Optional[str] = None):
+def instance_name_option(
+    instance_type: str, operation: str, help: Optional[str] = None
+):
     return typer.Option(
         "all",
         "--name",

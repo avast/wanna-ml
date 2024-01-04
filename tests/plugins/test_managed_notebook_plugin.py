@@ -5,11 +5,11 @@ from unittest.mock import MagicMock
 
 from mock import patch
 from typer.testing import CliRunner
-
-from tests.mocks import mocks
 from wanna.cli.plugins.managed_notebook_plugin import ManagedNotebookPlugin
 from wanna.core.deployment.models import PushMode
 from wanna.core.services.managed_notebook import ManagedNotebookService
+
+from tests.mocks import mocks
 
 
 @patch(
@@ -38,7 +38,9 @@ class TestManagedNotebookPlugin(unittest.TestCase):
             ],
         )
         ManagedNotebookService.create.assert_called_once()
-        ManagedNotebookService.create.assert_called_with("minimum-setup", push_mode=PushMode.all)
+        ManagedNotebookService.create.assert_called_with(
+            "minimum-setup", push_mode=PushMode.all
+        )
 
         self.assertEqual(0, result.exit_code)
 
@@ -111,7 +113,9 @@ class TestManagedNotebookPlugin(unittest.TestCase):
             ],
         )
         ManagedNotebookService.sync.assert_called_once()
-        ManagedNotebookService.sync.assert_called_with(force=True, push_mode=PushMode.all)
+        ManagedNotebookService.sync.assert_called_with(
+            force=True, push_mode=PushMode.all
+        )
 
         self.assertEqual(0, result.exit_code)
 

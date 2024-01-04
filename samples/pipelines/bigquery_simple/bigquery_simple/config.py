@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+
 from caseconverter import snakecase
 
 # Env exported from wanna pipeline cli command
@@ -11,7 +12,9 @@ BUCKET = os.getenv(f"{PIPELINE_NAME_PREFIX}_BUCKET")
 REGION = os.getenv(f"{PIPELINE_NAME_PREFIX}_REGION")
 PIPELINE_NAME = os.getenv(f"{PIPELINE_NAME_PREFIX}_PIPELINE_NAME")
 PIPELINE_JOB_ID = os.getenv(f"{PIPELINE_NAME_PREFIX}_PIPELINE_JOB_ID")
-VERSION = os.getenv(f"{PIPELINE_NAME_PREFIX}_VERSION", datetime.now().strftime("%Y%m%d%H%M%S"))
+VERSION = os.getenv(
+    f"{PIPELINE_NAME_PREFIX}_VERSION", datetime.now().strftime("%Y%m%d%H%M%S")
+)
 PIPELINE_LABELS = json.loads(os.getenv(f"{PIPELINE_NAME_PREFIX}_PIPELINE_LABELS", "{}"))
 TENSORBOARD = os.getenv(f"{PIPELINE_NAME_PREFIX}_TENSORBOARD")
 

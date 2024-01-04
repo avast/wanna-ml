@@ -26,7 +26,9 @@ def get_credentials() -> Optional[Credentials]:
                 credentials = impersonated_credentials.Credentials(
                     source_credentials=_credentials,
                     target_principal=impersonate_account,
-                    target_scopes=_credentials.scopes if _credentials and _credentials.scopes else target_scopes,
+                    target_scopes=_credentials.scopes
+                    if _credentials and _credentials.scopes
+                    else target_scopes,
                     lifetime=500,
                 )
                 return credentials
@@ -46,6 +48,8 @@ def get_credentials() -> Optional[Credentials]:
 def get_gcloud_user() -> str:
     if gcp_access_allowed:
         credentials, project = gcloud_config_helper.default()
-        return credentials.properties.get("core", {}).get("account", "unidentified")[:60]
+        return credentials.properties.get("core", {}).get("account", "unidentified")[
+            :60
+        ]
 
     return "no-gcp-access-not-allowed"

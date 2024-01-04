@@ -15,14 +15,12 @@
 # limitations under the License.
 #
 import logging
-
-from pyspark.sql import SparkSession
-from datetime import datetime, date
-from pyspark.sql import Row
+from datetime import date, datetime
+from pathlib import Path
 from typing import Union
 
 import click
-from pathlib import Path
+from pyspark.sql import Row, SparkSession
 
 
 def kubeflow_output_dump(path: Union[Path, str], content: str):
@@ -37,6 +35,7 @@ def maybe_replace_gcs(path: str):
     else:
         return path
 
+
 @click.command()
 @click.option(
     "--data_output",
@@ -44,32 +43,34 @@ def maybe_replace_gcs(path: str):
     required=True,
 )
 def main(data_output):
-    spark = SparkSession\
-            .builder\
-            .appName("PythonPi")\
-            .getOrCreate()
+    spark = SparkSession.builder.appName("PythonPi").getOrCreate()
 
-    df = spark.createDataFrame([
-            Row(a=1, b=4., c='GFG1', d=date(2000, 8, 1),
-                e=datetime(2000, 8, 1, 12, 0)),
+    df = spark.createDataFrame(
+        [
+            Row(
+                a=1, b=4.0, c="GFG1", d=date(2000, 8, 1), e=datetime(2000, 8, 1, 12, 0)
+            ),
+            Row(
+                a=2, b=8.0, c="GFG2", d=date(2000, 6, 2), e=datetime(2000, 6, 2, 12, 0)
+            ),
+            Row(
+                a=4, b=5.0, c="GFG3", d=date(2000, 5, 3), e=datetime(2000, 5, 3, 12, 0)
+            ),
+        ]
+    )
 
-            Row(a=2, b=8., c='GFG2', d=date(2000, 6, 2),
-                e=datetime(2000, 6, 2, 12, 0)),
-
-            Row(a=4, b=5., c='GFG3', d=date(2000, 5, 3),
-                e=datetime(2000, 5, 3, 12, 0))
-        ])
-
-        # show table
+    # show table
     df.show()
 
-        # show schema
+    # show schema
     df.printSchema()
 
     p = "/tmp/data.csv"
     Path(p).parent.mkdir(parents=True, exist_ok=True)
     print(f"Going to save data to: {p}")
-    df.coalesce(1).write.option("header","true").option("sep",",").mode("overwrite").csv(p)
+    df.coalesce(1).write.option("header", "true").option("sep", ",").mode(
+        "overwrite"
+    ).csv(p)
 
     kubeflow_output_dump(f"{data_output}", str(p))
 

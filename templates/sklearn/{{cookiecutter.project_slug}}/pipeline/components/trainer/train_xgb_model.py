@@ -15,7 +15,6 @@ from kfp.v2.dsl import Dataset, Input, Model, Output, component
 def train_xgb_model_op(
     dataset: Input[Dataset], model_artifact: Output[Model]
 ) -> NamedTuple("outputs", [("train_score", float), ("model_artifact_path", str)]):
-
     from collections import namedtuple
 
     import pandas as pd
@@ -43,6 +42,8 @@ def train_xgb_model_op(
     model.save_model(model_artifact.path)
 
     # After save make model path match GCS counter part
-    model_path = str(model_artifact.path).replace("/gcs/", "gs://").replace("model.bst", "")
+    model_path = (
+        str(model_artifact.path).replace("/gcs/", "gs://").replace("model.bst", "")
+    )
     outputs = namedtuple("outputs", ["train_score", "model_artifact_path"])
     return outputs(train_score=float(score), model_artifact_path=model_path)

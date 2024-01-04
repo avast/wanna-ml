@@ -2,9 +2,12 @@ import unittest
 
 import pytest
 from pydantic.error_wrappers import ValidationError
-
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.notebook import ManagedNotebookModel, NotebookEnvironment, NotebookModel
+from wanna.core.models.notebook import (
+    ManagedNotebookModel,
+    NotebookEnvironment,
+    NotebookModel,
+)
 
 
 class TestNotebookModel(unittest.TestCase):
@@ -16,7 +19,9 @@ class TestNotebookModel(unittest.TestCase):
                 }
             )
         except ValidationError:
-            assert False, "Specifying the container image must be enough for notebook environment"
+            assert (
+                False
+            ), "Specifying the container image must be enough for notebook environment"
 
     def test_notebook_environment_container_and_vm_image_is_set(self):
         with pytest.raises(ValidationError):
