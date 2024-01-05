@@ -123,7 +123,7 @@ docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 
 [tool.ruff]
-line-length = 99
+line-length = 120
 show-source = true
 select = ["E", "F", "I", "PERF", "ARG"]
 ignore = [
