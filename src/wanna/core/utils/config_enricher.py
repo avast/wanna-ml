@@ -5,7 +5,9 @@ from wanna.core.models.wanna_project import WannaProjectModel
 from wanna.core.utils.credentials import get_gcloud_user
 
 
-def add_labels(instance_dict: Dict[str, Any], new_labels: Dict[str, str]) -> Dict[str, Any]:
+def add_labels(
+    instance_dict: Dict[str, Any], new_labels: Dict[str, str]
+) -> Dict[str, Any]:
     """
     Add new labels to the instance model.
     Args:
@@ -37,7 +39,9 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
     return {
         "wanna_project": wanna_project.name,
         "wanna_project_version": str(wanna_project.version).replace(".", "__"),
-        "wanna_project_authors": "_".join([email_fixer(author.partition("@")[0]) for author in wanna_project.authors]),
+        "wanna_project_authors": "_".join(
+            [email_fixer(author.partition("@")[0]) for author in wanna_project.authors]
+        ),
         "author": email_fixer(get_gcloud_user()),
     }
 
@@ -65,7 +69,9 @@ def enrich_instance_info_with_gcp_settings_dict(
     return instance_info
 
 
-def enrich_gcp_profile_with_wanna_default_labels(cls, values_inst, values):
+def enrich_gcp_profile_with_wanna_default_labels(
+    cls, values_inst, values  # noqa: ARG001
+):
     """
     Enrich gcp_profile with wanna default project labels
 
@@ -81,7 +87,7 @@ def enrich_gcp_profile_with_wanna_default_labels(cls, values_inst, values):
     return values_inst
 
 
-def enrich_instance_with_gcp_settings(cls, values_inst, values):
+def enrich_instance_with_gcp_settings(cls, values_inst, values):  # noqa: ARG001
     """
     Enrich dictionary representing one instance (one notebook, job, etc.)
     with information wanna_project and gcp_settings. This is useful in scenario when

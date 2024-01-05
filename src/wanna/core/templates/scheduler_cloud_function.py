@@ -1,7 +1,7 @@
 # Generated file do not change
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pendulum
 from google.cloud import aiplatform
@@ -13,7 +13,9 @@ PIPELINE_ROOT = os.getenv("PIPELINE_ROOT")
 PIPELINE_NETWORK = os.getenv("PIPELINE_NETWORK")
 PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_EXPERIMENT = os.getenv("PIPELINE_EXPERIMENT")
-PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
+PIPELINE_LABELS = json.loads(
+    os.environ["PIPELINE_LABELS"]
+)  # if not define we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
 
@@ -22,7 +24,6 @@ _jinja_env.globals.update(modules={"pendulum": pendulum})
 
 
 def _update_time_template(params: Dict[str, Any]):
-
     for k, v in params.items():
         if isinstance(v, str):
             v = _jinja_env.from_string(v).render()
@@ -51,11 +52,7 @@ def process_request(request):
     parameter_values = _update_time_template(request_json["parameter_values"])
     enable_caching = request_json.get("enable_caching", False)
 
-    aiplatform.init(
-        project=PROJECT_ID,
-        location=REGION,
-        experiment=PIPELINE_EXPERIMENT
-    )
+    aiplatform.init(project=PROJECT_ID, location=REGION, experiment=PIPELINE_EXPERIMENT)
 
     job = aiplatform.PipelineJob(
         display_name="{{manifest.pipeline_name}}",
@@ -68,8 +65,10 @@ def process_request(request):
         encryption_spec_key_name=ENCRYPTION_SPEC_KEY_NAME,
     )
 
-    job.submit(service_account=PIPELINE_SERVICE_ACCOUNT,
-               network=PIPELINE_NETWORK,
-               experiment=PIPELINE_EXPERIMENT)
+    job.submit(
+        service_account=PIPELINE_SERVICE_ACCOUNT,
+        network=PIPELINE_NETWORK,
+        experiment=PIPELINE_EXPERIMENT,
+    )
 
     return "Job submitted"

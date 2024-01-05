@@ -12,7 +12,11 @@ from google.cloud.monitoring_v3 import (
 from waiting import wait
 
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
-from wanna.core.deployment.models import AlertPolicyResource, LogMetricResource, NotificationChannelResource
+from wanna.core.deployment.models import (
+    AlertPolicyResource,
+    LogMetricResource,
+    NotificationChannelResource,
+)
 from wanna.core.loggers.wanna_logger import get_logger
 
 logger = get_logger(__name__)
@@ -24,7 +28,9 @@ class MonitoringMixin(GCPCredentialsMixIn):
         client: NotificationChannelServiceClient, project: str, display_name: str
     ) -> Optional[NotificationChannel]:
         channels = list(client.list_notification_channels(name=f"projects/{project}"))
-        channels = [channel for channel in channels if channel.display_name == display_name]
+        channels = [
+            channel for channel in channels if channel.display_name == display_name
+        ]
         if channels:
             return channels[0]
         return None
@@ -32,7 +38,9 @@ class MonitoringMixin(GCPCredentialsMixIn):
     def upsert_notification_channel(self, resource: NotificationChannelResource):
         client = NotificationChannelServiceClient(credentials=self.credentials)
 
-        channel = MonitoringMixin._get_notification_channel(client, resource.project, resource.name)
+        channel = MonitoringMixin._get_notification_channel(
+            client, resource.project, resource.name
+        )
 
         if not channel:
             notification_channel = NotificationChannel(
@@ -45,7 +53,8 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 enabled=True,
             )
             return client.create_notification_channel(
-                name=f"projects/{resource.project}", notification_channel=notification_channel
+                name=f"projects/{resource.project}",
+                notification_channel=notification_channel,
             )
         else:
             return channel
@@ -88,7 +97,9 @@ class MonitoringMixin(GCPCredentialsMixIn):
             "notification_channels": resource.notification_channels,
         }
 
-        alert_policy = cast(AlertPolicy, AlertPolicy.from_json(json.dumps(alert_policy)))
+        alert_policy = cast(
+            AlertPolicy, AlertPolicy.from_json(json.dumps(alert_policy))
+        )
         policies = client.list_alert_policies(name=f"projects/{resource.project}")
         policy = [policy for policy in policies if policy.display_name == resource.name]
         if policy:
@@ -96,12 +107,16 @@ class MonitoringMixin(GCPCredentialsMixIn):
             alert_policy.name = policy.name
             client.update_alert_policy(alert_policy=alert_policy)
         else:
-            client.create_alert_policy(name=f"projects/{resource.project}", alert_policy=alert_policy)
+            client.create_alert_policy(
+                name=f"projects/{resource.project}", alert_policy=alert_policy
+            )
 
     def upsert_log_metric(self, resource: LogMetricResource) -> Dict[str, Any]:
         client = LoggingClient(credentials=self.credentials)
         try:
-            return client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
+            return client.metrics_api.metric_get(
+                project=resource.project, metric_name=resource.name
+            )
         except NotFound:
             client.metrics_api.metric_create(
                 project=resource.project,
@@ -111,9 +126,13 @@ class MonitoringMixin(GCPCredentialsMixIn):
             )
             with logger.user_spinner(f"Creating log metric: {resource.name}"):
                 wait(
-                    lambda: client.metrics_api.metric_get(project=resource.project, metric_name=resource.name),
+                    lambda: client.metrics_api.metric_get(
+                        project=resource.project, metric_name=resource.name
+                    ),
                     timeout_seconds=120,
                     sleep_seconds=5,
                     waiting_for="Log metric",
                 )
-            return client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
+            return client.metrics_api.metric_get(
+                project=resource.project, metric_name=resource.name
+            )

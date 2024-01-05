@@ -1,18 +1,19 @@
 # ignore: import-error
 # pylint: disable = no-value-for-parameter
 
-from google_cloud_pipeline_components.v1.endpoint.deploy_model.component import model_deploy
-
+from google_cloud_pipeline_components.v1.endpoint.deploy_model.component import (
+    model_deploy,
+)
 from kfp import dsl
 from kfp.dsl import component
-
-import wanna_simple.config as cfg
-from wanna_simple.components.data.get_data import get_data_op
-from wanna_simple.components.predictor import make_prediction_request
-from wanna_simple.components.trainer.eval_model import eval_model_op
-from wanna_simple.components.trainer.train_xgb_model import train_xgb_model_op
 from wanna.components.kubeflow.get_or_create_endpoint import get_or_create_endpoint
 from wanna.components.kubeflow.upload_model_version import upload_model_version
+
+from . import config as cfg
+from .components.data.get_data import get_data_op
+from .components.predictor import make_prediction_request
+from .components.trainer.eval_model import eval_model_op
+from .components.trainer.train_xgb_model import train_xgb_model_op
 
 
 @component(
@@ -41,10 +42,9 @@ def slack_notification(slack_channel: str, status: str):
 @dsl.pipeline(
     # A name for the pipeline. Use to determine the pipeline Context.
     name=cfg.PIPELINE_NAME,
-    pipeline_root=cfg.PIPELINE_ROOT
+    pipeline_root=cfg.PIPELINE_ROOT,
 )
 def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
-
     # ===================================================================
     # Get pipeline result notification
     # ===================================================================
@@ -59,7 +59,6 @@ def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
     )
 
     with dsl.ExitHandler(exit_task):
-
         # ===================================================================
         # collect datasets
         # ===================================================================
@@ -78,7 +77,8 @@ def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
         # ===================================================================
         # collect model metrics for deployment condition
         eval_op = eval_model_op(
-            test_set=dataset_op.outputs["dataset_test"], xgb_model=train_op.outputs["model_artifact"]
+            test_set=dataset_op.outputs["dataset_test"],
+            xgb_model=train_op.outputs["model_artifact"],
         )
 
         # ========================================================================
@@ -100,7 +100,7 @@ def wanna_sklearn_sample(eval_acc_threshold: float, start_date: str):
                     serving_container_image_uri=cfg.SERVE_IMAGE_URI,
                     labels=cfg.PIPELINE_LABELS,
                     artifact_uri=train_op.outputs["model_artifact_path"],
-                    version_aliases=["candidatemodel", "default"]
+                    version_aliases=["candidatemodel", "default"],
                 )
                 .set_display_name("Upload model version")
                 .after(eval_op)

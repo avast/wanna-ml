@@ -22,6 +22,6 @@ pipelines:
     schedule:
       cron: 2 * * * *
     bucket: "your-staging-bucket-name"
-    pipeline_file: pipeline/pipeline.py
-    pipeline_params: pipeline/params.yaml
+    pipeline_file: bigquery_simple/pipeline.py
+    pipeline_params: bigquery_simple/params.yaml
     docker_image_ref: []

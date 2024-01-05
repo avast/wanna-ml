@@ -41,5 +41,6 @@ class PubSubNotificationChannel(BaseNotificationChannel):
 
 
 NotificationChannelModel = Annotated[
-    Union[EmailNotificationChannel, PubSubNotificationChannel], Field(discriminator="type")
+    Union[EmailNotificationChannel, PubSubNotificationChannel],
+    Field(discriminator="type"),
 ]

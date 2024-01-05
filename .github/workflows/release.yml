@@ -30,7 +30,7 @@ jobs:
       - name: Publish docs
         run: |
           poetry install
-          poetry run task docs-deploy
+          poetry run poe docs-deploy
 
   docker:
     runs-on: ubuntu-latest

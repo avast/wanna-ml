@@ -27,4 +27,6 @@ def get_data_op(
     test.to_csv(dataset_test.path)
 
     outputs = namedtuple("outputs", ["dataset_train_path", "dataset_test_path"])
-    return outputs(dataset_train_path=dataset_train.path, dataset_test_path=dataset_test.path)
+    return outputs(
+        dataset_train_path=dataset_train.path, dataset_test_path=dataset_test.path
+    )

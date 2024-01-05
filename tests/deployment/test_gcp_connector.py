@@ -5,10 +5,17 @@ from typing import Any
 
 from google.cloud import logging, scheduler_v1
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
-from google.cloud.monitoring_v3 import AlertPolicyServiceClient, NotificationChannel, NotificationChannelServiceClient
+from google.cloud.monitoring_v3 import (
+    AlertPolicyServiceClient,
+    NotificationChannel,
+    NotificationChannelServiceClient,
+)
 from mock import MagicMock
-
-from wanna.core.deployment.models import CloudFunctionResource, CloudSchedulerResource, NotificationChannelResource
+from wanna.core.deployment.models import (
+    CloudFunctionResource,
+    CloudSchedulerResource,
+    NotificationChannelResource,
+)
 from wanna.core.deployment.vertex_connector import VertexConnector
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 
@@ -44,7 +51,9 @@ class TestGCPConnector(unittest.TestCase):
             enabled=True,
         )
 
-        NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
+        NotificationChannelServiceClient.list_notification_channels = MagicMock(
+            return_value=[]
+        )
         NotificationChannelServiceClient.create_notification_channel = MagicMock()
         self.connector.upsert_notification_channel(notification_channel_resource)
 
@@ -52,7 +61,8 @@ class TestGCPConnector(unittest.TestCase):
             name="projects/test-gcp-connector"
         )
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
-            name="projects/test-gcp-connector", notification_channel=expected_notification_channel
+            name="projects/test-gcp-connector",
+            notification_channel=expected_notification_channel,
         )
 
     def test_upsert_notification_channel(self):
@@ -74,7 +84,9 @@ class TestGCPConnector(unittest.TestCase):
             enabled=True,
         )
 
-        NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
+        NotificationChannelServiceClient.list_notification_channels = MagicMock(
+            return_value=[]
+        )
         NotificationChannelServiceClient.create_notification_channel = MagicMock()
         self.connector.upsert_notification_channel(notification_channel_resource)
 
@@ -82,7 +94,8 @@ class TestGCPConnector(unittest.TestCase):
             name="projects/test-gcp-connector"
         )
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
-            name="projects/test-gcp-connector", notification_channel=expected_notification_channel
+            name="projects/test-gcp-connector",
+            notification_channel=expected_notification_channel,
         )
 
     def test_upsert_cloud_function(self):
@@ -129,15 +142,23 @@ class TestGCPConnector(unittest.TestCase):
         )
 
         self.assertEqual(
-            function_path, "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
+            function_path,
+            "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test",
         )
-        self.assertEqual(function_url, "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test")
+        self.assertEqual(
+            function_url,
+            "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test",
+        )
 
         # Check cloudfunctions sdk methos were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_called_with(
-            {"name": "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"}
+            {
+                "name": "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
+            }
         )
-        CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
+        CloudFunctionsServiceClient.update_function.assert_called_with(
+            {"function": expected_function}
+        )
 
         AlertPolicyServiceClient.list_alert_policies.assert_called()
         AlertPolicyServiceClient.create_alert_policy.assert_called()
@@ -163,11 +184,16 @@ class TestGCPConnector(unittest.TestCase):
         logging.Client.metrics_api.metric_get = MagicMock()
         scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
-        NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
+        NotificationChannelServiceClient.list_notification_channels = MagicMock(
+            return_value=[]
+        )
         NotificationChannelServiceClient.create_notification_channel = MagicMock()
 
         self.connector.upsert_cloud_scheduler(
-            function=function_refs, resource=resource, version=self.version, env=self.env
+            function=function_refs,
+            resource=resource,
+            version=self.version,
+            env=self.env,
         )
 
         job_name = "projects/test-gcp-connector/locations/europe-west-1/jobs/test-cloud-scheduler-job-test"

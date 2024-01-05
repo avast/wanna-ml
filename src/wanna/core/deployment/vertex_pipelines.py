@@ -8,7 +8,9 @@ from typing import Optional
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import logging
 from google.cloud.aiplatform import PipelineJob
-from google.cloud.aiplatform.compat.types import pipeline_state_v1 as gca_pipeline_state_v1
+from google.cloud.aiplatform.compat.types import (
+    pipeline_state_v1 as gca_pipeline_state_v1,
+)
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
@@ -22,7 +24,10 @@ from wanna.core.deployment.models import (
 )
 from wanna.core.deployment.vertex_scheduling import VertexSchedulingMixIn
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.notification_channel import EmailNotificationChannel, PubSubNotificationChannel
+from wanna.core.models.notification_channel import (
+    EmailNotificationChannel,
+    PubSubNotificationChannel,
+)
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.utils import templates
 from wanna.core.utils.gcp import is_gcs_path
@@ -34,11 +39,20 @@ logger = get_logger(__name__)
 
 class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
     @staticmethod
-    def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool) -> None:
+    def _at_pipeline_exit(
+        pipeline_name: str, pipeline_job: PipelineJob, sync: bool
+    ) -> None:
         @atexit.register
         def stop_pipeline_job():
-            if sync and pipeline_job and getattr(pipeline_job._gca_resource, "name", None):
-                if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
+            if (
+                sync
+                and pipeline_job
+                and getattr(pipeline_job._gca_resource, "name", None)
+            ):
+                if (
+                    pipeline_job.state
+                    != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED
+                ):
                     logger.user_error(
                         "detected exit signal, "
                         f"shutting down running pipeline {pipeline_name} "
@@ -61,7 +75,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         pipeline_job_id = f"pipeline-{resource.pipeline_name}-{get_timestamp()}"
 
         # Apply override with cli provided params file
-        override_params = load_yaml_path(extra_params, Path(".")) if extra_params else {}
+        override_params = (
+            load_yaml_path(extra_params, Path(".")) if extra_params else {}
+        )
         pipeline_params = {**resource.parameter_values, **override_params}
         pipeline_params = update_time_template(pipeline_params)
 
@@ -79,19 +95,33 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             encryption_spec_key_name=resource.encryption_spec_key_name,
         )
 
-        VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
+        VertexPipelinesMixInVertex._at_pipeline_exit(
+            resource.pipeline_name, pipeline_job, sync
+        )
 
         # submit pipeline job for execution
-        experiment = resource.experiment if resource.experiment else f"{resource.pipeline_name}-experiment"
+        experiment = (
+            resource.experiment
+            if resource.experiment
+            else f"{resource.pipeline_name}-experiment"
+        )
 
-        pipeline_job.submit(service_account=resource.service_account, network=resource.network, experiment=experiment)
+        pipeline_job.submit(
+            service_account=resource.service_account,
+            network=resource.network,
+            experiment=experiment,
+        )
 
         if sync:
             logger.user_info(f"Pipeline dashboard at {pipeline_job._dashboard_uri()}.")
             pipeline_job.wait()
 
     def deploy_pipeline(
-        self, resource: PipelineResource, pipeline_paths: PipelinePaths, version: str, env: str
+        self,
+        resource: PipelineResource,
+        pipeline_paths: PipelinePaths,
+        version: str,
+        env: str,
     ) -> None:
         pipeline_service_account = (
             resource.schedule.service_account
@@ -139,7 +169,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                     )
                     channels.append(channel.name)
             else:
-                raise ValueError(f"Validation error notification config {config} can't be handled by wanna-ml")
+                raise ValueError(
+                    f"Validation error notification config {config} can't be handled by wanna-ml"
+                )
 
         function = self.upsert_cloud_function(
             resource=CloudFunctionResource(
@@ -182,7 +214,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             )
 
         else:
-            logger.user_info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
+            logger.user_info(
+                "Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync"
+            )
 
         logging_metric_ref = f"{resource.pipeline_name}-ml-pipeline-error"
         gcp_resource_type = "aiplatform.googleapis.com/PipelineJob"
@@ -240,15 +274,15 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         sink.create()
         logger.user_info("Created sink {}".format(sink.name))
 
-    def upsert_sla_function(self, resource: PipelineResource, version: str, env: str) -> None:
+    def upsert_sla_function(
+        self, resource: PipelineResource, version: str, env: str
+    ) -> None:
         logger.user_info(
             f"Deploying {resource.pipeline_name} SLA monitoring function with version {version} to env {env}"
         )
         parent = f"projects/{resource.project}/locations/{resource.location}"
         local_functions_package = "sla.zip"
-        functions_gcs_path_dir = (
-            f"{resource.pipeline_bucket}/wanna-pipelines/{resource.pipeline_name}/deployment/{version}/functions"
-        )
+        functions_gcs_path_dir = f"{resource.pipeline_bucket}/wanna-pipelines/{resource.pipeline_name}/deployment/{version}/functions"
         functions_gcs_path = f"{functions_gcs_path_dir}/sla.zip"
         function_name = f"{resource.pipeline_name}-{env}-{version}"
         function_path = f"{parent}/functions/{function_name}"
@@ -258,7 +292,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             labels=json.dumps(resource.labels, separators=(",", ":")),
         )
 
-        requirements = templates.render_template(Path("sla_cloud_function_requirements.txt"))
+        requirements = templates.render_template(
+            Path("sla_cloud_function_requirements.txt")
+        )
 
         with zipfile.ZipFile(local_functions_package, "w") as z:
             z.writestr("main.py", cloud_function)
@@ -279,7 +315,8 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             "runtime": "python39",
             "event_trigger": {
                 "event_type": "google.storage.object.finalize",
-                "resource": f"projects/{resource.project}/buckets/" + f"{resource.pipeline_bucket}"[5:],
+                "resource": f"projects/{resource.project}/buckets/"
+                + f"{resource.pipeline_bucket}"[5:],
             },
             "service_account_email": resource.service_account,
             "labels": resource.labels,
@@ -287,4 +324,6 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         try:
             cf.create_function({"location": parent, "function": function}).result()
         except AlreadyExists:
-            logger.user_error(f"Function {function_name} already exists, no need to re-deploy")
+            logger.user_error(
+                f"Function {function_name} already exists, no need to re-deploy"
+            )

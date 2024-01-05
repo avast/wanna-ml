@@ -4,7 +4,6 @@ from pathlib import Path
 
 from mock.mock import MagicMock
 from typer.testing import CliRunner
-
 from wanna.cli.plugins.job_plugin import JobPlugin
 from wanna.core.deployment.models import JobResource
 from wanna.core.deployment.vertex_connector import VertexConnector
@@ -91,7 +90,9 @@ class TestJobPlugin(unittest.TestCase):
         self.assertEqual(2, result.exit_code)
 
     def test_job_run_cli(self):
-        VertexConnector[JobResource[TrainingCustomJobModel]].run_training_job = MagicMock()
+        VertexConnector[
+            JobResource[TrainingCustomJobModel]
+        ].run_training_job = MagicMock()
 
         result = self.runner.invoke(
             self.plugin.app,
@@ -116,7 +117,9 @@ class TestJobPlugin(unittest.TestCase):
             ],
         )
         self.assertEqual(0, result.exit_code)
-        VertexConnector[JobResource[TrainingCustomJobModel]].run_training_job.assert_called()
+        VertexConnector[
+            JobResource[TrainingCustomJobModel]
+        ].run_training_job.assert_called()
 
         # should work without sync and hp-params
         result = self.runner.invoke(

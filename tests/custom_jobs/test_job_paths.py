@@ -12,12 +12,18 @@ class TestJobService(unittest.TestCase):
     job_build_dir = sample_job_dir / "build"
 
     def setUp(self) -> None:
-        self.job_paths = JobPaths(self.sample_job_dir, "gs://test_bucket", "custom-job-with-containers")
+        self.job_paths = JobPaths(
+            self.sample_job_dir, "gs://test_bucket", "custom-job-with-containers"
+        )
         self.version = "test"
 
     def test_job_paths(self) -> None:
-        wanna_local_manifest_file = self.job_paths.get_local_job_wanna_manifest_path(self.version)
-        wanna_gcs_manifest_file = self.job_paths.get_gcs_job_wanna_manifest_path(self.version)
+        wanna_local_manifest_file = self.job_paths.get_local_job_wanna_manifest_path(
+            self.version
+        )
+        wanna_gcs_manifest_file = self.job_paths.get_gcs_job_wanna_manifest_path(
+            self.version
+        )
 
         self.assertEqual(
             wanna_gcs_manifest_file,

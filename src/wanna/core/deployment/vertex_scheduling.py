@@ -27,7 +27,11 @@ logger = get_logger(__name__)
 
 class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
     def upsert_cloud_scheduler(
-        self, function: Tuple[str, str], resource: CloudSchedulerResource, version: str, env: str
+        self,
+        function: Tuple[str, str],
+        resource: CloudSchedulerResource,
+        version: str,
+        env: str,
     ) -> None:
         client = scheduler_v1.CloudSchedulerClient(credentials=self.credentials)
         parent = f"projects/{resource.project}/locations/{resource.location}"
@@ -35,7 +39,9 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         job_name = f"{parent}/jobs/{job_id}"
         function_name, function_url = function
 
-        logger.user_info(f"Deploying {resource.name} cloud scheduler with version {version} to env {env}")
+        logger.user_info(
+            f"Deploying {resource.name} cloud scheduler with version {version} to env {env}"
+        )
 
         http_target = {
             "uri": function_url,
@@ -46,7 +52,8 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 "Wanna-Pipeline-Version": version,
             },
             "oidc_token": {
-                "service_account_email": resource.cloud_scheduler.service_account or resource.service_account,
+                "service_account_email": resource.cloud_scheduler.service_account
+                or resource.service_account,
                 # required scope https://developers.google.com/identity/protocols/oauth2/scopes#cloudfunctions
                 # "scope": "https://www.googleapis.com/auth/cloud-platform"
             },
@@ -65,11 +72,18 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         try:
             _ = client.get_job({"name": job_name})
             logger.user_info(f"Found {job_name} cloud scheduler job, updating it")
-            client.update_job({"job": job, "update_mask": {"paths": ["schedule", "http_target", "time_zone"]}})
+            client.update_job(
+                {
+                    "job": job,
+                    "update_mask": {"paths": ["schedule", "http_target", "time_zone"]},
+                }
+            )
 
         except NotFound:
             # Does not exist let's create it
-            logger.user_info(f"Creating {job_name} with deployment manifest for {env} with version {version}")
+            logger.user_info(
+                f"Creating {job_name} with deployment manifest for {env} with version {version}"
+            )
             client.create_job({"parent": parent, "job": job})
 
         logging_metric_ref = f"{job_id}-cloud-scheduler-errors"
@@ -99,8 +113,12 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             )
         )
 
-    def upsert_cloud_function(self, resource: CloudFunctionResource, version: str, env: str) -> Tuple[str, str]:
-        logger.user_info(f"Deploying {resource.name} cloud function with version {version} to env {env}")
+    def upsert_cloud_function(
+        self, resource: CloudFunctionResource, version: str, env: str
+    ) -> Tuple[str, str]:
+        logger.user_info(
+            f"Deploying {resource.name} cloud function with version {version} to env {env}"
+        )
         parent = f"projects/{resource.project}/locations/{resource.location}"
         pipeline_functions_dir = resource.build_dir / "functions"
         os.makedirs(pipeline_functions_dir, exist_ok=True)
@@ -117,7 +135,8 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         )
 
         requirements = templates.render_template(
-            Path("scheduler_cloud_function_requirements.txt"), manifest=resource.template_vars
+            Path("scheduler_cloud_function_requirements.txt"),
+            manifest=resource.template_vars,
         )
 
         with zipfile.ZipFile(local_functions_package, "w") as z:
@@ -142,7 +161,9 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             },
             "service_account_email": resource.service_account,
             "labels": resource.labels,
-            "environment_variables": {snakecase(k).upper(): v for k, v in resource.env_params.items()}
+            "environment_variables": {
+                snakecase(k).upper(): v for k, v in resource.env_params.items()
+            }
             # TODO: timeout
         }
 

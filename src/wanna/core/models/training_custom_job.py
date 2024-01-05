@@ -37,7 +37,9 @@ class WorkerPoolModel(BaseModel, extra=Extra.forbid):
     # _machine_type = validator("machine_type", allow_reuse=True)(validators.validate_machine_type)
 
     @root_validator
-    def one_from_python_or_container_spec_must_be_set(cls, values):  # pylint: disable=no-self-argument,no-self-use
+    def one_from_python_or_container_spec_must_be_set(
+        cls, values
+    ):  # pylint: disable=no-self-argument,no-self-use
         if values.get("python_package") and values.get("container"):
             raise ValueError("Only one of python_package or container can be set")
         if not values.get("python_package") and not values.get("container"):
@@ -81,7 +83,8 @@ class DiscreteParameter(BaseModel, extra=Extra.forbid):
 
 
 HyperParamater = Annotated[
-    Union[IntegerParameter, DoubleParameter, CategoricalParameter, DiscreteParameter], Field(discriminator="type")
+    Union[IntegerParameter, DoubleParameter, CategoricalParameter, DiscreteParameter],
+    Field(discriminator="type"),
 ]
 
 
@@ -142,7 +145,9 @@ class BaseCustomJobModel(BaseInstanceModel):
         cls, values: Dict[str, Any]
     ) -> Dict[str, Any]:
         if not values.get("base_output_directory"):
-            values["base_output_directory"] = f"gs://{values.get('bucket')}/wanna-jobs/{values.get('name')}/outputs"
+            values[
+                "base_output_directory"
+            ] = f"gs://{values.get('bucket')}/wanna-jobs/{values.get('name')}/outputs"
         return values
 
     @root_validator(pre=False)
@@ -150,7 +155,9 @@ class BaseCustomJobModel(BaseInstanceModel):
         cls, values: Dict[str, Any]
     ) -> Dict[str, Any]:
         if values.get("tensorboard_ref") and not values.get("service_account"):
-            raise ValueError("service_account must be set when using tensorboard in jobs")
+            raise ValueError(
+                "service_account must be set when using tensorboard in jobs"
+            )
         return values
 
 
@@ -164,11 +171,14 @@ class CustomJobModel(BaseCustomJobModel):
         cls, workers: List[WorkerPoolModel]
     ) -> List[WorkerPoolModel]:
         if workers:
-            python_packages = list(filter(lambda w: w.python_package is not None, workers))
+            python_packages = list(
+                filter(lambda w: w.python_package is not None, workers)
+            )
             containers = list(filter(lambda w: w.container is not None, workers))
             if len(python_packages) > 0 and len(containers) > 0:
                 raise ValueError(
-                    "CustomJobs must be of the same spec. " "Either just based on python_package or container"
+                    "CustomJobs must be of the same spec. "
+                    "Either just based on python_package or container"
                 )
 
         return workers
