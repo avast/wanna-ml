@@ -93,6 +93,8 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     - `cloud_build_workerpool` - [str] (optional) Name of the GCP Cloud Build workerpool if you want to use one
     - `cloud_build_workerpool_location` - [str] (optional) Location of the GCP Cloud Build workerpool. Must be specified
     if cloud_build_workerpool is set.
+    - `cloud_build_kaniko_version` - [str] (optional) which https://github.com/GoogleContainerTools/kaniko/ version to use
+    - `cloud_build_kaniko_flags` - [str] (optional) which https://github.com/GoogleContainerTools/kaniko/ flags to use
     """
 
     images: List[DockerImageModel] = []
@@ -102,6 +104,12 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     cloud_build: bool = False
     cloud_build_workerpool: Optional[str]
     cloud_build_workerpool_location: Optional[str]
+    cloud_build_kaniko_version: Optional[str] = "latest"
+    cloud_build_kaniko_flags: List[str] = [
+        "--cache=true",
+        "--compressed-caching=false",
+        "--cache-copy-layers=true",
+    ]
 
 
 class DockerBuildResult(BaseModel, extra=Extra.forbid):
