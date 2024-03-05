@@ -3,7 +3,9 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 
 import typer
 
-CommandRegistration = Union[Callable[..., None], Tuple[Callable[..., None], Dict[Any, Any]]]
+CommandRegistration = Union[
+    Callable[..., None], Tuple[Callable[..., None], Dict[Any, Any]]
+]
 
 
 class BasePlugin(abc.ABC):

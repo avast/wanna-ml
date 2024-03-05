@@ -20,19 +20,18 @@ runner = PluginRunner()
 app = runner.app
 
 
-class WannaRepositoryTemplate(str, Enum):
+class WannaRepositoryTemplate(Enum):
     sklearn = "sklearn"
     blank = "blank"
 
 
 @app.command(name="version", help="Print your current and latest available version")
-def version(ctx: typer.Context):
+def version():
     perform_check()
 
 
 @app.command(name="init", help="Initiate a new wanna-ml project from template.")
 def init(
-    ctx: typer.Context,
     output_dir: Path = typer.Option(
         ...,
         "--output-dir",
@@ -48,7 +47,9 @@ def init(
     ),
 ):
     result_dir = cookiecutter(
-        "https://github.com/avast/wanna-ml", directory=f"templates/{template}", output_dir=output_dir
+        "https://github.com/avast/wanna-ml",
+        directory=f"templates/{template}",
+        output_dir=output_dir,
     )
     logger.user_success(f"Repo initiated at {result_dir}")
 

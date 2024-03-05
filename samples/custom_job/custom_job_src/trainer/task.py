@@ -13,8 +13,12 @@ tfds.disable_progress_bar()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lr", dest="lr", default=0.01, type=float, help="Learning rate.")
-parser.add_argument("--epochs", dest="epochs", default=10, type=int, help="Number of epochs.")
-parser.add_argument("--steps", dest="steps", default=200, type=int, help="Number of steps per epoch.")
+parser.add_argument(
+    "--epochs", dest="epochs", default=10, type=int, help="Number of epochs."
+)
+parser.add_argument(
+    "--steps", dest="steps", default=200, type=int, help="Number of steps per epoch."
+)
 parser.add_argument(
     "--distribute",
     dest="distribute",
@@ -101,11 +105,14 @@ from tensorflow.keras.callbacks import TensorBoard
 
 # Define Tensorboard as a Keras callback
 tensorboard = TensorBoard(
- log_dir=os.getenv("AIP_TENSORBOARD_LOG_DIR"),
- histogram_freq=1,
- write_images=True
+    log_dir=os.getenv("AIP_TENSORBOARD_LOG_DIR"), histogram_freq=1, write_images=True
 )
 keras_callbacks = [tensorboard]
 
-model.fit(x=train_dataset, epochs=args.epochs, steps_per_epoch=args.steps, callbacks=keras_callbacks)
+model.fit(
+    x=train_dataset,
+    epochs=args.epochs,
+    steps_per_epoch=args.steps,
+    callbacks=keras_callbacks,
+)
 model.save(MODEL_DIR)

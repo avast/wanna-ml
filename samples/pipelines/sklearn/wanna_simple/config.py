@@ -3,14 +3,18 @@ import os
 from datetime import datetime
 
 # Env exported from wanna pipeline cli command
-PIPELINE_NAME_PREFIX = "WANNA_SKLEARN_SAMPLE"  # snake_cased pipeline name in wanna config
+PIPELINE_NAME_PREFIX = (
+    "WANNA_SKLEARN_SAMPLE"  # snake_cased pipeline name in wanna config
+)
 
 PROJECT_ID = os.getenv(f"{PIPELINE_NAME_PREFIX}_PROJECT_ID")
 BUCKET = os.getenv(f"{PIPELINE_NAME_PREFIX}_BUCKET")
 REGION = os.getenv(f"{PIPELINE_NAME_PREFIX}_REGION")
 PIPELINE_NAME = os.getenv(f"{PIPELINE_NAME_PREFIX}_PIPELINE_NAME")
 PIPELINE_EXPERIMENT = os.environ[f"{PIPELINE_NAME_PREFIX}_PIPELINE_EXPERIMENT"]
-VERSION = os.getenv(f"{PIPELINE_NAME_PREFIX}_PIPELINE_VERSION", datetime.now().strftime("%Y%m%d%H%M%S"))
+VERSION = os.getenv(
+    f"{PIPELINE_NAME_PREFIX}_PIPELINE_VERSION", datetime.now().strftime("%Y%m%d%H%M%S")
+)
 PIPELINE_LABELS = json.loads(os.getenv(f"{PIPELINE_NAME_PREFIX}_PIPELINE_LABELS", "{}"))
 TENSORBOARD = os.getenv(f"{PIPELINE_NAME_PREFIX}_TENSORBOARD")
 
@@ -29,4 +33,4 @@ SERVE_IMAGE_URI = os.environ[f"SERVE_DOCKER_URI"]  # Yes, fail during compilatio
 SERVING_MACHINE_TYPE = "n1-standard-4"
 SERVING_MIN_REPLICA_COUNT = 1
 SERVING_MAX_REPLICA_COUNT = 2
-SERVING_TRAFFIC_SPLIT = '{"0": 100}'
+SERVING_TRAFFIC_SPLIT = {"0": 100}

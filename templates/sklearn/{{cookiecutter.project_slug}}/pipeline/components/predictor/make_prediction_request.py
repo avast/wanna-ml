@@ -7,7 +7,9 @@ from kfp.v2.dsl import component
     base_image="python:3.9",
     packages_to_install=["google-cloud-aiplatform", "google-cloud-pipeline-components"],
 )
-def make_prediction_request(project: str, bucket: str, endpoint: str, instances: List[List[float]]):
+def make_prediction_request(
+    project: str, bucket: str, endpoint: str, instances: List[List[float]]
+):
     """custom pipeline component to pass prediction requests to Vertex AI
     endpoint and get responses
     """

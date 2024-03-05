@@ -18,7 +18,9 @@ class BaseInstanceModel(BaseModel, extra=Extra.ignore, validate_assignment=True)
     tags: Optional[List[str]]
     metadata: Optional[Dict[str, Any]]
 
-    _project_id = validator("project_id", allow_reuse=True)(validators.validate_project_id)
+    _project_id = validator("project_id", allow_reuse=True)(
+        validators.validate_project_id
+    )
     _zone = validator("zone", allow_reuse=True)(validators.validate_zone)
     _region = validator("region", allow_reuse=True)(validators.validate_region)
     _network = validator("network", allow_reuse=True)(validators.validate_network_name)

@@ -26,7 +26,10 @@ class TestWannaConfigModel:
         wanna_config = WannaConfigModel.parse_obj(self.wanna_config_dict)
         assert wanna_config.notebooks[0].labels.get("grade") == "a"
         assert wanna_config.notebooks[0].labels.get("wanna_project") == "hogwarts-owl"
-        assert wanna_config.notebooks[0].labels.get("wanna_project_authors") == "luna-lovegood"
+        assert (
+            wanna_config.notebooks[0].labels.get("wanna_project_authors")
+            == "luna-lovegood"
+        )
 
     def test_parameters_propagation_dont_overwrite_if_exist(self):
         wanna_config = WannaConfigModel.parse_obj(self.wanna_config_dict)

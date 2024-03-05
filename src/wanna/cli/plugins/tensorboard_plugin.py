@@ -4,7 +4,11 @@ from typing import Optional
 import typer
 
 from wanna.cli.plugins.base_plugin import BasePlugin
-from wanna.cli.plugins.common_options import instance_name_option, profile_name_option, wanna_file_option
+from wanna.cli.plugins.common_options import (
+    instance_name_option,
+    profile_name_option,
+    wanna_file_option,
+)
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
@@ -63,7 +67,9 @@ class TensorboardPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         region: Optional[str] = typer.Option(
-            None, "--region", help="Overwrites the region from wanna-ml yaml configuration"
+            None,
+            "--region",
+            help="Overwrites the region from wanna-ml yaml configuration",
         ),
         filter_expr: str = typer.Option(
             None,
@@ -75,7 +81,9 @@ class TensorboardPlugin(BasePlugin):
             "Example: labels.wanna_project:* - to show all tensorboard created by wanna-ml.\n"
             "Example: labels.wanna_project:sushi-ssl.",
         ),
-        show_url: bool = typer.Option(True, "--url/--no-url", help="Weather to show URL link to experiments"),
+        show_url: bool = typer.Option(
+            True, "--url/--no-url", help="Weather to show URL link to experiments"
+        ),
     ) -> None:
         """
         List Tensorboard Instances in GCP Vertex AI Experiments.
@@ -91,4 +99,6 @@ class TensorboardPlugin(BasePlugin):
                 "Please provide a region. Either via cli arg or via region or zone in selected gcp profile"
             )
         else:
-            tb_service.list_tensorboards_in_tree(region=region, filter_expr=filter_expr, show_url=show_url)
+            tb_service.list_tensorboards_in_tree(
+                region=region, filter_expr=filter_expr, show_url=show_url
+            )

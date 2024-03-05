@@ -2,7 +2,7 @@
 # pylint: disable = no-value-for-parameter
 from pathlib import Path
 
-import config as cfg
+from . import config as cfg
 from kfp.v2 import dsl
 from kfp.v2.dsl import component
 
@@ -29,7 +29,9 @@ def wanna_pipeline(eval_acc_threshold: float):
     # ===================================================================
     # Get pipeline result notification
     # ===================================================================
-    exit_task = on_exit().set_display_name("On Exit Dummy Task").set_caching_options(False)
+    exit_task = (
+        on_exit().set_display_name("On Exit Dummy Task").set_caching_options(False)
+    )
 
     with dsl.ExitHandler(exit_task):
         pass

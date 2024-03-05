@@ -28,15 +28,15 @@ def on_exit():
     pipeline_root=cfg.PIPELINE_ROOT,
 )
 def wanna_sklearn_sample(eval_acc_threshold: float):
-
     # ===================================================================
     # Get pipeline result notification
     # ===================================================================
     # collect datasets provided by sklearn
-    exit_task = on_exit().set_display_name("On Exit Dummy Task").set_caching_options(False)
+    exit_task = (
+        on_exit().set_display_name("On Exit Dummy Task").set_caching_options(False)
+    )
 
     with dsl.ExitHandler(exit_task):
-
         # ===================================================================
         # collect datasets
         # ===================================================================
@@ -55,7 +55,8 @@ def wanna_sklearn_sample(eval_acc_threshold: float):
         # ===================================================================
         # collect model metrics for deployment condition
         eval_op = eval_model_op(
-            test_set=dataset_op.outputs["dataset_test"], xgb_model=train_op.outputs["model_artifact"]
+            test_set=dataset_op.outputs["dataset_test"],
+            xgb_model=train_op.outputs["model_artifact"],
         )
 
         # ========================================================================

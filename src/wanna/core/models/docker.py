@@ -76,7 +76,9 @@ class NotebookReadyImageModel(BaseDockerImageModel):
     requirements_txt: Path
 
 
-DockerImageModel = Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]
+DockerImageModel = Union[
+    LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel
+]
 
 
 class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):

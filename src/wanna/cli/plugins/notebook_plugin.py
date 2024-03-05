@@ -72,7 +72,9 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
-        nb_service = NotebookService(config=config, workdir=workdir, owner=owner, version=version)
+        nb_service = NotebookService(
+            config=config, workdir=workdir, owner=owner, version=version
+        )
         nb_service.create(instance_name, push_mode=mode)
 
     @staticmethod
@@ -96,7 +98,9 @@ class NotebookPlugin(BasePlugin):
             "you will be able to connect to the Jupyter Lab at localhost:{LOCAL_PORT}",
         ),
         local_port: int = typer.Option(
-            8080, "--port", help="Jupyter Lab will be accessible at this port at localhost."
+            8080,
+            "--port",
+            help="Jupyter Lab will be accessible at this port at localhost.",
         ),
     ) -> None:
         """
@@ -181,7 +185,9 @@ class NotebookPlugin(BasePlugin):
     def sync(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
+        force: bool = typer.Option(
+            False, "--force", help="Synchronisation without prompt"
+        ),
         version: str = version_option(instance_type="notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:

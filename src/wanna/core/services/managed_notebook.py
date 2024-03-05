@@ -5,7 +5,9 @@ from typing import List, Tuple
 
 import typer
 from google.api_core import exceptions
-from google.cloud.notebooks_v1.services.managed_notebook_service import ManagedNotebookServiceClient
+from google.cloud.notebooks_v1.services.managed_notebook_service import (
+    ManagedNotebookServiceClient,
+)
 from google.cloud.notebooks_v1.types import (
     ContainerImage,
     CreateRuntimeRequest,
@@ -74,7 +76,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         instances = self._filter_instances_by_name(instance_name)
 
         for instance in instances:
-            t = Thread(target=self._create_one_instance, args=(instance,), kwargs={**kwargs})
+            t = Thread(
+                target=self._create_one_instance, args=(instance,), kwargs={**kwargs}
+            )
             t.start()
 
     def delete(self, instance_name: str) -> None:
@@ -92,7 +96,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             t.start()
 
     def _create_runtime_request(
-        self, instance: ManagedNotebookModel, deploy: bool = True, push_mode: PushMode = PushMode.all
+        self,
+        instance: ManagedNotebookModel,
+        deploy: bool = True,
+        push_mode: PushMode = PushMode.all,
     ) -> CreateRuntimeRequest:
         """
         Transform the information about desired managed-notebook from the model based on yaml config
@@ -128,10 +135,14 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         # Disks
         disk_type = instance.data_disk.disk_type if instance.data_disk else None
         disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
-        local_disk_params = LocalDiskInitializeParams(disk_size_gb=disk_size_gb, disk_type=disk_type)
+        local_disk_params = LocalDiskInitializeParams(
+            disk_size_gb=disk_size_gb, disk_type=disk_type
+        )
         local_disk = LocalDisk(initialize_params=local_disk_params)
         encryption_config = (
-            EncryptionConfig(kms_key=self.config.gcp_profile.kms_key) if self.config.gcp_profile.kms_key else None
+            EncryptionConfig(kms_key=self.config.gcp_profile.kms_key)
+            if self.config.gcp_profile.kms_key
+            else None
         )
 
         # Accelerator
@@ -175,7 +186,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             if not self.docker_service:
                 raise Exception("Docker params in wanna-ml config not defined")
             for docker_image_ref in instance.kernel_docker_image_refs:
-                image_url = self.docker_service.build_container_and_get_image_url(docker_image_ref, push_mode=push_mode)
+                image_url = self.docker_service.build_container_and_get_image_url(
+                    docker_image_ref, push_mode=push_mode
+                )
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
                 kernels.append(ContainerImage(repository=repository, tag=tag))
@@ -208,9 +221,13 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             }
         )
 
-        runtimeAccessConfig = RuntimeAccessConfig(access_type=access_type, runtime_owner=notebook_owner)
+        runtimeAccessConfig = RuntimeAccessConfig(
+            access_type=access_type, runtime_owner=notebook_owner
+        )
         runtime = Runtime(
-            access_config=runtimeAccessConfig, software_config=runtimeSoftwareConfig, virtual_machine=virtualMachine
+            access_config=runtimeAccessConfig,
+            software_config=runtimeSoftwareConfig,
+            virtual_machine=virtualMachine,
         )
 
         # Create runtime request
@@ -230,13 +247,17 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         exists = self._instance_exists(notebook_instance)
         if exists:
-            logger.user_info(f"Deleting {self.instance_type} {notebook_instance.name} ...")
+            logger.user_info(
+                f"Deleting {self.instance_type} {notebook_instance.name} ..."
+            )
             deleted = self.notebook_client.delete_runtime(
                 name=f"projects/{notebook_instance.project_id}/locations/"
                 f"{notebook_instance.region}/runtimes/{notebook_instance.name}"
             )
             deleted.result()
-            logger.user_success(f"Deleted {self.instance_type} {notebook_instance.name}")
+            logger.user_success(
+                f"Deleted {self.instance_type} {notebook_instance.name}"
+            )
         else:
             logger.user_error(
                 f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
@@ -257,15 +278,21 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         """
         exists = self._instance_exists(instance)
         if exists:
-            logger.user_info(f"Managed notebook {instance.name} already exists in location {instance.region}")
-            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
+            logger.user_info(
+                f"Managed notebook {instance.name} already exists in location {instance.region}"
+            )
+            should_recreate = typer.confirm(
+                "Are you sure you want to delete it and start a new?"
+            )
             if should_recreate:
                 self._delete_one_instance(instance)
             else:
                 return
 
         push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
-        request = self._create_runtime_request(instance=instance, deploy=True, push_mode=push_mode)
+        request = self._create_runtime_request(
+            instance=instance, deploy=True, push_mode=push_mode
+        )
         logger.user_info(f"Creating instance for {instance.name} ...")
         nb_instance = self.notebook_client.create_runtime(request=request)
         instance_full_name = (
@@ -273,13 +300,17 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         )  # .result() waits for compute engine behind the notebook to start
         logger.user_info(f"Starting JupyterLab for {instance.name} ...")
         wait(
-            lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
+            lambda: self._validate_jupyterlab_state(
+                instance_full_name, Runtime.State.ACTIVE
+            ),
             timeout_seconds=450,
             sleep_seconds=20,
             waiting_for="Starting JupyterLab in your instance",
         )
         jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        logger.user_success(f"JupyterLab for {instance.name} started at {jupyterlab_link}")
+        logger.user_success(
+            f"JupyterLab for {instance.name} started at {jupyterlab_link}"
+        )
 
     def _list_running_instances(self, project_id: str, location: str) -> List[str]:
         """
@@ -293,7 +324,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             instance_names: List of the full names on notebook instances (this includes project_id, and zone)
 
         """
-        instances = self.notebook_client.list_runtimes(parent=f"projects/{project_id}/locations/{location}")
+        instances = self.notebook_client.list_runtimes(
+            parent=f"projects/{project_id}/locations/{location}"
+        )
         instance_names = [i.name for i in instances.runtimes]
         return instance_names
 
@@ -323,8 +356,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             startup_script
         """
         if nb_instance.tensorboard_ref:
-            tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                nb_instance.tensorboard_ref
+            tensorboard_resource_name = (
+                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                    nb_instance.tensorboard_ref
+                )
             )
         else:
             tensorboard_resource_name = None
@@ -349,7 +384,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         try:
             instance_info = self.notebook_client.get_runtime(name=instance_id)
         except exceptions.NotFound:
-            raise exceptions.NotFound(f"Managed Notebook {instance_id} was not found.") from None
+            raise exceptions.NotFound(
+                f"Managed Notebook {instance_id} was not found."
+            ) from None
         return instance_info.state == state
 
     def _get_jupyterlab_link(self, instance_id: str) -> str:
@@ -364,14 +401,18 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
         return f"https://{instance_info.access_config.proxy_uri}"
 
-    def _return_diff(self) -> Tuple[List[ManagedNotebookModel], List[ManagedNotebookModel]]:
+    def _return_diff(
+        self,
+    ) -> Tuple[List[ManagedNotebookModel], List[ManagedNotebookModel]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """
         location = self.config.gcp_profile.region
         parent = f"projects/{self.config.gcp_profile.project_id}/locations/{location}"
         active_runtimes = self.notebook_client.list_runtimes(parent=parent).runtimes
-        wanna_notebook_names = [managednotebook.name for managednotebook in self.instances]
+        wanna_notebook_names = [
+            managednotebook.name for managednotebook in self.instances
+        ]
         active_notebook_names = [str(runtime.name) for runtime in active_runtimes]
         to_be_deleted = []
         to_be_created = []
@@ -379,7 +420,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         Notebooks to be deleted
         """
         for runtime in active_runtimes:
-            if runtime.virtual_machine.virtual_machine_config.labels["wanna_project"] == self.config.wanna_project.name:
+            if (
+                runtime.virtual_machine.virtual_machine_config.labels["wanna_project"]
+                == self.config.wanna_project.name
+            ):
                 if runtime.name.split("/")[-1] not in wanna_notebook_names:
                     to_be_deleted.append(
                         ManagedNotebookModel.parse_obj(
@@ -405,7 +449,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_runtime_request(instance=instance, deploy=False, push_mode=PushMode.manifests)
+            self._create_runtime_request(
+                instance=instance, deploy=False, push_mode=PushMode.manifests
+            )
         logger.user_success("Managed notebooks validation OK!")
         return 0
 
@@ -414,13 +460,19 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         docker_image_refs = set(
             itertools.chain(
-                *[instance.kernel_docker_image_refs for instance in instances if instance.kernel_docker_image_refs]
+                *[
+                    instance.kernel_docker_image_refs
+                    for instance in instances
+                    if instance.kernel_docker_image_refs
+                ]
             )
         )
         if docker_image_refs:
             if self.docker_service:
                 for docker_image_ref in docker_image_refs:
-                    image_tag = self.docker_service.get_image(docker_image_ref=docker_image_ref)
+                    image_tag = self.docker_service.get_image(
+                        docker_image_ref=docker_image_ref
+                    )
                     if image_tag[1]:
                         self.docker_service.push_image(image_tag[1])
             else:

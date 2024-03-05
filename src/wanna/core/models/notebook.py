@@ -58,10 +58,14 @@ class NotebookModel(BaseInstanceModel):
     Works only for non-Docker notebooks!
     """
 
-    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
+    name: str = Field(
+        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
+    )
     zone: str
     machine_type: str = "n1-standard-4"
-    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
+    environment: NotebookEnvironment = NotebookEnvironment(
+        vm_image=VMImage(framework="common", version="cpu")
+    )
     owner: Optional[EmailStr]
     gpu: Optional[GPU]
     boot_disk: Optional[Disk]
@@ -107,7 +111,9 @@ class ManagedNotebookModel(BaseInstanceModel):
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
     """
 
-    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
+    name: str = Field(
+        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
+    )
     owner: Optional[str]
     machine_type: Optional[str] = "n1-standard-4"
     gpu: Optional[GPU]

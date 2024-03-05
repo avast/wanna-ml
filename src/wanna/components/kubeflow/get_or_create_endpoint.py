@@ -6,8 +6,8 @@ from kfp.v2 import dsl
 @dsl.component(
     base_image="python:3.9",
     packages_to_install=[
-        "google-cloud-pipeline-components==1.0.39",
-        "google-cloud-aiplatform==1.22.1",
+        "google-cloud-pipeline-components==2.5.0",
+        "google-cloud-aiplatform==1.35.0",
     ],
 )
 def get_or_create_endpoint(
@@ -18,7 +18,6 @@ def get_or_create_endpoint(
     labels: Dict[str, str] = {},
     network: Optional[str] = None,
 ):
-
     import logging
 
     from google.api_core.client_options import ClientOptions
@@ -38,12 +37,18 @@ def get_or_create_endpoint(
     )
     resp = client.list_endpoints(request=list_request)
     # Match endpoints on display name and also if they are public / private
-    endpoints = [e for e in resp if e.display_name == display_name and e.network == (network or "")]
+    endpoints = [
+        e
+        for e in resp
+        if e.display_name == display_name and e.network == (network or "")
+    ]
 
     if len(endpoints) > 0:
         logging.info("Already existing endpoints found")
         # If multiple endpoints are matched, take the newest one by update time
-        sorted_endpoints = sorted(endpoints, key=lambda ep: ep.update_time, reverse=True)
+        sorted_endpoints = sorted(
+            endpoints, key=lambda ep: ep.update_time, reverse=True
+        )
 
         endpoint_resource_name = sorted_endpoints[0].name
 

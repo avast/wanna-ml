@@ -31,4 +31,6 @@ class GPU(BaseModel, extra=Extra.forbid):
     accelerator_type: str
     install_gpu_driver: bool = True
 
-    _accelerator_type = validator("accelerator_type")(validators.validate_accelerator_type)
+    _accelerator_type = validator("accelerator_type")(
+        validators.validate_accelerator_type
+    )
