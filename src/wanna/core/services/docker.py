@@ -59,6 +59,7 @@ class DockerService:
         wanna_project_name: str,
         quick_mode: bool = False,  # just returns tags but does not build
     ):
+        self.docker_model = docker_model
         self.image_models = docker_model.images
         self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
 
@@ -376,8 +377,10 @@ class DockerService:
         tags_args = " ".join([f"--destination={t}" for t in tags]).split()
 
         steps = BuildStep(
-            name="gcr.io/kaniko-project/executor:latest",
-            args=tags_args + ["--cache=true", "--dockerfile", dockerfile],
+            name=f"gcr.io/kaniko-project/executor:{self.docker_model.cloud_build_kaniko_version}",
+            args=tags_args
+            + self.docker_model.cloud_build_kaniko_flags
+            + ["--dockerfile", dockerfile],
         )
 
         timeout = Duration()
