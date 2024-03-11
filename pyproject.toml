@@ -64,7 +64,6 @@ rich = "^13.7.0"
 scandir = [
     {version = "^1.10.0", platform="win32" }
 ]
-scantree = "<0.0.2a0"
 pendulum = "^2.1.2"
 
 [tool.poetry.group.samples.dependencies]
