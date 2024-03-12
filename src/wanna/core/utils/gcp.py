@@ -1,6 +1,4 @@
-import os
 import re
-import tarfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -329,22 +327,9 @@ def construct_vm_image_family_from_vm_image(
     return f"{framework}-{version}-notebooks"
 
 
-def make_tarfile(source_dir: Path, output_filename: Path):
-    """
-    TAR a given folder and save the result to output_filename.
-
-    Args:
-        source_dir:
-        output_filename:
-    """
-    os.makedirs(output_filename.parent.absolute(), exist_ok=True)
-    with tarfile.open(output_filename, "w:gz") as tar:
-        tar.add(source_dir, arcname=".")
-
-
 def upload_file_to_gcs(
     filename: Path, bucket_name: str, blob_name: str
-) -> "storage.blob.Blob":
+) -> storage.blob.Blob:
     """
     Upload file to GCS bucket
 
@@ -365,7 +350,7 @@ def upload_file_to_gcs(
 
 def upload_string_to_gcs(
     data: str, bucket_name: str, blob_name: str
-) -> "storage.blob.Blob":
+) -> storage.blob.Blob:
     """
     Upload a string to GCS bucket without saving it locally as a file.
     Args:

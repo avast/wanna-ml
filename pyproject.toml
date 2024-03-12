@@ -66,6 +66,7 @@ scandir = [
 ]
 scantree = "0.0.1"
 pendulum = "^2.1.2"
+igittigitt = "^2.1.4"
 
 [tool.poetry.group.samples.dependencies]
 google-cloud-pipeline-components = "^2.8.0"

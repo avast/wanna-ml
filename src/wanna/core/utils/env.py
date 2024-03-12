@@ -31,7 +31,7 @@ def _gcp_access_allowed(env_var="WANNA_GCP_ACCESS_ALLOWED"):
         bool if wanna can access GCP apis
     """
     allowed = get_env_bool(os.environ.get(env_var), True)
-    logger.user_info(f"WANNA GCP access {'NOT ' if not allowed else ''}allowed")
+    logger.user_info(f"GCP access {'NOT ' if not allowed else ''}allowed")
     return allowed
 
 
@@ -51,9 +51,9 @@ def _should_validate(env_var="WANNA_GCP_ENABLE_REMOTE_VALIDATION"):
     """
     validate = get_env_bool(os.environ.get(env_var), True)
     if validate:
-        logger.user_info("WANNA remote validation is enabled")
+        logger.user_info("Remote validation is enabled")
     else:
-        logger.user_info("WANNA remote validation is disabled")
+        logger.user_info("Remote validation is disabled")
     return validate
 
 
@@ -70,9 +70,9 @@ def _cloud_build_access_allowed(env_var="WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED") 
     """
     allowed = get_env_bool(os.environ.get(env_var), True)
     if allowed:
-        logger.user_info("WANNA cloud build access is enabled")
+        logger.user_info("Cloud build access is enabled")
     else:
-        logger.user_info("WANNA cloud build access is disabled")
+        logger.user_info("Cloud build access is disabled")
     return allowed
 
 
