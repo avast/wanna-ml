@@ -87,6 +87,7 @@ class DockerService:
         self.build_dir = self.work_dir / "build" / "docker"
         self.wanna_project_name = wanna_project_name
         self.project_id = gcp_profile.project_id
+        self.project_number = convert_project_id_to_project_number(self.project_id)
         self.location = gcp_profile.region
         self.docker_build_config_path = os.getenv(
             "WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml"
@@ -165,16 +166,15 @@ class DockerService:
                     docker_image_ref=docker_image_ref,
                     tags=tags,
                 )
-                project = convert_project_id_to_project_number(self.project_id)
                 build_id = op.metadata.build.id
                 base = "https://console.cloud.google.com/cloud-build/builds"
                 if self.cloud_build_workerpool:
                     link = (
                         base
-                        + f";region={self.cloud_build_workerpool_location}/{build_id}?project={project}"
+                        + f";region={self.cloud_build_workerpool_location}/{build_id}?project={self.project_number}"
                     )
                 else:
-                    link = base + f"/{build_id}?project={project}"
+                    link = base + f"/{build_id}?project={self.project_number}"
                 try:
                     op.result()
                     self._write_context_dir_checksum(
@@ -391,10 +391,9 @@ class DockerService:
         DEFAULT_POLLING._timeout = self.cloud_build_timeout
 
         if self.cloud_build_workerpool:
-            project_number = convert_project_id_to_project_number(self.project_id)
             options = BuildOptions(
                 pool=BuildOptions.PoolOption(
-                    name=f"projects/{project_number}/locations/{self.cloud_build_workerpool_location}"
+                    name=f"projects/{self.project_number}/locations/{self.cloud_build_workerpool_location}"
                     f"/workerPools/{self.cloud_build_workerpool}"
                 )
             )
