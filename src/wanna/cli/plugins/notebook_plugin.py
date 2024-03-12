@@ -14,7 +14,6 @@ from wanna.cli.plugins.common_options import (
 )
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.services.notebook import NotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 logger = get_logger(__name__)
@@ -50,6 +49,10 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(config=config, workdir=workdir)
         nb_service.delete(instance_name)
 
@@ -72,6 +75,10 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(
             config=config, workdir=workdir, owner=owner, version=version
         )
@@ -115,6 +122,10 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(config=config, workdir=workdir)
         nb_service.ssh(instance_name, run_in_background, local_port)
 
@@ -127,9 +138,17 @@ class NotebookPlugin(BasePlugin):
         """
         Displays a link to the cost report per wanna_project and optionally per instance name.
         """
+
+        # doing this import here speeds up the CLI app considerably
+
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(config=config, workdir=workdir)
+
         nb_service.report(
             instance_name=instance_name,
             wanna_project=config.wanna_project.name,
@@ -150,6 +169,10 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(config=config, workdir=workdir, version=version)
         nb_service.build()
 
@@ -172,12 +195,19 @@ class NotebookPlugin(BasePlugin):
         """
         Push docker containers. This command also builds the images.
         """
+
+        # doing this import here speeds up the CLI app considerably
+
         if mode != PushMode.containers:
             logger.user_error("Only containers are supported push mode as of now.")
             typer.Exit(1)
 
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(config=config, workdir=workdir, version=version)
         nb_service.push(instance_name=instance_name)
 
@@ -201,5 +231,9 @@ class NotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.notebook import NotebookService
+
         nb_service = NotebookService(config=config, workdir=workdir, version=version)
         nb_service.sync(force=force, push_mode=mode)

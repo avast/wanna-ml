@@ -12,7 +12,6 @@ from wanna.cli.plugins.common_options import (
     wanna_file_option,
 )
 from wanna.core.deployment.models import PushMode
-from wanna.core.services.pipeline import PipelineService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
@@ -53,6 +52,10 @@ class PipelinePlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.pipeline import PipelineService
+
         pipeline_service = PipelineService(
             config=config, workdir=workdir, version=version, push_mode=mode
         )
@@ -77,6 +80,10 @@ class PipelinePlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.pipeline import PipelineService
+
         pipeline_service = PipelineService(
             config=config, workdir=workdir, version=version, push_mode=mode
         )
@@ -97,6 +104,10 @@ class PipelinePlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.pipeline import PipelineService
+
         pipeline_service = PipelineService(
             config=config, workdir=workdir, version=version
         )
@@ -129,6 +140,10 @@ class PipelinePlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.pipeline import PipelineService
+
         pipeline_service = PipelineService(
             config=config,
             workdir=workdir,
@@ -158,6 +173,10 @@ class PipelinePlugin(BasePlugin):
         """
         Run the pipeline as specified in the wanna-ml manifest.
         """
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.pipeline import PipelineService
+
         PipelineService.run([manifest], extra_params=params, sync=sync)
 
     @staticmethod
@@ -171,6 +190,10 @@ class PipelinePlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.pipeline import PipelineService
+
         pipeline_service = PipelineService(config=config, workdir=workdir)
         pipeline_service.report(
             instance_name=instance_name,

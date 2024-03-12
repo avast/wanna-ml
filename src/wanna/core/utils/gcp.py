@@ -4,17 +4,20 @@ import tarfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import google.auth
-from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import storage
-from google.cloud.compute import MachineTypesClient, ZonesClient
-from google.cloud.compute_v1 import RegionsClient
-from google.cloud.compute_v1.services.images import ImagesClient
-from google.cloud.compute_v1.types import ListImagesRequest
-from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
+from wanna.core.utils.env import should_validate
+
+if should_validate:
+    # since is very slow to import all these, we do it only when validation is required
+    import google.auth
+    from google.auth.exceptions import DefaultCredentialsError
+    from google.cloud import storage
+    from google.cloud.compute import MachineTypesClient, ZonesClient
+    from google.cloud.compute_v1 import RegionsClient
+    from google.cloud.compute_v1.services.images import ImagesClient
+    from google.cloud.compute_v1.types import ListImagesRequest
+    from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.env import should_validate
 
 NETWORK_REGEX = (
     "projects/((?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)"
@@ -365,7 +368,7 @@ def make_tarfile(source_dir: Path, output_filename: Path):
 
 def upload_file_to_gcs(
     filename: Path, bucket_name: str, blob_name: str
-) -> storage.blob.Blob:
+) -> "storage.blob.Blob":
     """
     Upload file to GCS bucket
 
@@ -386,7 +389,7 @@ def upload_file_to_gcs(
 
 def upload_string_to_gcs(
     data: str, bucket_name: str, blob_name: str
-) -> storage.blob.Blob:
+) -> "storage.blob.Blob":
     """
     Upload a string to GCS bucket without saving it locally as a file.
     Args:

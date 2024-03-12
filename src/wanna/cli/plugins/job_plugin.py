@@ -13,7 +13,6 @@ from wanna.cli.plugins.common_options import (
     wanna_file_option,
 )
 from wanna.core.deployment.models import PushMode
-from wanna.core.services.jobs import JobService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
@@ -47,8 +46,13 @@ class JobPlugin(BasePlugin):
         """
         Create a manifest based on the wanna-ml config that can be later pushed or run.
         """
+
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.jobs import JobService
+
         job_service = JobService(config=config, workdir=workdir)
         job_service.build(instance_name)
 
@@ -65,6 +69,10 @@ class JobPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.jobs import JobService
+
         job_service = JobService(
             config=config, workdir=workdir, version=version, push_mode=mode
         )
@@ -92,6 +100,10 @@ class JobPlugin(BasePlugin):
         args, command = JobPlugin._extract_job_overrides(ctx.args)
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.jobs import JobService
+
         job_service = JobService(config=config, workdir=workdir, version=version)
         manifests = job_service.build(instance_name)
         job_service.push(manifests, local=False)
@@ -120,6 +132,10 @@ class JobPlugin(BasePlugin):
         Run the job as specified in the wanna-ml manifest.
         """
         args, command = JobPlugin._extract_job_overrides(ctx.args)
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.jobs import JobService
+
         JobService.run(
             manifests=[manifest],
             sync=sync,
@@ -139,6 +155,10 @@ class JobPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.jobs import JobService
+
         job_service = JobService(config=config, workdir=workdir)
         job_service.stop(instance_name)
 
@@ -153,6 +173,10 @@ class JobPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.jobs import JobService
+
         job_service = JobService(config=config, workdir=workdir)
         job_service.report(
             instance_name=instance_name,

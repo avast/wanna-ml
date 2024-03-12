@@ -3,13 +3,11 @@ import pathlib
 from pathlib import Path
 from typing import Any, Dict
 
-from google.cloud import aiplatform
-
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.utils import loaders
-from wanna.core.utils.credentials import get_credentials
+from wanna.core.utils.env import gcp_access_allowed
 
 logger = get_logger(__name__)
 
@@ -79,10 +77,16 @@ def load_config_from_yaml(
     logger.user_info(f"GCP profile '{profile_model.profile_name}' will be used.")
     logger.user_info(f"Profile details: {profile_model}")
 
-    aiplatform.init(
-        project=wanna_config.gcp_profile.project_id,
-        location=wanna_config.gcp_profile.region,
-        credentials=get_credentials(),
-    )
+    if gcp_access_allowed:
+        # doing this import here speeds up the CLI app considerably
+        from google.cloud import aiplatform
+
+        from wanna.core.utils.credentials import get_credentials
+
+        aiplatform.init(
+            project=wanna_config.gcp_profile.project_id,
+            location=wanna_config.gcp_profile.region,
+            credentials=get_credentials(),
+        )
 
     return wanna_config
