@@ -7,9 +7,15 @@ from typing import Any, Dict, List, Optional, Tuple
 from wanna.core.utils.env import should_validate
 
 if should_validate:
-    from google.cloud import compute_v1
+    # since is very slow to import all these, we do it only when validation is required
+    from google.cloud import storage
+    from google.cloud.compute import MachineTypesClient, ZonesClient
+    from google.cloud.compute_v1 import RegionsClient
+    from google.cloud.compute_v1.services.images import ImagesClient
+    from google.cloud.compute_v1.types import ListImagesRequest
+    from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
-from google.cloud import resourcemanager_v3, storage
+from google.cloud import storage
 
 from wanna.core.utils.credentials import get_credentials
 
@@ -31,7 +37,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
         list of available machine types
     """
     if should_validate:
-        response = compute_v1.MachineTypesClient(credentials=get_credentials()).list(
+        response = MachineTypesClient(credentials=get_credentials()).list(
             project=project_id, zone=zone
         )
         machine_types = [mtype.name for mtype in response.items]
@@ -183,9 +189,7 @@ def get_available_zones(project_id: str) -> List[str]:
     """
 
     if should_validate:
-        response = compute_v1.ZonesClient(credentials=get_credentials()).list(
-            project=project_id
-        )
+        response = ZonesClient(credentials=get_credentials()).list(project=project_id)
         return [zone.name for zone in response.items]
     else:
         return [
@@ -217,9 +221,7 @@ def get_available_regions(project_id: str) -> List[str]:
         list of available regions
     """
     if should_validate:
-        response = compute_v1.RegionsClient(credentials=get_credentials()).list(
-            project=project_id
-        )
+        response = RegionsClient(credentials=get_credentials()).list(project=project_id)
         return [region.name for region in response.items]
     else:
         return ["europe-west1", "europe-west3", "europe-west4", "us-east1", "us-west1"]
@@ -248,15 +250,11 @@ def convert_project_id_to_project_number(project_id: str) -> str:
         project_number: GCP project number
     """
     project_name = (
-        resourcemanager_v3.services.projects.ProjectsClient(
-            credentials=get_credentials()
-        )
+        ProjectsClient(credentials=get_credentials())
         .get_project(name=f"projects/{project_id}")
         .name
     )
     project_number = re.sub("projects/", "", project_name)
-    print(project_number)
-    exit(1)
     return project_number
 
 
@@ -298,12 +296,8 @@ def get_available_compute_image_families(
         List of dicts from parse_image_name_family
 
     """  # noqa: E501
-    list_images_request = compute_v1.ListImagesRequest(
-        project=project, filter=image_filter
-    )
-    all_images = compute_v1.ImagesClient(credentials=get_credentials()).list(
-        list_images_request
-    )
+    list_images_request = ListImagesRequest(project=project, filter=image_filter)
+    all_images = ImagesClient(credentials=get_credentials()).list(list_images_request)
     if family_must_contain:
         return [
             parse_image_name_family(image.family)
