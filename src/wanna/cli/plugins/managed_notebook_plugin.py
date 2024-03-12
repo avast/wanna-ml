@@ -13,7 +13,6 @@ from wanna.cli.plugins.common_options import (
 )
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.services.managed_notebook import ManagedNotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 logger = get_logger(__name__)
@@ -48,6 +47,10 @@ class ManagedNotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.managed_notebook import ManagedNotebookService
+
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.delete(instance_name)
 
@@ -69,6 +72,10 @@ class ManagedNotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.managed_notebook import ManagedNotebookService
+
         nb_service = ManagedNotebookService(
             config=config, workdir=workdir, version=version
         )
@@ -94,6 +101,10 @@ class ManagedNotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.managed_notebook import ManagedNotebookService
+
         nb_service = ManagedNotebookService(
             config=config, workdir=workdir, version=version
         )
@@ -110,6 +121,10 @@ class ManagedNotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.managed_notebook import ManagedNotebookService
+
         nb_service = ManagedNotebookService(config=config, workdir=workdir)
         nb_service.report(
             instance_name=instance_name,
@@ -131,6 +146,10 @@ class ManagedNotebookPlugin(BasePlugin):
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.managed_notebook import ManagedNotebookService
+
         nb_service = ManagedNotebookService(
             config=config, workdir=workdir, version=version
         )
@@ -161,6 +180,10 @@ class ManagedNotebookPlugin(BasePlugin):
 
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.managed_notebook import ManagedNotebookService
+
         nb_service = ManagedNotebookService(
             config=config, workdir=workdir, version=version
         )

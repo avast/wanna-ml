@@ -9,7 +9,6 @@ from wanna.cli.plugins.common_options import (
     profile_name_option,
     wanna_file_option,
 )
-from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 
@@ -41,6 +40,10 @@ class TensorboardPlugin(BasePlugin):
         Delete Tensorboard Instance in GCP Vertex AI Experiments.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.tensorboard import TensorboardService
+
         tb_service = TensorboardService(config=config)
         tb_service.delete(instance_name)
 
@@ -59,6 +62,10 @@ class TensorboardPlugin(BasePlugin):
         When the tensorboard instance is created, you will be given a full resource name.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.tensorboard import TensorboardService
+
         tb_service = TensorboardService(config=config)
         tb_service.create(instance_name)
 
@@ -92,6 +99,10 @@ class TensorboardPlugin(BasePlugin):
         in the tree format.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
+
+        # doing this import here speeds up the CLI app considerably
+        from wanna.core.services.tensorboard import TensorboardService
+
         tb_service = TensorboardService(config=config)
         region = region or config.gcp_profile.region
         if not region:

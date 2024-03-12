@@ -106,12 +106,14 @@ class BaseService(ABC, Generic[T]):
                 logger.user_error(
                     f"No {self.instance_type} can be parsed from your wanna-ml yaml config."
                 )
+                exit(1)
         else:
             instances = [nb for nb in self.instances if nb.name == instance_name]
         if not instances:
             logger.user_error(
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
             )
+            exit(1)
 
         return instances
 

@@ -76,15 +76,6 @@ def mock_gcp_get_credentials():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def mock_config_get_credentials():
-    with mock.patch(
-        "wanna.core.utils.config_loader.get_credentials",
-        mocks.mock_get_credentials,
-    ) as _fixture:
-        yield _fixture
-
-
-@pytest.fixture(scope="session", autouse=True)
 def mock_deployment_get_credentials():
     with mock.patch(
         "wanna.core.deployment.credentials.get_credentials",
