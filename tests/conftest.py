@@ -103,6 +103,15 @@ def mock_pipeline_get_project_id():
 
 
 @pytest.fixture(scope="session", autouse=True)
+def mock_docker_service_get_project_id():
+    with mock.patch(
+        "wanna.core.services.docker.convert_project_id_to_project_number",
+        mocks.mock_convert_project_id_to_project_number,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="session", autouse=True)
 def mock_metrics_api():
     with mock.patch(
         "google.cloud.logging.Client.metrics_api", new_callable=PropertyMock

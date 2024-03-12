@@ -8,14 +8,16 @@ from wanna.core.utils.env import should_validate
 
 if should_validate:
     # since is very slow to import all these, we do it only when validation is required
-    from google.cloud import storage
-    from google.cloud.compute import MachineTypesClient, ZonesClient
-    from google.cloud.compute_v1 import RegionsClient
-    from google.cloud.compute_v1.services.images import ImagesClient
+    from google.cloud.compute_v1 import (
+        ImagesClient,
+        MachineTypesClient,
+        RegionsClient,
+        ZonesClient,
+    )
     from google.cloud.compute_v1.types import ListImagesRequest
-    from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 from google.cloud import storage
+from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 from wanna.core.utils.credentials import get_credentials
 
