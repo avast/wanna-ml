@@ -8,14 +8,16 @@ from wanna.core.utils.env import should_validate
 
 if should_validate:
     # since is very slow to import all these, we do it only when validation is required
-    import google.auth
-    from google.auth.exceptions import DefaultCredentialsError
-    from google.cloud import storage
-    from google.cloud.compute import MachineTypesClient, ZonesClient
-    from google.cloud.compute_v1 import RegionsClient
-    from google.cloud.compute_v1.services.images import ImagesClient
+    from google.cloud.compute_v1 import (
+        ImagesClient,
+        MachineTypesClient,
+        RegionsClient,
+        ZonesClient,
+    )
     from google.cloud.compute_v1.types import ListImagesRequest
-    from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
+
+from google.cloud import storage
+from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 from wanna.core.utils.credentials import get_credentials
 
@@ -24,32 +26,6 @@ NETWORK_REGEX = (
     "?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?)))/global/networks/"
     "((?:[a-z](?:[-a-z0-9]*[a-z0-9])?))$"
 )
-
-
-def are_gcp_credentials_set() -> bool:
-    """
-    Function to verify if the default GCP credentials can be abstracted
-    from environment.
-
-    Returns:
-        True if GCP credentials can be found, False otherwise
-    """
-    try:
-        _credentials, _project_id = google.auth.default()
-        return True
-    except DefaultCredentialsError:
-        return False
-
-
-def get_current_local_gcp_project_id() -> str:
-    """
-    Get current local GCP default project.
-
-    Returns:
-        project_id: your current local GCP default project
-    """
-    _, project_id = google.auth.default()
-    return project_id
 
 
 def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]:
