@@ -7,7 +7,6 @@ from caseconverter import kebabcase
 from dirhash import dirhash
 from google.api_core.client_options import ClientOptions
 from google.api_core.future.polling import DEFAULT_POLLING
-from google.api_core.operation import Operation
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
 from google.cloud.devtools.cloudbuild_v1.types import (
@@ -17,6 +16,7 @@ from google.cloud.devtools.cloudbuild_v1.types import (
     Source,
     StorageSource,
 )
+from google.cloud.storage import Blob
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from python_on_whales import Image, docker
 
@@ -37,9 +37,9 @@ from wanna.core.utils.credentials import get_credentials
 from wanna.core.utils.env import cloud_build_access_allowed, gcp_access_allowed
 from wanna.core.utils.gcp import (
     convert_project_id_to_project_number,
-    make_tarfile,
     upload_file_to_gcs,
 )
+from wanna.core.utils.io import tar_docker_context
 from wanna.core.utils.templates import render_template
 
 logger = get_logger(__name__)
@@ -123,7 +123,7 @@ class DockerService:
             config_path:
 
         Returns:
-            DockerBuildConfigMode
+
         """
         if os.path.isfile(config_path):
             with open(config_path) as file:
@@ -143,6 +143,31 @@ class DockerService:
         """
         return docker.info().id is not None
 
+    @staticmethod
+    def _get_ignore_patterns(context_dir: Path) -> List[str]:
+        """
+        Get the ignore patterns from .dockerignore file in the context_dir.
+
+        Args:
+            context_dir: Path to the docker context directory where .dockerignore file is located
+
+        Returns:
+            List of ignore patterns
+
+        """
+        docker_ignore = context_dir / ".dockerignore"
+        ignore = []
+
+        if docker_ignore.exists():
+            with open(docker_ignore, "r") as f:
+                lines = f.readlines()
+                ignore += [
+                    ignore.rstrip()
+                    for ignore in lines
+                    if not ignore.startswith("#") and not ignore.strip() == ""
+                ]
+        return ignore
+
     def _build_image(
         self,
         context_dir,
@@ -150,55 +175,58 @@ class DockerService:
         tags: List[str],
         docker_image_ref: str,
         **build_args,
-    ) -> Union[Image, None]:
-        should_build = self._should_build_by_context_dir_checksum(
-            self.build_dir / docker_image_ref, context_dir
+    ) -> Optional[Image]:
+        """
+        Build a docker image locally or in GCP Cloud Build.
+
+        Args:
+            context_dir: Path to the directory with all necessary files for docker image build
+            file_path: Path to the Dockerfile
+            tags: List of tags for the image
+            docker_image_ref: Name of the image
+            build_args: Additional build arguments
+
+        Returns:
+            Image object if the image was built locally, None otherwise
+        """
+
+        ignore_patterns = self._get_ignore_patterns(context_dir)
+
+        # if the checksumdir of the context dir has changed, we should build the image
+        should_build = self.quick_mode or self._should_build_by_context_dir_checksum(
+            self.build_dir / docker_image_ref, context_dir, ignore_patterns
         )
 
-        if should_build and not self.quick_mode:
-            if self.cloud_build:
-                logger.user_info(
-                    text=f"Building {docker_image_ref} docker image in GCP Cloud build"
-                )
-                op = self._build_image_on_gcp_cloud_build(
-                    context_dir=context_dir,
-                    file_path=file_path,
-                    docker_image_ref=docker_image_ref,
-                    tags=tags,
-                )
-                build_id = op.metadata.build.id
-                base = "https://console.cloud.google.com/cloud-build/builds"
-                if self.cloud_build_workerpool:
-                    link = (
-                        base
-                        + f";region={self.cloud_build_workerpool_location}/{build_id}?project={self.project_number}"
-                    )
-                else:
-                    link = base + f"/{build_id}?project={self.project_number}"
-                try:
-                    op.result()
-                    self._write_context_dir_checksum(
-                        self.build_dir / docker_image_ref, context_dir
-                    )
-                except:
-                    raise Exception(f"Build failed. Here is a link to the logs: {link}")
-                return None
-            else:
-                logger.user_info(
-                    text=f"Building {docker_image_ref} docker image locally with {build_args}"
-                )
-                image = docker.build(
-                    context_dir, file=file_path, load=True, tags=tags, **build_args
-                )
-                self._write_context_dir_checksum(
-                    self.build_dir / docker_image_ref, context_dir
-                )
-                return image  # type: ignore
-        else:
+        # skip builds if we are in quick mode or the checksumdir of docker contex_dir has not changed
+        if not should_build:
             logger.user_info(
                 text=f"Skipping build for context_dir={context_dir}, dockerfile={file_path} and image {tags[0]}"
             )
             return None
+
+        if self.cloud_build:
+            logger.user_info(
+                text=f"Building {docker_image_ref} docker image in Cloud build"
+            )
+            self._build_image_on_gcp_cloud_build(
+                context_dir=context_dir,
+                file_path=file_path,
+                docker_image_ref=docker_image_ref,
+                tags=tags,
+                ignore_patterns=ignore_patterns,
+            )
+            return None
+        else:
+            logger.user_info(
+                text=f"Building {docker_image_ref} docker image locally with {build_args}"
+            )
+            image = docker.build(
+                context_dir, file=file_path, load=True, tags=tags, **build_args
+            )
+            self._write_context_dir_checksum(
+                self.build_dir / docker_image_ref, context_dir, ignore_patterns
+            )
+            return image  # type: ignore
 
     def _pull_image(self, image_url: str) -> Union[Image, None]:
         if self.cloud_build or self.quick_mode:
@@ -236,17 +264,21 @@ class DockerService:
     ) -> Tuple[DockerImageModel, Optional[Image], str]:
         """
         A wrapper around _get_image that checks if the docker image has been already build / pulled
-        and cached in image_store.
+
+        Args:
+            docker_image_ref: Name of the image to get
+
+        Returns:
+            Tuple of DockerImageModel, Image and image tag
+
         """
-        if docker_image_ref in self.image_store:
-            image = self.image_store.get(docker_image_ref)
-            return image  # type: ignore
-        else:
-            image = self._get_image(
-                docker_image_ref=docker_image_ref,
-            )
+
+        image = self.image_store.get(docker_image_ref)
+        if not image:
+            image = self._get_image(docker_image_ref=docker_image_ref)
             self.image_store.update({docker_image_ref: image})
-            return image
+
+        return image
 
     def _get_image(
         self,
@@ -256,8 +288,9 @@ class DockerService:
         Given the docker_image_ref, this function prepares the image for you.
         Depending on the build_type, it either build the docker image or
         if you work with provided_image type, it will pull the image to verify the url.
+
         Args:
-            docker_image_ref:
+            docker_image_ref: Name of the image to get
 
         Returns:
 
@@ -313,22 +346,31 @@ class DockerService:
             tags[0],
         )
 
-    def _get_dirhash(self, directory: Path):
-        dockerignore = directory / ".dockerignore"
-        ignore = []
+    @staticmethod
+    def _get_dirhash(
+        directory: Path, ignore_patterns: Optional[List[str]] = None
+    ) -> str:
+        """
+        Get the checksum of the directory.
 
-        if dockerignore.exists():
-            with open(dockerignore, "r") as f:
-                lines = f.readlines()
-                ignore += [
-                    ignore.rstrip()
-                    for ignore in lines
-                    if not ignore.startswith("#") and not ignore.strip() == ""
-                ]
+        Args:
+            directory: Path to the directory to be checksummed
+            ignore_patterns: List of patterns to ignore
 
-        return dirhash(directory, "sha256", ignore=set(ignore))
+        Returns:
+            Checksum of the directory
+        """
+        return dirhash(directory, "sha256", ignore=set(ignore_patterns or []))
 
-    def _get_cache_path(self, hash_cache_dir: Path):
+    def _get_cache_path(self, hash_cache_dir: Path) -> Path:
+        """
+        Get the path to the cache file.
+
+        Args:
+            hash_cache_dir: Path to the directory where the cache file is stored
+        Returns:
+            Path to the cache file
+        """
         version = kebabcase(self.version)
         os.makedirs(hash_cache_dir, exist_ok=True)
         return (
@@ -337,10 +379,21 @@ class DockerService:
         )
 
     def _should_build_by_context_dir_checksum(
-        self, hash_cache_dir: Path, context_dir: Path
+        self, hash_cache_dir: Path, context_dir: Path, ignore_patterns: List[str]
     ) -> bool:
+        """
+        Check if the context_dir has changed since the last build.
+
+        Args:
+            hash_cache_dir: Path to the directory where the cache file is stored
+            context_dir: Path to the directory to check
+            ignore_patterns: List of patterns to ignore
+
+        Returns:
+            True if the context_dir has changed, False otherwise
+        """
         cache_file = self._get_cache_path(hash_cache_dir)
-        sha256hash = self._get_dirhash(context_dir)
+        sha256hash = self._get_dirhash(context_dir, ignore_patterns)
         if cache_file.exists():
             with open(cache_file, "r") as f:
                 old_hash = f.read().replace("\n", "")
@@ -348,15 +401,36 @@ class DockerService:
         else:
             return True
 
-    def _write_context_dir_checksum(self, hash_cache_dir: Path, context_dir: Path):
+    def _write_context_dir_checksum(
+        self,
+        hash_cache_dir: Path,
+        context_dir: Path,
+        ignore_patterns: Optional[List[str]] = None,
+    ) -> None:
+        """
+        Write the checksum of the context_dir to a file.
+
+        Args:
+            hash_cache_dir: Path to the directory where the cache file is stored
+            context_dir: Path to the directory to check
+            ignore_patterns: List of patterns to ignore
+        Returns:
+            None
+        """
+
         cache_file = self._get_cache_path(hash_cache_dir)
-        sha256hash = self._get_dirhash(context_dir)
+        sha256hash = self._get_dirhash(context_dir, ignore_patterns)
         with open(cache_file, "w") as f:
             f.write(sha256hash)
 
     def _build_image_on_gcp_cloud_build(
-        self, context_dir: Path, file_path: Path, tags: List[str], docker_image_ref: str
-    ) -> Operation:
+        self,
+        context_dir: Path,
+        file_path: Path,
+        tags: List[str],
+        docker_image_ref: str,
+        ignore_patterns: Optional[List[str]] = None,
+    ) -> None:
         """
         Build a docker container in GCP Cloud Build and push the images to registry.
         Folder context_dir is tarred, uploaded to GCS and then used to building.
@@ -364,54 +438,56 @@ class DockerService:
         Args:
             context_dir: directory with all necessary files for docker image build
             file_path: path to Dockerfile
-            tags:
+            tags: list of tags for the image
+            docker_image_ref: Name of the image
+            ignore_patterns: List of patterns to ignore
+
+        Returns:
+            None
+
         """
-
-        dockerfile = os.path.relpath(file_path, context_dir)
-        tar_filename = self.work_dir / "build" / "docker" / f"{docker_image_ref}.tar.gz"
-        make_tarfile(context_dir, tar_filename)
-        blob_name = os.path.relpath(tar_filename, self.work_dir).replace("\\", "/")
-        blob = upload_file_to_gcs(
-            filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name
-        )
-        tags_args = " ".join([f"--destination={t}" for t in tags]).split()
-
-        steps = BuildStep(
-            name=f"gcr.io/kaniko-project/executor:{self.docker_model.cloud_build_kaniko_version}",
-            args=tags_args
-            + self.docker_model.cloud_build_kaniko_flags
-            + ["--dockerfile", dockerfile],
-        )
-
-        timeout = Duration()
-        timeout.seconds = self.cloud_build_timeout
 
         # Set the pooling timeout to self.cloud_build_timeout seconds
         # since often large GPUs builds exceed the 900s limit
+        timeout = Duration()
+        timeout.seconds = self.cloud_build_timeout
         DEFAULT_POLLING._timeout = self.cloud_build_timeout
 
-        if self.cloud_build_workerpool:
-            options = BuildOptions(
-                pool=BuildOptions.PoolOption(
-                    name=f"projects/{self.project_number}/locations/{self.cloud_build_workerpool_location}"
-                    f"/workerPools/{self.cloud_build_workerpool}"
-                )
+        dockerfile = os.path.relpath(file_path, context_dir)
+        blob = self._upload_context_dir_to_gcs(
+            context_dir, docker_image_ref, ignore_patterns
+        )
+
+        tags_args = " ".join([f"--destination={t}" for t in tags]).split()
+        kaniko_build_args = (
+            tags_args
+            + self.docker_model.cloud_build_kaniko_flags
+            + ["--dockerfile", dockerfile]
+        )
+
+        options, api_endpoint = (
+            (None, "cloudbuild.googleapis.com")
+            if not self.cloud_build_workerpool
+            else (
+                BuildOptions(
+                    pool=BuildOptions.PoolOption(
+                        name=f"projects/{self.project_number}/locations/{self.cloud_build_workerpool_location}/workerPools/{self.cloud_build_workerpool}"
+                    )
+                ),
+                f"{self.cloud_build_workerpool_location}-cloudbuild.googleapis.com",
             )
-            api_endpoint = (
-                f"{self.cloud_build_workerpool_location}-cloudbuild.googleapis.com"
-            )
-        else:
-            options = None
-            api_endpoint = "cloudbuild.googleapis.com"
+        )
 
         build = Build(
             source=Source(
                 storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)
             ),
-            steps=[steps],
-            # Issue with kaniko builder, images wont show in cloud build artifact column in UI
-            # https://github.com/GoogleCloudPlatform/cloud-builders-community/issues/212
-            # images=tags,
+            steps=[
+                BuildStep(
+                    name=f"gcr.io/kaniko-project/executor:{self.docker_model.cloud_build_kaniko_version}",
+                    args=kaniko_build_args,
+                )
+            ],
             timeout=timeout,
             options=options,
         )
@@ -420,10 +496,27 @@ class DockerService:
             client_options=ClientOptions(api_endpoint=api_endpoint),
         )
         request = cloudbuild_v1.CreateBuildRequest(
-            project_id=self.project_id,
-            build=build,
+            project_id=self.project_id, build=build
         )
-        return client.create_build(request=request)
+
+        op = client.create_build(request=request)
+        build_id = op.metadata.build.id
+        base = "https://console.cloud.google.com/cloud-build/builds"
+        link = base + (
+            f";region={self.cloud_build_workerpool_location}/{build_id}?project={self.project_number}"
+            if self.cloud_build_workerpool
+            else f"/{build_id}?project={self.project_number}"
+        )
+
+        logger.user_info(text=f"Build started {link}")
+
+        try:
+            op.result()
+            self._write_context_dir_checksum(
+                self.build_dir / docker_image_ref, context_dir, ignore_patterns
+            )
+        except:
+            raise Exception(f"Build failed {link}")
 
     def push_image(
         self, image_or_tags: Union[Image, List[str]], quiet: bool = False
@@ -431,10 +524,15 @@ class DockerService:
         """
         Push a docker image to the registry (image must have tags)
         If you are in the cloud_build mode, nothing is pushed, images already live in cloud.
+
         Args:
-            :param image_or_tags:
-            :param quiet:
+            image_or_tags: what docker resource to push
+            quiet: If you don't want to see the progress bars.
+
+        Returns:
+            None
         """
+
         if not self.cloud_build:
             tags = (
                 image_or_tags.repo_tags
@@ -449,9 +547,13 @@ class DockerService:
     ) -> None:
         """
         Push a docker image ref to the registry (image must have tags)
+
         Args:
             image_ref: image_ref to push
             quiet: If you don't want to see the progress bars.
+
+        Returns:
+            None
         """
         model, image, tag = self.get_image(image_ref)
         if (image or tag) and model.build_type != ImageBuildType.provided_image:
@@ -460,7 +562,16 @@ class DockerService:
     @staticmethod
     def remove_image(image: Image, force=False, prune=True) -> None:
         """
-        Remove docker image, useful if you dont want to clutter your machine.
+        Remove docker image, useful if you don't want to clutter your machine.
+
+        Args:
+            image: Image to remove
+            force: Force remove
+            prune: Prune
+
+        Returns:
+            None
+
         """
         docker.image.remove(image, force=force, prune=prune)
 
@@ -470,8 +581,9 @@ class DockerService:
     ):
         """
         Construct full image tag.
+
         Args:
-            image_name:
+            image_name: name of the image
 
         Returns:
             List of full image tag
@@ -486,6 +598,13 @@ class DockerService:
     def build_container_and_get_image_url(
         self, docker_image_ref: str, push_mode: PushMode = PushMode.all
     ) -> str:
+        """
+        Build a docker image and push it to the registry.
+
+        :param docker_image_ref:
+        :param push_mode:
+        :return:
+        """
         if push_mode == PushMode.quick:
             # only get image tag
             docker_image_model = self.find_image_model_by_name(docker_image_ref)
@@ -527,7 +646,36 @@ class DockerService:
             )
         else:
             raise Exception("Invalid docker image type.")
+
         docker_file_path = build_dir / Path(f"{image_model.name}.Dockerfile")
+
         with open(docker_file_path, "w") as file:
             file.write(rendered)
+
         return docker_file_path
+
+    def _upload_context_dir_to_gcs(
+        self,
+        context_dir: Path,
+        docker_image_ref: str,
+        ignore_patterns: Optional[List[str]] = None,
+    ) -> Blob:
+        """
+        Tar the context_dir and upload it to GCS.
+
+        Args:
+            context_dir: Path to the directory to be tarred and uploaded
+            docker_image_ref: Name of the image
+            ignore_patterns: List of patterns to ignore whilst tarring
+
+        Returns:
+            Blob
+        """
+        tar_filename = self.work_dir / "build" / "docker" / f"{docker_image_ref}.tar.gz"
+        tar_docker_context(context_dir, tar_filename, ignore_patterns or [])
+
+        blob_name = os.path.relpath(tar_filename, self.work_dir).replace("\\", "/")
+        blob = upload_file_to_gcs(
+            filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name
+        )
+        return blob
