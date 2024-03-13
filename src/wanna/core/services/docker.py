@@ -192,13 +192,12 @@ class DockerService:
 
         ignore_patterns = self._get_ignore_patterns(context_dir)
 
-        # if the checksumdir of the context dir has changed, we should build the image
-        should_build = self.quick_mode or self._should_build_by_context_dir_checksum(
+        # skip builds if we are in quick mode or the checksumdir of docker contex_dir has not changed
+        skip_build = self._should_skip_build(
             self.build_dir / docker_image_ref, context_dir, ignore_patterns
         )
 
-        # skip builds if we are in quick mode or the checksumdir of docker contex_dir has not changed
-        if not should_build:
+        if skip_build:
             logger.user_info(
                 text=f"Skipping build for context_dir={context_dir}, dockerfile={file_path} and image {tags[0]}"
             )
@@ -378,11 +377,12 @@ class DockerService:
             / f"{kebabcase(self.docker_repository)}-{version}-cache.sha256"
         )
 
-    def _should_build_by_context_dir_checksum(
+    def _should_skip_build(
         self, hash_cache_dir: Path, context_dir: Path, ignore_patterns: List[str]
     ) -> bool:
         """
-        Check if the context_dir has changed since the last build.
+        Check if the context_dir has changed since the last build or if quick mode is enabled
+        to decide if wanna should build the image again.
 
         Args:
             hash_cache_dir: Path to the directory where the cache file is stored
@@ -394,12 +394,14 @@ class DockerService:
         """
         cache_file = self._get_cache_path(hash_cache_dir)
         sha256hash = self._get_dirhash(context_dir, ignore_patterns)
+        context_dir_hash_match = False
+
         if cache_file.exists():
             with open(cache_file, "r") as f:
                 old_hash = f.read().replace("\n", "")
-                return old_hash != sha256hash
-        else:
-            return True
+                context_dir_hash_match = old_hash == sha256hash
+
+        return self.quick_mode or context_dir_hash_match
 
     def _write_context_dir_checksum(
         self,
