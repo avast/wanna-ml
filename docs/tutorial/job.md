@@ -21,7 +21,7 @@ A custom job can be simply converted to a hyper-parameter tuning job just by add
 one extra parameter called `hp_tuning`. This will start a series of jobs (instead of just one job) 
 and try to find the best combination of hyper-parameters in regard to a target variable that you specify.
 
-Read [the official documentation](https://cloud.google.com/ai-platform/training/docs/using-hyperparameter-tuning) for more information.
+Read [the official documentation](https://cloud.google.com/vertex-ai/docs/training/hyperparameter-tuning-overview) for more information.
 
 In general, you have to set which hyper-parameters are changeable, which metric you want to optimize over
 and how many trials you want to run. You also need to adjust your training script so it would accept
@@ -73,10 +73,7 @@ You can choose to either maximize or minimize your optimized metric. Example in 
         ...
 ```
 
-Your python script must report back the metric during training. In TensorFlow/Keras you can use
-a callback to write the metric to the TensorFlow summary - [documentation](https://cloud.google.com/ai-platform/training/docs/using-hyperparameter-tuning#tensorflow_with_a_runtime_version).
-
-In any other case, you should use [cloudml-hypertune](https://github.com/GoogleCloudPlatform/cloudml-hypertune) library.
+Your python script must report back the metric during training, you should use [cloudml-hypertune](https://github.com/GoogleCloudPlatform/cloudml-hypertune) library.
 
 ```
 import hypertune
