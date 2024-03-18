@@ -87,7 +87,6 @@ class DockerService:
         self.build_dir = self.work_dir / "build" / "docker"
         self.wanna_project_name = wanna_project_name
         self.project_id = gcp_profile.project_id
-        self.project_number = convert_project_id_to_project_number(self.project_id)
         self.location = gcp_profile.region
         self.docker_build_config_path = os.getenv(
             "WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml"
@@ -454,6 +453,7 @@ class DockerService:
         timeout = Duration()
         timeout.seconds = self.cloud_build_timeout
         DEFAULT_POLLING._timeout = self.cloud_build_timeout
+        project_number = convert_project_id_to_project_number(self.project_id)
 
         dockerfile = os.path.relpath(file_path, context_dir)
         blob = self._upload_context_dir_to_gcs(
@@ -473,7 +473,7 @@ class DockerService:
             else (
                 BuildOptions(
                     pool=BuildOptions.PoolOption(
-                        name=f"projects/{self.project_number}/locations/{self.cloud_build_workerpool_location}/workerPools/{self.cloud_build_workerpool}"
+                        name=f"projects/{project_number}/locations/{self.cloud_build_workerpool_location}/workerPools/{self.cloud_build_workerpool}"
                     )
                 ),
                 f"{self.cloud_build_workerpool_location}-cloudbuild.googleapis.com",
@@ -505,9 +505,9 @@ class DockerService:
         build_id = op.metadata.build.id
         base = "https://console.cloud.google.com/cloud-build/builds"
         link = base + (
-            f";region={self.cloud_build_workerpool_location}/{build_id}?project={self.project_number}"
+            f";region={self.cloud_build_workerpool_location}/{build_id}?project={project_number}"
             if self.cloud_build_workerpool
-            else f"/{build_id}?project={self.project_number}"
+            else f"/{build_id}?project={project_number}"
         )
 
         logger.user_info(text=f"Build started {link}")
