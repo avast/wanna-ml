@@ -95,7 +95,7 @@ class ManagedNotebookModel(BaseInstanceModel):
     - `service_account` - [str] (optional) Overrides service account from the `gcp_profile` segment
     - `network` - [str] (optional) Overrides network from the `gcp_profile` segment
     - `tags`- [Dict[str, str]] (optional) Tags to apply to this instance
-    - `metadata`- [str] (optional) Custom metadata to apply to this instance
+    - `metadata`- [Optional[Dict[str, Any]]] (optional) Custom metadata to apply to this instance
     - `owner` - [str] This can be either a single user email address and that would be the only one
       able to access the notebook. Or service account and then everyone who has the iam.serviceAccounts.actAs
       permission on the specified service account will be able to connect.
