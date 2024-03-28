@@ -193,6 +193,10 @@ def get_available_zones(project_id: str) -> List[str]:
         return [zone.name for zone in response.items]
     else:
         return [
+            "us-central1-a",
+            "us-central1-b",
+            "us-central1-c",
+            "us-central1-f",
             "us-east1-b",
             "us-east1-c",
             "us-east1-d",
@@ -224,7 +228,7 @@ def get_available_regions(project_id: str) -> List[str]:
         response = RegionsClient(credentials=get_credentials()).list(project=project_id)
         return [region.name for region in response.items]
     else:
-        return ["europe-west1", "europe-west3", "europe-west4", "us-east1", "us-west1"]
+        return ["europe-west1", "europe-west3", "europe-west4", "us-east1", "us-west1", "us-central1"]
 
 
 def get_region_from_zone(zone: str) -> str:
