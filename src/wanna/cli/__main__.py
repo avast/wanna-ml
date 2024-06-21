@@ -32,19 +32,19 @@ def version():
 
 @app.command(name="init", help="Initiate a new wanna-ml project from template.")
 def init(
-        output_dir: Path = typer.Option(
-            ...,
-            "--output-dir",
-            prompt="Where do you want to initiate your wanna-ml repository? (input '.' to use the current directory)",
-            help="The output directory where wanna-ml repository will be created",
-        ),
-        template: WannaRepositoryTemplate = typer.Option(
-            WannaRepositoryTemplate.sklearn.value,
-            "--template",
-            "-t",
-            help="Choose from available repository templates",
-            show_choices=True,
-        ),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output-dir",
+        prompt="Where do you want to initiate your wanna-ml repository? (input '.' to use the current directory)",
+        help="The output directory where wanna-ml repository will be created",
+    ),
+    template: WannaRepositoryTemplate = typer.Option(
+        WannaRepositoryTemplate.sklearn.value,
+        "--template",
+        "-t",
+        help="Choose from available repository templates",
+        show_choices=True,
+    ),
 ):
     result_dir = cookiecutter(
         "https://github.com/avast/wanna-ml",
