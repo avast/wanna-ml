@@ -308,6 +308,7 @@ class TestPipelineService(unittest.TestCase):
                 "ENCRYPTION_SPEC_KEY_NAME": "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key",
                 "PIPELINE_EXPERIMENT": "wanna-sample-experiment",
             },
+            "available_memory_mb": 512,
         }
 
         # Set Mocks
