@@ -163,7 +163,8 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             "labels": resource.labels,
             "environment_variables": {
                 snakecase(k).upper(): v for k, v in resource.env_params.items()
-            }
+            },
+            "available_memory_mb": 512
             # TODO: timeout
         }
 

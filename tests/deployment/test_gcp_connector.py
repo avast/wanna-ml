@@ -126,6 +126,7 @@ class TestGCPConnector(unittest.TestCase):
             "service_account_email": "wanna-dev@test-gcp-connector.iam.gserviceaccount.com",
             "labels": {},
             "environment_variables": {},
+            "available_memory_mb": 512
         }
 
         # Set Mocks
