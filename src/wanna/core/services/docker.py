@@ -125,7 +125,7 @@ class DockerService:
 
         """
         if os.path.isfile(config_path):
-            with open(config_path) as file:
+            with open(config_path, encoding="utf-8") as file:
                 # Load workflow file
                 build_config_dict = loaders.load_yaml(file, self.work_dir)
             build_config = DockerBuildConfigModel.parse_obj(build_config_dict)
@@ -158,7 +158,7 @@ class DockerService:
         ignore = []
 
         if docker_ignore.exists():
-            with open(docker_ignore, "r") as f:
+            with open(docker_ignore, "r", encoding="utf-8") as f:
                 lines = f.readlines()
                 ignore += [
                     ignore.rstrip()
@@ -396,7 +396,7 @@ class DockerService:
         context_dir_hash_match = False
 
         if cache_file.exists():
-            with open(cache_file, "r") as f:
+            with open(cache_file, "r", encoding="utf-8") as f:
                 old_hash = f.read().replace("\n", "")
                 context_dir_hash_match = old_hash == sha256hash
 
@@ -421,7 +421,7 @@ class DockerService:
 
         cache_file = self._get_cache_path(hash_cache_dir)
         sha256hash = self._get_dirhash(context_dir, ignore_patterns)
-        with open(cache_file, "w") as f:
+        with open(cache_file, "w", encoding="utf-8") as f:
             f.write(sha256hash)
 
     def _build_image_on_gcp_cloud_build(
@@ -651,7 +651,7 @@ class DockerService:
 
         docker_file_path = build_dir / Path(f"{image_model.name}.Dockerfile")
 
-        with open(docker_file_path, "w") as file:
+        with open(docker_file_path, "w", encoding="utf-8") as file:
             file.write(rendered)
 
         return docker_file_path

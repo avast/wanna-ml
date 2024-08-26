@@ -91,5 +91,5 @@ def upload_model_version(
     model.uri = vertex_uri_prefix + new_model_resource_name
     model.metadata = {"resourceName": new_model_resource_name}
 
-    with open(model_output_path, "w") as output_file:
+    with open(model_output_path, "w", encoding="utf-8") as output_file:
         output_file.write(json.dumps(model.__dict__))
