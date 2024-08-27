@@ -7,7 +7,7 @@ import kfp.components as comp
 
 
 def load_wanna_component(path: Union[Path, str]):
-    with open(str(path), "r") as f:
+    with open(str(path), "r", encoding="utf-8") as f:
         t = Template(f.read())
         component = t.safe_substitute(os.environ)
         return comp.load_component_from_text(component)

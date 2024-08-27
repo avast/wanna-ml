@@ -62,7 +62,7 @@ def load_config_from_yaml(
     """
 
     with logger.user_spinner("Reading and validating wanna yaml config"):
-        with open(wanna_config_path) as file:
+        with open(wanna_config_path, encoding="utf-8") as file:
             # Load workflow file
             wanna_dict = loaders.load_yaml(
                 file, pathlib.Path(wanna_config_path).parent.resolve()

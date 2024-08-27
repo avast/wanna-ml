@@ -39,5 +39,5 @@ def load_yaml_path(path: Path, context_dir: Path, **extras: Any) -> Dict[Any, An
     """
     Convert a Path into a yaml dict
     """
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return load_yaml(f, context_dir, **extras)

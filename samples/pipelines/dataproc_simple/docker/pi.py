@@ -25,7 +25,7 @@ from pyspark.sql import Row, SparkSession
 
 def kubeflow_output_dump(path: Union[Path, str], content: str):
     print(f"dumping output values to {path}")
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
 
 
