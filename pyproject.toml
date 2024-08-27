@@ -61,9 +61,6 @@ treelib = "^1.7.0"
 typer = "0.12.5"
 waiting = "^1.4.1"
 rich = "^13.7.1"
-scandir = [
-    {version = "^1.10.0", platform="win32" }
-]
 pendulum = "^2.1.2"
 igittigitt = "^2.1.4"
 
