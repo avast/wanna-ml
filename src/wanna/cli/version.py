@@ -1,6 +1,6 @@
 import json
 
-import pkg_resources
+import importlib.metadata
 import requests
 
 from wanna.core.loggers.wanna_logger import get_logger
@@ -31,7 +31,7 @@ def perform_check() -> None:
     """Perform the version check and instructs the user about the next steps"""
 
     latest_version = get_latest_version()
-    version = pkg_resources.get_distribution("wanna-ml").version
+    version = importlib.metadata.version("wanna-ml")
     if latest_version and version < latest_version:
         logger.user_error(
             f"Installed version is {version}, the latest version is {latest_version}",
