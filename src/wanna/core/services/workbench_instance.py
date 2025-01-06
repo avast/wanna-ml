@@ -33,7 +33,7 @@ from wanna.core.utils.gcp import (
 logger = get_logger(__name__)
 
 
-class NotebookService(BaseService[NotebookModel]):
+class WorkbenchInstanceService(BaseService[NotebookModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -42,7 +42,7 @@ class NotebookService(BaseService[NotebookModel]):
         version: str = "dev",
     ):
         super().__init__(
-            instance_type="notebook",
+            instance_type="instance",
         )
         self.version = version
         self.instances = config.notebooks

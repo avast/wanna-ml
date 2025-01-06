@@ -25,7 +25,7 @@ from waiting import wait
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.notebook import ManagedNotebookModel
+from wanna.core.models.workbench import ManagedNotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService

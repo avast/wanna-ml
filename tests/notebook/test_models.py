@@ -3,7 +3,7 @@ import unittest
 import pytest
 from pydantic.error_wrappers import ValidationError
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.notebook import (
+from wanna.core.models.workbench import (
     ManagedNotebookModel,
     NotebookEnvironment,
     NotebookModel,

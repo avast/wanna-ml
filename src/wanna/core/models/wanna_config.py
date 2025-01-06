@@ -4,7 +4,7 @@ from pydantic import BaseModel, Extra, validator
 
 from wanna.core.models.docker import DockerModel
 from wanna.core.models.gcp_profile import GCPProfileModel
-from wanna.core.models.notebook import ManagedNotebookModel, NotebookModel
+from wanna.core.models.workbench import ManagedNotebookModel, NotebookModel
 from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.pipeline import PipelineModel
 from wanna.core.models.tensorboard import TensorboardModel

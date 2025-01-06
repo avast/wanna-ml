@@ -5,7 +5,7 @@ from google.cloud.notebooks_v1.types import Instance
 from mock import patch
 from mock.mock import MagicMock
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.notebook import NotebookModel
+from wanna.core.models.workbench import NotebookModel
 from wanna.core.services.notebook import NotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 

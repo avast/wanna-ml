@@ -3,7 +3,7 @@ from pathlib import Path
 
 from google.cloud.notebooks_v1.types import Runtime
 from mock import patch
-from wanna.core.models.notebook import ManagedNotebookModel
+from wanna.core.models.workbench import ManagedNotebookModel
 from wanna.core.services.managed_notebook import ManagedNotebookService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
