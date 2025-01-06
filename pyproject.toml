@@ -85,7 +85,6 @@ pytest-ruff = "^0.2.1"
 pytest-mypy = "^0.10.3"
 pytest-mock = "^3.12.0"
 poethepoet = "^0.22.0"
-black = "^23.7.0"
 types-mock = "^5.1.0.3"
 types-pyyaml = "^6.0.12"
 types-requests = "^2.31.0"
@@ -114,9 +113,10 @@ filterwarnings = [
 ]
 
 [tool.poe.tasks]
-_black = "black ."
-_ruff = "ruff --select I --fix ."
-format-code = ["_black", "_ruff"]
+# Separate import sorting until https://github.com/astral-sh/ruff/issues/8232 is merged
+_ruff_sort_imports = "ruff check --select I --fix ."
+_ruff_format = "ruff format ."
+format-code = ["_ruff_sort_imports", "_ruff_format"]
 docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 
@@ -125,9 +125,9 @@ line-length = 120
 show-source = true
 select = ["E", "F", "I", "PERF", "ARG"]
 ignore = [
-    "E1", # handled by Black
-    "E4", # handled by Black
-    "E5", # handled by Black
+    "E1", # handled by formatter
+    "E4", # handled by formatter
+    "E5", # handled by formatter
     "E722",
     "PERF401"
 ]
@@ -158,10 +158,6 @@ ignore_missing_imports = true
 
 [tool.poetry.scripts]
 wanna = "wanna.cli.__main__:wanna"
-
-[tool.black]
-extend-ignore = "E203"
-max-line-length = 120
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
