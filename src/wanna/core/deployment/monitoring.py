@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, cast
+from typing import Any, Optional, cast
 
 from google.cloud.exceptions import NotFound
 from google.cloud.logging import Client as LoggingClient
@@ -111,7 +111,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 name=f"projects/{resource.project}", alert_policy=alert_policy
             )
 
-    def upsert_log_metric(self, resource: LogMetricResource) -> Dict[str, Any]:
+    def upsert_log_metric(self, resource: LogMetricResource) -> dict[str, Any]:
         client = LoggingClient(credentials=self.credentials)
         try:
             return client.metrics_api.metric_get(

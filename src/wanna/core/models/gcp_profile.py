@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Extra, root_validator, validator
 
@@ -17,7 +17,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     - `region` - [str] (optional) GCP location region. If the zone is set and the region not, we automatically
       parse the region from the zone (e.g., zone `us-east1-c` automatically sets region `us-east1` if the region
       is not supplied by the user).
-    - `labels` - [Dict[str, str]] (optional) GCP resource labels that will be added to all resources you create
+    - `labels` - [dict[str, str]] (optional) GCP resource labels that will be added to all resources you create
       with this profile. By default, we also add a few labels based on `wanna_project` section.
     - `bucket` - [str] (optional) GCS Bucket that can later be used in uploading manifests, storing logs, etc.
       depending on the resource type.
@@ -30,14 +30,14 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
       If you get an error, please grant the Service Account with the Cloud KMS CryptoKey Encrypter/Decrypter role
     - `docker_repository` - [str] Wanna Docker Repository
     - `docker_registry` - [str] (optional) Wanna Docker Registry, usually in format {region}-docker.pkg.dev
-    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to all the notebooks and custom jobs
+    - `env_vars` - dict[str, str] (optional) Environment variables to be propagated to all the notebooks and custom jobs
     """
 
     profile_name: str
     project_id: str
     zone: Optional[str]
     region: str
-    labels: Optional[Dict[str, str]]
+    labels: Optional[dict[str, str]]
     bucket: str
     service_account: Optional[str]
     network: Optional[str]
@@ -45,7 +45,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     kms_key: Optional[str]
     docker_repository: str = "wanna"
     docker_registry: Optional[str]
-    env_vars: Optional[Dict[str, str]]
+    env_vars: Optional[dict[str, str]]
 
     _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
     _ = validator("zone", allow_reuse=True)(validators.validate_zone)

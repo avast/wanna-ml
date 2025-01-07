@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from wanna.core.utils.env import should_validate
 
@@ -26,7 +26,7 @@ NETWORK_REGEX = (
 )
 
 
-def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]:
+def get_available_compute_machine_types(project_id: str, zone: str) -> list[str]:
     """
     Get available GCP Compute Engine Machine Types based on project and zone.
     Args:
@@ -178,7 +178,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
     return machine_types
 
 
-def get_available_zones(project_id: str) -> List[str]:
+def get_available_zones(project_id: str) -> list[str]:
     """
     Get available GCP zones based on project.
     Args:
@@ -215,7 +215,7 @@ def get_available_zones(project_id: str) -> List[str]:
         ]
 
 
-def get_available_regions(project_id: str) -> List[str]:
+def get_available_regions(project_id: str) -> list[str]:
     """
     Get available GCP regions based on project.
     Args:
@@ -262,7 +262,7 @@ def convert_project_id_to_project_number(project_id: str) -> str:
     return project_number
 
 
-def parse_image_name_family(name: str) -> Dict[str, Any]:
+def parse_image_name_family(name: str) -> dict[str, Any]:
     """
     Based on GCP Compute Engine VM Image name family (eg. tf2-2-7-cu113-notebooks-debian-10)
     return framework (eg. tf2), version (eg. 2-7-cu113), os (debian-10) information.
@@ -286,7 +286,7 @@ def get_available_compute_image_families(
     project: str,
     image_filter: Optional[str] = None,
     family_must_contain: Optional[str] = None,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """
     List available Compute Engine VM image families.
 
@@ -384,7 +384,7 @@ def is_gcs_path(path: str):
     return path.startswith("gs://")
 
 
-def get_network_info(network: Optional[str]) -> Optional[Tuple[str, str]]:
+def get_network_info(network: Optional[str]) -> Optional[tuple[str, str]]:
     """
     gets information about a network if set in long format
     Args:
@@ -393,7 +393,7 @@ def get_network_info(network: Optional[str]) -> Optional[Tuple[str, str]]:
         blob_name:
 
     Returns:
-        Tuple[str, str]
+        tuple[str, str]
     """
     if network:
         result = re.search(NETWORK_REGEX, network)

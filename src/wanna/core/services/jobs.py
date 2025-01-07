@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import typer
 from google.cloud import aiplatform
@@ -85,7 +85,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         self.build_dir = workdir / "build"
         self.version = version
 
-    def build(self, instance_name: str) -> List[Path]:
+    def build(self, instance_name: str) -> list[Path]:
         """
         Based on wanna config and setup it creates a JobManifest that
         can later be pushed, deployed or run
@@ -99,15 +99,15 @@ class JobService(BaseService[JobModelTypeAlias]):
         instances = self._filter_instances_by_name(instance_name)
         return [self._build(instance) for instance in instances]
 
-    def push(self, manifests: List[Path], local: bool = False) -> PushResult:
+    def push(self, manifests: list[Path], local: bool = False) -> PushResult:
         return self.connector.push_artifacts(
             self.docker_service.push_image,
             self._prepare_push(manifests, self.version, local),
         )
 
     def _prepare_push(
-        self, manifests: List[Path], version: str, local: bool = False
-    ) -> List[PushTask]:
+        self, manifests: list[Path], version: str, local: bool = False
+    ) -> list[PushTask]:
         """
         Completes the build process buy pushing docker images and pushing manifest files to
         GCS for future execution
@@ -167,16 +167,16 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     @staticmethod
     def run(
-        manifests: List[str],
+        manifests: list[str],
         sync: bool = True,
         hp_params: Optional[Path] = None,
-        command_override: Optional[List[str]] = None,
-        args_override: Optional[List[Union[str, float, int]]] = None,
+        command_override: Optional[list[str]] = None,
+        args_override: Optional[list[Union[str, float, int]]] = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
         Args:
-            manifests (List[str]): WANNA JobManifests to be executed
+            manifests (list[str]): WANNA JobManifests to be executed
             sync (bool): Allows to run the job in async vs sync mode
             hp_params: path with yaml hp_params for the job
             command_override: override default command from wanna.yaml.
@@ -336,7 +336,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         }
         if job_model.labels:
             labels = {**job_model.labels, **labels}
-        job_payload: Dict[str, Any] = {}
+        job_payload: dict[str, Any] = {}
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
             _, _, tag = self.docker_service.get_image(
@@ -404,7 +404,7 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     def _create_worker_pool_spec(
         self, worker_pool_model: WorkerPoolModel
-    ) -> Tuple[str, WorkerPoolSpec]:
+    ) -> tuple[str, WorkerPoolSpec]:
         """
         Converts the friendlier WANNA WorkerPoolModel to aiplatform sdk equivalent
         Args:
@@ -461,7 +461,7 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     @staticmethod
     def _create_list_jobs_filter_expr(
-        states: List[PipelineState], job_name: Optional[str] = None
+        states: list[PipelineState], job_name: Optional[str] = None
     ) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
@@ -480,8 +480,8 @@ class JobService(BaseService[JobModelTypeAlias]):
         return filter_expr
 
     def _list_jobs(
-        self, states: List[PipelineState], job_name: Optional[str] = None
-    ) -> List[CustomTrainingJob]:
+        self, states: list[PipelineState], job_name: Optional[str] = None
+    ) -> list[CustomTrainingJob]:
         """
         List all custom jobs with given project_id, region with given states.
 
@@ -605,5 +605,5 @@ class JobService(BaseService[JobModelTypeAlias]):
     def _create_one_instance(self, instance: T, **kwargs) -> None:
         raise NotImplementedError
 
-    def _return_diff(self) -> Tuple[List[T], List[T]]:
+    def _return_diff(self) -> tuple[list[T], list[T]]:
         raise NotImplementedError

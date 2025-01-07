@@ -1,24 +1,18 @@
-import sys
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing import Optional, Union, Literal
 
 from pydantic import BaseModel, Extra, Field
 
 
 class DockerBuildConfigModel(BaseModel, extra=Extra.forbid):
     # Docu for more info: https://gabrieldemarmiesse.github.io/python-on-whales/sub-commands/buildx/#build
-    build_args: Dict[str, str] = {}
-    add_hosts: Dict[str, str] = {}
-    labels: Dict[str, str] = {}
+    build_args: dict[str, str] = Field(default_factory=dict)
+    add_hosts: dict[str, str] = Field(default_factory=dict)
+    labels: dict[str, str] = Field(default_factory=dict)
     network: Optional[str]
-    platforms: Optional[List[str]]
-    secrets: Union[str, List[str]] = []
+    platforms: Optional[list[str]]
+    secrets: Union[str, list[str]] = Field(default_factory=list)
     ssh: Optional[str]
     target: Optional[str]
 
@@ -37,13 +31,13 @@ class LocalBuildImageModel(BaseDockerImageModel):
     """
     - `build_type` - [str] "local_build_image"
     - `name` - [str] This will later be used in `docker_image_ref` in other resources
-    - `build_args` [Dict[str, str]] - (optional) docker build args
+    - `build_args` [dict[str, str]] - (optional) docker build args
     - `context_dir` [Path] - Path to the docker build context directory
     - `dockerfile` [Path] - Path to the Dockerfile
     """
 
     build_type: Literal[ImageBuildType.local_build_image]
-    build_args: Optional[Dict[str, str]]
+    build_args: Optional[dict[str, str]]
     context_dir: Path
     dockerfile: Path
 
@@ -63,7 +57,7 @@ class NotebookReadyImageModel(BaseDockerImageModel):
     """
     - `build_type` - [str] "notebook_ready_image"
     - `name` - [str] This will later be used in `docker_image_ref` in other resources
-    - `build_args` [Dict[str, str]] - (optional) docker build args
+    - `build_args` [dict[str, str]] - (optional) docker build args
     - `base_image` [str] - (optional) base notebook docker image, you can check
     available images https://cloud.google.com/deep-learning-vm/docs/images
       when not set, it defaults to standard base CPU notebook.
@@ -71,7 +65,7 @@ class NotebookReadyImageModel(BaseDockerImageModel):
     """
 
     build_type: Literal[ImageBuildType.notebook_ready_image]
-    build_args: Optional[Dict[str, str]]
+    build_args: Optional[dict[str, str]]
     base_image: str = "gcr.io/deeplearning-platform-release/base-cpu"
     requirements_txt: Path
 
@@ -83,7 +77,7 @@ DockerImageModel = Union[
 
 class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     """
-    - `images`- [List[Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]]] Docker images
+    - `images`- [list[Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]]] Docker images
     that will be used in wanna-ml resources
     - `repository` - [str] (optional) GCP Artifact Registry repository for pushing images
     - `registry` - [str] (optional) GCP Artifact Registry, when not set it defaults
@@ -97,7 +91,7 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     - `cloud_build_kaniko_flags` - [str] (optional) which https://github.com/GoogleContainerTools/kaniko/ flags to use
     """
 
-    images: List[DockerImageModel] = []
+    images: list[DockerImageModel] = Field(default_factory=list)
     repository: Optional[str]
     registry: Optional[str]
     cloud_build_timeout: int = 12000
@@ -105,14 +99,14 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     cloud_build_workerpool: Optional[str]
     cloud_build_workerpool_location: Optional[str]
     cloud_build_kaniko_version: Optional[str] = "latest"
-    cloud_build_kaniko_flags: List[str] = [
+    cloud_build_kaniko_flags: list[str] = Field(default_factory=lambda: [
         "--cache=true",
         "--compressed-caching=false",
         "--cache-copy-layers=true",
-    ]
+    ])
 
 
 class DockerBuildResult(BaseModel, extra=Extra.forbid):
     name: str
-    tags: List[str]
+    tags: list[str]
     build_type: ImageBuildType

@@ -1,13 +1,12 @@
 import os
 import tarfile
 from pathlib import Path
-from typing import List
 
 import igittigitt
 
 
 def tar_docker_context(
-    source_dir: Path, target_tar_file: Path, ignore_patterns: List[str] = []
+    source_dir: Path, target_tar_file: Path, ignore_patterns: list[str] = []
 ):
     """
     Tars a directory recursively while optionally skipping files based on ignore patterns.

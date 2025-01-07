@@ -2,7 +2,7 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from caseconverter import snakecase
 from google.cloud import aiplatform
@@ -69,7 +69,7 @@ class PipelineService(BaseService[PipelineModel]):
 
     def build(
         self, instance_name: str, pipeline_params_path: Optional[Path] = None
-    ) -> List[Path]:
+    ) -> list[Path]:
         """
         Create an instance with name "name" based on wanna-ml config.
         Args:
@@ -84,15 +84,15 @@ class PipelineService(BaseService[PipelineModel]):
             for instance in instances
         ]
 
-    def push(self, manifests: List[Path], local: bool = False) -> PushResult:
+    def push(self, manifests: list[Path], local: bool = False) -> PushResult:
         return self.connector.push_artifacts(
             self.docker_service.push_image,
             self._prepare_push(manifests, self.version, local),
         )
 
     def _prepare_push(
-        self, pipelines: List[Path], version: str, local: bool = False
-    ) -> List[PushTask]:
+        self, pipelines: list[Path], version: str, local: bool = False
+    ) -> list[PushTask]:
         push_tasks = []
         for local_manifest_path in pipelines:
             manifest = PipelineService.read_manifest(
@@ -192,7 +192,7 @@ class PipelineService(BaseService[PipelineModel]):
 
     @staticmethod
     def run(
-        pipelines: List[str],
+        pipelines: list[str],
         extra_params: Optional[Path] = None,
         sync: bool = True,
     ) -> None:
@@ -207,7 +207,7 @@ class PipelineService(BaseService[PipelineModel]):
         pipeline_paths: PipelinePaths,
         pipeline_instance: PipelineModel,
         version: str,
-        images: List[Tuple[DockerImageModel, Optional[Image], str]],
+        images: list[tuple[DockerImageModel, Optional[Image], str]],
         tensorboard: Optional[str],
         network: Optional[str],
         pipeline_params_path: Optional[Path] = None,

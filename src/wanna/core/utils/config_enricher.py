@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_project import WannaProjectModel
@@ -6,8 +6,8 @@ from wanna.core.utils.credentials import get_gcloud_user
 
 
 def add_labels(
-    instance_dict: Dict[str, Any], new_labels: Dict[str, str]
-) -> Dict[str, Any]:
+    instance_dict: dict[str, Any], new_labels: dict[str, str]
+) -> dict[str, Any]:
     """
     Add new labels to the instance model.
     Args:
@@ -27,7 +27,7 @@ def email_fixer(email: str) -> str:
     return email.replace(".", "-").replace("@", "_at_")
 
 
-def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
+def generate_default_labels(wanna_project: WannaProjectModel) -> dict[str, str]:
     """
     Get the default labels (GCP labels) that will be used with all instances based on wanna_project info.
     Args:
@@ -47,8 +47,8 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> Dict[str, str]:
 
 
 def enrich_instance_info_with_gcp_settings_dict(
-    instance_dict: Dict[str, Any], gcp_profile: GCPProfileModel
-) -> Dict[str, Any]:
+    instance_dict: dict[str, Any], gcp_profile: GCPProfileModel
+) -> dict[str, Any]:
     """
     The dictionary instance_dict is updated with values from gcp_settings. This allows you to set values such as
     project_id and zone only on the wanna-ml config level but also give you the freedom to set separately for each

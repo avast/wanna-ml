@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Dict, Optional
+from typing import Optional
 
 from cron_validator import CronValidator
 from google.api_core import exceptions
@@ -169,7 +169,7 @@ def validate_project_id(project_id: str) -> str:
     return project_id
 
 
-def validate_labels(labels: Dict[str, str]) -> Dict[str, str]:
+def validate_labels(labels: dict[str, str]) -> dict[str, str]:
     for key, value in labels.items():
         if not re.match(r"^[a-z]{1}[a-z0-9_-]{0,62}$", key) or not re.match(
             r"^[a-z0-9_-]{0,63}$", value

@@ -1,5 +1,5 @@
 import json
-from typing import Callable, List
+from typing import Callable
 
 from wanna.core.deployment.io import IOMixin
 from wanna.core.deployment.models import (
@@ -16,23 +16,23 @@ logger = get_logger(__name__)
 
 class ArtifactsPushMixin(IOMixin):
     def push_artifacts(
-        self, docker_pusher: Callable[[List[str]], None], push_tasks: List[PushTask]
+        self, docker_pusher: Callable[[list[str]], None], push_tasks: list[PushTask]
     ) -> PushResult:
-        def push_containers(container_artifacts: List[ContainerArtifact]):
+        def push_containers(container_artifacts: list[ContainerArtifact]):
             for artifact in container_artifacts:
                 with logger.user_spinner(
                     f"Pushing {artifact.name.lower()} to {artifact.tags}"
                 ):
                     docker_pusher(artifact.tags)
 
-        def push_manifests(manifest_artifacts: List[PathArtifact]):
+        def push_manifests(manifest_artifacts: list[PathArtifact]):
             for artifact in manifest_artifacts:
                 with logger.user_spinner(
                     f"Pushing {artifact.name.lower()} to {artifact.destination}"
                 ):
                     self.upload_file(artifact.source, artifact.destination)
 
-        def push_json(artifacts: List[JsonArtifact]):
+        def push_json(artifacts: list[JsonArtifact]):
             for artifact in artifacts:
                 with logger.user_spinner(
                     f"Pushing {artifact.name.lower()} to {artifact.destination}"

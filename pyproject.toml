@@ -103,6 +103,7 @@ addopts = """
     --ignore=src/wanna/components/templates
     --ignore=templates
     --ignore=samples
+    --ignore=dev_tests
     """
 filterwarnings = [
     "error",
@@ -137,7 +138,8 @@ extend-exclude = [
     "src/wanna/components/templates/**",
     "samples/**",
     "templates/blank/**",
-    "templates/sklearn/**"
+    "templates/sklearn/**",
+    "dev_tests/**",
 ]
 
 [tool.mypy]
@@ -145,7 +147,8 @@ exclude = [
     "src/wanna/components/templates/**",
     "templates/blank/**",
     "templates/sklearn/**",
-    "samples/pipelines/"
+    "samples/pipelines/",
+    "dev_tests/**",
 ]
 follow_imports = "silent"
 strict = true

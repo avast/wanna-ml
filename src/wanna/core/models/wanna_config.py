@@ -1,4 +1,5 @@
-from typing import List, Optional, Union
+from dataclasses import Field
+from typing import Optional, Union
 
 from pydantic import BaseModel, Extra, validator
 
@@ -17,12 +18,12 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     wanna_project: WannaProjectModel
     gcp_profile: GCPProfileModel
     docker: Optional[DockerModel]
-    notebooks: List[NotebookModel] = []
-    tensorboards: List[TensorboardModel] = []
-    jobs: List[Union[CustomJobModel, TrainingCustomJobModel]] = []
-    pipelines: List[PipelineModel] = []
-    managed_notebooks: List[ManagedNotebookModel] = []
-    notification_channels: List[NotificationChannelModel] = []
+    notebooks: list[NotebookModel] = Field(default_factory=list)
+    tensorboards: list[TensorboardModel] = Field(default_factory=list)
+    jobs: list[Union[CustomJobModel, TrainingCustomJobModel]] = Field(default_factory=list)
+    pipelines: list[PipelineModel] = Field(default_factory=list)
+    managed_notebooks: list[ManagedNotebookModel] = Field(default_factory=list)
+    notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
 
     _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(
         enrich_instance_with_gcp_settings

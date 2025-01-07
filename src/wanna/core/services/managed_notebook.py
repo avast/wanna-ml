@@ -1,7 +1,6 @@
 import itertools
 from pathlib import Path
 from threading import Thread
-from typing import List, Tuple
 
 import typer
 from google.api_core import exceptions
@@ -312,7 +311,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             f"JupyterLab for {instance.name} started at {jupyterlab_link}"
         )
 
-    def _list_running_instances(self, project_id: str, location: str) -> List[str]:
+    def _list_running_instances(self, project_id: str, location: str) -> list[str]:
         """
         List all notebooks with given project_id and location.
 
@@ -403,7 +402,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
     def _return_diff(
         self,
-    ) -> Tuple[List[ManagedNotebookModel], List[ManagedNotebookModel]]:
+    ) -> tuple[list[ManagedNotebookModel], list[ManagedNotebookModel]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists managed notebooks to be deleted and created.
         """

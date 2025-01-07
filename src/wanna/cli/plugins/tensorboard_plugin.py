@@ -93,7 +93,7 @@ class TensorboardPlugin(BasePlugin):
         ),
     ) -> None:
         """
-        List Tensorboard Instances in GCP Vertex AI Experiments.
+        list Tensorboard Instances in GCP Vertex AI Experiments.
 
         We also show Tensorboard Experiments and Tensorboard Runs for each Instance
         in the tree format.

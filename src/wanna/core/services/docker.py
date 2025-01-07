@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from caseconverter import kebabcase
 from dirhash import dirhash
@@ -61,7 +61,7 @@ class DockerService:
     ):
         self.docker_model = docker_model
         self.image_models = docker_model.images
-        self.image_store: Dict[str, Tuple[DockerImageModel, Optional[Image], str]] = {}
+        self.image_store: dict[str, tuple[DockerImageModel, Optional[Image], str]] = {}
 
         # Artifactory mirrors to different registry/projectid/repository combo
         registry_suffix = os.getenv("WANNA_DOCKER_REGISTRY_SUFFIX")
@@ -143,7 +143,7 @@ class DockerService:
         return docker.info().id is not None
 
     @staticmethod
-    def _get_ignore_patterns(context_dir: Path) -> List[str]:
+    def _get_ignore_patterns(context_dir: Path) -> list[str]:
         """
         Get the ignore patterns from .dockerignore file in the context_dir.
 
@@ -151,7 +151,7 @@ class DockerService:
             context_dir: Path to the docker context directory where .dockerignore file is located
 
         Returns:
-            List of ignore patterns
+            list of ignore patterns
 
         """
         docker_ignore = context_dir / ".dockerignore"
@@ -171,7 +171,7 @@ class DockerService:
         self,
         context_dir,
         file_path: Path,
-        tags: List[str],
+        tags: list[str],
         docker_image_ref: str,
         **build_args,
     ) -> Optional[Image]:
@@ -181,7 +181,7 @@ class DockerService:
         Args:
             context_dir: Path to the directory with all necessary files for docker image build
             file_path: Path to the Dockerfile
-            tags: List of tags for the image
+            tags: list of tags for the image
             docker_image_ref: Name of the image
             build_args: Additional build arguments
 
@@ -259,7 +259,7 @@ class DockerService:
     def get_image(
         self,
         docker_image_ref: str,
-    ) -> Tuple[DockerImageModel, Optional[Image], str]:
+    ) -> tuple[DockerImageModel, Optional[Image], str]:
         """
         A wrapper around _get_image that checks if the docker image has been already build / pulled
 
@@ -267,7 +267,7 @@ class DockerService:
             docker_image_ref: Name of the image to get
 
         Returns:
-            Tuple of DockerImageModel, Image and image tag
+            tuple of DockerImageModel, Image and image tag
 
         """
 
@@ -281,7 +281,7 @@ class DockerService:
     def _get_image(
         self,
         docker_image_ref: str,
-    ) -> Tuple[DockerImageModel, Optional[Image], str]:
+    ) -> tuple[DockerImageModel, Optional[Image], str]:
         """
         Given the docker_image_ref, this function prepares the image for you.
         Depending on the build_type, it either build the docker image or
@@ -346,14 +346,14 @@ class DockerService:
 
     @staticmethod
     def _get_dirhash(
-        directory: Path, ignore_patterns: Optional[List[str]] = None
+        directory: Path, ignore_patterns: Optional[list[str]] = None
     ) -> str:
         """
         Get the checksum of the directory.
 
         Args:
             directory: Path to the directory to be checksummed
-            ignore_patterns: List of patterns to ignore
+            ignore_patterns: list of patterns to ignore
 
         Returns:
             Checksum of the directory
@@ -377,7 +377,7 @@ class DockerService:
         )
 
     def _should_skip_build(
-        self, hash_cache_dir: Path, context_dir: Path, ignore_patterns: List[str]
+        self, hash_cache_dir: Path, context_dir: Path, ignore_patterns: list[str]
     ) -> bool:
         """
         Check if the context_dir has changed since the last build or if quick mode is enabled
@@ -386,7 +386,7 @@ class DockerService:
         Args:
             hash_cache_dir: Path to the directory where the cache file is stored
             context_dir: Path to the directory to check
-            ignore_patterns: List of patterns to ignore
+            ignore_patterns: list of patterns to ignore
 
         Returns:
             True if the context_dir has changed, False otherwise
@@ -406,7 +406,7 @@ class DockerService:
         self,
         hash_cache_dir: Path,
         context_dir: Path,
-        ignore_patterns: Optional[List[str]] = None,
+        ignore_patterns: Optional[list[str]] = None,
     ) -> None:
         """
         Write the checksum of the context_dir to a file.
@@ -414,7 +414,7 @@ class DockerService:
         Args:
             hash_cache_dir: Path to the directory where the cache file is stored
             context_dir: Path to the directory to check
-            ignore_patterns: List of patterns to ignore
+            ignore_patterns: list of patterns to ignore
         Returns:
             None
         """
@@ -428,9 +428,9 @@ class DockerService:
         self,
         context_dir: Path,
         file_path: Path,
-        tags: List[str],
+        tags: list[str],
         docker_image_ref: str,
-        ignore_patterns: Optional[List[str]] = None,
+        ignore_patterns: Optional[list[str]] = None,
     ) -> None:
         """
         Build a docker container in GCP Cloud Build and push the images to registry.
@@ -441,7 +441,7 @@ class DockerService:
             file_path: path to Dockerfile
             tags: list of tags for the image
             docker_image_ref: Name of the image
-            ignore_patterns: List of patterns to ignore
+            ignore_patterns: list of patterns to ignore
 
         Returns:
             None
@@ -521,7 +521,7 @@ class DockerService:
             raise Exception(f"Build failed {link}")
 
     def push_image(
-        self, image_or_tags: Union[Image, List[str]], quiet: bool = False
+        self, image_or_tags: Union[Image, list[str]], quiet: bool = False
     ) -> None:
         """
         Push a docker image to the registry (image must have tags)
@@ -588,7 +588,7 @@ class DockerService:
             image_name: name of the image
 
         Returns:
-            List of full image tag
+            list of full image tag
         """
         versions = [self.version, "latest"]
         return [
@@ -660,7 +660,7 @@ class DockerService:
         self,
         context_dir: Path,
         docker_image_ref: str,
-        ignore_patterns: Optional[List[str]] = None,
+        ignore_patterns: Optional[list[str]] = None,
     ) -> Blob:
         """
         Tar the context_dir and upload it to GCS.
@@ -668,7 +668,7 @@ class DockerService:
         Args:
             context_dir: Path to the directory to be tarred and uploaded
             docker_image_ref: Name of the image
-            ignore_patterns: List of patterns to ignore whilst tarring
+            ignore_patterns: list of patterns to ignore whilst tarring
 
         Returns:
             Blob

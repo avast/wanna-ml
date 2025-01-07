@@ -1,24 +1,20 @@
 import itertools
 import subprocess
 from pathlib import Path
-from threading import Thread
-from typing import List, Optional, Tuple
-
-import typer
+from typing import Optional
 from google.api_core import exceptions
 from google.cloud import compute_v1
-from google.cloud.notebooks_v1.services.notebook_service import NotebookServiceClient
-from google.cloud.notebooks_v1.types import (
+from google.cloud.notebooks_v2.services.notebook_service import NotebookServiceClient
+from google.cloud.notebooks_v2.types import (
     ContainerImage,
     CreateInstanceRequest,
     Instance,
     VmImage,
 )
-from waiting import wait
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.workbench import NotebookModel
+from wanna.core.models.workbench import InstanceModel
 from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
@@ -33,7 +29,7 @@ from wanna.core.utils.gcp import (
 logger = get_logger(__name__)
 
 
-class WorkbenchInstanceService(BaseService[NotebookModel]):
+class WorkbenchInstanceService(BaseService[InstanceModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -65,123 +61,16 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
         self.owner = owner
         self.tensorboard_service = TensorboardService(config=config)
 
-    def create(self, instance_name: str, **kwargs) -> None:
+    def _list_running_instances(self, project_id: str, location: str) -> list[str]:
         """
-        Create an instance with name "name" based on wanna-ml config.
-
-        Args:
-            instance_name: The name of the only instance from wanna-ml config that should be created.
-                  Set to "all" to create everything from wanna-ml yaml configuration.
-        """
-        instances = self._filter_instances_by_name(instance_name)
-
-        for instance in instances:
-            t = Thread(
-                target=self._create_one_instance, args=(instance,), kwargs={**kwargs}
-            )
-            t.start()
-
-    def delete(self, instance_name: str) -> None:
-        """
-        Delete an instance with name "name" based on wanna-ml config if exists on GCP.
-
-        Args:
-            instance_name: The name of the only instance from wanna-ml config that should be deleted.
-                  Set to "all" to create all from configuration.
-        """
-        instances = self._filter_instances_by_name(instance_name)
-
-        for instance in instances:
-            t = Thread(target=self._delete_one_instance, args=(instance,))
-            t.start()
-
-    def _delete_one_instance(self, notebook_instance: NotebookModel) -> None:
-        """
-        Delete one notebook instance. This assumes that it has been already verified that notebook exists.
-
-        Args:
-            notebook_instance: notebook to delete
-        """
-
-        exists = self._instance_exists(notebook_instance)
-        if exists:
-            logger.user_info(
-                f"Deleting {self.instance_type} {notebook_instance.name} ..."
-            )
-            deleted = self.notebook_client.delete_instance(
-                name=f"projects/{notebook_instance.project_id}/locations/"
-                f"{notebook_instance.zone}/instances/{notebook_instance.name}"
-            )
-            deleted.result()
-            logger.user_success(
-                f"Deleted {self.instance_type} {notebook_instance.name}"
-            )
-        else:
-            logger.user_error(
-                f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
-            )
-            typer.Exit(1)
-
-    def _create_one_instance(self, instance: NotebookModel, **kwargs) -> None:
-        """
-        Create a notebook instance based on information in NotebookModel class.
-        1. Check if the notebook already exists
-        2. Parse the information from NotebookModel to GCP API friendly format = instance_request
-        3. Wait for the compute instance behind the notebook to start
-        4. Wait for JupyterLab to start
-        5. Get and print the link to JupyterLab
-
-        Args:
-            instance: notebook to be created
-
-        """
-        exists = self._instance_exists(instance)
-        if exists:
-            logger.user_info(
-                f"Instance {instance.name} already exists in location {instance.zone}"
-            )
-            should_recreate = typer.confirm(
-                "Are you sure you want to delete it and start a new?"
-            )
-            if should_recreate:
-                self._delete_one_instance(instance)
-            else:
-                return
-        push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
-        instance_request = self._create_instance_request(
-            notebook_instance=instance, deploy=True, push_mode=push_mode
-        )
-        logger.user_info(
-            f"Creating underlying compute engine instance for {instance.name} ..."
-        )
-        nb_instance = self.notebook_client.create_instance(instance_request)
-        instance_full_name = (
-            nb_instance.result().name
-        )  # .result() waits for compute engine behind the notebook to start
-        logger.user_info(f"Starting JupyterLab for {instance.name} ...")
-        wait(
-            lambda: self._validate_jupyterlab_state(
-                instance_full_name, Instance.State.ACTIVE
-            ),
-            timeout_seconds=450,
-            sleep_seconds=20,
-            waiting_for="Starting JupyterLab in your instance",
-        )
-        jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        logger.user_success(
-            f"JupyterLab for {instance.name} started at {jupyterlab_link}"
-        )
-
-    def _list_running_instances(self, project_id: str, location: str) -> List[str]:
-        """
-        List all notebooks with given project_id and location.
+        list all notebooks with given project_id and location.
 
         Args:
             project_id: GCP project ID
             location: GCP location (zone)
 
         Returns:
-            instance_names: List of the full names on notebook instances (this includes project_id, and zone)
+            instance_names: list of the full names on notebook instances (this includes project_id, and zone)
 
         """
         instances = self.notebook_client.list_instances(
@@ -190,7 +79,7 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
-    def _instance_exists(self, instance: NotebookModel) -> bool:
+    def _instance_exists(self, instance: InstanceModel) -> bool:
         """
         Check if the instance with given instance_name exists in given GCP project project_id and location.
         Args:
@@ -206,7 +95,7 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
 
     def _create_instance_request(
         self,
-        notebook_instance: NotebookModel,
+        notebook_instance: InstanceModel,
         deploy: bool = True,
         push_mode: PushMode = PushMode.all,
     ) -> CreateInstanceRequest:
@@ -383,7 +272,7 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
             instance=instance,
         )
 
-    def _prepare_startup_script(self, nb_instance: NotebookModel) -> str:
+    def _prepare_startup_script(self, nb_instance: InstanceModel) -> str:
         """
         Prepare the notebook startup script based on the information from notebook.
         This script run at the Compute Engine Instance creation time with a root user.
@@ -452,7 +341,7 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
         return f"https://{instance_info.proxy_uri}"
 
     def _ssh(
-        self, notebook_instance: NotebookModel, run_in_background: bool, local_port: int
+        self, notebook_instance: InstanceModel, run_in_background: bool, local_port: int
     ) -> None:
         """
         SSH connect to the notebook instance if the instance is already started.
@@ -550,9 +439,9 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
 
-    def _return_diff(self) -> Tuple[List[NotebookModel], List[NotebookModel]]:
+    def _return_diff(self) -> tuple[list[InstanceModel], list[InstanceModel]]:
         """
-        Figuring out the diff between GCP and wanna.yaml. Lists user-managed notebooks to be deleted and created.
+        Figuring out the diff between GCP and wanna.yaml. lists user-managed notebooks to be deleted and created.
         """
         # We list compute instances and not notebooks, because with notebooks you cannot list instances in all zones.
         # So instead we list all Compute Engine instances with notebook labels
@@ -567,7 +456,7 @@ class WorkbenchInstanceService(BaseService[NotebookModel]):
         )
 
         active_notebooks = [
-            NotebookModel.parse_obj(
+            InstanceModel.parse_obj(
                 {
                     "name": i.name,
                     "zone": i.zone.split("/")[-1],

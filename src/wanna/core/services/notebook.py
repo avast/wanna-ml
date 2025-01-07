@@ -2,7 +2,7 @@ import itertools
 import subprocess
 from pathlib import Path
 from threading import Thread
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import typer
 from google.api_core import exceptions
@@ -172,7 +172,7 @@ class NotebookService(BaseService[NotebookModel]):
             f"JupyterLab for {instance.name} started at {jupyterlab_link}"
         )
 
-    def _list_running_instances(self, project_id: str, location: str) -> List[str]:
+    def _list_running_instances(self, project_id: str, location: str) -> list[str]:
         """
         List all notebooks with given project_id and location.
 
@@ -550,7 +550,7 @@ class NotebookService(BaseService[NotebookModel]):
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
 
-    def _return_diff(self) -> Tuple[List[NotebookModel], List[NotebookModel]]:
+    def _return_diff(self) -> tuple[list[NotebookModel], list[NotebookModel]]:
         """
         Figuring out the diff between GCP and wanna.yaml. Lists user-managed notebooks to be deleted and created.
         """

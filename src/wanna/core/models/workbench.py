@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
 
@@ -37,10 +37,10 @@ class NotebookModel(BaseWorkbenchModel):
     - `project_id' - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
     - `zone` - [str] (optional) Overrides zone from the `gcp_profile` segment
     - `region` - [str] (optional) Overrides region from the `gcp_profile` segment
-    - `labels`- [Dict[str, str]] (optional) Custom labels to apply to this instance
+    - `labels`- [dict[str, str]] (optional) Custom labels to apply to this instance
     - `service_account` - [str] (optional) Overrides service account from the `gcp_profile` segment
     - `network` - [str] Overrides network from the `gcp_profile` segment
-    - `tags`- [Dict[str, str]] (optional) Tags to apply to this instance
+    - `tags`- [dict[str, str]] (optional) Tags to apply to this instance
     - `metadata`- [str] (optional) Custom metadata to apply to this instance
     - `machine_type` - [str] (optional) GCP Compute Engine machine type
     - `environment` [NotebookEnvironment] (optional) Notebook Environment defined by a docker image reference
@@ -50,7 +50,7 @@ class NotebookModel(BaseWorkbenchModel):
     - `gpu`- [GPU] (optional) The hardware GPU accelerator used on this instance.
     - `boot_disk` - [Disk] (optional) Boot disk configuration to attach to this instance.
     - `data_disk` - [Disk] (optional) Data disk configuration to attach to this instance.
-    - `bucket_mounts` - [List[BucketMount]] (optional) List of buckets to be accessible from the notebook
+    - `bucket_mounts` - [list[BucketMount]] (optional) List of buckets to be accessible from the notebook
     - `subnet`- [str] (optional) Subnetwork of a given network
     - `tensorboard_ref` - [str] (optional) Reference to Vertex Experiments
     - `enable_monitoring` - [bool] (optional) Reports system health and notebook metrics to Cloud Monitoring
@@ -60,7 +60,7 @@ class NotebookModel(BaseWorkbenchModel):
     - `no_proxy_access` - [bool] (optional) If true, the notebook instance will not register with the proxy
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440. After this time of inactivity,
     notebook will be stopped. If the parameter is not set, we don't do anything.
-    - `env_vars` - Dict[str, str] (optional) Environment variables to be propagated to the notebook
+    - `env_vars` - dict[str, str] (optional) Environment variables to be propagated to the notebook
     - `backup` - [str] (optional) Name of the bucket where a data backup is copied (no 'gs://' needed in the name).
     After creation, any changes (including deletion) made to the data disk contents will be synced to the GCS location
     It’s recommended that you enable object versioning for the selected location so you can restore accidentally
@@ -72,13 +72,13 @@ class NotebookModel(BaseWorkbenchModel):
         vm_image=VMImage(framework="common", version="cpu")
     )
     boot_disk: Optional[Disk]
-    bucket_mounts: Optional[List[BucketMount]]
+    bucket_mounts: Optional[list[BucketMount]]
     enable_monitoring: bool = True
     collaborative: bool = False
     no_public_ip: bool = True
     no_proxy_access: bool = False
     idle_shutdown_timeout: Optional[int]
-    env_vars: Optional[Dict[str, str]]
+    env_vars: Optional[dict[str, str]]
     backup: Optional[str]
 
     _machine_type = validator("machine_type")(validators.validate_machine_type)
@@ -90,18 +90,18 @@ class ManagedNotebookModel(BaseWorkbenchModel):
     - `project_id' - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
     - `zone` - [str] (optional) Overrides zone from the `gcp_profile` segment
     - `region` - [str] (optional) Overrides region from the `gcp_profile` segment
-    - `labels`- [Dict[str, str]] (optional) Custom labels to apply to this instance
+    - `labels`- [dict[str, str]] (optional) Custom labels to apply to this instance
     - `service_account` - [str] (optional) Overrides service account from the `gcp_profile` segment
     - `network` - [str] (optional) Overrides network from the `gcp_profile` segment
-    - `tags`- [Dict[str, str]] (optional) Tags to apply to this instance
-    - `metadata`- [Optional[Dict[str, Any]]] (optional) Custom metadata to apply to this instance
+    - `tags`- [dict[str, str]] (optional) Tags to apply to this instance
+    - `metadata`- [Optional[dict[str, Any]]] (optional) Custom metadata to apply to this instance
     - `owner` - [str] This can be either a single user email address and that would be the only one
       able to access the notebook. Or service account and then everyone who has the iam.serviceAccounts.actAs
       permission on the specified service account will be able to connect.
     - `machine_type` - [str] (optional) GCP Compute Engine machine type
     - `gpu`- [GPU] (optional) The hardware GPU accelerator used on this instance.
     - `data_disk` - [Disk] (optional) Data disk configuration to attach to this instance.
-    - `kernels` - [List[str]] (optional) Custom kernels given as links to container registry
+    - `kernels` - [list[str]] (optional) Custom kernels given as links to container registry
     - `tensorboard_ref` - [str] (optional) Reference to Vertex Experimetes
     - `subnet`- [str] (optional) Subnetwork of a given network
     - `internal_ip_only` - [bool] (optional) Public or private (default) IP address
@@ -109,7 +109,7 @@ class ManagedNotebookModel(BaseWorkbenchModel):
       true (default) or false
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
     """
-    kernel_docker_image_refs: Optional[List[str]]
+    kernel_docker_image_refs: Optional[list[str]]
     internal_ip_only: bool = True
     idle_shutdown: bool = True
     idle_shutdown_timeout: int = Field(ge=10, le=1440, default=180)
@@ -121,18 +121,18 @@ class InstanceModel(BaseWorkbenchModel):
     - `project_id' - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
     - `zone` - [str] (optional) Overrides zone from the `gcp_profile` segment
     - `region` - [str] (optional) Overrides region from the `gcp_profile` segment
-    - `labels`- [Dict[str, str]] (optional) Custom labels to apply to this instance
+    - `labels`- [dict[str, str]] (optional) Custom labels to apply to this instance
     - `service_account` - [str] (optional) Overrides service account from the `gcp_profile` segment
     - `network` - [str] (optional) Overrides network from the `gcp_profile` segment
-    - `tags`- [Dict[str, str]] (optional) Tags to apply to this instance
-    - `metadata`- [Optional[Dict[str, Any]]] (optional) Custom metadata to apply to this instance
+    - `tags`- [dict[str, str]] (optional) Tags to apply to this instance
+    - `metadata`- [Optional[dict[str, Any]]] (optional) Custom metadata to apply to this instance
     - `owner` - [str] This can be either a single user email address and that would be the only one
       able to access the notebook. Or service account and then everyone who has the iam.serviceAccounts.actAs
       permission on the specified service account will be able to connect.
     - `machine_type` - [str] (optional) GCP Compute Engine machine type
     - `gpu`- [GPU] (optional) The hardware GPU accelerator used on this instance.
     - `data_disk` - [Disk] (optional) Data disk configuration to attach to this instance.
-    - `kernels` - [List[str]] (optional) Custom kernels given as links to container registry
+    - `kernels` - [list[str]] (optional) Custom kernels given as links to container registry
     - `tensorboard_ref` - [str] (optional) Reference to Vertex Experimetes
     - `subnet`- [str] (optional) Subnetwork of a given network
     - `internal_ip_only` - [bool] (optional) Public or private (default) IP address

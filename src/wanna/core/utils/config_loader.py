@@ -1,7 +1,7 @@
 import os
 import pathlib
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
@@ -12,7 +12,7 @@ from wanna.core.utils.env import gcp_access_allowed
 logger = get_logger(__name__)
 
 
-def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfileModel:
+def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfileModel:
     """
     This functions goes through wanna-ml config and optionally through a file
     $WANNA_GCP_PROFILE_PATH, reads all gcp profiles and returns the one

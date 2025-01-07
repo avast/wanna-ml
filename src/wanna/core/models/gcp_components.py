@@ -1,10 +1,4 @@
-import sys
-from typing import Optional
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing import Optional, Literal
 
 from pydantic import BaseModel, Extra, Field, validator
 

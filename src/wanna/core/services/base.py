@@ -1,6 +1,6 @@
 from abc import ABC
 from threading import Thread
-from typing import Generic, List, Optional, Tuple, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import typer
 
@@ -29,7 +29,7 @@ class BaseService(ABC, Generic[T]):
         self,
         instance_type: str,
     ):
-        self.instances: List[T] = []
+        self.instances: list[T] = []
         self.instance_type = instance_type
 
     def create(self, instance_name: str, **kwargs) -> None:
@@ -89,7 +89,7 @@ class BaseService(ABC, Generic[T]):
         """
         raise NotImplementedError
 
-    def _filter_instances_by_name(self, instance_name: str) -> List[T]:
+    def _filter_instances_by_name(self, instance_name: str) -> list[T]:
         """
         From self.instances filter only the instances with name instance_name.
 
@@ -198,7 +198,7 @@ class BaseService(ABC, Generic[T]):
         else:
             return None
 
-    def _return_diff(self) -> Tuple[List[T], List[T]]:
+    def _return_diff(self) -> tuple[list[T], list[T]]:
         """
         Abstract class.
         """

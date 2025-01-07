@@ -1,17 +1,11 @@
-import sys
 from pathlib import Path
 
 from wanna.core.models.training_custom_job import JobModelTypeAlias
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
+from typing import Any, Generic, Optional, TypeVar, Literal
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, Extra, Field
 from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
@@ -36,16 +30,16 @@ class GCPResource(
 
 class NotificationChannelResource(GCPResource):
     type_: Literal["email", "pubsub"]
-    config: Dict[str, str]
-    labels: Dict[str, str]
+    config: dict[str, str]
+    labels: dict[str, str]
     description: Optional[str]
 
 
 class CloudSchedulerResource(GCPResource):
     cloud_scheduler: CloudSchedulerModel
-    body: Dict[str, Any]
-    labels: Dict[str, str]
-    notification_channels: List[str]
+    body: dict[str, Any]
+    labels: dict[str, str]
+    notification_channels: list[str]
 
 
 class CloudFunctionResource(GCPResource):
@@ -53,11 +47,11 @@ class CloudFunctionResource(GCPResource):
     resource_root: str
     resource_function_template: str
     resource_requirements_template: str
-    template_vars: Dict[str, Any]
-    env_params: Dict[str, str]
-    labels: Dict[str, str]
+    template_vars: dict[str, Any]
+    env_params: dict[str, str]
+    labels: dict[str, str]
     network: Optional[str] = None
-    notification_channels: List[str]
+    notification_channels: list[str]
 
 
 class LogMetricResource(GCPResource):
@@ -69,8 +63,8 @@ class AlertPolicyResource(GCPResource):
     logging_metric_type: str
     resource_type: str
     display_name: str
-    labels: Dict[str, str]
-    notification_channels: List[str]
+    labels: dict[str, str]
+    notification_channels: list[str]
 
 
 class PipelineResource(GCPResource):
@@ -79,14 +73,14 @@ class PipelineResource(GCPResource):
     pipeline_root: str
     pipeline_version: str
     json_spec_path: str
-    parameter_values: Dict[str, Any] = {}
-    labels: Dict[str, str] = {}
+    parameter_values: dict[str, Any] = Field(default_factory=dict)
+    labels: dict[str, str] = Field(default_factory=dict)
     enable_caching: bool = True
     schedule: Optional[CloudSchedulerModel]
-    docker_refs: List[DockerBuildResult]
-    compile_env_params: Dict[str, str]
+    docker_refs: list[DockerBuildResult]
+    compile_env_params: dict[str, str]
     network: Optional[str]
-    notification_channels: List[NotificationChannelModel] = []
+    notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
     encryption_spec_key_name: Optional[str]
     experiment: Optional[str]
 
@@ -96,13 +90,13 @@ JOB = TypeVar("JOB", bound=JobModelTypeAlias)  # dependency from wanna models
 
 
 class JobResource(GCPResource, Generic[JOB]):
-    job_payload: Dict[str, Any]
-    image_refs: List[str] = []
+    job_payload: dict[str, Any]
+    image_refs: list[str] = Field(default_factory=list)
     tensorboard: Optional[str]
     network: Optional[str]
     job_config: JOB
     encryption_spec: Optional[str]
-    environment_variables: Optional[Dict[str, str]]
+    environment_variables: Optional[dict[str, str]]
 
 
 class PushArtifact(BaseModel):
@@ -111,7 +105,7 @@ class PushArtifact(BaseModel):
 
 class JsonArtifact(PushArtifact):
     name: str
-    json_body: Dict[Any, Any]
+    json_body: dict[Any, Any]
     destination: str
 
 
@@ -123,7 +117,7 @@ class PathArtifact(PushArtifact):
 
 class ContainerArtifact(PushArtifact):
     name: str
-    tags: List[str]
+    tags: list[str]
 
 
 class PushMode(str, Enum):
@@ -143,11 +137,11 @@ class PushMode(str, Enum):
 
 
 class PushTask(BaseModel):
-    manifest_artifacts: List[PathArtifact]
-    container_artifacts: List[ContainerArtifact]
-    json_artifacts: List[JsonArtifact]
+    manifest_artifacts: list[PathArtifact]
+    container_artifacts: list[ContainerArtifact]
+    json_artifacts: list[JsonArtifact]
 
 
-PushResult = List[
-    Tuple[List[ContainerArtifact], List[PathArtifact], List[JsonArtifact]]
+PushResult = list[
+    tuple[list[ContainerArtifact], list[PathArtifact], list[JsonArtifact]]
 ]

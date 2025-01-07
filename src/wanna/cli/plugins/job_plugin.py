@@ -1,6 +1,6 @@
 import pathlib
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Union
 
 import typer
 
@@ -189,9 +189,9 @@ class JobPlugin(BasePlugin):
 
     @staticmethod
     def _extract_job_overrides(
-        extra_args: List[str],
-    ) -> Tuple[List[Union[str, float, int]], List[str]]:
-        args: List[Union[str, float, int]] = []
+        extra_args: list[str],
+    ) -> tuple[list[Union[str, float, int]], list[str]]:
+        args: list[Union[str, float, int]] = []
         command = []
         for extra_arg in extra_args:
             if extra_arg.startswith("--") or args:

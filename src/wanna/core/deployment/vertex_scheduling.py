@@ -2,7 +2,6 @@ import json
 import os
 import zipfile
 from pathlib import Path
-from typing import Tuple
 
 from caseconverter import snakecase
 from google.api_core.exceptions import PermissionDenied
@@ -28,7 +27,7 @@ logger = get_logger(__name__)
 class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
     def upsert_cloud_scheduler(
         self,
-        function: Tuple[str, str],
+        function: tuple[str, str],
         resource: CloudSchedulerResource,
         version: str,
         env: str,
@@ -115,7 +114,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
 
     def upsert_cloud_function(
         self, resource: CloudFunctionResource, version: str, env: str
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         logger.user_info(
             f"Deploying {resource.name} cloud function with version {version} to env {env}"
         )

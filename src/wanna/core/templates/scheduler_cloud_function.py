@@ -1,7 +1,7 @@
 # Generated file do not change
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 import pendulum
 from google.cloud import aiplatform
@@ -23,7 +23,7 @@ _jinja_env = Environment()
 _jinja_env.globals.update(modules={"pendulum": pendulum})
 
 
-def _update_time_template(params: Dict[str, Any]):
+def _update_time_template(params: dict[str, Any]):
     for k, v in params.items():
         if isinstance(v, str):
             v = _jinja_env.from_string(v).render()

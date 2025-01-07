@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union, cast
+from typing import Union, cast
 
 import typer
 from google.cloud import aiplatform
@@ -119,20 +119,20 @@ class TensorboardService(BaseService[TensorboardModel]):
         return found is not None
 
     @staticmethod
-    def _list_running_instances(project_id: str, region: str) -> List["Tensorboard"]:
+    def _list_running_instances(project_id: str, region: str) -> list["Tensorboard"]:
         """
-        List all tensorboards with given project_id and region
+        list all tensorboards with given project_id and region
 
         Args:
             project_id: GCP project ID
             region: GCP region
 
         Returns:
-            instances: List of the tensorboard instances
+            instances: list of the tensorboard instances
 
         """
         instances = cast(
-            List[Tensorboard],
+            list[Tensorboard],
             aiplatform.Tensorboard.list(project=project_id, location=region),
         )
         return instances
@@ -146,7 +146,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         Returns:
             TensorboardModel
         """
-        matched_tb_models: List[TensorboardModel] = list(
+        matched_tb_models: list[TensorboardModel] = list(
             filter(lambda i: i.name.strip() == tb_name.strip(), self.instances)
         )
 
