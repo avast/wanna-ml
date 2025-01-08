@@ -25,8 +25,8 @@ def vm_image_config():
 
 
 @patch(
-    "wanna.core.services.notebook.NotebookServiceClient",
-    mocks.MockWorkbechInstanceServiceClient,
+    "wanna.core.services.workbench_instance.NotebookServiceClient",
+    mocks.MockWorkbenchInstanceServiceClient,
 )
 class TestWorkbenchInstanceService:
     project_id = "gcp-project"

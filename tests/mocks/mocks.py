@@ -160,7 +160,7 @@ class MockManagedNotebookServiceClient:
         return matched_instances[0]
 
 
-class MockWorkbechInstanceServiceClient:
+class MockWorkbenchInstanceServiceClient:
     def __init__(self):
         self.notebook_states = {
             "nb1": Instance.State.ACTIVE,
