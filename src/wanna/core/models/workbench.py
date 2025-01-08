@@ -25,7 +25,6 @@ class BaseWorkbenchModel(BaseInstanceModel):
         min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
     )
     machine_type: str = "n1-standard-4"
-    owner: Optional[EmailStr]
     gpu: Optional[GPU]
     data_disk: Optional[Disk]
     subnet: Optional[str]
@@ -68,6 +67,7 @@ class NotebookModel(BaseWorkbenchModel):
     Works only for non-Docker notebooks!
     """
     zone: str
+    owner: Optional[EmailStr]
     environment: NotebookEnvironment = NotebookEnvironment(
         vm_image=VMImage(framework="common", version="cpu")
     )
@@ -109,6 +109,7 @@ class ManagedNotebookModel(BaseWorkbenchModel):
       true (default) or false
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
     """
+    owner: Optional[str]
     kernel_docker_image_refs: Optional[list[str]]
     internal_ip_only: bool = True
     idle_shutdown: bool = True
@@ -140,4 +141,18 @@ class InstanceModel(BaseWorkbenchModel):
       true (default) or false
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
     """
-
+    zone: str
+    owner: Optional[EmailStr]
+    boot_disk: Optional[Disk]
+    environment: NotebookEnvironment = NotebookEnvironment(
+        vm_image=VMImage(framework="common", version="cpu")
+    )
+    no_public_ip: bool = True
+    enable_dataproc: bool = False
+    enable_ip_forwarding: bool = False
+    no_proxy_access: bool = False
+    enable_monitoring: bool = True
+    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=None)
+    collaborative: bool = False
+    env_vars: Optional[dict[str, str]]
+    bucket_mounts: Optional[list[BucketMount]]

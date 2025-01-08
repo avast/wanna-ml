@@ -155,17 +155,17 @@ class DockerService:
 
         """
         docker_ignore = context_dir / ".dockerignore"
-        ignore = []
+        ignores = []
 
         if docker_ignore.exists():
             with open(docker_ignore, "r", encoding="utf-8") as f:
                 lines = f.readlines()
-                ignore += [
+                ignores += [
                     ignore.rstrip()
                     for ignore in lines
                     if not ignore.startswith("#") and not ignore.strip() == ""
                 ]
-        return ignore
+        return ignores
 
     def _build_image(
         self,

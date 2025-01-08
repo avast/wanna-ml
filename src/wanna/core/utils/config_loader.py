@@ -54,7 +54,6 @@ def load_config_from_yaml(
     Args:
         wanna_config_path: path to the wanna-ml yaml file
         gcp_profile_name: name of the GCP profile
-        profiles_file_path: optionally passed through cli
 
     Returns:
         WannaConfigModel

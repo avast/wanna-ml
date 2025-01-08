@@ -2,11 +2,12 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any, cast
 
 from caseconverter import snakecase
 from google.cloud import aiplatform
 from kfp.v2.compiler import Compiler
+from pydantic import EmailStr
 from python_on_whales import Image
 
 from wanna.core.deployment.artifacts_push import PushResult
@@ -16,7 +17,7 @@ from wanna.core.deployment.models import (
     PathArtifact,
     PipelineResource,
     PushMode,
-    PushTask,
+    PushTask, PipelineEnvParams,
 )
 from wanna.core.deployment.vertex_connector import VertexConnector
 from wanna.core.loggers.wanna_logger import get_logger
@@ -167,13 +168,13 @@ class PipelineService(BaseService[PipelineModel]):
         return push_tasks
 
     @staticmethod
-    def get_pipeline_bucket(bucket: Optional[str], fallback_bucket: str):
+    def get_pipeline_bucket(bucket: Optional[str], fallback_bucket: str) -> str:
         if bucket:
             return bucket if bucket.startswith("gs://") else f"gs://{bucket}"
         else:
             return f"gs://{fallback_bucket}"
 
-    def deploy(self, instance_name: str, env: str):
+    def deploy(self, instance_name: str, env: str) -> None:
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
             logger.user_info(
@@ -211,7 +212,7 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
         network: Optional[str],
         pipeline_params_path: Optional[Path] = None,
-    ):
+    ) -> tuple[PipelineEnvParams, dict[Any, Any] | dict[str, Any]]:
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
@@ -382,7 +383,7 @@ class PipelineService(BaseService[PipelineModel]):
             parameter_values=pipeline_params,
             enable_caching=self.kubeflow_pipeline_caching or pipeline.enable_caching,
             labels=pipeline.labels,
-            pipeline_root=pipeline_env_params.get("pipeline_root"),
+            pipeline_root=cast(str, pipeline_env_params["pipeline_root"]),
             schedule=pipeline.schedule,
             docker_refs=docker_refs,
             compile_env_params=pipeline_env_params,

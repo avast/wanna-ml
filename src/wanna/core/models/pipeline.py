@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from pydantic import Field, root_validator
+from pydantic import root_validator, Field
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel

@@ -5,13 +5,14 @@ from wanna.core.models.training_custom_job import JobModelTypeAlias
 from enum import Enum
 from typing import Any, Generic, Optional, TypeVar, Literal
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, EmailStr
 from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
 from wanna.core.models.notification_channel import NotificationChannelModel
 
+PipelineEnvParams = dict[str, str | None | EmailStr]
 
 class GCPResource(
     GenericModel,
@@ -48,7 +49,7 @@ class CloudFunctionResource(GCPResource):
     resource_function_template: str
     resource_requirements_template: str
     template_vars: dict[str, Any]
-    env_params: dict[str, str]
+    env_params: PipelineEnvParams
     labels: dict[str, str]
     network: Optional[str] = None
     notification_channels: list[str]
@@ -78,7 +79,7 @@ class PipelineResource(GCPResource):
     enable_caching: bool = True
     schedule: Optional[CloudSchedulerModel]
     docker_refs: list[DockerBuildResult]
-    compile_env_params: dict[str, str]
+    compile_env_params: PipelineEnvParams
     network: Optional[str]
     notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
     encryption_spec_key_name: Optional[str]

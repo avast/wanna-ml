@@ -1,11 +1,10 @@
-from dataclasses import Field
 from typing import Optional, Union
 
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, Extra, validator, Field
 
 from wanna.core.models.docker import DockerModel
 from wanna.core.models.gcp_profile import GCPProfileModel
-from wanna.core.models.workbench import ManagedNotebookModel, NotebookModel
+from wanna.core.models.workbench import ManagedNotebookModel, NotebookModel, InstanceModel
 from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.pipeline import PipelineModel
 from wanna.core.models.tensorboard import TensorboardModel
@@ -23,6 +22,7 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     jobs: list[Union[CustomJobModel, TrainingCustomJobModel]] = Field(default_factory=list)
     pipelines: list[PipelineModel] = Field(default_factory=list)
     managed_notebooks: list[ManagedNotebookModel] = Field(default_factory=list)
+    workbench_instances: list[InstanceModel] = Field(default_factory=list)
     notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
 
     _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(

@@ -2,8 +2,14 @@ import itertools
 import subprocess
 from pathlib import Path
 from typing import Optional
+
+from google.api_core.operation import Operation
+from waiting import wait
+
+import typer
 from google.api_core import exceptions
 from google.cloud import compute_v1
+from google.cloud.notebooks_v2 import GceSetup, BootDisk, DataDisk, NetworkInterface, GPUDriverConfig, AcceleratorConfig
 from google.cloud.notebooks_v2.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v2.types import (
     ContainerImage,
@@ -16,9 +22,9 @@ from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.workbench import InstanceModel
 from wanna.core.models.wanna_config import WannaConfigModel
-from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
+from wanna.core.services.workbench import BaseWorkbenchService, CreateRequest, Instances
 from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import (
@@ -29,7 +35,7 @@ from wanna.core.utils.gcp import (
 logger = get_logger(__name__)
 
 
-class WorkbenchInstanceService(BaseService[InstanceModel]):
+class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -38,10 +44,10 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
         version: str = "dev",
     ):
         super().__init__(
-            instance_type="instance",
+            instance_type="workbench-instance",
         )
         self.version = version
-        self.instances = config.notebooks
+        self.instances = config.workbench_instances
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_profile.bucket
         self.notebook_client = NotebookServiceClient()
@@ -60,6 +66,18 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
 
         self.owner = owner
         self.tensorboard_service = TensorboardService(config=config)
+
+    def _delete_instance_client(self, instance: InstanceModel) -> Operation:
+        return self.notebook_client.delete_instance(
+            name=f"projects/{instance.project_id}/locations/"
+                 f"{instance.zone}/instances/{instance.name}"
+        )
+
+    def _create_instance_client(self, request: CreateInstanceRequest) -> Operation:
+        return self.notebook_client.create_instance(request)
+
+    def workbench_location(self, instance: InstanceModel) -> str:
+        return instance.zone
 
     def _list_running_instances(self, project_id: str, location: str) -> list[str]:
         """
@@ -80,14 +98,6 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
         return instance_names
 
     def _instance_exists(self, instance: InstanceModel) -> bool:
-        """
-        Check if the instance with given instance_name exists in given GCP project project_id and location.
-        Args:
-            instance: notebook to verify if exists on GCP
-
-        Returns:
-            True if exists, False if not
-        """
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
         return full_instance_name in self._list_running_instances(
             instance.project_id, instance.zone
@@ -95,55 +105,51 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
 
     def _create_instance_request(
         self,
-        notebook_instance: InstanceModel,
+        instance: InstanceModel,
         deploy: bool = True,
         push_mode: PushMode = PushMode.all,
     ) -> CreateInstanceRequest:
-        """
-        Transform the information about desired notebook from our NotebookModel model (based on yaml config)
-        to the form suitable for GCP API.
-
-        Args:
-            notebook_instance
-
-        Returns:
-            CreateInstanceRequest
-        """
-
         # Network
         full_network_name = self._get_resource_network(
             project_id=self.config.gcp_profile.project_id,
             push_mode=PushMode.all,
-            resource_network=notebook_instance.network,
+            resource_network=instance.network,
             fallback_project_network=self.config.gcp_profile.network,
             use_project_number=True,
         )
         subnet = (
-            notebook_instance.subnet
-            if notebook_instance.subnet
+            instance.subnet
+            if instance.subnet
             else self.config.gcp_profile.subnet
         )
         full_subnet_name = self._get_resource_subnet(
             full_network_name,
             subnet,
-            notebook_instance.region,
+            instance.region,
         )
-
+        network_interfaces = [NetworkInterface(
+            network=full_network_name,
+            subnet=full_subnet_name,
+        )] if instance.network and instance.subnet else None
         # GPU
-        if notebook_instance.gpu:
-            accelerator_config = Instance.AcceleratorConfig(
-                core_count=notebook_instance.gpu.count,
-                type_=notebook_instance.gpu.accelerator_type,
+        if gpu := instance.gpu:
+            accelerator_configs = [AcceleratorConfig(
+                core_count=gpu.count,
+                type_=gpu.accelerator_type,
+            )]
+            gpu_driver_config = GPUDriverConfig(
+                enable_gpu_driver=gpu.install_gpu_driver,
+                custom_gpu_driver_path=gpu.custom_gpu_driver_path,
             )
-            install_gpu_driver = notebook_instance.gpu.install_gpu_driver
         else:
-            accelerator_config = None
-            install_gpu_driver = False
+            accelerator_configs = None
+            gpu_driver_config = None
+
         # Environment
-        if notebook_instance.environment.docker_image_ref:
+        if docker_image_ref := instance.environment.docker_image_ref:
             if self.docker_service:
                 image_url = self.docker_service.build_container_and_get_image_url(
-                    notebook_instance.environment.docker_image_ref, push_mode=push_mode
+                    docker_image_ref, push_mode=push_mode
                 )
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
@@ -154,13 +160,13 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
                 vm_image = None
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
-        elif notebook_instance.environment.vm_image:
+        elif instance.environment.vm_image:
             vm_image = VmImage(
                 project="deeplearning-platform-release",
                 image_family=construct_vm_image_family_from_vm_image(
-                    notebook_instance.environment.vm_image.framework,
-                    notebook_instance.environment.vm_image.version,
-                    notebook_instance.environment.vm_image.os,
+                    instance.environment.vm_image.framework,
+                    instance.environment.vm_image.version,
+                    instance.environment.vm_image.os,
                 ),
             )
             container_image = None
@@ -169,64 +175,61 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
                 "No notebook environment was found. This should not be possible."
                 " Something went wrong during model validation"
             )
+
         # Disks
-        boot_disk_type = (
-            notebook_instance.boot_disk.disk_type
-            if notebook_instance.boot_disk
-            else None
-        )
-        boot_disk_size_gb = (
-            notebook_instance.boot_disk.size_gb if notebook_instance.boot_disk else None
-        )
-        data_disk_type = (
-            notebook_instance.data_disk.disk_type
-            if notebook_instance.data_disk
-            else None
-        )
-        data_disk_size_gb = (
-            notebook_instance.data_disk.size_gb if notebook_instance.data_disk else None
-        )
         disk_encryption = "CMEK" if self.config.gcp_profile.kms_key else None
         kms_key = (
             self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
         )
+        boot_disk = BootDisk(
+            disk_size_gb=boot_d.size_gb,
+            disk_type=boot_d.disk_type,
+            disk_encryption=disk_encryption,
+            kms_key=kms_key,
+        ) if (boot_d := instance.boot_disk) else None
+        data_disks = [DataDisk(
+            disk_size_gb=data_d.size_gb,
+            disk_type=data_d.disk_type,
+            disk_encryption=disk_encryption,
+            kms_key=kms_key,
+        )] if (data_d := instance.data_disk) else None
 
         # service account and instance owners
-        service_account = notebook_instance.service_account
-        instance_owner = self.owner or notebook_instance.owner
+        service_accounts = [instance.service_account]
+        instance_owner = self.owner or instance.owner
         instance_owners = [instance_owner] if instance_owner else None
 
         # labels and tags
-        tags = notebook_instance.tags
+        tags = instance.tags
         labels = {
-            "wanna_name": notebook_instance.name,
+            "wanna_name": instance.name,
             "wanna_resource": self.instance_type,
         }
         if instance_owner:
             labels["wanna_owner"] = email_fixer(instance_owner)
-        if notebook_instance.labels:
-            labels = {**notebook_instance.labels, **labels}
+        if instance.labels:
+            labels = {**instance.labels, **labels}
 
         # post startup script
         if deploy and (
-            notebook_instance.bucket_mounts
-            or notebook_instance.tensorboard_ref
-            or notebook_instance.idle_shutdown_timeout
+            instance.bucket_mounts
+            or instance.tensorboard_ref
+            or instance.idle_shutdown_timeout
             or self.config.gcp_profile.env_vars
-            or notebook_instance.env_vars
+            or instance.env_vars
         ):
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
-                notebook_instance.bucket or self.bucket_name,
-                f"notebooks/{notebook_instance.name}/startup_script.sh",
+                instance.bucket or self.bucket_name,
+                f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
         else:
             post_startup_script = None
 
-        metadata = notebook_instance.metadata or {}
-        if notebook_instance.enable_monitoring:
+        metadata = instance.metadata or {}
+        if instance.enable_monitoring:
             enable_monitoring_metadata = {
                 "enable-guest-attributes": "TRUE",
                 "report-system-health": "TRUE",
@@ -235,41 +238,47 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
                 "enable-extended-ui": "TRUE",
             }
             metadata = {**metadata, **enable_monitoring_metadata}
-        if notebook_instance.collaborative:
+        if instance.collaborative:
+            # todo: test this
             collaborative_metadata = {"use-collaborative": "TRUE"}
             metadata = {**metadata, **collaborative_metadata}
-        if notebook_instance.backup:
-            backup_metadata = {"gcs-data-bucket": notebook_instance.backup}
-            metadata = {**metadata, **backup_metadata}
+        # https://cloud.google.com/vertex-ai/docs/workbench/instances/create-dataproc-enabled#terraform
+        dataproc_metadata = {"disable-mixer": "false" if instance.enable_dataproc else "true"}
+        metadata = {**metadata, **dataproc_metadata}
+        # https://cloud.google.com/vertex-ai/docs/workbench/instances/idle-shutdown#terraform
+        idle_shutdown_metadata = {"idle-timeout-seconds": str(idle_shutdown_timeout) if (
+            idle_shutdown_timeout := instance.idle_shutdown_timeout) else ""}
+        metadata = {**metadata, **idle_shutdown_metadata}
+        # https://cloud.google.com/vertex-ai/docs/workbench/instances/create#gcloud
+        post_startup_script_metadata = {"post-startup-script": post_startup_script} if post_startup_script else {}
+        metadata = {**metadata, **post_startup_script_metadata}
 
-        instance = Instance(
+        gce_setup = GceSetup(
+            machine_type=instance.machine_type,
+            accelerator_configs=accelerator_configs,
+            service_accounts=service_accounts,
             vm_image=vm_image,
             container_image=container_image,
-            machine_type=notebook_instance.machine_type,
-            accelerator_config=accelerator_config,
-            install_gpu_driver=install_gpu_driver,
-            network=full_network_name,
-            subnet=full_subnet_name,
-            boot_disk_type=boot_disk_type,
-            boot_disk_size_gb=boot_disk_size_gb,
-            data_disk_type=data_disk_type,
-            data_disk_size_gb=data_disk_size_gb,
-            post_startup_script=post_startup_script,
-            instance_owners=instance_owners,
-            service_account=service_account,
-            metadata=metadata,
+            boot_disk=boot_disk,
+            data_disks=data_disks,
+            network_interfaces=network_interfaces,
+            disable_public_ip=instance.no_public_ip,
             tags=tags,
+            metadata=metadata,
+            enable_ip_forwarding=instance.enable_ip_forwarding,
+            gpu_driver_config=gpu_driver_config,
+        )
+        instance_proto = Instance(
+            gce_setup=gce_setup,
+            instance_owners=instance_owners,
+            disable_proxy_access=instance.no_proxy_access,
             labels=labels,
-            disk_encryption=disk_encryption,
-            kms_key=kms_key,
-            no_public_ip=notebook_instance.no_public_ip,
-            no_proxy_access=notebook_instance.no_proxy_access,
         )
 
         return CreateInstanceRequest(
-            parent=f"projects/{notebook_instance.project_id}/locations/{notebook_instance.zone}",
-            instance_id=notebook_instance.name,
-            instance=instance,
+            parent=f"projects/{instance.project_id}/locations/{instance.zone}",
+            instance_id=instance.name,
+            instance=instance_proto,
         )
 
     def _prepare_startup_script(self, nb_instance: InstanceModel) -> str:
@@ -309,63 +318,39 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
         )
         return startup_script
 
-    def _validate_jupyterlab_state(self, instance_id: str, state: int) -> bool:
-        """
-        Validate if the given notebook instance is in given state.
-
-        Args:
-            instance_id: Full notebook instance id
-            state: Notebook state (ACTIVE, PENDING,...)
-
-        Returns:
-            True if desired state, False otherwise
-        """
-        try:
-            instance_info = self.notebook_client.get_instance(name=instance_id)
-        except exceptions.NotFound:
-            raise exceptions.NotFound(
-                f"Notebook {instance_id} was not found."
-            ) from None
-        return instance_info.state == state
+    def _client_get_instance(self, instance_id: str) -> Instances:
+        return self.notebook_client.get_instance(name=instance_id)
 
     def _get_jupyterlab_link(self, instance_id: str) -> str:
-        """
-        Get a link to jupyterlab proxy based on given notebook instance id.
-        Args:
-            instance_id: full notebook instance id
-
-        Returns:
-            proxy_uri: link to jupyterlab
-        """
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return f"https://{instance_info.proxy_uri}"
 
     def _ssh(
-        self, notebook_instance: InstanceModel, run_in_background: bool, local_port: int
+        self, workbench_instance: InstanceModel, run_in_background: bool, local_port: int
     ) -> None:
         """
         SSH connect to the notebook instance if the instance is already started.
 
         Args:
-            notebook_instance: notebook model representing the instance you want to connect to
+            workbench_instance: notebook model representing the instance you want to connect to
             run_in_background: whether to run in the background or in interactive mode
             local_port: jupyter lab will be exposed at this port at localhost
 
         Returns:
 
         """
-        exists = self._instance_exists(notebook_instance)
+        exists = self._instance_exists(workbench_instance)
         if not exists:
             logger.user_info(
-                f"Notebook {notebook_instance.name} is not running, create it first and then ssh connect to it."
+                f"Notebook {workbench_instance.name} is not running, create it first and then ssh connect to it."
             )
             return
 
         bash_command = f"gcloud compute ssh \
-             --project {notebook_instance.project_id} \
-             --zone {notebook_instance.zone} \
+             --project {workbench_instance.project_id} \
+             --zone {workbench_instance.zone} \
              --tunnel-through-iap \
-              {notebook_instance.name} \
+              {workbench_instance.name} \
              -- -L 8080:localhost:{local_port}"
         if run_in_background:
             bash_command += " -N -f"
@@ -387,18 +372,18 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
 
         """
         if instance_name == "all":
-            if len(self.config.notebooks) == 1:
-                self._ssh(self.config.notebooks[0], run_in_background, local_port)
-            elif len(self.config.notebooks) > 1:
+            if len(self.config.workbench_instances) == 1:
+                self._ssh(self.config.workbench_instances[0], run_in_background, local_port)
+            elif len(self.config.workbench_instances) > 1:
                 raise ValueError("You can connect to only one notebook at a time.")
             else:
                 logger.user_error("No notebook definition found in your YAML config.")
         else:
-            if instance_name in [notebook.name for notebook in self.config.notebooks]:
+            if instance_name in [notebook.name for notebook in self.config.workbench_instances]:
                 self._ssh(
                     [
                         notebook
-                        for notebook in self.config.notebooks
+                        for notebook in self.config.workbench_instances
                         if notebook.name == instance_name
                     ][0],
                     run_in_background,
@@ -413,7 +398,7 @@ class WorkbenchInstanceService(BaseService[InstanceModel]):
     def build(self) -> int:
         for instance in self.instances:
             self._create_instance_request(
-                notebook_instance=instance, deploy=False, push_mode=PushMode.manifests
+                instance=instance, deploy=False, push_mode=PushMode.manifests
             )
         logger.user_success("Notebooks validation OK!")
         return 0

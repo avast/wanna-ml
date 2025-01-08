@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from kfp.v2 import dsl
 
@@ -15,7 +15,7 @@ def get_or_create_endpoint(
     location: str,
     display_name: str,
     endpoint: dsl.Output[dsl.Artifact],
-    labels: dict[str, str] = {},
+    labels: Dict[str, str] = {},
     network: Optional[str] = None,
 ):
     import logging

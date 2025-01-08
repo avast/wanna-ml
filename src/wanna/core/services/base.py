@@ -22,7 +22,6 @@ class BaseService(ABC, Generic[T]):
 
     Args:
         instance_type: what are you working with (notebook, job, tensorboard) - used mainly in logging
-        instance_model: pydantic instance model
     """
 
     def __init__(

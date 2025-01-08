@@ -78,10 +78,10 @@ mkdocstrings-python = "^1.7.3"
 mkautodoc = "^0.2.0"
 markdown = "^3.5"
 mock = "^5.1.0"
-mypy = "^1.5.1"
-pytest = "^7.4.0"
-pytest-cov = "^4.1.0"
-pytest-ruff = "^0.2.1"
+mypy = "^1.8.0"
+pytest = "^8.0.1"
+pytest-cov = "^5.0.0"
+pytest-ruff = "^0.3.1"
 pytest-mypy = "^0.10.3"
 pytest-mock = "^3.12.0"
 poethepoet = "^0.22.0"
@@ -144,13 +144,16 @@ extend-exclude = [
 
 [tool.mypy]
 exclude = [
-    "src/wanna/components/templates/**",
-    "templates/blank/**",
-    "templates/sklearn/**",
-    "samples/pipelines/",
-    "dev_tests/**",
+    "src/wanna/components/templates/*",
+    "templates/blank/*",
+    "templates/sklearn/*",
+    "samples/pipelines/*",
+    "dev_tests/*",
 ]
 follow_imports = "silent"
+mypy_path = ["src"]
+namespace_packages = true
+explicit_package_bases = true
 strict = true
 strict_optional = true
 warn_redundant_casts = true

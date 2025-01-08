@@ -1,9 +1,9 @@
 import itertools
 from pathlib import Path
-from threading import Thread
 
 import typer
 from google.api_core import exceptions
+from google.api_core.operation import Operation
 from google.cloud.notebooks_v1.services.managed_notebook_service import (
     ManagedNotebookServiceClient,
 )
@@ -24,11 +24,11 @@ from waiting import wait
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.workbench import ManagedNotebookModel
+from wanna.core.models.workbench import ManagedNotebookModel, BaseWorkbenchModel
 from wanna.core.models.wanna_config import WannaConfigModel
-from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
+from wanna.core.services.workbench import BaseWorkbenchService, CreateRequest, Instances
 from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import upload_string_to_gcs
@@ -36,7 +36,7 @@ from wanna.core.utils.gcp import upload_string_to_gcs
 logger = get_logger(__name__)
 
 
-class ManagedNotebookService(BaseService[ManagedNotebookModel]):
+class ManagedNotebookService(BaseWorkbenchService[ManagedNotebookModel]):
     def __init__(
         self,
         config: WannaConfigModel,
@@ -64,52 +64,12 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
             else None
         )
 
-    def create(self, instance_name: str, **kwargs) -> None:
-        """
-        Create an instance with name "name" based on wanna-ml config.
-
-        Args:
-            instance_name: The name of the only instance from wanna-ml config that should be created.
-                  Set to "all" to create everything from wanna-ml yaml configuration.
-        """
-        instances = self._filter_instances_by_name(instance_name)
-
-        for instance in instances:
-            t = Thread(
-                target=self._create_one_instance, args=(instance,), kwargs={**kwargs}
-            )
-            t.start()
-
-    def delete(self, instance_name: str) -> None:
-        """
-        Delete an instance with name "name" based on wanna-ml config if exists on GCP.
-
-        Args:
-            instance_name: The name of the only instance from wanna-ml config that should be deleted.
-                  Set to "all" to create all from configuration.
-        """
-        instances = self._filter_instances_by_name(instance_name)
-
-        for instance in instances:
-            t = Thread(target=self._delete_one_instance, args=(instance,))
-            t.start()
-
-    def _create_runtime_request(
+    def _create_instance_request(
         self,
         instance: ManagedNotebookModel,
         deploy: bool = True,
         push_mode: PushMode = PushMode.all,
     ) -> CreateRuntimeRequest:
-        """
-        Transform the information about desired managed-notebook from the model based on yaml config
-        to the form suitable for GCP API.
-
-        Args:
-            instance
-
-        Returns:
-            CreateRuntimeRequest
-        """
         # Configuration of the managed notebook
         labels = {
             "wanna_name": instance.name,
@@ -164,7 +124,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         full_subnet = self._get_resource_subnet(
             full_network,
             subnet,
-            instance.region,
+            self.workbench_location(instance),
         )
 
         # Post startup script
@@ -231,85 +191,22 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
         # Create runtime request
         return CreateRuntimeRequest(
-            parent=f"projects/{instance.project_id}/locations/{instance.region}",
+            parent=f"projects/{instance.project_id}/locations/{self.workbench_location(instance)}",
             runtime_id=instance.name,
             runtime=runtime,
         )
 
-    def _delete_one_instance(self, notebook_instance: ManagedNotebookModel) -> None:
-        """
-        Delete one notebook instance. This assumes that it has been already verified that notebook exists.
-
-        Args:
-            notebook_instance: notebook to delete
-        """
-
-        exists = self._instance_exists(notebook_instance)
-        if exists:
-            logger.user_info(
-                f"Deleting {self.instance_type} {notebook_instance.name} ..."
-            )
-            deleted = self.notebook_client.delete_runtime(
-                name=f"projects/{notebook_instance.project_id}/locations/"
-                f"{notebook_instance.region}/runtimes/{notebook_instance.name}"
-            )
-            deleted.result()
-            logger.user_success(
-                f"Deleted {self.instance_type} {notebook_instance.name}"
-            )
-        else:
-            logger.user_error(
-                f"Notebook with name {notebook_instance.name} was not found in region {notebook_instance.region}",
+    def _delete_instance_client(self, instance: ManagedNotebookModel) -> Operation:
+        return self.notebook_client.delete_runtime(
+                name=f"projects/{instance.project_id}/locations/"
+                f"{self.workbench_location(instance)}/runtimes/{instance.name}"
             )
 
-    def _create_one_instance(self, instance: ManagedNotebookModel, **kwargs) -> None:
-        """
-        Create a notebook instance based on information in NotebookModel class.
-        1. Check if the notebook already exists
-        2. Parse the information from NotebookModel to GCP API friendly format = runtime_request
-        3. Wait for the compute instance behind the notebook to start
-        4. Wait for JupyterLab to start
-        5. Get and print the link to JupyterLab
+    def _create_instance_client(self, request: CreateRuntimeRequest) -> Operation:
+        return self.notebook_client.create_runtime(request=request)
 
-        Args:
-            instance: notebook to be created
-
-        """
-        exists = self._instance_exists(instance)
-        if exists:
-            logger.user_info(
-                f"Managed notebook {instance.name} already exists in location {instance.region}"
-            )
-            should_recreate = typer.confirm(
-                "Are you sure you want to delete it and start a new?"
-            )
-            if should_recreate:
-                self._delete_one_instance(instance)
-            else:
-                return
-
-        push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
-        request = self._create_runtime_request(
-            instance=instance, deploy=True, push_mode=push_mode
-        )
-        logger.user_info(f"Creating instance for {instance.name} ...")
-        nb_instance = self.notebook_client.create_runtime(request=request)
-        instance_full_name = (
-            nb_instance.result().name
-        )  # .result() waits for compute engine behind the notebook to start
-        logger.user_info(f"Starting JupyterLab for {instance.name} ...")
-        wait(
-            lambda: self._validate_jupyterlab_state(
-                instance_full_name, Runtime.State.ACTIVE
-            ),
-            timeout_seconds=450,
-            sleep_seconds=20,
-            waiting_for="Starting JupyterLab in your instance",
-        )
-        jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        logger.user_success(
-            f"JupyterLab for {instance.name} started at {jupyterlab_link}"
-        )
+    def workbench_location(self, instance: ManagedNotebookModel) -> str:
+        return instance.region or self.config.gcp_profile.region
 
     def _list_running_instances(self, project_id: str, location: str) -> list[str]:
         """
@@ -330,17 +227,9 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         return instance_names
 
     def _instance_exists(self, instance: ManagedNotebookModel) -> bool:
-        """
-        Check if the instance with given instance_name exists in given GCP project project_id and location.
-        Args:
-            instance: notebook to verify if exists on GCP
-
-        Returns:
-            True if exists, False if not
-        """
-        full_instance_name = f"projects/{instance.project_id}/locations/{instance.region}/runtimes/{instance.name}"
+        full_instance_name = f"projects/{instance.project_id}/locations/{self.workbench_location(instance)}/runtimes/{instance.name}"
         return full_instance_name in self._list_running_instances(
-            instance.project_id, instance.region or self.config.gcp_profile.region
+            instance.project_id, self.workbench_location(instance)
         )
 
     def _prepare_startup_script(self, nb_instance: ManagedNotebookModel) -> str:
@@ -369,34 +258,10 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
         )
         return startup_script
 
-    def _validate_jupyterlab_state(self, instance_id: str, state: int) -> bool:
-        """
-        Validate if the given notebook instance is in given state.
-
-        Args:
-            instance_id: Full notebook instance id
-            state: Notebook state (ACTIVE, PENDING,...)
-
-        Returns:
-            True if desired state, False otherwise
-        """
-        try:
-            instance_info = self.notebook_client.get_runtime(name=instance_id)
-        except exceptions.NotFound:
-            raise exceptions.NotFound(
-                f"Managed Notebook {instance_id} was not found."
-            ) from None
-        return instance_info.state == state
+    def _client_get_instance(self, instance_id: str) -> Instances:
+        return self.notebook_client.get_runtime(name=instance_id)
 
     def _get_jupyterlab_link(self, instance_id: str) -> str:
-        """
-        Get a link to jupyterlab proxy based on given notebook instance id.
-        Args:
-            instance_id: full notebook instance id
-
-        Returns:
-            proxy_uri: link to jupyterlab
-        """
         instance_info = self.notebook_client.get_runtime({"name": instance_id})
         return f"https://{instance_info.access_config.proxy_uri}"
 
@@ -448,7 +313,7 @@ class ManagedNotebookService(BaseService[ManagedNotebookModel]):
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_runtime_request(
+            self._create_instance_request(
                 instance=instance, deploy=False, push_mode=PushMode.manifests
             )
         logger.user_success("Managed notebooks validation OK!")

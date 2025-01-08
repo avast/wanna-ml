@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Dict
 
 from google_cloud_pipeline_components.types.artifact_types import VertexModel
 from kfp import dsl
@@ -19,9 +19,9 @@ def upload_model_version(
     artifact_uri: str,
     model: dsl.Output[VertexModel],
     model_output_path: dsl.OutputPath(str),  # type: ignore
-    labels: dict[str, str] = {},
-    version_aliases: list[str] = [],
-    metadata: list[str] = [],
+    labels: Dict[str, str] = {},
+    version_aliases: List[str] = [],
+    metadata: List[str] = [],
     model_description: Optional[str] = None,
     version_description: Optional[str] = None,
 ):
