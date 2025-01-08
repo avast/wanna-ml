@@ -1,0 +1,41 @@
+wanna_project:
+  name: wanna-notebook-sample-custom-container
+  version: 1
+  authors: ["john.doe@example.com", "jane.doe@example.com"]
+
+gcp_profiles:
+  - profile_name: default
+    project_id: "your-gcp-project-id"
+    zone: europe-west1-b
+    bucket: "your-staging-bucket-name"
+    network: default
+  - profile_name: test
+    project_id: "your-gcp-project-id"
+    zone: europe-west4-a
+    bucket: "your-staging-bucket-name"
+    network: default
+    labels:
+      env_var: ${LABEL}
+
+docker:
+  images:
+    - build_type: local_build_image
+      name: custom-notebook-container
+      context_dir: .
+      dockerfile: Dockerfile.notebook
+  repository: wanna-samples
+  cloud_build: true
+
+workbench_instances:
+  - name: wanna-notebook-custom-container
+    machine_type: n1-standard-4
+    labels:
+      notebook_usecase: wanna-notebook-sample-custom-container
+    environment:
+      docker_image_ref: custom-notebook-container
+    boot_disk:
+      disk_type: pd_standard
+      size_gb: 100
+    data_disk:
+      disk_type: pd_standard
+      size_gb: 100

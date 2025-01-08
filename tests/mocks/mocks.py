@@ -166,3 +166,29 @@ class MockManagedNotebookServiceClient:
     def get_runtime(self, name):
         matched_instances = [i for i in self.runtimes if name == i.name]
         return matched_instances[0]
+
+class MockWorkbechInstanceServiceClient:
+    def __init__(self):
+        self.notebook_states = {
+            "nb1": Instance.State.ACTIVE,
+            "tf-gpu": Instance.State.PROVISIONING,
+            "pytorch-notebook": Instance.State.DELETED,
+        }
+        self.project_id = "gcp-project"
+        self.zone = "us-east1-a"
+        self.instances = [
+            Instance(
+                name=f"projects/{self.project_id}/locations/{self.zone}/instances/{n}",
+                state=s,
+            )
+            for n, s in self.notebook_states.items()
+        ]
+
+    def list_instances(self, parent):
+        return ListInstancesResponse(
+            instances=[i for i in self.instances if i.name.startswith(parent)]
+        )
+
+    def get_instance(self, name):
+        matched_instances = [i for i in self.instances if name == i.name]
+        return matched_instances[0]

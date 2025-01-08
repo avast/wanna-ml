@@ -1,30 +1,42 @@
 import unittest
 from pathlib import Path
 
+import pytest
 from google.cloud.notebooks_v1.types import Instance
 from mock import patch
 from mock.mock import MagicMock
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.workbench import NotebookModel
+from wanna.core.models.workbench import NotebookModel, InstanceModel
 from wanna.core.services.notebook import NotebookService
+from wanna.core.services.workbench_instance import WorkbenchInstanceService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
 from tests.mocks import mocks
 
+@pytest.fixture
+def custom_container_config():
+    return load_config_from_yaml(
+            "samples/notebook/workbench_instance_custom_container/wanna.yaml", "default"
+        )
+
+
+@pytest.fixture
+def vm_image_config():
+    return load_config_from_yaml(
+            "samples/notebook/workbench_instance_vm_image/wanna.yaml", "default"
+        )
 
 @patch(
     "wanna.core.services.notebook.NotebookServiceClient",
-    mocks.MockNotebookServiceClient,
+    mocks.MockWorkbechInstanceServiceClient,
 )
-class TestNotebookService(unittest.TestCase):
+class TestWorkbenchInstanceService(unittest.TestCase):
     project_id = "gcp-project"
     zone = "us-east1-a"
 
-    def test_list_running_instances(self):
-        config = load_config_from_yaml(
-            "samples/notebook/custom_container/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
+    def test_list_running_instances(self, custom_container_config):
+        config = custom_container_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         running_notebooks = nb_service._list_running_instances(
             project_id=self.project_id, location=self.zone
         )
@@ -45,29 +57,25 @@ class TestNotebookService(unittest.TestCase):
             not in running_notebooks
         )
 
-    def test_instance_exists(self):
-        config = load_config_from_yaml(
-            "samples/notebook/custom_container/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
+    def test_instance_exists(self, custom_container_config):
+        config = custom_container_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         should_exist = nb_service._instance_exists(
-            instance=NotebookModel.parse_obj(
+            instance=InstanceModel.parse_obj(
                 {"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"}
             )
         )
         assert should_exist
         should_not_exist = nb_service._instance_exists(
-            instance=NotebookModel.parse_obj(
+            instance=InstanceModel.parse_obj(
                 {"project_id": self.project_id, "zone": self.zone, "name": "confundo"}
             )
         )
         assert not should_not_exist
 
-    def test_validate_jupyterlab_state(self):
-        config = load_config_from_yaml(
-            "samples/notebook/custom_container/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
+    def test_validate_jupyterlab_state(self, custom_container_config):
+        config = custom_container_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         state_1 = nb_service._validate_jupyterlab_state(
             instance_id=f"projects/{self.project_id}/locations/{self.zone}/instances/nb1",
             state=Instance.State.ACTIVE,
@@ -79,12 +87,10 @@ class TestNotebookService(unittest.TestCase):
         )
         assert not state_1
 
-    def test_create_instance_request_network_short_name(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_network_short_name(self, custom_container_config):
+        config = custom_container_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         instance.network = "little-hangleton"
         request = nb_service._create_instance_request(instance)
         assert (
@@ -92,12 +98,10 @@ class TestNotebookService(unittest.TestCase):
             == "projects/123456789/global/networks/little-hangleton"
         )
 
-    def test_create_instance_request_network_subnet(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_network_subnet(self, custom_container_config):
+        config = custom_container_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         instance.network = "little-hangleton"
         instance.subnet = "the-riddle-house"
         request = nb_service._create_instance_request(instance)
@@ -106,12 +110,10 @@ class TestNotebookService(unittest.TestCase):
             == f"projects/123456789/regions/{config.gcp_profile.region}/subnetworks/the-riddle-house"
         )
 
-    def test_create_instance_request_gpu_config(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_gpu_config(self, vm_image_config):
+        config = vm_image_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         instance.gpu = GPU.parse_obj(
             {"accelerator_type": "NVIDIA_TESLA_V100", "count": 4}
         )
@@ -119,12 +121,10 @@ class TestNotebookService(unittest.TestCase):
         assert request.instance.accelerator_config.type_.name == "NVIDIA_TESLA_V100"
         assert request.instance.accelerator_config.core_count == 4
 
-    def test_create_instance_request_custom_container(self):
-        config = load_config_from_yaml(
-            "samples/notebook/custom_container/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_custom_container(self, custom_container_config):
+        config = custom_container_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         nb_service.docker_service._build_image = MagicMock(
             return_value=(None, None, None)
         )
@@ -137,35 +137,29 @@ class TestNotebookService(unittest.TestCase):
         )
         assert request.instance.container_image.tag == "dev"
 
-    def test_create_instance_request_vm_image(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_vm_image(self, vm_image_config):
+        config = vm_image_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         request = nb_service._create_instance_request(instance)
         assert (
             request.instance.vm_image.image_family
             == "pytorch-1-9-xla-notebooks-debian-10"
         )
 
-    def test_create_instance_request_boot_disk(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_boot_disk(self, vm_image_config):
+        config = vm_image_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         instance.boot_disk = Disk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
         assert request.instance.boot_disk_type == Instance.DiskType.PD_SSD
         assert request.instance.boot_disk_size_gb == 500
 
-    def test_create_instance_request_data_disk(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+    def test_create_instance_request_data_disk(self, vm_image_config):
+        config = vm_image_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         instance.data_disk = Disk.parse_obj(
             {"disk_type": "pd_balanced", "size_gb": 750}
         )
@@ -173,22 +167,20 @@ class TestNotebookService(unittest.TestCase):
         assert request.instance.data_disk_type == Instance.DiskType.PD_BALANCED
         assert request.instance.data_disk_size_gb == 750
 
-    def test_prepare_startup_script(self):
-        config = load_config_from_yaml("samples/notebook/julia/wanna.yaml", "default")
+    def test_prepare_startup_script(self, vm_image_config):
+        config = vm_image_config
         # to allow the test execution even without local docker daemon running
         # which is not needed in this test
         config.docker.cloud_build = True
-        nb_service = NotebookService(config=config, workdir=Path("."))
-        instance = config.notebooks[0]
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
+        instance = config.workbench_instances[0]
         startup_script = nb_service._prepare_startup_script(instance)
         assert (
             "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name"
             in startup_script
         )
 
-    def test_build(self):
-        config = load_config_from_yaml(
-            "samples/notebook/vm_image/wanna.yaml", "default"
-        )
-        nb_service = NotebookService(config=config, workdir=Path("."))
+    def test_build(self, vm_image_config):
+        config = vm_image_config
+        nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         assert nb_service.build() == 0
