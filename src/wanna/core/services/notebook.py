@@ -17,8 +17,8 @@ from waiting import wait
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.workbench import NotebookModel
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.models.workbench import NotebookModel
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.services.workbench import BaseWorkbenchService, CreateRequest, Instances
@@ -66,8 +66,7 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
 
     def _delete_instance_client(self, instance: NotebookModel) -> Operation:
         return self.notebook_client.delete_instance(
-            name=f"projects/{instance.project_id}/locations/"
-                 f"{instance.zone}/instances/{instance.name}"
+            name=f"projects/{instance.project_id}/locations/" f"{instance.zone}/instances/{instance.name}"
         )
 
     def _create_instance_client(self, request: CreateInstanceRequest) -> Operation:
@@ -88,17 +87,13 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
             instance_names: List of the full names on notebook instances (this includes project_id, and zone)
 
         """
-        instances = self.notebook_client.list_instances(
-            parent=f"projects/{project_id}/locations/{location}"
-        )
+        instances = self.notebook_client.list_instances(parent=f"projects/{project_id}/locations/{location}")
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
     def _instance_exists(self, instance: NotebookModel) -> bool:
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
-        return full_instance_name in self._list_running_instances(
-            instance.project_id, instance.zone
-        )
+        return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
 
     def _create_instance_request(
         self,
@@ -114,11 +109,7 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
             fallback_project_network=self.config.gcp_profile.network,
             use_project_number=True,
         )
-        subnet = (
-            instance.subnet
-            if instance.subnet
-            else self.config.gcp_profile.subnet
-        )
+        subnet = instance.subnet if instance.subnet else self.config.gcp_profile.subnet
         full_subnet_name = self._get_resource_subnet(
             full_network_name,
             subnet,
@@ -166,26 +157,12 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
                 " Something went wrong during model validation"
             )
         # Disks
-        boot_disk_type = (
-            instance.boot_disk.disk_type
-            if instance.boot_disk
-            else None
-        )
-        boot_disk_size_gb = (
-            instance.boot_disk.size_gb if instance.boot_disk else None
-        )
-        data_disk_type = (
-            instance.data_disk.disk_type
-            if instance.data_disk
-            else None
-        )
-        data_disk_size_gb = (
-            instance.data_disk.size_gb if instance.data_disk else None
-        )
+        boot_disk_type = instance.boot_disk.disk_type if instance.boot_disk else None
+        boot_disk_size_gb = instance.boot_disk.size_gb if instance.boot_disk else None
+        data_disk_type = instance.data_disk.disk_type if instance.data_disk else None
+        data_disk_size_gb = instance.data_disk.size_gb if instance.data_disk else None
         disk_encryption = "CMEK" if self.config.gcp_profile.kms_key else None
-        kms_key = (
-            self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
-        )
+        kms_key = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
 
         # service account and instance owners
         service_account = instance.service_account
@@ -279,19 +256,13 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
         Returns:
             startup_script
         """
-        env_vars = (
-            self.config.gcp_profile.env_vars
-            if self.config.gcp_profile.env_vars
-            else dict()
-        )
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
         if nb_instance.env_vars:
             env_vars = {**env_vars, **nb_instance.env_vars}
 
         if nb_instance.tensorboard_ref:
-            tensorboard_resource_name = (
-                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                    nb_instance.tensorboard_ref
-                )
+            tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                nb_instance.tensorboard_ref
             )
         else:
             tensorboard_resource_name = None
@@ -312,9 +283,7 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return f"https://{instance_info.proxy_uri}"
 
-    def _ssh(
-        self, notebook_instance: NotebookModel, run_in_background: bool, local_port: int
-    ) -> None:
+    def _ssh(self, notebook_instance: NotebookModel, run_in_background: bool, local_port: int) -> None:
         """
         SSH connect to the notebook instance if the instance is already started.
 
@@ -368,25 +337,17 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
         else:
             if instance_name in [notebook.name for notebook in self.config.notebooks]:
                 self._ssh(
-                    [
-                        notebook
-                        for notebook in self.config.notebooks
-                        if notebook.name == instance_name
-                    ][0],
+                    [notebook for notebook in self.config.notebooks if notebook.name == instance_name][0],
                     run_in_background,
                     local_port,
                 )
             else:
                 logger.user_error(f"No notebook {instance_name} found")
-                raise ValueError(
-                    f"Notebook {instance_name} does not exists in configuration"
-                )
+                raise ValueError(f"Notebook {instance_name} does not exists in configuration")
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_instance_request(
-                instance=instance, deploy=False, push_mode=PushMode.manifests
-            )
+            self._create_instance_request(instance=instance, deploy=False, push_mode=PushMode.manifests)
         logger.user_success("Notebooks validation OK!")
         return 0
 
@@ -394,18 +355,12 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
         instances = self._filter_instances_by_name(instance_name)
 
         docker_image_refs = set(
-            [
-                instance.environment.docker_image_ref
-                for instance in instances
-                if instance.environment.docker_image_ref
-            ]
+            [instance.environment.docker_image_ref for instance in instances if instance.environment.docker_image_ref]
         )
         if docker_image_refs:
             if self.docker_service:
                 for docker_image_ref in docker_image_refs:
-                    image_tag = self.docker_service.get_image(
-                        docker_image_ref=docker_image_ref
-                    )
+                    image_tag = self.docker_service.get_image(docker_image_ref=docker_image_ref)
                     if image_tag[1]:
                         self.docker_service.push_image(image_tag[1])
             else:
@@ -423,9 +378,7 @@ class NotebookService(BaseWorkbenchService[NotebookModel]):
         )
         request.project = self.config.gcp_profile.project_id
         agg_list = instance_client.aggregated_list(request=request)
-        gcp_instances = itertools.chain(
-            *[resp.instances for zone, resp in agg_list if resp.instances]
-        )
+        gcp_instances = itertools.chain(*[resp.instances for zone, resp in agg_list if resp.instances])
 
         active_notebooks = [
             NotebookModel.parse_obj(

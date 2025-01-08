@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union, Literal
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Extra, Field
 
@@ -70,9 +70,7 @@ class NotebookReadyImageModel(BaseDockerImageModel):
     requirements_txt: Path
 
 
-DockerImageModel = Union[
-    LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel
-]
+DockerImageModel = Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]
 
 
 class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
@@ -99,11 +97,13 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     cloud_build_workerpool: Optional[str]
     cloud_build_workerpool_location: Optional[str]
     cloud_build_kaniko_version: Optional[str] = "latest"
-    cloud_build_kaniko_flags: list[str] = Field(default_factory=lambda: [
-        "--cache=true",
-        "--compressed-caching=false",
-        "--cache-copy-layers=true",
-    ])
+    cloud_build_kaniko_flags: list[str] = Field(
+        default_factory=lambda: [
+            "--cache=true",
+            "--compressed-caching=false",
+            "--cache-copy-layers=true",
+        ]
+    )
 
 
 class DockerBuildResult(BaseModel, extra=Extra.forbid):

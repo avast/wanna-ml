@@ -56,9 +56,7 @@ class PipelinePlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.pipeline import PipelineService
 
-        pipeline_service = PipelineService(
-            config=config, workdir=workdir, version=version, push_mode=mode
-        )
+        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
         pipeline_service.build(instance_name, params)
 
     @staticmethod
@@ -84,9 +82,7 @@ class PipelinePlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.pipeline import PipelineService
 
-        pipeline_service = PipelineService(
-            config=config, workdir=workdir, version=version, push_mode=mode
-        )
+        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
         manifests = pipeline_service.build(instance_name, params)
         pipeline_service.push(manifests)
 
@@ -108,9 +104,7 @@ class PipelinePlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.pipeline import PipelineService
 
-        pipeline_service = PipelineService(
-            config=config, workdir=workdir, version=version
-        )
+        pipeline_service = PipelineService(config=config, workdir=workdir, version=version)
         pipeline_service.deploy(instance_name, env)
 
     @staticmethod
@@ -122,9 +116,7 @@ class PipelinePlugin(BasePlugin):
             envvar="WANNA_ENV_PIPELINE_PARAMS",
             help="Path to the params file in yaml format",
         ),
-        sync: bool = typer.Option(
-            False, "--sync", "-s", help="Runs the pipeline in sync mode"
-        ),
+        sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "run"),
@@ -157,18 +149,14 @@ class PipelinePlugin(BasePlugin):
 
     @staticmethod
     def run_manifest(
-        manifest: str = typer.Option(
-            None, "--manifest", "-v", help="Job deployment manifest"
-        ),
+        manifest: str = typer.Option(None, "--manifest", "-v", help="Job deployment manifest"),
         params: Path = typer.Option(
             None,
             "--params",
             envvar="WANNA_ENV_PIPELINE_PARAMS",
             help="Path to the params file in yaml format",
         ),
-        sync: bool = typer.Option(
-            False, "--sync", "-s", help="Runs the pipeline in sync mode"
-        ),
+        sync: bool = typer.Option(False, "--sync", "-s", help="Runs the pipeline in sync mode"),
     ) -> None:
         """
         Run the pipeline as specified in the wanna-ml manifest.

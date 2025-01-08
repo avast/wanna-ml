@@ -15,28 +15,20 @@ logger = get_logger(__name__)
 
 
 class ArtifactsPushMixin(IOMixin):
-    def push_artifacts(
-        self, docker_pusher: Callable[[list[str]], None], push_tasks: list[PushTask]
-    ) -> PushResult:
+    def push_artifacts(self, docker_pusher: Callable[[list[str]], None], push_tasks: list[PushTask]) -> PushResult:
         def push_containers(container_artifacts: list[ContainerArtifact]):
             for artifact in container_artifacts:
-                with logger.user_spinner(
-                    f"Pushing {artifact.name.lower()} to {artifact.tags}"
-                ):
+                with logger.user_spinner(f"Pushing {artifact.name.lower()} to {artifact.tags}"):
                     docker_pusher(artifact.tags)
 
         def push_manifests(manifest_artifacts: list[PathArtifact]):
             for artifact in manifest_artifacts:
-                with logger.user_spinner(
-                    f"Pushing {artifact.name.lower()} to {artifact.destination}"
-                ):
+                with logger.user_spinner(f"Pushing {artifact.name.lower()} to {artifact.destination}"):
                     self.upload_file(artifact.source, artifact.destination)
 
         def push_json(artifacts: list[JsonArtifact]):
             for artifact in artifacts:
-                with logger.user_spinner(
-                    f"Pushing {artifact.name.lower()} to {artifact.destination}"
-                ):
+                with logger.user_spinner(f"Pushing {artifact.name.lower()} to {artifact.destination}"):
                     self.write(artifact.destination, json.dumps(artifact.json_body))
 
         results: PushResult = []

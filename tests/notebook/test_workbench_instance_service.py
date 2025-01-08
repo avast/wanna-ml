@@ -5,71 +5,51 @@ import pytest
 from google.cloud.notebooks_v1.types import Instance
 from mock import patch
 from mock.mock import MagicMock
+
+from tests.mocks import mocks
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.workbench import NotebookModel, InstanceModel
+from wanna.core.models.workbench import InstanceModel, NotebookModel
 from wanna.core.services.notebook import NotebookService
 from wanna.core.services.workbench_instance import WorkbenchInstanceService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
-from tests.mocks import mocks
 
 @pytest.fixture
 def custom_container_config():
-    return load_config_from_yaml(
-            "samples/notebook/workbench_instance_custom_container/wanna.yaml", "default"
-        )
+    return load_config_from_yaml("samples/notebook/workbench_instance_custom_container/wanna.yaml", "default")
 
 
 @pytest.fixture
 def vm_image_config():
-    return load_config_from_yaml(
-            "samples/notebook/workbench_instance_vm_image/wanna.yaml", "default"
-        )
+    return load_config_from_yaml("samples/notebook/workbench_instance_vm_image/wanna.yaml", "default")
+
 
 @patch(
     "wanna.core.services.notebook.NotebookServiceClient",
     mocks.MockWorkbechInstanceServiceClient,
 )
-class TestWorkbenchInstanceService(unittest.TestCase):
+class TestWorkbenchInstanceService:
     project_id = "gcp-project"
     zone = "us-east1-a"
 
     def test_list_running_instances(self, custom_container_config):
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        running_notebooks = nb_service._list_running_instances(
-            project_id=self.project_id, location=self.zone
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/nb1"
-            in running_notebooks
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu"
-            in running_notebooks
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/pytorch-notebook"
-            in running_notebooks
-        )
-        assert (
-            f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra"
-            not in running_notebooks
-        )
+        running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.zone)
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/nb1" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/pytorch-notebook" in running_notebooks
+        assert f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra" not in running_notebooks
 
     def test_instance_exists(self, custom_container_config):
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         should_exist = nb_service._instance_exists(
-            instance=InstanceModel.parse_obj(
-                {"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"}
-            )
+            instance=InstanceModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"})
         )
         assert should_exist
         should_not_exist = nb_service._instance_exists(
-            instance=InstanceModel.parse_obj(
-                {"project_id": self.project_id, "zone": self.zone, "name": "confundo"}
-            )
+            instance=InstanceModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "confundo"})
         )
         assert not should_not_exist
 
@@ -93,10 +73,7 @@ class TestWorkbenchInstanceService(unittest.TestCase):
         instance = config.workbench_instances[0]
         instance.network = "little-hangleton"
         request = nb_service._create_instance_request(instance)
-        assert (
-            request.instance.network
-            == "projects/123456789/global/networks/little-hangleton"
-        )
+        assert request.instance.network == "projects/123456789/global/networks/little-hangleton"
 
     def test_create_instance_request_network_subnet(self, custom_container_config):
         config = custom_container_config
@@ -114,9 +91,7 @@ class TestWorkbenchInstanceService(unittest.TestCase):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.workbench_instances[0]
-        instance.gpu = GPU.parse_obj(
-            {"accelerator_type": "NVIDIA_TESLA_V100", "count": 4}
-        )
+        instance.gpu = GPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
         request = nb_service._create_instance_request(instance)
         assert request.instance.accelerator_config.type_.name == "NVIDIA_TESLA_V100"
         assert request.instance.accelerator_config.core_count == 4
@@ -125,9 +100,7 @@ class TestWorkbenchInstanceService(unittest.TestCase):
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.workbench_instances[0]
-        nb_service.docker_service._build_image = MagicMock(
-            return_value=(None, None, None)
-        )
+        nb_service.docker_service._build_image = MagicMock(return_value=(None, None, None))
         nb_service.docker_service._pull_image = MagicMock(return_value=None)
         request = nb_service._create_instance_request(instance)
         assert (
@@ -142,10 +115,7 @@ class TestWorkbenchInstanceService(unittest.TestCase):
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.workbench_instances[0]
         request = nb_service._create_instance_request(instance)
-        assert (
-            request.instance.vm_image.image_family
-            == "pytorch-1-9-xla-notebooks-debian-10"
-        )
+        assert request.instance.vm_image.image_family == "pytorch-1-9-xla-notebooks-debian-10"
 
     def test_create_instance_request_boot_disk(self, vm_image_config):
         config = vm_image_config
@@ -160,9 +130,7 @@ class TestWorkbenchInstanceService(unittest.TestCase):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.workbench_instances[0]
-        instance.data_disk = Disk.parse_obj(
-            {"disk_type": "pd_balanced", "size_gb": 750}
-        )
+        instance.data_disk = Disk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
         assert request.instance.data_disk_type == Instance.DiskType.PD_BALANCED
         assert request.instance.data_disk_size_gb == 750
@@ -175,10 +143,7 @@ class TestWorkbenchInstanceService(unittest.TestCase):
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.workbench_instances[0]
         startup_script = nb_service._prepare_startup_script(instance)
-        assert (
-            "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name"
-            in startup_script
-        )
+        assert "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name" in startup_script
 
     def test_build(self, vm_image_config):
         config = vm_image_config

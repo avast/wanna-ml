@@ -65,9 +65,7 @@ class MockMachineTypesClient:
             "n2d-standard-2",
             "n1-standard-4",
         ]
-        return MachineTypeList(
-            items=[MachineType({"name": mtype}) for mtype in machine_type_names]
-        )
+        return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
 
 
 class MockNotebookServiceClient:
@@ -88,9 +86,7 @@ class MockNotebookServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(
-            instances=[i for i in self.instances if i.name.startswith(parent)]
-        )
+        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]
@@ -149,9 +145,7 @@ class MockManagedNotebookServiceClient:
                     "name": f"projects/{self.project_id}/locations/{self.region}/runtimes/{n}",
                     "state": s,
                     "virtual_machine": {
-                        "virtual_machine_config": {
-                            "labels": {"wanna_project": self.wanna_project_name}
-                        }
+                        "virtual_machine_config": {"labels": {"wanna_project": self.wanna_project_name}}
                     },
                 }
             )
@@ -159,13 +153,12 @@ class MockManagedNotebookServiceClient:
         ]
 
     def list_runtimes(self, parent):
-        return ListRuntimesResponse(
-            runtimes=[i for i in self.runtimes if i.name.startswith(parent)]
-        )
+        return ListRuntimesResponse(runtimes=[i for i in self.runtimes if i.name.startswith(parent)])
 
     def get_runtime(self, name):
         matched_instances = [i for i in self.runtimes if name == i.name]
         return matched_instances[0]
+
 
 class MockWorkbechInstanceServiceClient:
     def __init__(self):
@@ -185,9 +178,7 @@ class MockWorkbechInstanceServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(
-            instances=[i for i in self.instances if i.name.startswith(parent)]
-        )
+        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]

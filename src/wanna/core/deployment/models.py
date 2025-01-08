@@ -1,18 +1,17 @@
-from pathlib import Path
-
-from wanna.core.models.training_custom_job import JobModelTypeAlias
-
 from enum import Enum
-from typing import Any, Generic, Optional, TypeVar, Literal
+from pathlib import Path
+from typing import Any, Generic, Literal, Optional, TypeVar
 
-from pydantic import BaseModel, Extra, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Extra, Field
 from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
 from wanna.core.models.notification_channel import NotificationChannelModel
+from wanna.core.models.training_custom_job import JobModelTypeAlias
 
 PipelineEnvParams = dict[str, str | None | EmailStr]
+
 
 class GCPResource(
     GenericModel,
@@ -143,6 +142,4 @@ class PushTask(BaseModel):
     json_artifacts: list[JsonArtifact]
 
 
-PushResult = list[
-    tuple[list[ContainerArtifact], list[PathArtifact], list[JsonArtifact]]
-]
+PushResult = list[tuple[list[ContainerArtifact], list[PathArtifact], list[JsonArtifact]]]

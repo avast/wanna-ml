@@ -26,7 +26,7 @@ class ComponentsPlugin(BasePlugin):
             "--output-dir",
             prompt="Where do you want to store the component",
             help="The output directory where wanna-ml repository will be created",
-        )
+        ),
     ) -> None:
         """
         Create a kubeflow component based on a template.

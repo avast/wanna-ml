@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from kfp.v2 import dsl
 
@@ -37,18 +37,12 @@ def get_or_create_endpoint(
     )
     resp = client.list_endpoints(request=list_request)
     # Match endpoints on display name and also if they are public / private
-    endpoints = [
-        e
-        for e in resp
-        if e.display_name == display_name and e.network == (network or "")
-    ]
+    endpoints = [e for e in resp if e.display_name == display_name and e.network == (network or "")]
 
     if len(endpoints) > 0:
         logging.info("Already existing endpoints found")
         # If multiple endpoints are matched, take the newest one by update time
-        sorted_endpoints = sorted(
-            endpoints, key=lambda ep: ep.update_time, reverse=True
-        )
+        sorted_endpoints = sorted(endpoints, key=lambda ep: ep.update_time, reverse=True)
 
         endpoint_resource_name = sorted_endpoints[0].name
 

@@ -20,15 +20,15 @@ class NotebookEnvironment(BaseModel, extra=Extra.forbid):
 
     _ = root_validator()(validators.validate_only_one_must_be_set)
 
+
 class BaseWorkbenchModel(BaseInstanceModel):
-    name: str = Field(
-        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
-    )
+    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     machine_type: str = "n1-standard-4"
     gpu: Optional[GPU]
     data_disk: Optional[Disk]
     subnet: Optional[str]
     tensorboard_ref: Optional[str]
+
 
 class NotebookModel(BaseWorkbenchModel):
     """
@@ -66,11 +66,10 @@ class NotebookModel(BaseWorkbenchModel):
     deleted or overwritten files. To prevent sync conflicts, avoid assigning the same location to multiple instances.
     Works only for non-Docker notebooks!
     """
+
     zone: str
     owner: Optional[EmailStr]
-    environment: NotebookEnvironment = NotebookEnvironment(
-        vm_image=VMImage(framework="common", version="cpu")
-    )
+    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
     boot_disk: Optional[Disk]
     bucket_mounts: Optional[list[BucketMount]]
     enable_monitoring: bool = True
@@ -87,7 +86,7 @@ class NotebookModel(BaseWorkbenchModel):
 class ManagedNotebookModel(BaseWorkbenchModel):
     """
     - `name`- [str] Custom name for this instance
-    - `project_id' - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
+    - `project_id` - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
     - `zone` - [str] (optional) Overrides zone from the `gcp_profile` segment
     - `region` - [str] (optional) Overrides region from the `gcp_profile` segment
     - `labels`- [dict[str, str]] (optional) Custom labels to apply to this instance
@@ -109,6 +108,7 @@ class ManagedNotebookModel(BaseWorkbenchModel):
       true (default) or false
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
     """
+
     owner: Optional[str]
     kernel_docker_image_refs: Optional[list[str]]
     internal_ip_only: bool = True
@@ -119,7 +119,7 @@ class ManagedNotebookModel(BaseWorkbenchModel):
 class InstanceModel(BaseWorkbenchModel):
     """
     - `name`- [str] Custom name for this instance
-    - `project_id' - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
+    - `project_id` - [str] (optional) Overrides GCP Project ID from the `gcp_profile` segment
     - `zone` - [str] (optional) Overrides zone from the `gcp_profile` segment
     - `region` - [str] (optional) Overrides region from the `gcp_profile` segment
     - `labels`- [dict[str, str]] (optional) Custom labels to apply to this instance
@@ -141,12 +141,11 @@ class InstanceModel(BaseWorkbenchModel):
       true (default) or false
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
     """
+
     zone: str
     owner: Optional[EmailStr]
     boot_disk: Optional[Disk]
-    environment: NotebookEnvironment = NotebookEnvironment(
-        vm_image=VMImage(framework="common", version="cpu")
-    )
+    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
     no_public_ip: bool = True
     enable_dataproc: bool = False
     enable_ip_forwarding: bool = False

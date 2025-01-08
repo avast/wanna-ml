@@ -5,9 +5,7 @@ from pathlib import Path
 import igittigitt
 
 
-def tar_docker_context(
-    source_dir: Path, target_tar_file: Path, ignore_patterns: list[str] = []
-):
+def tar_docker_context(source_dir: Path, target_tar_file: Path, ignore_patterns: list[str] = []):
     """
     Tars a directory recursively while optionally skipping files based on ignore patterns.
 
@@ -27,6 +25,4 @@ def tar_docker_context(
                 file_path = os.path.join(root, file)
                 if parser.match(file_path):
                     continue
-                the_tar_file.add(
-                    file_path, arcname=os.path.relpath(file_path, source_dir)
-                )
+                the_tar_file.add(file_path, arcname=os.path.relpath(file_path, source_dir))

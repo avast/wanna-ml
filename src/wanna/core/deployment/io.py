@@ -12,11 +12,7 @@ from wanna.core.deployment.credentials import GCPCredentialsMixIn
 class IOMixin(GCPCredentialsMixIn):
     @contextlib.contextmanager
     def _open(self, uri, mode="r", **kwargs):
-        transport_params = (
-            {"client": Client(credentials=self.credentials)}
-            if str(uri).startswith("gs")
-            else {}
-        )
+        transport_params = {"client": Client(credentials=self.credentials)} if str(uri).startswith("gs") else {}
         with gcs_open(uri, mode, transport_params=transport_params, **kwargs) as c:
             yield c
 

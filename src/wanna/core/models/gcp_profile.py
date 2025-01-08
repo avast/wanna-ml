@@ -52,9 +52,7 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
     _ = validator("labels", allow_reuse=True)(validators.validate_labels)
 
     @root_validator(pre=True)
-    def parse_region_from_zone(
-        cls, values
-    ):  # pylint: disable=no-self-argument,no-self-use
+    def parse_region_from_zone(cls, values):  # pylint: disable=no-self-argument,no-self-use
         """
         In some cases, the zone is defined and region not.
         Region can be easily parsed from zone.

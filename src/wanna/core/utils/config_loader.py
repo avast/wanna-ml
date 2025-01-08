@@ -44,9 +44,7 @@ def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfil
     return profile_model
 
 
-def load_config_from_yaml(
-    wanna_config_path: Path, gcp_profile_name: str
-) -> WannaConfigModel:
+def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> WannaConfigModel:
     """
     Load the yaml file from wanna_config_path and parses the information to the models.
     This also includes the data validation.
@@ -63,12 +61,8 @@ def load_config_from_yaml(
     with logger.user_spinner("Reading and validating wanna yaml config"):
         with open(wanna_config_path, encoding="utf-8") as file:
             # Load workflow file
-            wanna_dict = loaders.load_yaml(
-                file, pathlib.Path(wanna_config_path).parent.resolve()
-            )
-        profile_model = load_gcp_profile(
-            profile_name=gcp_profile_name, wanna_dict=wanna_dict
-        )
+            wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
+        profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
         os.environ["GOOGLE_CLOUD_PROJECT"] = profile_model.project_id
         wanna_dict.update({"gcp_profile": profile_model})
         del wanna_dict["gcp_profiles"]

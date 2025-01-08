@@ -79,9 +79,7 @@ class NotebookPlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.notebook import NotebookService
 
-        nb_service = NotebookService(
-            config=config, workdir=workdir, owner=owner, version=version
-        )
+        nb_service = NotebookService(config=config, workdir=workdir, owner=owner, version=version)
         nb_service.create(instance_name, push_mode=mode)
 
     @staticmethod
@@ -215,9 +213,7 @@ class NotebookPlugin(BasePlugin):
     def sync(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        force: bool = typer.Option(
-            False, "--force", help="Synchronisation without prompt"
-        ),
+        force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
         version: str = version_option(instance_type="notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:

@@ -76,18 +76,14 @@ class ManagedNotebookPlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.managed_notebook import ManagedNotebookService
 
-        nb_service = ManagedNotebookService(
-            config=config, workdir=workdir, version=version
-        )
+        nb_service = ManagedNotebookService(config=config, workdir=workdir, version=version)
         nb_service.create(instance_name, push_mode=mode)
 
     @staticmethod
     def sync(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        force: bool = typer.Option(
-            False, "--force", help="Synchronisation without prompt"
-        ),
+        force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
         version: str = version_option(instance_type="managed notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:
@@ -105,9 +101,7 @@ class ManagedNotebookPlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.managed_notebook import ManagedNotebookService
 
-        nb_service = ManagedNotebookService(
-            config=config, workdir=workdir, version=version
-        )
+        nb_service = ManagedNotebookService(config=config, workdir=workdir, version=version)
         nb_service.sync(force=force, push_mode=mode)
 
     @staticmethod
@@ -150,9 +144,7 @@ class ManagedNotebookPlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.managed_notebook import ManagedNotebookService
 
-        nb_service = ManagedNotebookService(
-            config=config, workdir=workdir, version=version
-        )
+        nb_service = ManagedNotebookService(config=config, workdir=workdir, version=version)
         nb_service.build()
 
     @staticmethod
@@ -184,7 +176,5 @@ class ManagedNotebookPlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.managed_notebook import ManagedNotebookService
 
-        nb_service = ManagedNotebookService(
-            config=config, workdir=workdir, version=version
-        )
+        nb_service = ManagedNotebookService(config=config, workdir=workdir, version=version)
         nb_service.push(instance_name=instance_name)

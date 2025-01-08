@@ -102,9 +102,7 @@ class BaseService(ABC, Generic[T]):
         if instance_name == "all":
             instances = self.instances
             if not instances:
-                logger.user_error(
-                    f"No {self.instance_type} can be parsed from your wanna-ml yaml config."
-                )
+                logger.user_error(f"No {self.instance_type} can be parsed from your wanna-ml yaml config.")
                 exit(1)
         else:
             instances = [nb for nb in self.instances if nb.name == instance_name]
@@ -129,17 +127,13 @@ class BaseService(ABC, Generic[T]):
         Displays a link to the Google Cloud cost report
         """
         if not billing_id or not organization_id:
-            logger.user_error(
-                "Billing and Organization IDs are needed. Please provide them in wanna.yaml"
-            )
+            logger.user_error("Billing and Organization IDs are needed. Please provide them in wanna.yaml")
             return None
 
         base_url = f"https://console.cloud.google.com/billing/{billing_id}/reports;projects={gcp_project}"
 
         if instance_name == "all":
-            labels = (
-                f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
-            )
+            labels = f";labels=wanna_project:{wanna_project},wanna_resource:{wanna_resource}"
         elif instance_name not in [nb.name for nb in self.instances]:
             logger.user_error(
                 f"{self.instance_type} with name {instance_name} not found in your wanna-ml yaml config.",
@@ -160,9 +154,7 @@ class BaseService(ABC, Generic[T]):
         fallback_project_network: Optional[str],
         use_project_number: bool = True,
     ):
-        resource_network = (
-            resource_network if resource_network else fallback_project_network
-        )
+        resource_network = resource_network if resource_network else fallback_project_network
         if resource_network:
             result = get_network_info(resource_network)
             if result:
@@ -178,9 +170,7 @@ class BaseService(ABC, Generic[T]):
         else:
             return None
 
-    def _get_resource_subnet(
-        self, network: Optional[str], subnet: Optional[str], region: Optional[str]
-    ):
+    def _get_resource_subnet(self, network: Optional[str], subnet: Optional[str], region: Optional[str]):
         if subnet:
             # Assumes the full qualified path was provided in config
             if "/" in subnet:
@@ -217,14 +207,8 @@ class BaseService(ABC, Generic[T]):
 
         if to_be_deleted:
             to_be_deleted_str = "\n".join(["- " + item.name for item in to_be_deleted])
-            logger.user_info(
-                f"{self.instance_type.capitalize()}s to be deleted:\n{to_be_deleted_str}"
-            )
-            should_delete = (
-                True
-                if force
-                else typer.confirm("Are you sure you want to delete them?")
-            )
+            logger.user_info(f"{self.instance_type.capitalize()}s to be deleted:\n{to_be_deleted_str}")
+            should_delete = True if force else typer.confirm("Are you sure you want to delete them?")
             if should_delete:
                 for notebook in to_be_deleted:
                     t = Thread(target=self._delete_one_instance, args=(notebook,))
@@ -232,14 +216,8 @@ class BaseService(ABC, Generic[T]):
 
         if to_be_created:
             to_be_created_str = "\n".join(["- " + item.name for item in to_be_created])
-            logger.user_info(
-                f"{self.instance_type.capitalize()}s to be created:\n{to_be_created_str}"
-            )
-            should_create = (
-                True
-                if force
-                else typer.confirm("Are you sure you want to create them?")
-            )
+            logger.user_info(f"{self.instance_type.capitalize()}s to be created:\n{to_be_created_str}")
+            should_create = True if force else typer.confirm("Are you sure you want to create them?")
             if should_create:
                 for notebook in to_be_created:
                     t = Thread(
@@ -249,6 +227,4 @@ class BaseService(ABC, Generic[T]):
                     )
                     t.start()
 
-        logger.user_info(
-            f"{self.instance_type.capitalize()}s on GCP are in sync with wanna.yaml"
-        )
+        logger.user_info(f"{self.instance_type.capitalize()}s on GCP are in sync with wanna.yaml")

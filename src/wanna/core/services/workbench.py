@@ -1,18 +1,19 @@
 from abc import abstractmethod
 from typing import TypeVar
-from google.api_core import exceptions
 
 import typer
-from google.cloud.notebooks_v1 import CreateRuntimeRequest, CreateInstanceRequest as CreateInstanceRequestV1, Runtime, Instance as InstanceV1
-from google.cloud.notebooks_v2 import CreateInstanceRequest, Instance
+from google.api_core import exceptions
 from google.api_core.operation import Operation
-
+from google.cloud.notebooks_v1 import CreateInstanceRequest as CreateInstanceRequestV1
+from google.cloud.notebooks_v1 import CreateRuntimeRequest, Runtime
+from google.cloud.notebooks_v1 import Instance as InstanceV1
+from google.cloud.notebooks_v2 import CreateInstanceRequest, Instance
 from waiting import wait
 
 from wanna.core.deployment.models import PushMode
+from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.workbench import BaseWorkbenchModel
 from wanna.core.services.base import BaseService
-from wanna.core.loggers.wanna_logger import get_logger
 
 T = TypeVar("T", bound=BaseWorkbenchModel)
 CreateRequest = CreateRuntimeRequest | CreateInstanceRequestV1 | CreateInstanceRequest
@@ -20,8 +21,8 @@ Instances = Runtime | InstanceV1 | Instance
 
 logger = get_logger(__name__)
 
-class BaseWorkbenchService(BaseService[T]):
 
+class BaseWorkbenchService(BaseService[T]):
     @abstractmethod
     def _instance_exists(self, instance: T) -> bool:
         """
@@ -50,29 +51,21 @@ class BaseWorkbenchService(BaseService[T]):
         if should_end:
             return
         push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
-        request = self._create_instance_request(
-            instance=instance, deploy=True, push_mode=push_mode
-        )
-        logger.user_info(
-            f"Creating underlying compute engine instance for {instance.name} ..."
-        )
+        request = self._create_instance_request(instance=instance, deploy=True, push_mode=push_mode)
+        logger.user_info(f"Creating underlying compute engine instance for {instance.name} ...")
         nb_instance = self._create_instance_client(request=request)
         instance_full_name = (
             nb_instance.result().name
         )  # .result() waits for compute engine behind the notebook to start
         logger.user_info(f"Starting JupyterLab for {instance.name} ...")
         wait(
-            lambda: self._validate_jupyterlab_state(
-                instance_full_name, Runtime.State.ACTIVE
-            ),
+            lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
             timeout_seconds=450,
             sleep_seconds=20,
             waiting_for="Starting JupyterLab in your instance",
         )
         jupyterlab_link = self._get_jupyterlab_link(instance_full_name)
-        logger.user_success(
-            f"JupyterLab for {instance.name} started at {jupyterlab_link}"
-        )
+        logger.user_success(f"JupyterLab for {instance.name} started at {jupyterlab_link}")
 
     def _create_one_instance_exists(self, instance: T) -> bool:
         """
@@ -89,9 +82,7 @@ class BaseWorkbenchService(BaseService[T]):
             logger.user_info(
                 f"{self.instance_type} {instance.name} already exists in location {self.workbench_location(instance)}"
             )
-            should_recreate = typer.confirm(
-                "Are you sure you want to delete it and start a new?"
-            )
+            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
             if should_recreate:
                 self._delete_one_instance(instance)
             else:
@@ -138,16 +129,10 @@ class BaseWorkbenchService(BaseService[T]):
 
         exists = self._instance_exists(instance)
         if exists:
-            logger.user_info(
-                f"Deleting {self.instance_type} {instance.name} ..."
-            )
-            deleted = self._delete_instance_client(
-                instance=instance
-            )
+            logger.user_info(f"Deleting {self.instance_type} {instance.name} ...")
+            deleted = self._delete_instance_client(instance=instance)
             deleted.result()
-            logger.user_success(
-                f"Deleted {self.instance_type} {instance.name}"
-            )
+            logger.user_success(f"Deleted {self.instance_type} {instance.name}")
         else:
             logger.user_error(
                 f"{self.instance_type} with name {instance.name} was not found in location {self.workbench_location(instance)}",
@@ -192,9 +177,7 @@ class BaseWorkbenchService(BaseService[T]):
         try:
             instance_info = self._client_get_instance(instance_id)
         except exceptions.NotFound:
-            raise exceptions.NotFound(
-                f"{self.instance_type} {instance_id} was not found."
-            ) from None
+            raise exceptions.NotFound(f"{self.instance_type} {instance_id} was not found.") from None
         return instance_info.state == state
 
     @abstractmethod

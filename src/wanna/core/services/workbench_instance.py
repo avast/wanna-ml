@@ -3,13 +3,11 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from google.api_core.operation import Operation
-from waiting import wait
-
 import typer
 from google.api_core import exceptions
+from google.api_core.operation import Operation
 from google.cloud import compute_v1
-from google.cloud.notebooks_v2 import GceSetup, BootDisk, DataDisk, NetworkInterface, GPUDriverConfig, AcceleratorConfig
+from google.cloud.notebooks_v2 import AcceleratorConfig, BootDisk, DataDisk, GceSetup, GPUDriverConfig, NetworkInterface
 from google.cloud.notebooks_v2.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v2.types import (
     ContainerImage,
@@ -17,11 +15,12 @@ from google.cloud.notebooks_v2.types import (
     Instance,
     VmImage,
 )
+from waiting import wait
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
-from wanna.core.models.workbench import InstanceModel
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.models.workbench import InstanceModel
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.services.workbench import BaseWorkbenchService, CreateRequest, Instances
@@ -69,8 +68,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
     def _delete_instance_client(self, instance: InstanceModel) -> Operation:
         return self.notebook_client.delete_instance(
-            name=f"projects/{instance.project_id}/locations/"
-                 f"{instance.zone}/instances/{instance.name}"
+            name=f"projects/{instance.project_id}/locations/" f"{instance.zone}/instances/{instance.name}"
         )
 
     def _create_instance_client(self, request: CreateInstanceRequest) -> Operation:
@@ -91,17 +89,13 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             instance_names: list of the full names on notebook instances (this includes project_id, and zone)
 
         """
-        instances = self.notebook_client.list_instances(
-            parent=f"projects/{project_id}/locations/{location}"
-        )
+        instances = self.notebook_client.list_instances(parent=f"projects/{project_id}/locations/{location}")
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
     def _instance_exists(self, instance: InstanceModel) -> bool:
         full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
-        return full_instance_name in self._list_running_instances(
-            instance.project_id, instance.zone
-        )
+        return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
 
     def _create_instance_request(
         self,
@@ -117,26 +111,30 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             fallback_project_network=self.config.gcp_profile.network,
             use_project_number=True,
         )
-        subnet = (
-            instance.subnet
-            if instance.subnet
-            else self.config.gcp_profile.subnet
-        )
+        subnet = instance.subnet if instance.subnet else self.config.gcp_profile.subnet
         full_subnet_name = self._get_resource_subnet(
             full_network_name,
             subnet,
             instance.region,
         )
-        network_interfaces = [NetworkInterface(
-            network=full_network_name,
-            subnet=full_subnet_name,
-        )] if instance.network and instance.subnet else None
+        network_interfaces = (
+            [
+                NetworkInterface(
+                    network=full_network_name,
+                    subnet=full_subnet_name,
+                )
+            ]
+            if instance.network and instance.subnet
+            else None
+        )
         # GPU
         if gpu := instance.gpu:
-            accelerator_configs = [AcceleratorConfig(
-                core_count=gpu.count,
-                type_=gpu.accelerator_type,
-            )]
+            accelerator_configs = [
+                AcceleratorConfig(
+                    core_count=gpu.count,
+                    type_=gpu.accelerator_type,
+                )
+            ]
             gpu_driver_config = GPUDriverConfig(
                 enable_gpu_driver=gpu.install_gpu_driver,
                 custom_gpu_driver_path=gpu.custom_gpu_driver_path,
@@ -148,9 +146,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         # Environment
         if docker_image_ref := instance.environment.docker_image_ref:
             if self.docker_service:
-                image_url = self.docker_service.build_container_and_get_image_url(
-                    docker_image_ref, push_mode=push_mode
-                )
+                image_url = self.docker_service.build_container_and_get_image_url(docker_image_ref, push_mode=push_mode)
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
                 container_image = ContainerImage(
@@ -178,21 +174,29 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
         # Disks
         disk_encryption = "CMEK" if self.config.gcp_profile.kms_key else None
-        kms_key = (
-            self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
+        kms_key = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
+        boot_disk = (
+            BootDisk(
+                disk_size_gb=boot_d.size_gb,
+                disk_type=boot_d.disk_type,
+                disk_encryption=disk_encryption,
+                kms_key=kms_key,
+            )
+            if (boot_d := instance.boot_disk)
+            else None
         )
-        boot_disk = BootDisk(
-            disk_size_gb=boot_d.size_gb,
-            disk_type=boot_d.disk_type,
-            disk_encryption=disk_encryption,
-            kms_key=kms_key,
-        ) if (boot_d := instance.boot_disk) else None
-        data_disks = [DataDisk(
-            disk_size_gb=data_d.size_gb,
-            disk_type=data_d.disk_type,
-            disk_encryption=disk_encryption,
-            kms_key=kms_key,
-        )] if (data_d := instance.data_disk) else None
+        data_disks = (
+            [
+                DataDisk(
+                    disk_size_gb=data_d.size_gb,
+                    disk_type=data_d.disk_type,
+                    disk_encryption=disk_encryption,
+                    kms_key=kms_key,
+                )
+            ]
+            if (data_d := instance.data_disk)
+            else None
+        )
 
         # service account and instance owners
         service_accounts = [instance.service_account]
@@ -246,8 +250,11 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         dataproc_metadata = {"disable-mixer": "false" if instance.enable_dataproc else "true"}
         metadata = {**metadata, **dataproc_metadata}
         # https://cloud.google.com/vertex-ai/docs/workbench/instances/idle-shutdown#terraform
-        idle_shutdown_metadata = {"idle-timeout-seconds": str(idle_shutdown_timeout) if (
-            idle_shutdown_timeout := instance.idle_shutdown_timeout) else ""}
+        idle_shutdown_metadata = {
+            "idle-timeout-seconds": str(idle_shutdown_timeout)
+            if (idle_shutdown_timeout := instance.idle_shutdown_timeout)
+            else ""
+        }
         metadata = {**metadata, **idle_shutdown_metadata}
         # https://cloud.google.com/vertex-ai/docs/workbench/instances/create#gcloud
         post_startup_script_metadata = {"post-startup-script": post_startup_script} if post_startup_script else {}
@@ -292,19 +299,13 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         Returns:
             startup_script
         """
-        env_vars = (
-            self.config.gcp_profile.env_vars
-            if self.config.gcp_profile.env_vars
-            else dict()
-        )
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
         if nb_instance.env_vars:
             env_vars = {**env_vars, **nb_instance.env_vars}
 
         if nb_instance.tensorboard_ref:
-            tensorboard_resource_name = (
-                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                    nb_instance.tensorboard_ref
-                )
+            tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                nb_instance.tensorboard_ref
             )
         else:
             tensorboard_resource_name = None
@@ -325,9 +326,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return f"https://{instance_info.proxy_uri}"
 
-    def _ssh(
-        self, workbench_instance: InstanceModel, run_in_background: bool, local_port: int
-    ) -> None:
+    def _ssh(self, workbench_instance: InstanceModel, run_in_background: bool, local_port: int) -> None:
         """
         SSH connect to the notebook instance if the instance is already started.
 
@@ -381,25 +380,17 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         else:
             if instance_name in [notebook.name for notebook in self.config.workbench_instances]:
                 self._ssh(
-                    [
-                        notebook
-                        for notebook in self.config.workbench_instances
-                        if notebook.name == instance_name
-                    ][0],
+                    [notebook for notebook in self.config.workbench_instances if notebook.name == instance_name][0],
                     run_in_background,
                     local_port,
                 )
             else:
                 logger.user_error(f"No notebook {instance_name} found")
-                raise ValueError(
-                    f"Notebook {instance_name} does not exists in configuration"
-                )
+                raise ValueError(f"Notebook {instance_name} does not exists in configuration")
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_instance_request(
-                instance=instance, deploy=False, push_mode=PushMode.manifests
-            )
+            self._create_instance_request(instance=instance, deploy=False, push_mode=PushMode.manifests)
         logger.user_success("Notebooks validation OK!")
         return 0
 
@@ -407,18 +398,12 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         instances = self._filter_instances_by_name(instance_name)
 
         docker_image_refs = set(
-            [
-                instance.environment.docker_image_ref
-                for instance in instances
-                if instance.environment.docker_image_ref
-            ]
+            [instance.environment.docker_image_ref for instance in instances if instance.environment.docker_image_ref]
         )
         if docker_image_refs:
             if self.docker_service:
                 for docker_image_ref in docker_image_refs:
-                    image_tag = self.docker_service.get_image(
-                        docker_image_ref=docker_image_ref
-                    )
+                    image_tag = self.docker_service.get_image(docker_image_ref=docker_image_ref)
                     if image_tag[1]:
                         self.docker_service.push_image(image_tag[1])
             else:
@@ -436,9 +421,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
         request.project = self.config.gcp_profile.project_id
         agg_list = instance_client.aggregated_list(request=request)
-        gcp_instances = itertools.chain(
-            *[resp.instances for zone, resp in agg_list if resp.instances]
-        )
+        gcp_instances = itertools.chain(*[resp.instances for zone, resp in agg_list if resp.instances])
 
         active_notebooks = [
             InstanceModel.parse_obj(

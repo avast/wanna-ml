@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from pydantic import root_validator, Field
+from pydantic import Field, root_validator
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
@@ -30,9 +30,7 @@ class PipelineModel(BaseInstanceModel):
     - `enable_caching` - [bool] enable KubeFlow pipeline execution caching
     """
 
-    name: str = Field(
-        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
-    )
+    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     zone: str
     pipeline_file: Optional[str]
     pipeline_function: Optional[str]
@@ -59,9 +57,7 @@ class PipelineModel(BaseInstanceModel):
         return values
 
     @root_validator(pre=False)
-    def validate_pipeline_function(
-        cls, values
-    ):  # pylint: disable=no-self-argument,no-self-use
+    def validate_pipeline_function(cls, values):  # pylint: disable=no-self-argument,no-self-use
         """
         Validate that at least one of pipeline_function or pipeline_file are present
         """
