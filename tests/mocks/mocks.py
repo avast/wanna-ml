@@ -13,10 +13,19 @@ from google.cloud.compute_v1.types.compute import (
     ZoneList,
 )
 from google.cloud.notebooks_v1.types import (
-    Instance,
-    ListInstancesResponse,
+    Instance as InstanceV1,
+)
+from google.cloud.notebooks_v1.types import (
+    ListInstancesResponse as ListInstancesResponseV1,
+)
+from google.cloud.notebooks_v1.types import (
     ListRuntimesResponse,
     Runtime,
+)
+from google.cloud.notebooks_v2.types import (
+    Instance,
+    ListInstancesResponse,
+    State,
 )
 from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
@@ -73,14 +82,14 @@ class MockMachineTypesClient:
 class MockNotebookServiceClient:
     def __init__(self):
         self.notebook_states = {
-            "nb1": Instance.State.ACTIVE,
-            "tf-gpu": Instance.State.PROVISIONING,
-            "pytorch-notebook": Instance.State.DELETED,
+            "nb1": InstanceV1.State.ACTIVE,
+            "tf-gpu": InstanceV1.State.PROVISIONING,
+            "pytorch-notebook": InstanceV1.State.DELETED,
         }
         self.project_id = "gcp-project"
         self.zone = "us-east1-a"
         self.instances = [
-            Instance(
+            InstanceV1(
                 name=f"projects/{self.project_id}/locations/{self.zone}/instances/{n}",
                 state=s,
             )
@@ -88,7 +97,7 @@ class MockNotebookServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
+        return ListInstancesResponseV1(instances=[i for i in self.instances if i.name.startswith(parent)])
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]
@@ -169,9 +178,9 @@ class MockManagedNotebookServiceClient:
 class MockWorkbenchInstanceServiceClient:
     def __init__(self):
         self.notebook_states = {
-            "nb1": Instance.State.ACTIVE,
-            "tf-gpu": Instance.State.PROVISIONING,
-            "pytorch-notebook": Instance.State.DELETED,
+            "nb1": State.ACTIVE,
+            "tf-gpu": State.PROVISIONING,
+            "pytorch-notebook": State.DELETED,
         }
         self.project_id = "gcp-project"
         self.zone = "us-east1-a"

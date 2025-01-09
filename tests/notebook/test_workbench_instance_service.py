@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from google.cloud.notebooks_v2 import State
+from google.cloud.notebooks_v2 import DiskType, State
 from google.cloud.notebooks_v2.types import Instance
 from mock import patch
 from mock.mock import MagicMock
@@ -73,7 +73,10 @@ class TestWorkbenchInstanceService:
         instance.network = "little-hangleton"
         instance.subnet = "the-riddle-house"
         request = nb_service._create_instance_request(instance)
-        assert request.instance.gce_setup.network_interfaces[0].network == "projects/123456789/global/networks/little-hangleton"
+        assert (
+            request.instance.gce_setup.network_interfaces[0].network
+            == "projects/123456789/global/networks/little-hangleton"
+        )
 
     def test_create_instance_request_network_subnet(self, vm_image_config):
         config = vm_image_config
@@ -123,7 +126,7 @@ class TestWorkbenchInstanceService:
         instance = config.workbench_instances[0]
         instance.boot_disk = Disk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
-        assert request.instance.gce_setup.boot_disk.disk_type == Instance.DiskType.PD_SSD
+        assert request.instance.gce_setup.boot_disk.disk_type == DiskType.PD_SSD
         assert request.instance.gce_setup.boot_disk.disk_size_gb == 500
 
     def test_create_instance_request_data_disk(self, vm_image_config):
@@ -132,7 +135,7 @@ class TestWorkbenchInstanceService:
         instance = config.workbench_instances[0]
         instance.data_disk = Disk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
-        assert request.instance.gce_setup.data_disks[0].disk_type == Instance.DiskType.PD_BALANCED
+        assert request.instance.gce_setup.data_disks[0].disk_type == DiskType.PD_BALANCED
         assert request.instance.gce_setup.data_disks[0].disk_size_gb == 750
 
     def test_prepare_startup_script(self, custom_container_config):

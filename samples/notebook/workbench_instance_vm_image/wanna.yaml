@@ -20,5 +20,3 @@ workbench_instances:
        framework: pytorch
        version: 1-9-xla
        os: debian-10
-    bucket_mounts:
-      - bucket_name: "your-staging-bucket-name"
