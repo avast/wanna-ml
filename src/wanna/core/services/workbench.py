@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TypeVar
+from typing import TypeVar, Union
 
 import typer
 from google.api_core import exceptions
@@ -16,8 +16,8 @@ from wanna.core.models.workbench import BaseWorkbenchModel
 from wanna.core.services.base import BaseService
 
 T = TypeVar("T", bound=BaseWorkbenchModel)
-CreateRequest = CreateRuntimeRequest | CreateInstanceRequestV1 | CreateInstanceRequest
-Instances = Runtime | InstanceV1 | Instance
+CreateRequest = Union[CreateRuntimeRequest, CreateInstanceRequestV1, CreateInstanceRequest]
+Instances = Union[Runtime, InstanceV1, Instance]
 
 logger = get_logger(__name__)
 
