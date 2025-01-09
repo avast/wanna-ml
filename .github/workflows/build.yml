@@ -6,40 +6,28 @@ on:
     branches: master
 
 jobs:
-  build-ubuntu:
-    name: Build ubuntu
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
+
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install poetry==1.6.1
+          pip install poetry==1.8.1
           poetry install
       - name: Build
         run: |
           poetry run pytest
       - name: Upload Coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
         uses: codecov/codecov-action@v2
-
-  build-windows:
-    name: Build windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry==1.6.1
-          poetry install
-      - name: Build
-        run: |
-          poetry run pytest
