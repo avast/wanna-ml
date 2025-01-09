@@ -12,11 +12,11 @@ jobs:
         os: [ ubuntu-latest, windows-latest ]
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
 
-    name: Build ${{ matrix.os }}
+    name: Build ${{ matrix.os }} ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
