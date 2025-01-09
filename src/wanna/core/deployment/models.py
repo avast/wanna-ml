@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generic, Literal, Optional, TypeVar
+from typing import Any, Generic, Literal, Optional, TypeVar, Union
 
 from pydantic import BaseModel, EmailStr, Extra, Field
 from pydantic.generics import GenericModel
@@ -12,8 +10,7 @@ from wanna.core.models.docker import DockerBuildResult
 from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.training_custom_job import JobModelTypeAlias
 
-PipelineEnvParams = dict[str, str | None | EmailStr]
-
+PipelineEnvParams = dict[str, Union[str, None, EmailStr]]
 
 class GCPResource(
     GenericModel,

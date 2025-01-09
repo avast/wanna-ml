@@ -29,5 +29,5 @@ jobs:
         run: |
           poetry run pytest
       - name: Upload Coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
         uses: codecov/codecov-action@v2
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
