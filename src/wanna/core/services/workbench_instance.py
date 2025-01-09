@@ -3,8 +3,6 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-import typer
-from google.api_core import exceptions
 from google.api_core.operation import Operation
 from google.cloud import compute_v1
 from google.cloud.notebooks_v2 import AcceleratorConfig, BootDisk, DataDisk, GceSetup, GPUDriverConfig, NetworkInterface
@@ -13,9 +11,9 @@ from google.cloud.notebooks_v2.types import (
     ContainerImage,
     CreateInstanceRequest,
     Instance,
+    ServiceAccount,
     VmImage,
 )
-from waiting import wait
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -23,7 +21,7 @@ from wanna.core.models.wanna_config import WannaConfigModel
 from wanna.core.models.workbench import InstanceModel
 from wanna.core.services.docker import DockerService
 from wanna.core.services.tensorboard import TensorboardService
-from wanna.core.services.workbench import BaseWorkbenchService, CreateRequest, Instances
+from wanna.core.services.workbench import BaseWorkbenchService, Instances
 from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import (
@@ -159,7 +157,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         elif instance.environment.vm_image:
             vm_image = VmImage(
                 project="deeplearning-platform-release",
-                image_family=construct_vm_image_family_from_vm_image(
+                family=construct_vm_image_family_from_vm_image(
                     instance.environment.vm_image.framework,
                     instance.environment.vm_image.version,
                     instance.environment.vm_image.os,
@@ -199,7 +197,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
 
         # service account and instance owners
-        service_accounts = [instance.service_account]
+        service_accounts = [ServiceAccount(email=sa)] if (sa := instance.service_account) else None
         instance_owner = self.owner or instance.owner
         instance_owners = [instance_owner] if instance_owner else None
 

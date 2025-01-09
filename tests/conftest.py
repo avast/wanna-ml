@@ -105,3 +105,11 @@ def mock_docker_service_get_project_id():
 def mock_metrics_api():
     with mock.patch("google.cloud.logging.Client.metrics_api", new_callable=PropertyMock) as _fixture:
         yield _fixture
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_upload_string_to_gcs():
+    with mock.patch(
+        "wanna.core.services.workbench_instance.upload_string_to_gcs", mocks.upload_string_to_gcs
+    ) as _fixture:
+        yield _fixture

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from google.auth.credentials import Credentials
@@ -17,6 +18,7 @@ from google.cloud.notebooks_v1.types import (
     ListRuntimesResponse,
     Runtime,
 )
+from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
 
 
@@ -115,6 +117,10 @@ def mock_get_gcloud_user() -> str:
 
 def mock_upload_file(any, src: str, dest: str):  # noqa
     return None
+
+
+def upload_string_to_gcs(filename: Path, bucket_name: str, blob_name: str):  # noqa
+    return Blob(blob_name, MockStorageClient().get_bucket(bucket_name))
 
 
 def mock_list_running_instances(project_id: str, region: str):  # noqa
