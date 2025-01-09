@@ -2,7 +2,7 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, Optional, cast, Union
 
 from caseconverter import snakecase
 from google.cloud import aiplatform
@@ -178,7 +178,7 @@ class PipelineService(BaseService[PipelineModel]):
         tensorboard: Optional[str],
         network: Optional[str],
         pipeline_params_path: Optional[Path] = None,
-    ) -> tuple[PipelineEnvParams, dict[Any, Any] | dict[str, Any]]:
+    ) -> tuple[PipelineEnvParams, Union[dict[Any, Any], dict[str, Any]]]:
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
