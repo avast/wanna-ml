@@ -275,22 +275,17 @@ class PipelineService(BaseService[PipelineModel]):
             pipeline_params_path,
         )
 
-        # Compile kubeflow V2 Pipeline
-        if pipeline.pipeline_function and not pipeline.pipeline_file:
-            # This branch implies that the pipeline_function is
-            # a python import path. ex: module1.module2.function
-            mod_name, func_name = pipeline.pipeline_function.rsplit(".", 1)
-            module = importlib.import_module(mod_name)
-            logger.user_info(f"Using Compiler.compile with function {pipeline.pipeline_function}")
-            func = getattr(module, func_name)
-            Compiler().compile(
-                pipeline_func=func,
-                pipeline_parameters=pipeline_params,
-                package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
-                type_check=True,
-            )
-        else:
-            raise ValueError("Can not compile kfp pipeline, " "pipeline_file or pipeline_function must be set.")
+        # The current version implies that the pipeline_function is a python import path. ex: module1.module2.function
+        mod_name, func_name = pipeline.pipeline_function.rsplit(".", 1)
+        module = importlib.import_module(mod_name)
+        logger.user_info(f"Using Compiler.compile with function {pipeline.pipeline_function}")
+        func = getattr(module, func_name)
+        Compiler().compile(
+            pipeline_func=func,
+            pipeline_parameters=pipeline_params,
+            package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),
+            type_check=True,
+        )
 
         docker_refs = [
             DockerBuildResult(

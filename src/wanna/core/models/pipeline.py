@@ -32,8 +32,7 @@ class PipelineModel(BaseInstanceModel):
 
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
     zone: str
-    pipeline_file: Optional[str]
-    pipeline_function: Optional[str]
+    pipeline_function: str
     pipeline_params: Union[Path, dict[str, Any], None]
     docker_image_ref: list[str] = Field(default_factory=list)
     schedule: Optional[CloudSchedulerModel]

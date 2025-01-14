@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
 
@@ -23,7 +23,7 @@ class NotebookEnvironment(BaseModel, extra=Extra.forbid):
 
 class BaseWorkbenchModel(BaseInstanceModel):
     name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
-    machine_type: str = "n1-standard-4"
+    machine_type: str = "e2-standard-2"
     gpu: Optional[GPU]
     data_disk: Optional[Disk]
     subnet: Optional[str]
@@ -137,11 +137,10 @@ class InstanceModel(BaseWorkbenchModel):
     - `tensorboard_ref` - [str] (optional) Reference to Vertex Experimetes
     - `subnet`- [str] (optional) Subnetwork of a given network
     - `internal_ip_only` - [bool] (optional) Public or private (default) IP address
-    - `idle_shutdown` - [bool] (optional) Turning off the notebook after the timeout, can be
-      true (default) or false
-    - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 180
+    - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 720. If None,
+        there is no idle shutdown
     """
-
+    type: Literal["instance"] = "instance"
     zone: str
     owner: Optional[EmailStr]
     boot_disk: Optional[Disk]
@@ -151,7 +150,7 @@ class InstanceModel(BaseWorkbenchModel):
     enable_ip_forwarding: bool = False
     no_proxy_access: bool = False
     enable_monitoring: bool = True
-    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=None)
+    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=720)   # 12 hours
     collaborative: bool = False
     env_vars: Optional[dict[str, str]]
     bucket_mounts: Optional[list[BucketMount]]

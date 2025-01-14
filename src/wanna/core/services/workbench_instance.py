@@ -154,13 +154,17 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
                 vm_image = None
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
-        elif instance.environment.vm_image:
+        elif vm_i := instance.environment.vm_image:
             vm_image = VmImage(
-                project="deeplearning-platform-release",
-                family=construct_vm_image_family_from_vm_image(
-                    instance.environment.vm_image.framework,
-                    instance.environment.vm_image.version,
-                    instance.environment.vm_image.os,
+                project="cloud-notebooks-managed"
+                if vm_i.framework == "workbench" and vm_i.version == "instances"
+                else "deeplearning-platform-release",
+                family=f"{vm_i.framework}-{vm_i.version}"
+                if vm_i.framework == "workbench" and vm_i.version == "instances"
+                else construct_vm_image_family_from_vm_image(
+                    vm_i.framework,
+                    vm_i.version,
+                    vm_i.os,
                 ),
             )
             container_image = None
@@ -249,7 +253,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         metadata = {**metadata, **dataproc_metadata}
         # https://cloud.google.com/vertex-ai/docs/workbench/instances/idle-shutdown#terraform
         idle_shutdown_metadata = {
-            "idle-timeout-seconds": str(idle_shutdown_timeout)
+            "idle-timeout-seconds": str(idle_shutdown_timeout * 60) # we set it in minutes
             if (idle_shutdown_timeout := instance.idle_shutdown_timeout)
             else ""
         }
@@ -257,6 +261,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         # https://cloud.google.com/vertex-ai/docs/workbench/instances/create#gcloud
         post_startup_script_metadata = {"post-startup-script": post_startup_script} if post_startup_script else {}
         metadata = {**metadata, **post_startup_script_metadata}
+        if instance.bucket_mounts and container_image is not None:
+            gcsfuse_metadata = {"container-allow-fuse": "true"}
+            metadata = {**metadata, **gcsfuse_metadata}
 
         gce_setup = GceSetup(
             machine_type=instance.machine_type,

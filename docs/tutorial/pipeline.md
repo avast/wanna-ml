@@ -85,7 +85,7 @@ the output should be something like
 
 component_name [component_name]: data
 component_author [component author]: Joao Da Silva
-component_author_email [you@avast.com]: joao.silva1@avast.com
+component_author_email [you@gendigital.com]: joao.silva1@gendigital.com
 component_version [0.0.0]: 
 component_description [Describe your component]: data component for WANNA pipeline tutorial        
 component_url [Link to MLOps project page]: 
@@ -148,7 +148,7 @@ pipelines:
     schedule:
       cron: 2 * * * *
     bucket: gs://wanna-tensorflow-sample-dev
-    pipeline_file: pipeline/pipeline.py
+    pipeline_functions: project_name.pipeline.wanna_pipeline
     pipeline_params: pipeline/params.yaml
     docker_image_ref: ["data"]
     tensorboard_ref: pipeline-tutorial-board
