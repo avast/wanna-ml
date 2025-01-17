@@ -19,3 +19,7 @@ sudo su - jupyter -c "gcsfuse --implicit-dirs {{ bucket_mount["bucket_name"] }} 
 echo '#!/bin/bash' | sudo tee /etc/profile.d/myenvvars.sh
 echo 'export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}' | sudo tee -a /etc/profile.d/myenvvars.sh
 {% endif %}
+
+{% if user_script is not none %}
+{{ user_script }}
+{% endif %}

@@ -3,6 +3,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
+from google.cloud.storage import Blob
+
 from wanna.core.utils.env import should_validate
 
 if should_validate:
@@ -337,8 +339,7 @@ def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> stor
     Returns:
         storage.blob.Blob
     """
-    storage_client = storage.Client(credentials=get_credentials())
-    bucket = storage_client.get_bucket(bucket_name)
+    bucket = storage_client().get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(filename)
     return blob
@@ -355,12 +356,29 @@ def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage
     Returns:
         storage.blob.Blob
     """
-    storage_client = storage.Client(credentials=get_credentials())
-    bucket = storage_client.get_bucket(bucket_name)
+    bucket = storage_client().get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_string(data)
     return blob
 
+
+@lru_cache(maxsize=1)
+def storage_client() -> storage.Client:
+    return storage.Client(credentials=get_credentials())
+
+
+def download_script_from_gcs(gcs_path: str) -> str:
+    """
+    Download a script from GCS bucket and return it as a string
+
+    Args:
+        gcs_path: GCS path to the script
+
+    Returns:
+        str
+    """
+    blob = Blob.from_string(gcs_path, storage_client())
+    return blob.download_as_string().decode("utf-8")
 
 def is_gcs_path(path: str):
     """

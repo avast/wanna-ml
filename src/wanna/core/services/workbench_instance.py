@@ -26,7 +26,7 @@ from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import (
     construct_vm_image_family_from_vm_image,
-    upload_string_to_gcs,
+    upload_string_to_gcs, download_script_from_gcs,
 )
 
 logger = get_logger(__name__)
@@ -44,7 +44,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             instance_type="workbench-instance",
         )
         self.version = version
-        self.instances = config.workbench_instances
+        self.instances = config.notebooks
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_profile.bucket
         self.notebook_client = NotebookServiceClient()
@@ -216,9 +216,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             or self.config.gcp_profile.env_vars
             or instance.env_vars
         ):
-            if instance.post_startup_script is not None:
-                raise ValueError("You cannot have both post_startup_script and use env vars, tensorboard or bucket mounts.")
-            script = self._prepare_startup_script(self.instances[0])
+
+            script = self._prepare_startup_script(instance)
+
             blob = upload_string_to_gcs(
                 script,
                 instance.bucket or self.bucket_name,
@@ -324,11 +324,23 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         else:
             tensorboard_resource_name = None
 
+        if nb_instance.post_startup_script is not None:
+            # download the script from the bucket
+            user_script = download_script_from_gcs(nb_instance.post_startup_script)
+            # removing the shebang
+            lines = user_script.split('\n')
+            if lines and lines[0].startswith('#!'):
+                lines = lines[1:]
+            user_script = '\n'.join(lines)
+        else:
+            user_script = None
+
         startup_script = templates.render_template(
             Path("notebook_startup_script.sh.j2"),
             bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
             env_vars=env_vars,
+            user_script=user_script
         )
         return startup_script
 
@@ -463,4 +475,4 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         for wanna_notebook in self.instances:
             if wanna_notebook.name not in active_notebook_names:
                 to_be_created.append(wanna_notebook)
-        return to_be_deleted, to_
+        return to_be_deleted, to_be_created
