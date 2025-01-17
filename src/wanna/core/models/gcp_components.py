@@ -6,11 +6,7 @@ from wanna.core.utils import validators
 
 
 class VMImage(BaseModel, extra=Extra.forbid):
-    framework: str
-    version: str
-    os: Optional[str] = None
-
-    # _ = root_validator()(validators.validate_vm_image)
+    version: Optional[str] = None
 
 
 class Disk(BaseModel, extra=Extra.forbid):

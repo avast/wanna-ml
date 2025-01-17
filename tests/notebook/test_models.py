@@ -27,18 +27,25 @@ class TestNotebookModel(unittest.TestCase):
             _ = NotebookEnvironment.parse_obj(
                 {
                     "docker_ref": "some-defined-docker-image",
-                    "vm_image": {"framework": "tf", "version": "ent-2-3-cu110"},
+                    "vm_image": {"version": "v20241224"},
                 }
             )
 
     def test_notebook_environment_vm_image(self):
         model = NotebookEnvironment.parse_obj(
             {
-                "vm_image": {"framework": "tf", "version": "ent-2-3-cu110"},
+                "vm_image": {"version": "v20241224"},
             }
         )
-        assert model.vm_image.framework == "tf"
-        assert model.vm_image.version == "ent-2-3-cu110"
+        assert model.vm_image.version == "v20241224"
+
+    def test_notebook_environment_vm_image_default(self):
+        model = NotebookEnvironment.parse_obj(
+            {
+                "vm_image": {},
+            }
+        )
+        assert model.vm_image.version is None
 
     def test_notebook_disk_valid_type(self):
         disk_type = "pd_ssd"

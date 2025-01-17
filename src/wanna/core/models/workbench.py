@@ -69,7 +69,7 @@ class NotebookModel(BaseWorkbenchModel):
 
     zone: str
     owner: Optional[EmailStr]
-    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
+    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage())
     boot_disk: Optional[Disk]
     bucket_mounts: Optional[list[BucketMount]]
     enable_monitoring: bool = True
@@ -139,12 +139,18 @@ class InstanceModel(BaseWorkbenchModel):
     - `internal_ip_only` - [bool] (optional) Public or private (default) IP address
     - `idle_shutdown_timeout` - [int] (optional) Time in minutes, between 10 and 1440, defaults to 720. If None,
         there is no idle shutdown
+    - `post_startup_script` - [str] (optional) Path to a script that will be executed after the instance is started.
+    - `post_startup_script_behavior` - [str] Defines the behavior of the post startup script.
+        Documentation https://cloud.google.com/vertex-ai/docs/workbench/instances/manage-metadata
+    - `environment_auto_upgrade` - [str] (optional) Cron schedule for environment auto-upgrade.
+    - `delete_to_trash` - [bool] (optional) If true, the instance will be deleted to trash.
+    - `report_health` - [bool] (optional) If true, the instance will report health to Cloud Monitoring
     """
     type: Literal["instance"] = "instance"
     zone: str
     owner: Optional[EmailStr]
     boot_disk: Optional[Disk]
-    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage(framework="common", version="cpu"))
+    environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage())
     no_public_ip: bool = True
     enable_dataproc: bool = False
     enable_ip_forwarding: bool = False
@@ -154,3 +160,10 @@ class InstanceModel(BaseWorkbenchModel):
     collaborative: bool = False
     env_vars: Optional[dict[str, str]]
     bucket_mounts: Optional[list[BucketMount]]
+    post_startup_script: Optional[str]  # todo: add validation for existing object in bucket
+    post_startup_script_behavior: Literal["run_once", "run_every_start", "download_and_run_every_start"] = "run_once"
+    environment_auto_upgrade: Optional[str] = None
+    delete_to_trash: bool = False
+    report_health: bool = True
+
+    _environment_auto_upgrade = validator("environment_auto_upgrade")(validators.validate_cron_schedule)

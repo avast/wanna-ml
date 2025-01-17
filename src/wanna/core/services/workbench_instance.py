@@ -156,16 +156,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
                 raise Exception("Docker params in wanna-ml config not defined")
         elif vm_i := instance.environment.vm_image:
             vm_image = VmImage(
-                project="cloud-notebooks-managed"
-                if vm_i.framework == "workbench" and vm_i.version == "instances"
-                else "deeplearning-platform-release",
-                family=f"{vm_i.framework}-{vm_i.version}"
-                if vm_i.framework == "workbench" and vm_i.version == "instances"
-                else construct_vm_image_family_from_vm_image(
-                    vm_i.framework,
-                    vm_i.version,
-                    vm_i.os,
-                ),
+                project="cloud-notebooks-managed",
+                family=f"workbench-instances" if vm_i.version is None else None,
+                name=f"workbench-instances-{vm_i.version}" if vm_i.version is not None else None,
             )
             container_image = None
         else:
@@ -220,10 +213,11 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         if deploy and (
             instance.bucket_mounts
             or instance.tensorboard_ref
-            or instance.idle_shutdown_timeout
             or self.config.gcp_profile.env_vars
             or instance.env_vars
         ):
+            if instance.post_startup_script is not None:
+                raise ValueError("You cannot have both post_startup_script and use env vars, tensorboard or bucket mounts.")
             script = self._prepare_startup_script(self.instances[0])
             blob = upload_string_to_gcs(
                 script,
@@ -231,6 +225,8 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
                 f"notebooks/{instance.name}/startup_script.sh",
             )
             post_startup_script = f"gs://{blob.bucket.name}/{blob.name}"
+        elif instance.post_startup_script is not None:
+            post_startup_script = instance.post_startup_script
         else:
             post_startup_script = None
 
@@ -258,12 +254,25 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             else ""
         }
         metadata = {**metadata, **idle_shutdown_metadata}
-        # https://cloud.google.com/vertex-ai/docs/workbench/instances/create#gcloud
-        post_startup_script_metadata = {"post-startup-script": post_startup_script} if post_startup_script else {}
-        metadata = {**metadata, **post_startup_script_metadata}
+        if post_startup_script:
+            # https://cloud.google.com/vertex-ai/docs/workbench/instances/manage-metadata
+            # https://cloud.google.com/vertex-ai/docs/workbench/instances/create#gcloud
+            post_startup_script_metadata = {
+                "post-startup-script": post_startup_script,
+                "post-startup-script-behavior": instance.post_startup_script_behavior,
+            }
+            metadata = {**metadata, **post_startup_script_metadata}
         if instance.bucket_mounts and container_image is not None:
             gcsfuse_metadata = {"container-allow-fuse": "true"}
             metadata = {**metadata, **gcsfuse_metadata}
+        if instance.environment_auto_upgrade:
+            auto_upgrade_metadata = {"notebook-upgrade-schedule": instance.environment_auto_upgrade}
+            metadata = {**metadata, **auto_upgrade_metadata}
+        if instance.delete_to_trash:
+            delete_to_trash_metadata = {"notebook-enable-delete-to-trash": "true"}
+            metadata = {**metadata, **delete_to_trash_metadata}
+        report_health_metadata = {"report-event-health": "true" if instance.report_health else "false"}
+        metadata = {**metadata, **report_health_metadata}
 
         gce_setup = GceSetup(
             machine_type=instance.machine_type,
@@ -319,7 +328,6 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             Path("notebook_startup_script.sh.j2"),
             bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
-            idle_shutdown_timeout=nb_instance.idle_shutdown_timeout,
             env_vars=env_vars,
         )
         return startup_script
@@ -455,4 +463,4 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         for wanna_notebook in self.instances:
             if wanna_notebook.name not in active_notebook_names:
                 to_be_created.append(wanna_notebook)
-        return to_be_deleted, to_be_created
+        return to_be_deleted, to_

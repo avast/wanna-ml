@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
@@ -26,6 +27,7 @@ NETWORK_REGEX = (
 )
 
 
+@lru_cache(maxsize=256)
 def get_available_compute_machine_types(project_id: str, zone: str) -> list[str]:
     """
     Get available GCP Compute Engine Machine Types based on project and zone.
@@ -176,6 +178,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> list[str]
     return machine_types
 
 
+@lru_cache(maxsize=32)
 def get_available_zones(project_id: str) -> list[str]:
     """
     Get available GCP zones based on project.
@@ -213,6 +216,7 @@ def get_available_zones(project_id: str) -> list[str]:
         ]
 
 
+@lru_cache(maxsize=32)
 def get_available_regions(project_id: str) -> list[str]:
     """
     Get available GCP regions based on project.
@@ -241,6 +245,7 @@ def get_region_from_zone(zone: str) -> str:
     return zone.rpartition("-")[0]
 
 
+@lru_cache(maxsize=32)
 def convert_project_id_to_project_number(project_id: str) -> str:
     """
     Convert GCP project_id (eg. 'my-gcp-project') to project_number (eg. '966193337054')
@@ -276,6 +281,7 @@ def parse_image_name_family(name: str) -> dict[str, Any]:
     return {"framework": framework, "version": version, "os": os}
 
 
+@lru_cache(maxsize=128)
 def get_available_compute_image_families(
     project: str,
     image_filter: Optional[str] = None,
