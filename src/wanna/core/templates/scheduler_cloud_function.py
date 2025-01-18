@@ -1,7 +1,7 @@
 # Generated file do not change
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 import pendulum
 from google.cloud import aiplatform
@@ -13,9 +13,7 @@ PIPELINE_ROOT = os.getenv("PIPELINE_ROOT")
 PIPELINE_NETWORK = os.getenv("PIPELINE_NETWORK")
 PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_EXPERIMENT = os.getenv("PIPELINE_EXPERIMENT")
-PIPELINE_LABELS = json.loads(
-    os.environ["PIPELINE_LABELS"]
-)  # if not define we won't run it
+PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
 
@@ -23,7 +21,7 @@ _jinja_env = Environment()
 _jinja_env.globals.update(modules={"pendulum": pendulum})
 
 
-def _update_time_template(params: Dict[str, Any]):
+def _update_time_template(params: dict[str, Any]):
     for k, v in params.items():
         if isinstance(v, str):
             v = _jinja_env.from_string(v).render()

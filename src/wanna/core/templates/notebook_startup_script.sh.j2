@@ -1,6 +1,6 @@
 #!/bin/bash
 
-{% if env_vars is not none %}
+{% if env_vars is not none and env_vars|length > 0 %}
 echo '#!/bin/bash' | sudo tee /etc/profile.d/myenvvars.sh
 {% for key, value in env_vars.items() %}
 echo 'export {{ key }}={{ value }}' | sudo tee -a /etc/profile.d/myenvvars.sh
@@ -20,37 +20,6 @@ echo '#!/bin/bash' | sudo tee /etc/profile.d/myenvvars.sh
 echo 'export AIP_TENSORBOARD_LOG_DIR={{ tensorboard_resource_name }}' | sudo tee -a /etc/profile.d/myenvvars.sh
 {% endif %}
 
-{% if idle_shutdown_timeout is not none %}
-
-cat > /shutdown_check.py <<EOF
-import requests
-from datetime import datetime
-import os
-
-datetime_format = "%Y-%m-%dT%H:%M:%S.%fZ"
-idle_shutdown_timeout = {{idle_shutdown_timeout}}*60 # seconds
-
-status = requests.get("http://localhost:8080/api/status").json()
-notebook_started = datetime.strptime(status["started"], datetime_format)
-
-if (datetime.now() - notebook_started).total_seconds() < idle_shutdown_timeout:
-    # grace period after the notebook start
-    os._exit(0)
-
-kernels = requests.get("http://localhost:8080/api/kernels").json()
-states = {kernel["execution_state"] for kernel in kernels}
-
-if not states:
-    # No kernels
-    os.system('sudo poweroff')
-elif states=={'idle'}:
-    # only idle kernels
-    last_activity = datetime.strptime(max([kernel["last_activity"] for kernel in kernels]), datetime_format)
-    if (datetime.now() - last_activity).total_seconds() > idle_shutdown_timeout:
-        os.system('sudo poweroff')
-
-EOF
-
-crontab -l | { cat; echo "*/10 * * * * /opt/conda/bin/python /shutdown_check.py"; } | crontab -
-
+{% if user_script is not none %}
+{{ user_script }}
 {% endif %}

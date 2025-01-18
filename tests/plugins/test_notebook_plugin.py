@@ -5,11 +5,11 @@ from unittest.mock import MagicMock
 
 from mock import patch
 from typer.testing import CliRunner
+
+from tests.mocks import mocks
 from wanna.cli.plugins.notebook_plugin import NotebookPlugin
 from wanna.core.deployment.models import PushMode
 from wanna.core.services.notebook import NotebookService
-
-from tests.mocks import mocks
 
 
 @patch(
@@ -38,9 +38,7 @@ class TestNotebookPlugin(unittest.TestCase):
             ],
         )
         NotebookService.create.assert_called_once()
-        NotebookService.create.assert_called_with(
-            "wanna-notebook-vm", push_mode=PushMode.all
-        )
+        NotebookService.create.assert_called_with("wanna-notebook-vm", push_mode=PushMode.all)
 
         self.assertEqual(0, result.exit_code)
 

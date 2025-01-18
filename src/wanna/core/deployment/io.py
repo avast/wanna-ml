@@ -1,7 +1,7 @@
 import contextlib
 import json
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 from google.cloud.storage import Client
 from smart_open import open as gcs_open
@@ -12,11 +12,7 @@ from wanna.core.deployment.credentials import GCPCredentialsMixIn
 class IOMixin(GCPCredentialsMixIn):
     @contextlib.contextmanager
     def _open(self, uri, mode="r", **kwargs):
-        transport_params = (
-            {"client": Client(credentials=self.credentials)}
-            if str(uri).startswith("gs")
-            else {}
-        )
+        transport_params = {"client": Client(credentials=self.credentials)} if str(uri).startswith("gs") else {}
         with gcs_open(uri, mode, transport_params=transport_params, **kwargs) as c:
             yield c
 
@@ -29,6 +25,6 @@ class IOMixin(GCPCredentialsMixIn):
         with self._open(destination, "w") as fout:
             fout.write(body)
 
-    def read(self, source: Union[Path, str]) -> Dict[Any, Any]:
+    def read(self, source: Union[Path, str]) -> dict[Any, Any]:
         with self._open(source, "r") as fin:
             return json.loads(fin.read())

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import typer
 from google.cloud import aiplatform
@@ -51,9 +51,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         workdir: Path,
         version: str = "dev",
         push_mode: PushMode = PushMode.all,
-        connector: VertexConnector[JobResource[JobModelTypeAlias]] = VertexConnector[
-            JobResource[JobModelTypeAlias]
-        ](),
+        connector: VertexConnector[JobResource[JobModelTypeAlias]] = VertexConnector[JobResource[JobModelTypeAlias]](),
     ):
         """
         Service to build, push, deploy and run Vertex AI custom jobs
@@ -85,7 +83,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         self.build_dir = workdir / "build"
         self.version = version
 
-    def build(self, instance_name: str) -> List[Path]:
+    def build(self, instance_name: str) -> list[Path]:
         """
         Based on wanna config and setup it creates a JobManifest that
         can later be pushed, deployed or run
@@ -99,15 +97,13 @@ class JobService(BaseService[JobModelTypeAlias]):
         instances = self._filter_instances_by_name(instance_name)
         return [self._build(instance) for instance in instances]
 
-    def push(self, manifests: List[Path], local: bool = False) -> PushResult:
+    def push(self, manifests: list[Path], local: bool = False) -> PushResult:
         return self.connector.push_artifacts(
             self.docker_service.push_image,
             self._prepare_push(manifests, self.version, local),
         )
 
-    def _prepare_push(
-        self, manifests: List[Path], version: str, local: bool = False
-    ) -> List[PushTask]:
+    def _prepare_push(self, manifests: list[Path], version: str, local: bool = False) -> list[PushTask]:
         """
         Completes the build process buy pushing docker images and pushing manifest files to
         GCS for future execution
@@ -130,18 +126,14 @@ class JobService(BaseService[JobModelTypeAlias]):
             )
             manifest_artifacts, container_artifacts = [], []
 
-            logger.user_info(
-                f"Packaging {loaded_manifest.job_config.name} job resources"
-            )
+            logger.user_info(f"Packaging {loaded_manifest.job_config.name} job resources")
 
             if self.push_mode.can_push_containers():
                 for docker_image_ref in loaded_manifest.image_refs:
                     model, image, tag = self.docker_service.get_image(docker_image_ref)
                     if model.build_type != ImageBuildType.provided_image:
                         tags = image.repo_tags if image and image.repo_tags else [tag]
-                        container_artifacts.append(
-                            ContainerArtifact(name=model.name, tags=tags)
-                        )
+                        container_artifacts.append(ContainerArtifact(name=model.name, tags=tags))
 
             if self.push_mode.can_push_gcp_resources():
                 gcs_manifest_path = job_paths.get_gcs_job_wanna_manifest_path(version)
@@ -167,16 +159,16 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     @staticmethod
     def run(
-        manifests: List[str],
+        manifests: list[str],
         sync: bool = True,
         hp_params: Optional[Path] = None,
-        command_override: Optional[List[str]] = None,
-        args_override: Optional[List[Union[str, float, int]]] = None,
+        command_override: Optional[list[str]] = None,
+        args_override: Optional[list[Union[str, float, int]]] = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
         Args:
-            manifests (List[str]): WANNA JobManifests to be executed
+            manifests (list[str]): WANNA JobManifests to be executed
             sync (bool): Allows to run the job in async vs sync mode
             hp_params: path with yaml hp_params for the job
             command_override: override default command from wanna.yaml.
@@ -199,12 +191,8 @@ class JobService(BaseService[JobModelTypeAlias]):
                     manifest.job_payload["command"] = command_override
 
                 if manifest.job_config.worker.python_package and command_override:
-                    manifest.job_config.worker.python_package.module_name = " ".join(
-                        command_override
-                    )
-                    manifest.job_payload["python_module_name"] = " ".join(
-                        command_override
-                    )
+                    manifest.job_config.worker.python_package.module_name = " ".join(command_override)
+                    manifest.job_payload["python_module_name"] = " ".join(command_override)
 
             elif isinstance(manifest.job_config, CustomJobModel):
                 logger.user_info(
@@ -219,14 +207,8 @@ class JobService(BaseService[JobModelTypeAlias]):
             if isinstance(manifest.job_config, CustomJobModel):
                 if hp_params:
                     override_hp_params = load_yaml_path(hp_params, Path("."))
-                    manifest_hp_params = (
-                        manifest.job_config.hp_tuning.dict()
-                        if manifest.job_config.hp_tuning
-                        else {}
-                    )
-                    overriden_hp_tuning = HyperparameterTuning.parse_obj(
-                        {**manifest_hp_params, **override_hp_params}
-                    )
+                    manifest_hp_params = manifest.job_config.hp_tuning.dict() if manifest.job_config.hp_tuning else {}
+                    overriden_hp_tuning = HyperparameterTuning.parse_obj({**manifest_hp_params, **override_hp_params})
                     manifest.job_config.hp_tuning = overriden_hp_tuning
                 connector.run_custom_job(manifest, sync)
             else:
@@ -247,9 +229,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             instance.name,
         )
         manifest_path = Path(job_paths.get_local_job_wanna_manifest_path(self.version))
-        resource: Union[
-            JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]
-        ] = (
+        resource: Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]] = (
             self._create_training_job_resource(instance)
             if isinstance(instance, TrainingCustomJobModel)
             else self._create_custom_job_resource(instance)
@@ -262,9 +242,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         job_model: CustomJobModel,
     ) -> JobResource[CustomJobModel]:
         image_refs, worker_pool_specs = set(
-            zip(
-                *[self._create_worker_pool_spec(worker) for worker in job_model.workers]
-            )
+            zip(*[self._create_worker_pool_spec(worker) for worker in job_model.workers])
         )
         labels = {
             "wanna_name": job_model.name,
@@ -281,15 +259,9 @@ class JobService(BaseService[JobModelTypeAlias]):
         )
 
         encryption_spec_key_name = (
-            job_model.encryption_spec
-            if job_model.encryption_spec
-            else self.config.gcp_profile.kms_key
+            job_model.encryption_spec if job_model.encryption_spec else self.config.gcp_profile.kms_key
         )
-        env_vars = (
-            self.config.gcp_profile.env_vars
-            if self.config.gcp_profile.env_vars
-            else dict()
-        )
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
         if job_model.env_vars:
             env_vars = {**env_vars, **job_model.env_vars}
         return JobResource[CustomJobModel](
@@ -308,9 +280,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             },
             image_refs=list(image_refs),
             # during `run` calls, this means changing TensorboardService init
-            tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                job_model.tensorboard_ref
-            )
+            tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(job_model.tensorboard_ref)
             if job_model.tensorboard_ref
             else None,
             network=network,
@@ -336,12 +306,10 @@ class JobService(BaseService[JobModelTypeAlias]):
         }
         if job_model.labels:
             labels = {**job_model.labels, **labels}
-        job_payload: Dict[str, Any] = {}
+        job_payload: dict[str, Any] = {}
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
-            _, _, tag = self.docker_service.get_image(
-                docker_image_ref=job_model.worker.python_package.docker_image_ref
-            )
+            _, _, tag = self.docker_service.get_image(docker_image_ref=job_model.worker.python_package.docker_image_ref)
             job_payload = {
                 "display_name": job_model.name,
                 "python_package_gcs_uri": job_model.worker.python_package.package_gcs_uri,
@@ -352,9 +320,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             }
         elif job_model.worker.container:
             image_ref = job_model.worker.container.docker_image_ref
-            _, _, tag = self.docker_service.get_image(
-                docker_image_ref=job_model.worker.container.docker_image_ref
-            )
+            _, _, tag = self.docker_service.get_image(docker_image_ref=job_model.worker.container.docker_image_ref)
             job_payload = {
                 "display_name": job_model.name,
                 "container_uri": tag,
@@ -363,9 +329,7 @@ class JobService(BaseService[JobModelTypeAlias]):
                 "staging_bucket": job_model.bucket,
             }
         else:
-            raise ValueError(
-                f"Job {job_model.name} worker must have `container` or `python_package` defined"
-            )
+            raise ValueError(f"Job {job_model.name} worker must have `container` or `python_package` defined")
 
         network = self._get_resource_network(
             project_id=self.config.gcp_profile.project_id,
@@ -374,15 +338,9 @@ class JobService(BaseService[JobModelTypeAlias]):
             fallback_project_network=self.config.gcp_profile.network,
         )
         encryption_spec_key_name = (
-            job_model.encryption_spec
-            if job_model.encryption_spec
-            else self.config.gcp_profile.kms_key
+            job_model.encryption_spec if job_model.encryption_spec else self.config.gcp_profile.kms_key
         )
-        env_vars = (
-            self.config.gcp_profile.env_vars
-            if self.config.gcp_profile.env_vars
-            else dict()
-        )
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
         if job_model.env_vars:
             env_vars = {**env_vars, **job_model.env_vars}
         return JobResource[TrainingCustomJobModel](
@@ -392,9 +350,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             job_config=job_model,
             job_payload=job_payload,
             image_refs=[image_ref],
-            tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                job_model.tensorboard_ref
-            )
+            tensorboard=self.tensorboard_service.get_or_create_tensorboard_instance_by_name(job_model.tensorboard_ref)
             if job_model.tensorboard_ref
             else None,
             network=network,
@@ -402,9 +358,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             environment_variables=env_vars,
         )
 
-    def _create_worker_pool_spec(
-        self, worker_pool_model: WorkerPoolModel
-    ) -> Tuple[str, WorkerPoolSpec]:
+    def _create_worker_pool_spec(self, worker_pool_model: WorkerPoolModel) -> tuple[str, WorkerPoolSpec]:
         """
         Converts the friendlier WANNA WorkerPoolModel to aiplatform sdk equivalent
         Args:
@@ -421,8 +375,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             image_ref = worker_pool_model.python_package.docker_image_ref
         else:
             raise ValueError(
-                "Worker pool does not have container nor python_package. "
-                "This means validation has a bug."
+                "Worker pool does not have container nor python_package. " "This means validation has a bug."
             )
 
         return image_ref, WorkerPoolSpec(
@@ -443,12 +396,8 @@ class JobService(BaseService[JobModelTypeAlias]):
             else None,
             machine_spec=MachineSpec(
                 machine_type=worker_pool_model.machine_type,
-                accelerator_type=worker_pool_model.gpu.accelerator_type
-                if worker_pool_model.gpu
-                else None,
-                accelerator_count=worker_pool_model.gpu.count
-                if worker_pool_model.gpu
-                else None,
+                accelerator_type=worker_pool_model.gpu.accelerator_type if worker_pool_model.gpu else None,
+                accelerator_count=worker_pool_model.gpu.count if worker_pool_model.gpu else None,
             ),
             disk_spec=DiskSpec(
                 boot_disk_type=worker_pool_model.boot_disk.disk_type,
@@ -460,9 +409,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         )
 
     @staticmethod
-    def _create_list_jobs_filter_expr(
-        states: List[PipelineState], job_name: Optional[str] = None
-    ) -> str:
+    def _create_list_jobs_filter_expr(states: list[PipelineState], job_name: Optional[str] = None) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
         Args:
@@ -472,16 +419,12 @@ class JobService(BaseService[JobModelTypeAlias]):
         Returns:
             filter expression
         """
-        filter_expr = (
-            "(" + " OR ".join([f'state="{state.name}"' for state in states]) + ")"
-        )
+        filter_expr = "(" + " OR ".join([f'state="{state.name}"' for state in states]) + ")"
         if job_name:
             filter_expr = filter_expr + f' AND display_name="{job_name}"'
         return filter_expr
 
-    def _list_jobs(
-        self, states: List[PipelineState], job_name: Optional[str] = None
-    ) -> List[CustomTrainingJob]:
+    def _list_jobs(self, states: list[PipelineState], job_name: Optional[str] = None) -> list[CustomTrainingJob]:
         """
         List all custom jobs with given project_id, region with given states.
 
@@ -492,15 +435,11 @@ class JobService(BaseService[JobModelTypeAlias]):
         Returns:
             list of jobs
         """
-        filter_expr = self._create_list_jobs_filter_expr(
-            states=states, job_name=job_name
-        )
+        filter_expr = self._create_list_jobs_filter_expr(states=states, job_name=job_name)
         jobs = aiplatform.CustomTrainingJob.list(filter=filter_expr)
         return jobs  # type: ignore
 
-    def _stop_one_instance(
-        self, instance: Union[CustomJobModel, TrainingCustomJobModel]
-    ) -> None:
+    def _stop_one_instance(self, instance: Union[CustomJobModel, TrainingCustomJobModel]) -> None:
         """
         Pause one all jobs that have the same region and name as "instance".
         First we list all jobs with state running and pending and then
@@ -550,9 +489,7 @@ class JobService(BaseService[JobModelTypeAlias]):
     def write_manifest(
         self,
         local_manifest_path: Path,
-        resource: Union[
-            JobResource[TrainingCustomJobModel], JobResource[CustomJobModel]
-        ],
+        resource: Union[JobResource[TrainingCustomJobModel], JobResource[CustomJobModel]],
     ) -> Path:
         """
         Writes a JobManifest to a local path
@@ -565,15 +502,9 @@ class JobService(BaseService[JobModelTypeAlias]):
             Path: Path where resource manifest was saved to
         """
         encryption_spec_key_name = (
-            resource.encryption_spec
-            if resource.encryption_spec
-            else self.config.gcp_profile.kms_key
+            resource.encryption_spec if resource.encryption_spec else self.config.gcp_profile.kms_key
         )
-        env_vars = (
-            self.config.gcp_profile.env_vars
-            if self.config.gcp_profile.env_vars
-            else dict()
-        )
+        env_vars = self.config.gcp_profile.env_vars if self.config.gcp_profile.env_vars else dict()
         if resource.environment_variables:
             env_vars = {**env_vars, **resource.environment_variables}
         json_dict = {
@@ -591,9 +522,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         json_dump = json.dumps(
             remove_nones(json_dict),
             allow_nan=False,
-            default=lambda o: dict(
-                (key, value) for key, value in o.__dict__.items() if value
-            ),
+            default=lambda o: dict((key, value) for key, value in o.__dict__.items() if value),
         )
         self.connector.write(local_manifest_path, json_dump)
 
@@ -605,5 +534,5 @@ class JobService(BaseService[JobModelTypeAlias]):
     def _create_one_instance(self, instance: T, **kwargs) -> None:
         raise NotImplementedError
 
-    def _return_diff(self) -> Tuple[List[T], List[T]]:
+    def _return_diff(self) -> tuple[list[T], list[T]]:
         raise NotImplementedError

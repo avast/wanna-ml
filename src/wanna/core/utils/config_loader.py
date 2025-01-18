@@ -1,7 +1,7 @@
 import os
 import pathlib
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
@@ -12,7 +12,7 @@ from wanna.core.utils.env import gcp_access_allowed
 logger = get_logger(__name__)
 
 
-def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfileModel:
+def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfileModel:
     """
     This functions goes through wanna-ml config and optionally through a file
     $WANNA_GCP_PROFILE_PATH, reads all gcp profiles and returns the one
@@ -44,9 +44,7 @@ def load_gcp_profile(profile_name: str, wanna_dict: Dict[str, Any]) -> GCPProfil
     return profile_model
 
 
-def load_config_from_yaml(
-    wanna_config_path: Path, gcp_profile_name: str
-) -> WannaConfigModel:
+def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> WannaConfigModel:
     """
     Load the yaml file from wanna_config_path and parses the information to the models.
     This also includes the data validation.
@@ -54,7 +52,6 @@ def load_config_from_yaml(
     Args:
         wanna_config_path: path to the wanna-ml yaml file
         gcp_profile_name: name of the GCP profile
-        profiles_file_path: optionally passed through cli
 
     Returns:
         WannaConfigModel
@@ -64,12 +61,8 @@ def load_config_from_yaml(
     with logger.user_spinner("Reading and validating wanna yaml config"):
         with open(wanna_config_path, encoding="utf-8") as file:
             # Load workflow file
-            wanna_dict = loaders.load_yaml(
-                file, pathlib.Path(wanna_config_path).parent.resolve()
-            )
-        profile_model = load_gcp_profile(
-            profile_name=gcp_profile_name, wanna_dict=wanna_dict
-        )
+            wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
+        profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
         os.environ["GOOGLE_CLOUD_PROJECT"] = profile_model.project_id
         wanna_dict.update({"gcp_profile": profile_model})
         del wanna_dict["gcp_profiles"]

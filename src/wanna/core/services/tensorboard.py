@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union, cast
+from typing import Union, cast
 
 import typer
 from google.cloud import aiplatform
@@ -37,17 +37,15 @@ class TensorboardService(BaseService[TensorboardModel]):
         """
         tensorboard = self._find_existing_tensorboard_by_model(instance)
         if not tensorboard:
-            logger.user_info(
-                f"Tensorboard {instance.name} does not exist, nothing to delete."
-            )
+            logger.user_info(f"Tensorboard {instance.name} does not exist, nothing to delete.")
         else:
             with logger.user_spinner(f"Deleting Tensorboard {instance.name}"):
-                aiplatform.Tensorboard(
-                    tensorboard_name=tensorboard.resource_name
-                ).delete()
+                aiplatform.Tensorboard(tensorboard_name=tensorboard.resource_name).delete()
 
     def _create_one_instance(
-        self, instance: TensorboardModel, **kwargs  # noqa: ARG002
+        self,
+        instance: TensorboardModel,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         """
         Creates one Tensorboard instance based on pydantic model.
@@ -64,9 +62,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                 logger.user_info(
                     f"Tensorboard {instance.name} already exists and is running at {existing_instance.resource_name}"
                 )
-                should_recreate = typer.confirm(
-                    "Are you sure you want to delete it and start a new?"
-                )
+                should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
                 if should_recreate:
                     self._delete_one_instance(instance)
                 else:
@@ -82,13 +78,9 @@ class TensorboardService(BaseService[TensorboardModel]):
 
         created = self._find_existing_tensorboard_by_model(instance)
         if created:
-            logger.user_info(
-                f"Tensorboard {instance.name} is running at {created.resource_name}"
-            )
+            logger.user_info(f"Tensorboard {instance.name} is running at {created.resource_name}")
 
-    def _find_existing_tensorboard_by_model(
-        self, instance: TensorboardModel
-    ) -> Union[Tensorboard, None]:
+    def _find_existing_tensorboard_by_model(self, instance: TensorboardModel) -> Union[Tensorboard, None]:
         """
         Given pydantic tensorboard model, find the actual running tensorboard instance on GCP.
 
@@ -98,9 +90,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         Returns:
             Tensorboard or None if not found
         """
-        for running_tensorboard in self._list_running_instances(
-            instance.project_id, instance.region
-        ):
+        for running_tensorboard in self._list_running_instances(instance.project_id, instance.region):
             if running_tensorboard.display_name == instance.name:
                 return running_tensorboard
         return None
@@ -119,20 +109,20 @@ class TensorboardService(BaseService[TensorboardModel]):
         return found is not None
 
     @staticmethod
-    def _list_running_instances(project_id: str, region: str) -> List["Tensorboard"]:
+    def _list_running_instances(project_id: str, region: str) -> list["Tensorboard"]:
         """
-        List all tensorboards with given project_id and region
+        list all tensorboards with given project_id and region
 
         Args:
             project_id: GCP project ID
             region: GCP region
 
         Returns:
-            instances: List of the tensorboard instances
+            instances: list of the tensorboard instances
 
         """
         instances = cast(
-            List[Tensorboard],
+            list[Tensorboard],
             aiplatform.Tensorboard.list(project=project_id, location=region),
         )
         return instances
@@ -146,16 +136,14 @@ class TensorboardService(BaseService[TensorboardModel]):
         Returns:
             TensorboardModel
         """
-        matched_tb_models: List[TensorboardModel] = list(
+        matched_tb_models: list[TensorboardModel] = list(
             filter(lambda i: i.name.strip() == tb_name.strip(), self.instances)
         )
 
         if len(matched_tb_models) == 0:
             raise ValueError(f"No tensorboard model with name {tb_name} found")
         elif len(matched_tb_models) > 1:
-            raise ValueError(
-                f"Multiple tensorboard models with name {tb_name} found, please use unique names"
-            )
+            raise ValueError(f"Multiple tensorboard models with name {tb_name} found, please use unique names")
         else:
             return matched_tb_models[0]
 
@@ -173,9 +161,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         tb_model = self._find_tensorboard_model_by_name(tb_name=tensorboard_name)
         tb_existing = self._find_existing_tensorboard_by_model(instance=tb_model)
         if not tb_existing:
-            logger.user_info(
-                f"Tensorboard with name {tb_model.name} in {tb_model.region} not found, creating it."
-            )
+            logger.user_info(f"Tensorboard with name {tb_model.name} in {tb_model.region} not found, creating it.")
             self._create_one_instance(tb_model)
             tb_existing = self._find_existing_tensorboard_by_model(instance=tb_model)
             if not tb_existing:
@@ -198,9 +184,7 @@ class TensorboardService(BaseService[TensorboardModel]):
             f'experiment/{experiment.resource_name.replace("/", "+")}'
         )
 
-    def _create_tensorboard_tree(
-        self, region: str, filter_expr: str, show_url: bool
-    ) -> Tree:
+    def _create_tensorboard_tree(self, region: str, filter_expr: str, show_url: bool) -> Tree:
         """
         Create a tensorboard instance - tensorboard experiment - tensorboard run tree
         Args:
@@ -216,9 +200,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         root_tag = f"{project_id} / {region}"
         tree.create_node(tag=root_tag, identifier=root_tag)
 
-        tensorboards = aiplatform.Tensorboard.list(
-            project=project_id, location=region, filter=filter_expr
-        )
+        tensorboards = aiplatform.Tensorboard.list(project=project_id, location=region, filter=filter_expr)
         for tensorboard in tensorboards:
             tag = f"Tensorboard: {tensorboard.display_name}"
             tree.create_node(
@@ -227,9 +209,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                 parent=root_tag,
                 data=tensorboard,
             )
-            experiments = aiplatform.TensorboardExperiment.list(
-                tensorboard.resource_name
-            )
+            experiments = aiplatform.TensorboardExperiment.list(tensorboard.resource_name)
             for experiment in experiments:
                 tag = f"Experiment: {experiment.display_name or experiment.name}"
                 if show_url:
@@ -240,9 +220,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                     parent=tensorboard.resource_name,
                     data=experiment,
                 )
-                runs = aiplatform.TensorboardRun.list(
-                    tensorboard_experiment_name=experiment.resource_name
-                )
+                runs = aiplatform.TensorboardRun.list(tensorboard_experiment_name=experiment.resource_name)
                 for run in runs:
                     tag = f"Run: {run.display_name or run.name}"
                     tree.create_node(
@@ -253,11 +231,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                     )
         return tree
 
-    def list_tensorboards_in_tree(
-        self, region: str, filter_expr: str, show_url: bool
-    ) -> None:
+    def list_tensorboards_in_tree(self, region: str, filter_expr: str, show_url: bool) -> None:
         with logger.user_spinner("Creating Tensorboard tree"):
-            tree = self._create_tensorboard_tree(
-                region=region, filter_expr=filter_expr, show_url=show_url
-            )
+            tree = self._create_tensorboard_tree(region=region, filter_expr=filter_expr, show_url=show_url)
         tree.show()

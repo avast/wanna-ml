@@ -88,12 +88,10 @@ class TensorboardPlugin(BasePlugin):
             "Example: labels.wanna_project:* - to show all tensorboard created by wanna-ml.\n"
             "Example: labels.wanna_project:sushi-ssl.",
         ),
-        show_url: bool = typer.Option(
-            True, "--url/--no-url", help="Weather to show URL link to experiments"
-        ),
+        show_url: bool = typer.Option(True, "--url/--no-url", help="Weather to show URL link to experiments"),
     ) -> None:
         """
-        List Tensorboard Instances in GCP Vertex AI Experiments.
+        list Tensorboard Instances in GCP Vertex AI Experiments.
 
         We also show Tensorboard Experiments and Tensorboard Runs for each Instance
         in the tree format.
@@ -110,6 +108,4 @@ class TensorboardPlugin(BasePlugin):
                 "Please provide a region. Either via cli arg or via region or zone in selected gcp profile"
             )
         else:
-            tb_service.list_tensorboards_in_tree(
-                region=region, filter_expr=filter_expr, show_url=show_url
-            )
+            tb_service.list_tensorboards_in_tree(region=region, filter_expr=filter_expr, show_url=show_url)

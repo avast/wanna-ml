@@ -9,41 +9,31 @@ from .mocks import mocks
 # IO Mocks
 @pytest.fixture(scope="session", autouse=True)
 def mock_zones_client():
-    with mock.patch(
-        "wanna.core.utils.gcp.ZonesClient", mocks.MockZonesClient
-    ) as _fixture:
+    with mock.patch("wanna.core.utils.gcp.ZonesClient", mocks.MockZonesClient) as _fixture:
         yield _fixture
 
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_regions_client():
-    with mock.patch(
-        "wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient
-    ) as _fixture:
+    with mock.patch("wanna.core.utils.gcp.RegionsClient", mocks.MockRegionsClient) as _fixture:
         yield _fixture
 
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_images_client():
-    with mock.patch(
-        "wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient
-    ) as _fixture:
+    with mock.patch("wanna.core.utils.gcp.ImagesClient", mocks.MockImagesClient) as _fixture:
         yield _fixture
 
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_machine_types_client():
-    with mock.patch(
-        "wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient
-    ) as _fixture:
+    with mock.patch("wanna.core.utils.gcp.MachineTypesClient", mocks.MockMachineTypesClient) as _fixture:
         yield _fixture
 
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_storage_client():
-    with mock.patch(
-        "wanna.core.utils.validators.StorageClient", mocks.MockStorageClient
-    ) as _fixture:
+    with mock.patch("wanna.core.utils.validators.StorageClient", mocks.MockStorageClient) as _fixture:
         yield _fixture
 
 
@@ -113,7 +103,13 @@ def mock_docker_service_get_project_id():
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_metrics_api():
+    with mock.patch("google.cloud.logging.Client.metrics_api", new_callable=PropertyMock) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_upload_string_to_gcs():
     with mock.patch(
-        "google.cloud.logging.Client.metrics_api", new_callable=PropertyMock
+        "wanna.core.services.workbench_instance.upload_string_to_gcs", mocks.upload_string_to_gcs
     ) as _fixture:
         yield _fixture

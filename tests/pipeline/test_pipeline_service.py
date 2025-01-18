@@ -4,7 +4,6 @@ import sys
 import unittest
 from pathlib import Path
 
-import wanna.core.services.pipeline
 from google import auth
 from google.cloud import aiplatform, logging, scheduler_v1
 from google.cloud.aiplatform.pipeline_jobs import PipelineJob
@@ -18,6 +17,8 @@ from google.cloud.monitoring_v3 import (
 )
 from mock import patch
 from mock.mock import MagicMock
+
+import wanna.core.services.pipeline
 from wanna.core.deployment.models import (
     ContainerArtifact,
     JsonArtifact,
@@ -66,12 +67,8 @@ class TestPipelineService(unittest.TestCase):
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 
-        config = load_config_from_yaml(
-            self.sample_pipeline_dir / "wanna.yaml", "default"
-        )
-        pipeline_service = PipelineService(
-            config=config, workdir=self.sample_pipeline_dir, version="test"
-        )
+        config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
+        pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
         # Setup expected data/fixtures
         expected_train_docker_image_model = LocalBuildImageModel(
             name="train",
@@ -84,9 +81,7 @@ class TestPipelineService(unittest.TestCase):
             "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:test",
             "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
-        expected_serve_docker_tags = [
-            "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
-        ]
+        expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
         exppected_pipeline_root = "gs://your-staging-bucket-name/wanna-pipelines/wanna-sklearn-sample/executions/"
 
         expected_pipeline_labels = (
@@ -138,17 +133,13 @@ class TestPipelineService(unittest.TestCase):
         )
 
         # Mock PipelineService
-        PipelineService._make_pipeline_root = MagicMock(
-            return_value=exppected_pipeline_root
-        )
+        PipelineService._make_pipeline_root = MagicMock(return_value=exppected_pipeline_root)
         TensorboardService.get_or_create_tensorboard_instance_by_name = MagicMock(
             return_value="projects/123456789/locations/europe-west4/tensorboards/123456789"
         )
 
         # Mock Docker IO
-        DockerService._find_image_model_by_name = MagicMock(
-            return_value=expected_train_docker_image_model
-        )
+        DockerService._find_image_model_by_name = MagicMock(return_value=expected_train_docker_image_model)
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 
@@ -170,14 +161,11 @@ class TestPipelineService(unittest.TestCase):
             pipeline_params_path=self.test_pipeline_params_override_dir,
         )
         manifest_path = pipelines[0]
-        pipeline_meta = PipelineService.read_manifest(
-            pipeline_service.connector, str(manifest_path)
-        )
+        pipeline_meta = PipelineService.read_manifest(pipeline_service.connector, str(manifest_path))
 
         docker_mock.build.assert_called_with(
             self.sample_pipeline_dir,
-            file=self.sample_pipeline_dir
-            / expected_train_docker_image_model.dockerfile,
+            file=self.sample_pipeline_dir / expected_train_docker_image_model.dockerfile,
             tags=expected_train_docker_tags,
             load=True,
         )
@@ -223,13 +211,7 @@ class TestPipelineService(unittest.TestCase):
         push_result = pipeline_service.push(pipelines, local=True)
         DockerService.push_image.assert_called_once()
 
-        release_path = (
-            self.pipeline_build_dir
-            / "wanna-pipelines"
-            / "wanna-sklearn-sample"
-            / "deployment"
-            / "test"
-        )
+        release_path = self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test"
         manifest_path = release_path / "manifests"
         expected_manifest_json_path = str(manifest_path / "wanna-manifest.json")
         expected_pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
@@ -240,9 +222,7 @@ class TestPipelineService(unittest.TestCase):
         expected_push_result = [
             (
                 [
-                    ContainerArtifact(
-                        name="train", tags=[expected_train_docker_tags[0]]
-                    ),
+                    ContainerArtifact(name="train", tags=[expected_train_docker_tags[0]]),
                 ],
                 [
                     PathArtifact(
@@ -312,13 +292,9 @@ class TestPipelineService(unittest.TestCase):
         }
 
         # Set Mocks
-        NotificationChannelServiceClient.list_notification_channels = MagicMock(
-            return_value=[]
-        )
+        NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
         NotificationChannelServiceClient.create_notification_channel = MagicMock(
-            return_value=NotificationChannel(
-                name="projects/[PROJECT_ID_OR_NUMBER]/notificationChannels/[CHANNEL_ID]"
-            )
+            return_value=NotificationChannel(name="projects/[PROJECT_ID_OR_NUMBER]/notificationChannels/[CHANNEL_ID]")
         )
         AlertPolicyServiceClient.list_alert_policies = MagicMock(return_value=[])
         AlertPolicyServiceClient.update_alert_policy = MagicMock()
@@ -332,8 +308,8 @@ class TestPipelineService(unittest.TestCase):
         scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
-        wanna.core.services.path_utils.PipelinePaths.get_gcs_wanna_manifest_path = (
-            MagicMock(return_value=expected_manifest_json_path)
+        wanna.core.services.path_utils.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
+            return_value=expected_manifest_json_path
         )
 
         # Deploy the thing
@@ -346,17 +322,13 @@ class TestPipelineService(unittest.TestCase):
         CloudFunctionsServiceClient.get_function.assert_called_with(
             {"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}
         )
-        CloudFunctionsServiceClient.update_function.assert_called_with(
-            {"function": expected_function}
-        )
+        CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
             name="projects/your-gcp-project-id",
             notification_channel=NotificationChannel(
                 type_="pubsub",
                 display_name="wanna-sample-pipeline-pubsub-channel-wanna-alert-topic-channel",
-                labels={
-                    "topic": "projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"
-                },
+                labels={"topic": "projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"},
                 user_labels={
                     "wanna_project": "pipeline-sklearn-example-1",
                     "wanna_project_version": "1",
@@ -386,9 +358,7 @@ class TestPipelineService(unittest.TestCase):
             resource_network="pipeline-network",
             fallback_project_network="fallback-network",
         )
-        self.assertEqual(
-            push_network, "projects/123456789/global/networks/pipeline-network"
-        )
+        self.assertEqual(push_network, "projects/123456789/global/networks/pipeline-network")
 
         non_push_network = pipeline_service._get_resource_network(
             project_id="test-project-id",

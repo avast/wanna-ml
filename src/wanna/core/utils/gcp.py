@@ -1,6 +1,9 @@
 import re
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
+
+from google.cloud.storage import Blob
 
 from wanna.core.utils.env import should_validate
 
@@ -26,7 +29,8 @@ NETWORK_REGEX = (
 )
 
 
-def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]:
+@lru_cache(maxsize=256)
+def get_available_compute_machine_types(project_id: str, zone: str) -> list[str]:
     """
     Get available GCP Compute Engine Machine Types based on project and zone.
     Args:
@@ -37,9 +41,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
         list of available machine types
     """
     if should_validate:
-        response = MachineTypesClient(credentials=get_credentials()).list(
-            project=project_id, zone=zone
-        )
+        response = MachineTypesClient(credentials=get_credentials()).list(project=project_id, zone=zone)
         machine_types = [mtype.name for mtype in response.items]
     else:
         machine_types = [
@@ -178,7 +180,8 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> List[str]
     return machine_types
 
 
-def get_available_zones(project_id: str) -> List[str]:
+@lru_cache(maxsize=32)
+def get_available_zones(project_id: str) -> list[str]:
     """
     Get available GCP zones based on project.
     Args:
@@ -215,7 +218,8 @@ def get_available_zones(project_id: str) -> List[str]:
         ]
 
 
-def get_available_regions(project_id: str) -> List[str]:
+@lru_cache(maxsize=32)
+def get_available_regions(project_id: str) -> list[str]:
     """
     Get available GCP regions based on project.
     Args:
@@ -243,6 +247,7 @@ def get_region_from_zone(zone: str) -> str:
     return zone.rpartition("-")[0]
 
 
+@lru_cache(maxsize=32)
 def convert_project_id_to_project_number(project_id: str) -> str:
     """
     Convert GCP project_id (eg. 'my-gcp-project') to project_number (eg. '966193337054')
@@ -253,16 +258,12 @@ def convert_project_id_to_project_number(project_id: str) -> str:
     Returns:
         project_number: GCP project number
     """
-    project_name = (
-        ProjectsClient(credentials=get_credentials())
-        .get_project(name=f"projects/{project_id}")
-        .name
-    )
+    project_name = ProjectsClient(credentials=get_credentials()).get_project(name=f"projects/{project_id}").name
     project_number = re.sub("projects/", "", project_name)
     return project_number
 
 
-def parse_image_name_family(name: str) -> Dict[str, Any]:
+def parse_image_name_family(name: str) -> dict[str, Any]:
     """
     Based on GCP Compute Engine VM Image name family (eg. tf2-2-7-cu113-notebooks-debian-10)
     return framework (eg. tf2), version (eg. 2-7-cu113), os (debian-10) information.
@@ -282,11 +283,12 @@ def parse_image_name_family(name: str) -> Dict[str, Any]:
     return {"framework": framework, "version": version, "os": os}
 
 
+@lru_cache(maxsize=128)
 def get_available_compute_image_families(
     project: str,
     image_filter: Optional[str] = None,
     family_must_contain: Optional[str] = None,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """
     List available Compute Engine VM image families.
 
@@ -303,17 +305,11 @@ def get_available_compute_image_families(
     list_images_request = ListImagesRequest(project=project, filter=image_filter)
     all_images = ImagesClient(credentials=get_credentials()).list(list_images_request)
     if family_must_contain:
-        return [
-            parse_image_name_family(image.family)
-            for image in all_images
-            if family_must_contain in image.family
-        ]
+        return [parse_image_name_family(image.family) for image in all_images if family_must_contain in image.family]
     return [parse_image_name_family(image.family) for image in all_images]
 
 
-def construct_vm_image_family_from_vm_image(
-    framework: str, version: str, os: Optional[str]
-) -> str:
+def construct_vm_image_family_from_vm_image(framework: str, version: str, os: Optional[str]) -> str:
     """
     Construct name of the Compute Engine VM family with given framework(eg. pytorch),
     version(eg. 1-9-xla) and optional OS (eg. debian-10).
@@ -331,9 +327,7 @@ def construct_vm_image_family_from_vm_image(
     return f"{framework}-{version}-notebooks"
 
 
-def upload_file_to_gcs(
-    filename: Path, bucket_name: str, blob_name: str
-) -> storage.blob.Blob:
+def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> storage.blob.Blob:
     """
     Upload file to GCS bucket
 
@@ -345,16 +339,13 @@ def upload_file_to_gcs(
     Returns:
         storage.blob.Blob
     """
-    storage_client = storage.Client(credentials=get_credentials())
-    bucket = storage_client.get_bucket(bucket_name)
+    bucket = storage_client().get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_filename(filename)
     return blob
 
 
-def upload_string_to_gcs(
-    data: str, bucket_name: str, blob_name: str
-) -> storage.blob.Blob:
+def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage.blob.Blob:
     """
     Upload a string to GCS bucket without saving it locally as a file.
     Args:
@@ -365,11 +356,29 @@ def upload_string_to_gcs(
     Returns:
         storage.blob.Blob
     """
-    storage_client = storage.Client(credentials=get_credentials())
-    bucket = storage_client.get_bucket(bucket_name)
+    bucket = storage_client().get_bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.upload_from_string(data)
     return blob
+
+
+@lru_cache(maxsize=1)
+def storage_client() -> storage.Client:
+    return storage.Client(credentials=get_credentials())
+
+
+def download_script_from_gcs(gcs_path: str) -> str:
+    """
+    Download a script from GCS bucket and return it as a string
+
+    Args:
+        gcs_path: GCS path to the script
+
+    Returns:
+        str
+    """
+    blob = Blob.from_string(gcs_path, storage_client())
+    return blob.download_as_string().decode("utf-8")
 
 
 def is_gcs_path(path: str):
@@ -384,7 +393,7 @@ def is_gcs_path(path: str):
     return path.startswith("gs://")
 
 
-def get_network_info(network: Optional[str]) -> Optional[Tuple[str, str]]:
+def get_network_info(network: Optional[str]) -> Optional[tuple[str, str]]:
     """
     gets information about a network if set in long format
     Args:
@@ -393,7 +402,7 @@ def get_network_info(network: Optional[str]) -> Optional[Tuple[str, str]]:
         blob_name:
 
     Returns:
-        Tuple[str, str]
+        tuple[str, str]
     """
     if network:
         result = re.search(NETWORK_REGEX, network)

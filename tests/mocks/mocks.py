@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from google.auth.credentials import Credentials
@@ -12,11 +13,21 @@ from google.cloud.compute_v1.types.compute import (
     ZoneList,
 )
 from google.cloud.notebooks_v1.types import (
-    Instance,
-    ListInstancesResponse,
+    Instance as InstanceV1,
+)
+from google.cloud.notebooks_v1.types import (
+    ListInstancesResponse as ListInstancesResponseV1,
+)
+from google.cloud.notebooks_v1.types import (
     ListRuntimesResponse,
     Runtime,
 )
+from google.cloud.notebooks_v2.types import (
+    Instance,
+    ListInstancesResponse,
+    State,
+)
+from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
 
 
@@ -65,22 +76,20 @@ class MockMachineTypesClient:
             "n2d-standard-2",
             "n1-standard-4",
         ]
-        return MachineTypeList(
-            items=[MachineType({"name": mtype}) for mtype in machine_type_names]
-        )
+        return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
 
 
 class MockNotebookServiceClient:
     def __init__(self):
         self.notebook_states = {
-            "nb1": Instance.State.ACTIVE,
-            "tf-gpu": Instance.State.PROVISIONING,
-            "pytorch-notebook": Instance.State.DELETED,
+            "nb1": InstanceV1.State.ACTIVE,
+            "tf-gpu": InstanceV1.State.PROVISIONING,
+            "pytorch-notebook": InstanceV1.State.DELETED,
         }
         self.project_id = "gcp-project"
         self.zone = "us-east1-a"
         self.instances = [
-            Instance(
+            InstanceV1(
                 name=f"projects/{self.project_id}/locations/{self.zone}/instances/{n}",
                 state=s,
             )
@@ -88,9 +97,7 @@ class MockNotebookServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(
-            instances=[i for i in self.instances if i.name.startswith(parent)]
-        )
+        return ListInstancesResponseV1(instances=[i for i in self.instances if i.name.startswith(parent)])
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]
@@ -121,6 +128,10 @@ def mock_upload_file(any, src: str, dest: str):  # noqa
     return None
 
 
+def upload_string_to_gcs(filename: Path, bucket_name: str, blob_name: str):  # noqa
+    return Blob(blob_name, MockStorageClient().get_bucket(bucket_name))
+
+
 def mock_list_running_instances(project_id: str, region: str):  # noqa
     tensorboard_names = ["tb1", "tb2"]
     return [
@@ -149,9 +160,7 @@ class MockManagedNotebookServiceClient:
                     "name": f"projects/{self.project_id}/locations/{self.region}/runtimes/{n}",
                     "state": s,
                     "virtual_machine": {
-                        "virtual_machine_config": {
-                            "labels": {"wanna_project": self.wanna_project_name}
-                        }
+                        "virtual_machine_config": {"labels": {"wanna_project": self.wanna_project_name}}
                     },
                 }
             )
@@ -159,10 +168,33 @@ class MockManagedNotebookServiceClient:
         ]
 
     def list_runtimes(self, parent):
-        return ListRuntimesResponse(
-            runtimes=[i for i in self.runtimes if i.name.startswith(parent)]
-        )
+        return ListRuntimesResponse(runtimes=[i for i in self.runtimes if i.name.startswith(parent)])
 
     def get_runtime(self, name):
         matched_instances = [i for i in self.runtimes if name == i.name]
+        return matched_instances[0]
+
+
+class MockWorkbenchInstanceServiceClient:
+    def __init__(self):
+        self.notebook_states = {
+            "nb1": State.ACTIVE,
+            "tf-gpu": State.PROVISIONING,
+            "pytorch-notebook": State.DELETED,
+        }
+        self.project_id = "gcp-project"
+        self.zone = "us-east1-a"
+        self.instances = [
+            Instance(
+                name=f"projects/{self.project_id}/locations/{self.zone}/instances/{n}",
+                state=s,
+            )
+            for n, s in self.notebook_states.items()
+        ]
+
+    def list_instances(self, parent):
+        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
+
+    def get_instance(self, name):
+        matched_instances = [i for i in self.instances if name == i.name]
         return matched_instances[0]

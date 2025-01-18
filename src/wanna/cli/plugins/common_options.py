@@ -32,9 +32,7 @@ push_mode_option: PushMode = typer.Option(
 )
 
 
-def instance_name_option(
-    instance_type: str, operation: str, help: Optional[str] = None
-):
+def instance_name_option(instance_type: str, operation: str, help: Optional[str] = None):
     return typer.Option(
         "all",
         "--name",

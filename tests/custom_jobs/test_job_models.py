@@ -2,6 +2,7 @@ import unittest
 
 import pytest
 from pydantic.error_wrappers import ValidationError
+
 from wanna.core.models.training_custom_job import (
     TrainingCustomJobModel,
     WorkerPoolModel,

@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 from cookiecutter.main import cookiecutter
+
 from wanna.cli.__main__ import WannaRepositoryTemplate
 from wanna.core.utils.config_loader import load_config_from_yaml
 
@@ -26,9 +27,7 @@ class TestInitTemplates:
             output_dir=os.path.join("build", "testing", "templates", template_name),
         )
 
-        _ = load_config_from_yaml(
-            Path(os.path.join(result_dir, "wanna.yaml")), "default"
-        )
+        _ = load_config_from_yaml(Path(os.path.join(result_dir, "wanna.yaml")), "default")
 
     def test_templates(self):
         for template in self.template_names:

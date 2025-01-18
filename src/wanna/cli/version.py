@@ -1,6 +1,6 @@
+import importlib.metadata
 import json
 
-import importlib.metadata
 import requests
 
 from wanna.core.loggers.wanna_logger import get_logger
