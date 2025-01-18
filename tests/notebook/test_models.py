@@ -4,11 +4,7 @@ import pytest
 from pydantic.error_wrappers import ValidationError
 
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.workbench import (
-    ManagedNotebookModel,
-    NotebookEnvironment,
-    NotebookModel,
-)
+from wanna.core.models.workbench import NotebookEnvironment, InstanceModel
 
 
 class TestNotebookModel(unittest.TestCase):
@@ -62,25 +58,11 @@ class TestNotebookModel(unittest.TestCase):
     def test_notebook_invalid_machine_type(self):
         machine_type = "expelliarmus"
         with pytest.raises(ValidationError):
-            _ = NotebookModel.parse_obj(
+            _ = InstanceModel.parse_obj(
                 {
                     "name": "my-notebook",
                     "project_id": "gcp-project",
                     "zone": "europe-west4-a",
                     "machine_type": machine_type,
-                }
-            )
-
-
-class TestManagedNotebookModel(unittest.TestCase):
-    def test_kernel(self):
-        kernel1 = "gcr.io/projectId/imageName1"
-        kernel2 = "gcr.io/projectId/imageName2"
-        with pytest.raises(ValidationError):
-            _ = ManagedNotebookModel.parse_obj(
-                {
-                    "name": "jacek-notebook",
-                    "owner": "jacek.hebda@avast.com",
-                    "kernels": [kernel1, kernel2],
                 }
             )
