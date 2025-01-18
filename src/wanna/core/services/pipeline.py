@@ -2,7 +2,7 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional, cast, Union
+from typing import Any, Optional, Union, cast
 
 from caseconverter import snakecase
 from google.cloud import aiplatform

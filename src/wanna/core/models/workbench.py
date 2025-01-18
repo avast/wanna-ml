@@ -61,6 +61,7 @@ class InstanceModel(BaseWorkbenchModel):
     - `delete_to_trash` - [bool] (optional) If true, the instance will be deleted to trash.
     - `report_health` - [bool] (optional) If true, the instance will report health to Cloud Monitoring
     """
+
     type: Literal["instance"] = "instance"
     zone: str
     owner: Optional[EmailStr]
@@ -71,7 +72,7 @@ class InstanceModel(BaseWorkbenchModel):
     enable_ip_forwarding: bool = False
     no_proxy_access: bool = False
     enable_monitoring: bool = True
-    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=720)   # 12 hours
+    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=720)  # 12 hours
     collaborative: bool = False
     env_vars: Optional[dict[str, str]]
     bucket_mounts: Optional[list[BucketMount]]

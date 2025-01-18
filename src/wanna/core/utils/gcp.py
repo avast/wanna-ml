@@ -380,6 +380,7 @@ def download_script_from_gcs(gcs_path: str) -> str:
     blob = Blob.from_string(gcs_path, storage_client())
     return blob.download_as_string().decode("utf-8")
 
+
 def is_gcs_path(path: str):
     """
     Simply checks if path str represents a GCS path

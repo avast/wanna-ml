@@ -12,6 +12,7 @@ from wanna.core.models.training_custom_job import JobModelTypeAlias
 
 PipelineEnvParams = dict[str, Union[str, None, EmailStr]]
 
+
 class GCPResource(
     GenericModel,
     extra=Extra.forbid,

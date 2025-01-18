@@ -26,7 +26,8 @@ from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import (
     construct_vm_image_family_from_vm_image,
-    upload_string_to_gcs, download_script_from_gcs,
+    download_script_from_gcs,
+    upload_string_to_gcs,
 )
 
 logger = get_logger(__name__)
@@ -211,12 +212,8 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
         # post startup script
         if deploy and (
-            instance.bucket_mounts
-            or instance.tensorboard_ref
-            or self.config.gcp_profile.env_vars
-            or instance.env_vars
+            instance.bucket_mounts or instance.tensorboard_ref or self.config.gcp_profile.env_vars or instance.env_vars
         ):
-
             script = self._prepare_startup_script(instance)
 
             blob = upload_string_to_gcs(
@@ -249,7 +246,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         metadata = {**metadata, **dataproc_metadata}
         # https://cloud.google.com/vertex-ai/docs/workbench/instances/idle-shutdown#terraform
         idle_shutdown_metadata = {
-            "idle-timeout-seconds": str(idle_shutdown_timeout * 60) # we set it in minutes
+            "idle-timeout-seconds": str(idle_shutdown_timeout * 60)  # we set it in minutes
             if (idle_shutdown_timeout := instance.idle_shutdown_timeout)
             else ""
         }
@@ -328,10 +325,10 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             # download the script from the bucket
             user_script = download_script_from_gcs(nb_instance.post_startup_script)
             # removing the shebang
-            lines = user_script.split('\n')
-            if lines and lines[0].startswith('#!'):
+            lines = user_script.split("\n")
+            if lines and lines[0].startswith("#!"):
                 lines = lines[1:]
-            user_script = '\n'.join(lines)
+            user_script = "\n".join(lines)
         else:
             user_script = None
 
@@ -340,7 +337,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             bucket_mounts=nb_instance.bucket_mounts,
             tensorboard_resource_name=tensorboard_resource_name,
             env_vars=env_vars,
-            user_script=user_script
+            user_script=user_script,
         )
         return startup_script
 
