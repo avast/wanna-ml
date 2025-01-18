@@ -24,12 +24,6 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
 
     _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
-    _managed_notebooks = validator("managed_notebooks", pre=True, each_item=True, allow_reuse=True)(
-        enrich_instance_with_gcp_settings
-    )
-    _workbench_instances = validator("workbench_instances", pre=True, each_item=True, allow_reuse=True)(
-        enrich_instance_with_gcp_settings
-    )
     _tensorboards = validator("tensorboards", pre=True, each_item=True, allow_reuse=True)(
         enrich_instance_with_gcp_settings
     )

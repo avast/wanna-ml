@@ -82,4 +82,4 @@ class InstanceModel(BaseWorkbenchModel):
     delete_to_trash: bool = False
     report_health: bool = True
 
-    _environment_auto_upgrade = validator("environment_auto_upgrade")(validators.validate_cron_schedule)
+    _environment_auto_upgrade = validator("environment_auto_upgrade", allow_reuse=True)(validators.validate_cron_schedule)
