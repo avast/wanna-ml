@@ -1,9 +1,0 @@
-# docker-py tars the whole build directory and sends it to the docker-machine
-# excluding large folders and files unrelated to docker build can save you _a lot of_ time on each build
-
-.git
-.idea
-.vscode
-.mypy_cache
-
-venv/
