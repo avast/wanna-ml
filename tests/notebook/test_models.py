@@ -4,7 +4,7 @@ import pytest
 from pydantic.error_wrappers import ValidationError
 
 from wanna.core.models.gcp_components import GPU, Disk
-from wanna.core.models.workbench import NotebookEnvironment, InstanceModel
+from wanna.core.models.workbench import InstanceModel, NotebookEnvironment
 
 
 class TestNotebookModel(unittest.TestCase):

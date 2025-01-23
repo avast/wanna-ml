@@ -104,6 +104,7 @@ addopts = """
     --ignore=templates
     --ignore=samples
     --ignore=dev_tests
+    -s
     """
 filterwarnings = [
     "error",

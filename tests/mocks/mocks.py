@@ -79,31 +79,6 @@ class MockMachineTypesClient:
         return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
 
 
-class MockNotebookServiceClient:
-    def __init__(self):
-        self.notebook_states = {
-            "nb1": InstanceV1.State.ACTIVE,
-            "tf-gpu": InstanceV1.State.PROVISIONING,
-            "pytorch-notebook": InstanceV1.State.DELETED,
-        }
-        self.project_id = "gcp-project"
-        self.zone = "us-east1-a"
-        self.instances = [
-            InstanceV1(
-                name=f"projects/{self.project_id}/locations/{self.zone}/instances/{n}",
-                state=s,
-            )
-            for n, s in self.notebook_states.items()
-        ]
-
-    def list_instances(self, parent):
-        return ListInstancesResponseV1(instances=[i for i in self.instances if i.name.startswith(parent)])
-
-    def get_instance(self, name):
-        matched_instances = [i for i in self.instances if name == i.name]
-        return matched_instances[0]
-
-
 class MockStorageClient:
     def __init__(self, credentials: Optional[Credentials] = None):
         self.credentials = credentials
@@ -142,37 +117,6 @@ def mock_list_running_instances(project_id: str, region: str):  # noqa
         )
         for t in tensorboard_names
     ]
-
-
-class MockManagedNotebookServiceClient:
-    def __init__(self):
-        self.notebook_states = {
-            "minimum-setup": Runtime.State.ACTIVE,
-            "maximum-setup": Runtime.State.STOPPED,
-        }
-        self.wanna_project_name = "wanna-notebook-sample"
-        self.project_id = "your-gcp-project-id"
-        self.region = "europe-west1"
-        self.owner = "jacek.hebda@avast.com"
-        self.runtimes = [
-            Runtime(
-                {
-                    "name": f"projects/{self.project_id}/locations/{self.region}/runtimes/{n}",
-                    "state": s,
-                    "virtual_machine": {
-                        "virtual_machine_config": {"labels": {"wanna_project": self.wanna_project_name}}
-                    },
-                }
-            )
-            for n, s in self.notebook_states.items()
-        ]
-
-    def list_runtimes(self, parent):
-        return ListRuntimesResponse(runtimes=[i for i in self.runtimes if i.name.startswith(parent)])
-
-    def get_runtime(self, name):
-        matched_instances = [i for i in self.runtimes if name == i.name]
-        return matched_instances[0]
 
 
 class MockWorkbenchInstanceServiceClient:

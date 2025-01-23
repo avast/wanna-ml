@@ -1,6 +1,0 @@
-gcp_profiles:
-  - profile_name: prod
-    project_id: "your-gcp-project-id"
-    zone: europe-west1-b
-    bucket: wanna-ml-prod
-    network: default

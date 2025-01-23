@@ -20,4 +20,3 @@ notebooks:
        framework: pytorch
        version: 1-9-xla
        os: debian-10
-
