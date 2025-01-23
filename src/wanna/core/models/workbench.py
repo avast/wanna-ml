@@ -85,3 +85,5 @@ class InstanceModel(BaseWorkbenchModel):
     _environment_auto_upgrade = validator("environment_auto_upgrade", allow_reuse=True)(
         validators.validate_cron_schedule
     )
+    _machine_type = validator("machine_type")(validators.validate_machine_type)
+

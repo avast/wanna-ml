@@ -18,7 +18,6 @@ class PipelineModel(BaseInstanceModel):
     - `network` - [str] (optional) Overrides network from the `gcp_profile` segment
     - `tags`- [dict[str, str]] (optional) Tags to apply to this instance
     - `metadata`- [str] (optional) Custom metadata to apply to this instance
-    - `pipeline_file` - [str] Path to a Kubeflow Python script
     - `pipeline_function` - [str] (optional) Path to a cloud function
     - `pipeline_params` - [str] (optional) Path to params.yaml file
     - `docker_image_ref` - [list[str]] - list of names of docker images
@@ -53,15 +52,4 @@ class PipelineModel(BaseInstanceModel):
         if not experiment and name:
             values["experiment"] = f"{name}-experiment"
 
-        return values
-
-    @root_validator(pre=False)
-    def validate_pipeline_function(cls, values):  # pylint: disable=no-self-argument,no-self-use
-        """
-        Validate that at least one of pipeline_function or pipeline_file are present
-        """
-        pipeline_function = values.get("pipeline_function")
-        pipeline_file = values.get("pipeline_file")
-        if not pipeline_function and not pipeline_file:
-            raise ValueError("pipeline_function or pipeline_file must be set")
         return values
