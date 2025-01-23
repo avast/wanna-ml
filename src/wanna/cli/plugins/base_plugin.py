@@ -1,11 +1,9 @@
 import abc
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Union
 
 import typer
 
-CommandRegistration = Union[
-    Callable[..., None], Tuple[Callable[..., None], Dict[Any, Any]]
-]
+CommandRegistration = Union[Callable[..., None], tuple[Callable[..., None], dict[Any, Any]]]
 
 
 class BasePlugin(abc.ABC):
@@ -20,6 +18,6 @@ class BasePlugin(abc.ABC):
         else:
             self.app.command()(func)
 
-    def register_many(self, funcs: List[CommandRegistration]) -> None:
+    def register_many(self, funcs: list[CommandRegistration]) -> None:
         for func in funcs:
             self.register_command(func)

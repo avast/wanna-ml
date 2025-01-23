@@ -9,7 +9,7 @@ date: 2022-04-06
 # Installation
 
 ## Requirements
-To run wanna-ml, you need `docker` daemon, a `Python >=3.7` environment setup and [gcloud cli](https://cloud.google.com/sdk/docs/install-sdk) installed
+To run wanna-ml, you need `docker` daemon, a `Python >=3.9` environment setup and [gcloud cli](https://cloud.google.com/sdk/docs/install-sdk) installed
 
 ## Installing with Pipx
 The recommended way to install wanna-ml is to use pipx.

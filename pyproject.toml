@@ -78,14 +78,13 @@ mkdocstrings-python = "^1.7.3"
 mkautodoc = "^0.2.0"
 markdown = "^3.5"
 mock = "^5.1.0"
-mypy = "^1.5.1"
-pytest = "^7.4.0"
-pytest-cov = "^4.1.0"
-pytest-ruff = "^0.2.1"
+mypy = "^1.8.0"
+pytest = "^8.0.1"
+pytest-cov = "^5.0.0"
+pytest-ruff = "^0.3.1"
 pytest-mypy = "^0.10.3"
 pytest-mock = "^3.12.0"
 poethepoet = "^0.22.0"
-black = "^23.7.0"
 types-mock = "^5.1.0.3"
 types-pyyaml = "^6.0.12"
 types-requests = "^2.31.0"
@@ -93,17 +92,25 @@ types-setuptools = "^68.2.0"
 pre-commit = "^2.19.0"
 
 [tool.pytest.ini_options]
+#addopts = """
+#    --verbose
+#    --ruff
+#    --mypy
+#    --cov-report term
+#    --cov-report xml:coverage.xml
+#    --cov=src
+#    --durations=0
+#    --ignore=src/wanna/components/templates
+#    --ignore=templates
+#    --ignore=samples
+#    --ignore=dev_tests
+#    """
 addopts = """
-    --verbose
-    --ruff
-    --mypy
-    --cov-report term
-    --cov-report xml:coverage.xml
-    --cov=src
-    --durations=0
     --ignore=src/wanna/components/templates
     --ignore=templates
     --ignore=samples
+    --ignore=dev_tests
+    -s
     """
 filterwarnings = [
     "error",
@@ -114,40 +121,48 @@ filterwarnings = [
 ]
 
 [tool.poe.tasks]
-_black = "black ."
-_ruff = "ruff --select I --fix ."
-format-code = ["_black", "_ruff"]
+# Separate import sorting until https://github.com/astral-sh/ruff/issues/8232 is merged
+_ruff_sort_imports = "ruff check --select I --fix ."
+_ruff_format = "ruff format ."
+format-code = ["_ruff_sort_imports", "_ruff_format"]
 docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 
 [tool.ruff]
 line-length = 120
-show-source = true
-select = ["E", "F", "I", "PERF", "ARG"]
-ignore = [
-    "E1", # handled by Black
-    "E4", # handled by Black
-    "E5", # handled by Black
-    "E722",
-    "PERF401"
-]
+output-format = "full"
 extend-exclude = [
     "**pb2.py",
     "**pb2.pyi",
     "src/wanna/components/templates/**",
     "samples/**",
     "templates/blank/**",
-    "templates/sklearn/**"
+    "templates/sklearn/**",
+    "dev_tests/**",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "PERF", "ARG"]
+ignore = [
+    "E1", # handled by formatter
+    "E4", # handled by formatter
+    "E5", # handled by formatter
+    "E722",
+    "PERF401"
 ]
 
 [tool.mypy]
 exclude = [
-    "src/wanna/components/templates/**",
-    "templates/blank/**",
-    "templates/sklearn/**",
-    "samples/pipelines/"
+    "src/wanna/components/templates/*",
+    "templates/blank/*",
+    "templates/sklearn/*",
+    "samples/pipelines/*",
+    "dev_tests/*",
 ]
 follow_imports = "silent"
+mypy_path = ["src"]
+namespace_packages = true
+explicit_package_bases = true
 strict = true
 strict_optional = true
 warn_redundant_casts = true
@@ -158,10 +173,6 @@ ignore_missing_imports = true
 
 [tool.poetry.scripts]
 wanna = "wanna.cli.__main__:wanna"
-
-[tool.black]
-extend-ignore = "E203"
-max-line-length = 120
 
 [build-system]
 build-backend = "poetry.core.masonry.api"

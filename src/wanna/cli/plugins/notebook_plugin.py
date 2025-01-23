@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 class NotebookPlugin(BasePlugin):
     """
-    Create, delete and more operations for user-managed Workbench (Jupyter notebook).
+    Create, delete and more operations for Workbench Instance (Jupyter notebook).
     """
 
     def __init__(self) -> None:
@@ -42,31 +42,31 @@ class NotebookPlugin(BasePlugin):
     def delete(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("notebook", "delete"),
+        instance_name: str = instance_name_option("workbench instance", "delete"),
     ) -> None:
         """
-        Delete a User-Managed Workbench Notebook.
+        Workbench Instance.
         """
         config = load_config_from_yaml(file, gcp_profile_name=profile_name)
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir)
         nb_service.delete(instance_name)
 
     @staticmethod
     def create(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("notebook", "create"),
+        instance_name: str = instance_name_option("workbench instance", "create"),
         owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
-        version: str = version_option(instance_type="notebook"),
+        version: str = version_option(instance_type="workbench instance"),
         mode: PushMode = push_mode_option,
     ) -> None:
         """
-        Create a User-Managed Workbench Notebook.
+        Workbench Instance.
 
         If there already is a notebook with the same name in the same location and project,
         you will be prompt if you want to delete the existing one and start a new one.
@@ -77,11 +77,9 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(
-            config=config, workdir=workdir, owner=owner, version=version
-        )
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir, owner=owner, version=version)
         nb_service.create(instance_name, push_mode=mode)
 
     @staticmethod
@@ -89,7 +87,7 @@ class NotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option(
-            "notebook",
+            "workbench instance",
             "ssh",
             help="Specify to which notebook you want to connect via ssh. "
             "Selecting 'all' will work only if there is just one notebook "
@@ -124,9 +122,9 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir)
         nb_service.ssh(instance_name, run_in_background, local_port)
 
     @staticmethod
@@ -145,9 +143,9 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(config=config, workdir=workdir)
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir)
 
         nb_service.report(
             instance_name=instance_name,
@@ -171,16 +169,16 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(config=config, workdir=workdir, version=version)
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir, version=version)
         nb_service.build()
 
     @staticmethod
     def push(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("notebook", "push"),
+        instance_name: str = instance_name_option("workbench instance", "push"),
         version: str = version_option(instance_type="notebook"),
         mode: PushMode = typer.Option(
             PushMode.containers,
@@ -206,18 +204,16 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(config=config, workdir=workdir, version=version)
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir, version=version)
         nb_service.push(instance_name=instance_name)
 
     @staticmethod
     def sync(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        force: bool = typer.Option(
-            False, "--force", help="Synchronisation without prompt"
-        ),
+        force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
         version: str = version_option(instance_type="notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:
@@ -233,7 +229,7 @@ class NotebookPlugin(BasePlugin):
         workdir = pathlib.Path(file).parent.resolve()
 
         # doing this import here speeds up the CLI app considerably
-        from wanna.core.services.notebook import NotebookService
+        from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = NotebookService(config=config, workdir=workdir, version=version)
+        nb_service = WorkbenchInstanceService(config=config, workdir=workdir, version=version)
         nb_service.sync(force=force, push_mode=mode)

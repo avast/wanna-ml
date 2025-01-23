@@ -39,3 +39,5 @@ notebooks:
     data_disk:
       disk_type: pd_standard
       size_gb: 100
+    bucket_mounts:
+      - bucket_name: "your-staging-bucket-name"

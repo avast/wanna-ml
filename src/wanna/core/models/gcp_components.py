@@ -1,10 +1,4 @@
-import sys
-from typing import Optional
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Extra, Field, validator
 
@@ -12,11 +6,7 @@ from wanna.core.utils import validators
 
 
 class VMImage(BaseModel, extra=Extra.forbid):
-    framework: str
-    version: str
-    os: Optional[str] = None
-
-    # _ = root_validator()(validators.validate_vm_image)
+    version: Optional[str] = None
 
 
 class Disk(BaseModel, extra=Extra.forbid):
@@ -30,7 +20,5 @@ class GPU(BaseModel, extra=Extra.forbid):
     count: Literal[1, 2, 4, 8]
     accelerator_type: str
     install_gpu_driver: bool = True
-
-    _accelerator_type = validator("accelerator_type")(
-        validators.validate_accelerator_type
-    )
+    _accelerator_type = validator("accelerator_type")(validators.validate_accelerator_type)
+    custom_gpu_driver_path: Optional[str] = None

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 import pendulum
 from jinja2 import Environment
@@ -12,7 +12,7 @@ def get_timestamp():
     return datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def update_time_template(params: Dict[str, Any]):
+def update_time_template(params: dict[str, Any]):
     for k, v in params.items():
         if isinstance(v, str):
             v = _jinja_env.from_string(v).render()

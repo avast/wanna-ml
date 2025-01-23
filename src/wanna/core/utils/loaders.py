@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, TextIO
+from typing import Any, TextIO
 
 import yaml
 from yamlinclude import YamlIncludeConstructor
@@ -22,20 +22,18 @@ def replace_environment_variables() -> None:
     yaml.add_constructor("!env_var", env_var_constructor)
 
 
-def load_yaml(stream: TextIO, context_dir: Path, **extras: Any) -> Dict[Any, Any]:
+def load_yaml(stream: TextIO, context_dir: Path, **extras: Any) -> dict[Any, Any]:
     """
     Convert a YAML stream into a class via the OrderedLoader class.
     """
-    YamlIncludeConstructor.add_to_loader_class(
-        loader_class=yaml.FullLoader, base_dir=context_dir
-    )
+    YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=context_dir)
     replace_environment_variables()
     yaml_dict = yaml.load(stream, Loader=yaml.FullLoader) or {}
     yaml_dict.update(extras)
     return yaml_dict
 
 
-def load_yaml_path(path: Path, context_dir: Path, **extras: Any) -> Dict[Any, Any]:
+def load_yaml_path(path: Path, context_dir: Path, **extras: Any) -> dict[Any, Any]:
     """
     Convert a Path into a yaml dict
     """
