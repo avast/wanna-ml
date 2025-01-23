@@ -28,6 +28,6 @@ pipelines:
     schedule:
       cron: 2 * * * *
     bucket: "your-staging-bucket-name"
-    pipeline_file: dataproc_simple/pipeline.py
+    pipeline_function: dataproc_simple.pipeline.wanna_pipeline
     pipeline_params: dataproc_simple/params.yaml
     docker_image_ref: ["dataproc"]

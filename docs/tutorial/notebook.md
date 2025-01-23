@@ -8,10 +8,11 @@ date: 2022-04-06
 ---
   
 # WANNA Notebook
-We offer a simple way of managing Jupyter Notebooks on GCP, with multiple ways
-to set your environment, mount a GCS bucket, and more.
+We offer a simple way of managing Jupyter Notebooks on GCP using 
+[Vertex AI Workbench Instances](https://cloud.google.com/vertex-ai/docs/workbench/instances/introduction), 
+with multiple ways to set your environment, mount a GCS bucket, and more.
 
-::: wanna.core.models.notebook.NotebookModel
+::: wanna.core.models.workbench.InstanceModel
     :docstring:
 
 ### Notebook Environments
@@ -36,19 +37,17 @@ notebooks:
     environment:
       docker_image_ref: custom-notebook-container
 ```  
-- Use a virtual machine image with preconfigured python libraries or TensorFlow / PyTorch / R and more.
-A complete list of available images can be found [here](https://cloud.google.com/vertex-ai/docs/workbench/user-managed/images).
+- Use a virtual machine image with preconfigured python libraries containing TensorFlow, PyTorch, R and more.
+Currently, GCP does not offer any customization, so you just pass empty dict to the `vm_image`.
 
 ```
 notebooks:
   - name: wanna-notebook-vm
     machine_type: n1-standard-4
     environment:
-     vm_image:
-       framework: pytorch
-       version: 1-9-xla
-       os: debian-10
+     vm_image: {}
 ```    
+
 ### Mounting buckets
 We can automatically mount GCS buckets with `gcsfuse` during the notebook startup.
 
@@ -123,10 +122,7 @@ notebooks:
     labels:
       notebook_usecase: wanna-notebook-sample-simple-pip
     environment:
-      vm_image:
-        framework: pytorch
-        version: 1-9-xla
-        os: debian-10
+      vm_image: {}
     gpu:
       count: 1
       accelerator_type: NVIDIA_TESLA_V100

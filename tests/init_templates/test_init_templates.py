@@ -28,7 +28,7 @@ class TestInitTemplates:
             overwrite_if_exists=True,
             output_dir=os.path.join("build", "testing", "templates", template_name),
         )
-        with pytest.raises(ValidationError):    # temporary, until the change in template is merged
+        with pytest.raises(ValidationError):  # temporary, until the change in template is merged
             _ = load_config_from_yaml(Path(os.path.join(result_dir, "wanna.yaml")), "default")
 
     def test_templates(self):
