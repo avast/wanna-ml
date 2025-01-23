@@ -131,7 +131,7 @@ class NotebookPlugin(BasePlugin):
     def report(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        instance_name: str = instance_name_option("workbench instance", "report"),
+        instance_name: str = instance_name_option("notebook", "report"),
     ) -> None:
         """
         Displays a link to the cost report per wanna_project and optionally per instance name.
@@ -150,7 +150,7 @@ class NotebookPlugin(BasePlugin):
         nb_service.report(
             instance_name=instance_name,
             wanna_project=config.wanna_project.name,
-            wanna_resource="workbench instance",
+            wanna_resource="notebook",
             gcp_project=config.gcp_profile.project_id,
             billing_id=config.wanna_project.billing_id,
             organization_id=config.wanna_project.organization_id,
@@ -160,7 +160,7 @@ class NotebookPlugin(BasePlugin):
     def build(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        version: str = version_option(instance_type="workbench instance"),
+        version: str = version_option(instance_type="notebook"),
     ) -> None:
         """
         Validates build of notebooks as they are defined in wanna.yaml
@@ -179,7 +179,7 @@ class NotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("workbench instance", "push"),
-        version: str = version_option(instance_type="workbench instance"),
+        version: str = version_option(instance_type="notebook"),
         mode: PushMode = typer.Option(
             PushMode.containers,
             "--mode",
@@ -214,7 +214,7 @@ class NotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         force: bool = typer.Option(False, "--force", help="Synchronisation without prompt"),
-        version: str = version_option(instance_type="workbench instance"),
+        version: str = version_option(instance_type="notebook"),
         mode: PushMode = push_mode_option,
     ) -> None:
         """

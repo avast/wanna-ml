@@ -16,7 +16,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 @pytest.fixture
 def custom_container_config():
     return load_config_from_yaml(
-        Path("samples") / "samples" / "notebook" / "custom_container" / "wanna.yaml", "default"
+        Path("samples") / "notebook" / "custom_container" / "wanna.yaml", "default"
     )
 
 
@@ -71,7 +71,7 @@ class TestWorkbenchInstanceService:
     def test_create_instance_request_network_short_name(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         instance.network = "little-hangleton"
         instance.subnet = "the-riddle-house"
         request = nb_service._create_instance_request(instance)
@@ -83,7 +83,7 @@ class TestWorkbenchInstanceService:
     def test_create_instance_request_network_subnet(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         instance.network = "little-hangleton"
         instance.subnet = "the-riddle-house"
         request = nb_service._create_instance_request(instance)
@@ -95,7 +95,7 @@ class TestWorkbenchInstanceService:
     def test_create_instance_request_gpu_config(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         instance.gpu = GPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
         request = nb_service._create_instance_request(instance)
         assert request.instance.gce_setup.accelerator_configs[0].type_.name == "NVIDIA_TESLA_V100"
@@ -104,7 +104,7 @@ class TestWorkbenchInstanceService:
     def test_create_instance_request_custom_container(self, custom_container_config):
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         nb_service.docker_service._build_image = MagicMock(return_value=(None, None, None))
         nb_service.docker_service._pull_image = MagicMock(return_value=None)
         request = nb_service._create_instance_request(instance)
@@ -118,14 +118,14 @@ class TestWorkbenchInstanceService:
     def test_create_instance_request_vm_image(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         request = nb_service._create_instance_request(instance)
-        assert request.instance.gce_setup.vm_image.family == "pytorch-1-9-xla-notebooks-debian-10"
+        assert request.instance.gce_setup.vm_image.family == "workbench-instances"
 
     def test_create_instance_request_boot_disk(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         instance.boot_disk = Disk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
         assert request.instance.gce_setup.boot_disk.disk_type == DiskType.PD_SSD
@@ -134,7 +134,7 @@ class TestWorkbenchInstanceService:
     def test_create_instance_request_data_disk(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         instance.data_disk = Disk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
         assert request.instance.gce_setup.data_disks[0].disk_type == DiskType.PD_BALANCED
@@ -146,7 +146,7 @@ class TestWorkbenchInstanceService:
         # which is not needed in this test
         config.docker.cloud_build = True
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        instance = config.workbench_instances[0]
+        instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
         assert "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name" in startup_script
 

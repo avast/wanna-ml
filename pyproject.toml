@@ -92,14 +92,20 @@ types-setuptools = "^68.2.0"
 pre-commit = "^2.19.0"
 
 [tool.pytest.ini_options]
+#addopts = """
+#    --verbose
+#    --ruff
+#    --mypy
+#    --cov-report term
+#    --cov-report xml:coverage.xml
+#    --cov=src
+#    --durations=0
+#    --ignore=src/wanna/components/templates
+#    --ignore=templates
+#    --ignore=samples
+#    --ignore=dev_tests
+#    """
 addopts = """
-    --verbose
-    --ruff
-    --mypy
-    --cov-report term
-    --cov-report xml:coverage.xml
-    --cov=src
-    --durations=0
     --ignore=src/wanna/components/templates
     --ignore=templates
     --ignore=samples

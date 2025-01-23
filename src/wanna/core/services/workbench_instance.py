@@ -393,16 +393,16 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
         """
         if instance_name == "all":
-            if len(self.config.workbench_instances) == 1:
-                self._ssh(self.config.workbench_instances[0], run_in_background, local_port)
-            elif len(self.config.workbench_instances) > 1:
+            if len(self.config.notebooks) == 1:
+                self._ssh(self.config.notebooks[0], run_in_background, local_port)
+            elif len(self.config.notebooks) > 1:
                 raise ValueError("You can connect to only one notebook at a time.")
             else:
                 logger.user_error("No notebook definition found in your YAML config.")
         else:
-            if instance_name in [notebook.name for notebook in self.config.workbench_instances]:
+            if instance_name in [notebook.name for notebook in self.config.notebooks]:
                 self._ssh(
-                    [notebook for notebook in self.config.workbench_instances if notebook.name == instance_name][0],
+                    [notebook for notebook in self.config.notebooks if notebook.name == instance_name][0],
                     run_in_background,
                     local_port,
                 )

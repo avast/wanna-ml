@@ -37,11 +37,10 @@ class TestNotebookPlugin(unittest.TestCase):
                 "default",
             ],
         )
-        print(result)
-        # WorkbenchInstanceService.create.assert_called_once()
-        # WorkbenchInstanceService.create.assert_called_with("wanna-notebook-vm", push_mode=PushMode.all)
+        WorkbenchInstanceService.create.assert_called_once()
+        WorkbenchInstanceService.create.assert_called_with("wanna-notebook-vm", push_mode=PushMode.all)
 
-        # self.assertEqual(0, result.exit_code)
+        self.assertEqual(0, result.exit_code)
 
     def test_notebook_delete_cli(self):
         WorkbenchInstanceService.delete = MagicMock()
