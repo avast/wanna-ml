@@ -40,3 +40,11 @@ poetry run pytest
 ```
 
 this runs static analysis, linter and tests.
+
+## Generating documentation
+
+Make sure the documentation is correct by
+
+```bash
+poetry run mkdocs serve
+```

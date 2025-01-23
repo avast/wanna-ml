@@ -61,7 +61,6 @@ nav:
         - 'WANNA Docker': 'tutorial/docker.md'
         - 'WANNA Tensorboard': 'tutorial/tensorboard.md'
         - 'WANNA Notebook': 'tutorial/notebook.md'
-        - 'WANNA Managed Notebook': 'tutorial/managed-notebook.md'
         - 'WANNA Job': 'tutorial/job.md'
         - 'WANNA Pipeline': 'tutorial/pipeline.md'
     - CLI Reference: 'cli/commands.md'

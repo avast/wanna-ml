@@ -86,4 +86,3 @@ class InstanceModel(BaseWorkbenchModel):
         validators.validate_cron_schedule
     )
     _machine_type = validator("machine_type")(validators.validate_machine_type)
-

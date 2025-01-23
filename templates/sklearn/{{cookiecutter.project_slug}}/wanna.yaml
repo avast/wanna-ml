@@ -41,7 +41,7 @@ pipelines:
     schedule:
       cron: 2 * * * *
     bucket: gs://{{ cookiecutter.gcp_bucket }}
-    pipeline_file: pipeline/pipeline.py
+    pipeline_function: {{ cookiecutter.project_slug }}.pipeline.wanna_sklearn_sample
     pipeline_params: pipeline/params.yaml
     docker_image_ref: ["train", "serve"]
     tensorboard_ref: {{ cookiecutter.project_slug }}-board

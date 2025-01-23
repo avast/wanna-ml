@@ -148,7 +148,7 @@ pipelines:
     schedule:
       cron: 2 * * * *
     bucket: gs://wanna-tensorflow-sample-dev
-    pipeline_functions: project_name.pipeline.wanna_pipeline
+    pipeline_function: project_name.pipeline.wanna_pipeline
     pipeline_params: pipeline/params.yaml
     docker_image_ref: ["data"]
     tensorboard_ref: pipeline-tutorial-board

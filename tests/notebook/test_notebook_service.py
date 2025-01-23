@@ -15,9 +15,7 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 @pytest.fixture
 def custom_container_config():
-    return load_config_from_yaml(
-        Path("samples") / "notebook" / "custom_container" / "wanna.yaml", "default"
-    )
+    return load_config_from_yaml(Path("samples") / "notebook" / "custom_container" / "wanna.yaml", "default")
 
 
 @pytest.fixture
