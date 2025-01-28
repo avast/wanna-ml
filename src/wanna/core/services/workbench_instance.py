@@ -25,7 +25,6 @@ from wanna.core.services.workbench import BaseWorkbenchService, Instances
 from wanna.core.utils import templates
 from wanna.core.utils.config_enricher import email_fixer
 from wanna.core.utils.gcp import (
-    construct_vm_image_family_from_vm_image,
     download_script_from_gcs,
     upload_string_to_gcs,
 )

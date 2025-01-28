@@ -1,6 +1,7 @@
 import logging
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 import typer
 from cookiecutter.main import cookiecutter
@@ -38,17 +39,29 @@ def init(
         prompt="Where do you want to initiate your wanna-ml repository? (input '.' to use the current directory)",
         help="The output directory where wanna-ml repository will be created",
     ),
-    template: WannaRepositoryTemplate = typer.Option(
-        WannaRepositoryTemplate.sklearn.value,
+    template: str = typer.Option(
+        ...,
         "--template",
         "-t",
-        help="Choose from available repository templates",
-        show_choices=True,
+        help="The git repository of the template you want to use",
+    ),
+    checkout: Optional[str] = typer.Option(
+        None,
+        "--checkout",
+        "-c",
+        help="The branch, tag or commit to checkout after cloning the repository",
+    ),
+    directory: Optional[str] = typer.Option(
+        None,
+        "--directory",
+        "-d",
+        help="The directory within the repository to use as the template",
     ),
 ):
     result_dir = cookiecutter(
-        "https://github.com/avast/wanna-ml",
-        directory=f"templates/{template}",
+        template=template,
+        checkout=checkout,
+        directory=directory,
         output_dir=output_dir,
     )
     logger.user_success(f"Repo initiated at {result_dir}")

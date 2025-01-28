@@ -309,24 +309,6 @@ def get_available_compute_image_families(
     return [parse_image_name_family(image.family) for image in all_images]
 
 
-def construct_vm_image_family_from_vm_image(framework: str, version: str, os: Optional[str]) -> str:
-    """
-    Construct name of the Compute Engine VM family with given framework(eg. pytorch),
-    version(eg. 1-9-xla) and optional OS (eg. debian-10).
-
-    Args:
-        framework: VM image framework (pytorch, r, tf2, ...)
-        version: Version of the framework
-        os: operation system
-
-    Returns:
-        object: Compute Engine VM Family name
-    """
-    if os:
-        return f"{framework}-{version}-notebooks-{os}"
-    return f"{framework}-{version}-notebooks"
-
-
 def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> storage.blob.Blob:
     """
     Upload file to GCS bucket

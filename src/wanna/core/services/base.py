@@ -183,7 +183,9 @@ class BaseService(ABC, Generic[T]):
                         network_project_id = network_project_parts[1]
                     else:
                         network_project_id = network
-                return f"projects/{network_project_id}/regions/{region}/subnetworks/{subnet}"
+                    return f"projects/{network_project_id}/regions/{region}/subnetworks/{subnet}"
+                else:
+                    raise ValueError("subnet specified without network")
         else:
             return None
 
