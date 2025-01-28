@@ -47,7 +47,7 @@ class TestPipelineService(unittest.TestCase):
     # Add sample_pipeline_dir to Python path to simulate the usage of venv containing the sample project
     sys.path.insert(0, str(sample_pipeline_dir.absolute()))
 
-    def setup(self) -> None:
+    def setUp(self) -> None:
         self.project_id = "gcp-project"
         self.zone = "us-east1-a"
         shutil.rmtree(self.pipeline_build_dir, ignore_errors=True)

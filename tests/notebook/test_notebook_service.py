@@ -15,12 +15,12 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 @pytest.fixture
 def custom_container_config():
-    return load_config_from_yaml(Path("samples") / "notebook" / "custom_container" / "wanna.yaml", "default")
+    return load_config_from_yaml(Path(__file__).parent.parent.parent / "samples" / "notebook" / "custom_container" / "wanna.yaml", "default")
 
 
 @pytest.fixture
 def vm_image_config():
-    return load_config_from_yaml(Path("samples") / "notebook" / "vm_image" / "wanna.yaml", "default")
+    return load_config_from_yaml(Path(__file__).parent.parent.parent / "samples" / "notebook" / "vm_image" / "wanna.yaml", "default")
 
 
 @patch(
