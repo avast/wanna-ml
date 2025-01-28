@@ -7,7 +7,6 @@ from typing import Any, Optional, Union, cast
 from caseconverter import snakecase
 from google.cloud import aiplatform
 from kfp.v2.compiler import Compiler
-from pydantic import EmailStr
 from python_on_whales import Image
 
 from wanna.core.deployment.artifacts_push import PushResult

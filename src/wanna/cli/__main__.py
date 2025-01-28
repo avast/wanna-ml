@@ -21,11 +21,6 @@ runner = PluginRunner()
 app = runner.app
 
 
-class WannaRepositoryTemplate(Enum):
-    sklearn = "sklearn"
-    blank = "blank"
-
-
 @app.command(name="version", help="Print your current and latest available version")
 def version():
     perform_check()
@@ -57,12 +52,24 @@ def init(
         "-d",
         help="The directory within the repository to use as the template",
     ),
+    overwrite_if_exists: bool = typer.Option(
+        False,
+        "--overwrite-if-exists",
+        help="Overwrite the contents of the output directory if it exists",
+    ),
+    no_input: bool = typer.Option(
+        False,
+        "--no-input",
+        help="Do not prompt for parameters and only use cookiecutter.json file content",
+    ),
 ):
     result_dir = cookiecutter(
         template=template,
         checkout=checkout,
         directory=directory,
         output_dir=output_dir,
+        overwrite_if_exists=overwrite_if_exists,
+        no_input=no_input,
     )
     logger.user_success(f"Repo initiated at {result_dir}")
 

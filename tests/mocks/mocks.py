@@ -12,16 +12,6 @@ from google.cloud.compute_v1.types.compute import (
     Zone,
     ZoneList,
 )
-from google.cloud.notebooks_v1.types import (
-    Instance as InstanceV1,
-)
-from google.cloud.notebooks_v1.types import (
-    ListInstancesResponse as ListInstancesResponseV1,
-)
-from google.cloud.notebooks_v1.types import (
-    ListRuntimesResponse,
-    Runtime,
-)
 from google.cloud.notebooks_v2.types import (
     Instance,
     ListInstancesResponse,
@@ -29,6 +19,9 @@ from google.cloud.notebooks_v2.types import (
 )
 from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
+
+from wanna.core.models.docker import DockerModel
+from wanna.core.models.gcp_profile import GCPProfileModel
 
 
 class MockZonesClient:
@@ -142,3 +135,25 @@ class MockWorkbenchInstanceServiceClient:
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]
         return matched_instances[0]
+
+
+class MockVertexPipelinesMixInVertex:
+    pass
+
+
+class MockDockerService:
+    def __init__(
+        self,
+        docker_model: DockerModel,
+        gcp_profile: GCPProfileModel,
+        version: str,
+        work_dir: Path,
+        wanna_project_name: str,
+        quick_mode: bool = False,  # just returns tags but does not build
+    ):
+        self.docker_model = docker_model
+        self.gcp_profile = gcp_profile
+        self.version = version
+        self.work_dir = work_dir
+        self.wanna_project_name = wanna_project_name
+        self.quick_mode = quick_mode
