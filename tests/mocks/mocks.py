@@ -20,14 +20,6 @@ from google.cloud.notebooks_v2.types import (
 from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
 
-from wanna.core.models.docker import (
-    DockerImageModel,
-    DockerModel,
-    ImageBuildType,
-    ProvidedImageModel,
-)
-from wanna.core.models.gcp_profile import GCPProfileModel
-
 
 class MockZonesClient:
     def __init__(self, credentials: Optional[Credentials] = None):

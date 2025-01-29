@@ -1,7 +1,6 @@
 import os
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from mock import patch
 from typer.testing import CliRunner
@@ -9,7 +8,6 @@ from typer.testing import CliRunner
 from tests.mocks import mocks
 from wanna.cli.plugins.notebook_plugin import NotebookPlugin
 from wanna.core.deployment.models import PushMode
-from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
 
 @patch(

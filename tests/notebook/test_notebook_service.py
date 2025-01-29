@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 from google.cloud.notebooks_v2 import DiskType, State
-from google.cloud.notebooks_v2.types import Instance
 from mock import patch
 from mock.mock import MagicMock
 
