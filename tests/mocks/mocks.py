@@ -20,7 +20,7 @@ from google.cloud.notebooks_v2.types import (
 from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
 
-from wanna.core.models.docker import DockerModel
+from wanna.core.models.docker import DockerModel, DockerImageModel, ProvidedImageModel, ImageBuildType
 from wanna.core.models.gcp_profile import GCPProfileModel
 
 
@@ -157,3 +157,13 @@ class MockDockerService:
         self.work_dir = work_dir
         self.wanna_project_name = wanna_project_name
         self.quick_mode = quick_mode
+
+    def get_image(
+        self,
+        docker_image_ref: str,
+    ) -> tuple[DockerImageModel, Optional[Image], str]:
+        return (
+            ProvidedImageModel(image_url=docker_image_ref, name="dummy-image", build_type=ImageBuildType.provided_image),
+            None,
+            "latest",
+        )

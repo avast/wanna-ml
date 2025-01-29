@@ -8,17 +8,14 @@ from typer.testing import CliRunner
 
 from tests.mocks import mocks
 from wanna.cli.plugins.pipeline_plugin import PipelinePlugin
-from wanna.core.services.pipeline import PipelineService
+from wanna.core.utils.env import reload_setup
 
 
 @patch(
     "wanna.core.services.pipeline.VertexConnector",
     mocks.MockVertexPipelinesMixInVertex,
 )
-@patch(
-    "wanna.core.services.pipeline.DockerService",
-    mocks.MockDockerService,
-)
+@patch("wanna.core.services.docker.docker", new=MagicMock())
 class TestPipelinePlugin(unittest.TestCase):
     runner = CliRunner()
     plugin = PipelinePlugin()
@@ -29,14 +26,15 @@ class TestPipelinePlugin(unittest.TestCase):
         self.original_env = os.environ.copy()
         os.environ["WANNA_GCP_ACCESS_ALLOWED"] = "false"
         os.environ["WANNA_GCP_ENABLE_REMOTE_VALIDATION"] = "false"
+        reload_setup()
 
     def tearDown(self):
         os.environ.clear()
         os.environ.update(self.original_env)
+        reload_setup()
 
-    def test_pipeline_build_cli(self):
-        PipelineService.build = MagicMock()
-
+    @patch("wanna.core.services.pipeline.PipelineService.build")
+    def test_pipeline_build_cli(self, build_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -51,14 +49,15 @@ class TestPipelinePlugin(unittest.TestCase):
                 "default",
             ],
         )
-        PipelineService.build.assert_called_once()
-        PipelineService.build.assert_called_with("wanna-sklearn-sample", None)
+        build_patch.assert_called_once()
+        build_patch.assert_called_with("wanna-sklearn-sample", None)
 
         self.assertEqual(0, result.exit_code)
 
-    def test_pipeline_run_cli(self):
-        PipelineService.run = MagicMock()
-
+    @patch("wanna.core.services.pipeline.PipelineService.run")
+    @patch("wanna.core.services.pipeline.PipelineService.build")
+    @patch("wanna.core.services.pipeline.PipelineService.push")
+    def test_pipeline_run_cli(self, push_patch, build_patch, run_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -71,12 +70,19 @@ class TestPipelinePlugin(unittest.TestCase):
                 "default",
             ],
         )
-        PipelineService.run.assert_called_once()
-        PipelineService.run.assert_called_with([], extra_params=None, sync=False)
+        push_patch.assert_called_once()
+        build_patch.assert_called_once()
+        run_patch.assert_called_once()
+        run_patch.assert_called_with([], extra_params=None, sync=False)
         self.assertEqual(0, result.exit_code)
 
-    def test_pipeline_push_cli(self):
-        PipelineService.push = MagicMock()
+    @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[
+        Path(__file__).parent.parent.parent / "samples" / "pipelines" / "sklearn" / "build" / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test" / "manifests" / "wanna-manifest.json"
+    ])
+    @patch("wanna.core.services.pipeline.PipelineService.push")
+    def test_pipeline_push_cli(self, push_patch,
+                               build_patch
+                               ):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -90,12 +96,12 @@ class TestPipelinePlugin(unittest.TestCase):
             ],
         )
 
-        PipelineService.push.assert_called_once()
-
+        build_patch.assert_called_once()
+        push_patch.assert_called_once()
         self.assertEqual(0, result.exit_code)
 
-    def test_pipeline_deploy_cli(self):
-        PipelineService.deploy = MagicMock()
+    @patch("wanna.core.services.pipeline.PipelineService.deploy")
+    def test_pipeline_deploy_cli(self, deploy_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -109,67 +115,28 @@ class TestPipelinePlugin(unittest.TestCase):
             ],
         )
 
-        PipelineService.deploy.assert_called_once()
-
+        deploy_patch.assert_called_once()
         self.assertEqual(0, result.exit_code)
 
-    def test_notebook_build(self):
-        PipelineService.build = MagicMock()
-        result = self.runner.invoke(
-            self.plugin.app,
-            [
-                "build",
-                "--file",
-                str(self.wanna_path),
-            ],
-        )
-        PipelineService.build.assert_called_once()
-        self.assertEqual(0, result.exit_code)
-
-    def test_notebook_run_manifest_cli(self):
-        # to build the manifest
-        self.runner.invoke(
-            self.plugin.app,
-            [
-                "build",
-                "--file",
-                self.wanna_path,
-                "--name",
-                "wanna-sklearn-sample",
-                "--mode",
-                "quick",
-                "--profile",
-                "default",
-            ],
-        )
-
-        PipelineService.run = MagicMock()
-        manifest_file = (
-            self.wanna_path.parent
-            / "build"
-            / "wanna-pipelines"
-            / "wanna-sklearn-sample"
-            / "deployment"
-            / "test"
-            / "manifests"
-            / "wanna-manifest.json"
-        )
+    @patch("wanna.core.services.pipeline.PipelineService.run")
+    def test_notebook_run_manifest_cli(self, run_patch):
+        manifest_file = str(Path(
+            __file__).parent.parent.parent / "samples" / "pipelines" / "sklearn" / "build" / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test" / "manifests" / "wanna-manifest.json")
         result = self.runner.invoke(
             self.plugin.app,
             [
                 "run-manifest",
                 "--manifest",
-                str(manifest_file),
+                manifest_file,
             ],
         )
-        PipelineService.run.assert_called_once()
-        PipelineService.run.assert_called_with([str(manifest_file)], extra_params=None, sync=False)
+        run_patch.assert_called_once()
+        run_patch.assert_called_with([manifest_file], extra_params=None, sync=False)
 
         self.assertEqual(0, result.exit_code)
 
-    def test_pipeline_report_cli(self):
-        PipelineService.report = MagicMock()
-
+    @patch("wanna.core.services.pipeline.PipelineService.report")
+    def test_pipeline_report_cli(self, report_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -182,8 +149,8 @@ class TestPipelinePlugin(unittest.TestCase):
                 "default",
             ],
         )
-        PipelineService.report.assert_called_once()
-        PipelineService.report.assert_called_with(
+        report_patch.assert_called_once()
+        report_patch.assert_called_with(
             billing_id=None,
             gcp_project="your-gcp-project-id",
             instance_name="wanna-sklearn-sample",

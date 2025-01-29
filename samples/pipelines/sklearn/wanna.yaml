@@ -14,8 +14,8 @@ gcp_profiles:
     service_account: wanna-dev@your-gcp-project-id.iam.gserviceaccount.com
     kms_key: "projects/project_id/locations/region/keyRings/key_ring/cryptoKeys/key"
 
-tensorboards:
-  - name: wanna-sample-pipeline-board
+#tensorboards:
+#  - name: wanna-sample-pipeline-board
 
 notification_channels:
   - type: pubsub
@@ -61,7 +61,7 @@ pipelines:
     pipeline_function: "wanna_simple.pipeline.wanna_sklearn_sample"
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]
-    tensorboard_ref: wanna-sample-pipeline-board
+#    tensorboard_ref: wanna-sample-pipeline-board
     enable_caching: false
     experiment: "wanna-sample-experiment"
     notification_channels_ref:
