@@ -139,31 +139,3 @@ class MockWorkbenchInstanceServiceClient:
 
 class MockVertexPipelinesMixInVertex:
     pass
-
-
-class MockDockerService:
-    def __init__(
-        self,
-        docker_model: DockerModel,
-        gcp_profile: GCPProfileModel,
-        version: str,
-        work_dir: Path,
-        wanna_project_name: str,
-        quick_mode: bool = False,  # just returns tags but does not build
-    ):
-        self.docker_model = docker_model
-        self.gcp_profile = gcp_profile
-        self.version = version
-        self.work_dir = work_dir
-        self.wanna_project_name = wanna_project_name
-        self.quick_mode = quick_mode
-
-    def get_image(
-        self,
-        docker_image_ref: str,
-    ) -> tuple[DockerImageModel, Optional[Image], str]:
-        return (
-            ProvidedImageModel(image_url=docker_image_ref, name="dummy-image", build_type=ImageBuildType.provided_image),
-            None,
-            "latest",
-        )
