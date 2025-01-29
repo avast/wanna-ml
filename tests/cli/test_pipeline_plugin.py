@@ -19,8 +19,9 @@ from wanna.core.utils.env import reload_setup
 class TestPipelinePlugin(unittest.TestCase):
     runner = CliRunner()
     plugin = PipelinePlugin()
-    parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
+    parent = Path(__file__).parent.parent.parent
     wanna_path = parent / "samples" / "pipelines" / "sklearn" / "wanna.yaml"
+    manifest_path = parent / "samples" / "pipelines" / "sklearn" / "build" / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test" / "manifests" / "wanna-manifest.json"
 
     def setUp(self):
         self.original_env = os.environ.copy()
@@ -55,7 +56,9 @@ class TestPipelinePlugin(unittest.TestCase):
         self.assertEqual(0, result.exit_code)
 
     @patch("wanna.core.services.pipeline.PipelineService.run")
-    @patch("wanna.core.services.pipeline.PipelineService.build")
+    @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[
+        manifest_path
+    ])
     @patch("wanna.core.services.pipeline.PipelineService.push")
     def test_pipeline_run_cli(self, push_patch, build_patch, run_patch):
         result = self.runner.invoke(
@@ -73,11 +76,13 @@ class TestPipelinePlugin(unittest.TestCase):
         push_patch.assert_called_once()
         build_patch.assert_called_once()
         run_patch.assert_called_once()
-        run_patch.assert_called_with([], extra_params=None, sync=False)
+        push_patch.assert_called_with(build_patch.return_value, local=False)
+        build_patch.assert_called_with("wanna-sklearn-sample")
+        run_patch.assert_called_with([str(self.manifest_path)], extra_params=None, sync=False)
         self.assertEqual(0, result.exit_code)
 
     @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[
-        Path(__file__).parent.parent.parent / "samples" / "pipelines" / "sklearn" / "build" / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test" / "manifests" / "wanna-manifest.json"
+        manifest_path
     ])
     @patch("wanna.core.services.pipeline.PipelineService.push")
     def test_pipeline_push_cli(self, push_patch,
@@ -97,7 +102,9 @@ class TestPipelinePlugin(unittest.TestCase):
         )
 
         build_patch.assert_called_once()
+        build_patch.assert_called_with("wanna-sklearn-sample", None)
         push_patch.assert_called_once()
+        push_patch.assert_called_with([self.manifest_path])
         self.assertEqual(0, result.exit_code)
 
     @patch("wanna.core.services.pipeline.PipelineService.deploy")
@@ -116,12 +123,12 @@ class TestPipelinePlugin(unittest.TestCase):
         )
 
         deploy_patch.assert_called_once()
+        deploy_patch.assert_called_with("wanna-sklearn-sample", "local")
         self.assertEqual(0, result.exit_code)
 
     @patch("wanna.core.services.pipeline.PipelineService.run")
     def test_notebook_run_manifest_cli(self, run_patch):
-        manifest_file = str(Path(
-            __file__).parent.parent.parent / "samples" / "pipelines" / "sklearn" / "build" / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test" / "manifests" / "wanna-manifest.json")
+        manifest_file = str(self.manifest_path)
         result = self.runner.invoke(
             self.plugin.app,
             [

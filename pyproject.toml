@@ -92,23 +92,24 @@ types-setuptools = "^68.2.0"
 pre-commit = "^2.19.0"
 
 [tool.pytest.ini_options]
-#addopts = """
-#    --verbose
-#    --ruff
-#    --mypy
-#    --cov-report html
-#    --cov=src
-#    --durations=0
-#    --ignore=templates
-#    --ignore=samples
-#    --ignore=dev_tests
-#    """
 addopts = """
+    --verbose
+    --ruff
+    --mypy
+    --cov-report term
+    --cov-report xml:coverage.xml
+    --cov=src
+    --durations=0
     --ignore=templates
     --ignore=samples
     --ignore=dev_tests
-    -s
     """
+#addopts = """
+#    --ignore=templates
+#    --ignore=samples
+#    --ignore=dev_tests
+#    -s
+#    """
 filterwarnings = [
     "error",
     "ignore::UserWarning", # note the use of single quote below to denote "raw" strings in TOML
