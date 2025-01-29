@@ -15,12 +15,22 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 @pytest.fixture
 def custom_container_config():
-    return load_config_from_yaml(Path(__file__).parent.parent.parent / "samples" / "notebook" / "custom_container" / "wanna.yaml", "default")
+    return load_config_from_yaml(
+        Path(__file__).parent.parent.parent
+        / "samples"
+        / "notebook"
+        / "custom_container"
+        / "wanna.yaml",
+        "default",
+    )
 
 
 @pytest.fixture
 def vm_image_config():
-    return load_config_from_yaml(Path(__file__).parent.parent.parent / "samples" / "notebook" / "vm_image" / "wanna.yaml", "default")
+    return load_config_from_yaml(
+        Path(__file__).parent.parent.parent / "samples" / "notebook" / "vm_image" / "wanna.yaml",
+        "default",
+    )
 
 
 @patch(
@@ -34,21 +44,38 @@ class TestWorkbenchInstanceService:
     def test_list_running_instances(self, custom_container_config):
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        running_notebooks = nb_service._list_running_instances(project_id=self.project_id, location=self.zone)
-        assert f"projects/{self.project_id}/locations/{self.zone}/instances/nb1" in running_notebooks
-        assert f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu" in running_notebooks
-        assert f"projects/{self.project_id}/locations/{self.zone}/instances/pytorch-notebook" in running_notebooks
-        assert f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra" not in running_notebooks
+        running_notebooks = nb_service._list_running_instances(
+            project_id=self.project_id, location=self.zone
+        )
+        assert (
+            f"projects/{self.project_id}/locations/{self.zone}/instances/nb1" in running_notebooks
+        )
+        assert (
+            f"projects/{self.project_id}/locations/{self.zone}/instances/tf-gpu"
+            in running_notebooks
+        )
+        assert (
+            f"projects/{self.project_id}/locations/{self.zone}/instances/pytorch-notebook"
+            in running_notebooks
+        )
+        assert (
+            f"projects/{self.project_id}/locations/{self.zone}/instances/sectumsempra"
+            not in running_notebooks
+        )
 
     def test_instance_exists(self, custom_container_config):
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         should_exist = nb_service._instance_exists(
-            instance=InstanceModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"})
+            instance=InstanceModel.parse_obj(
+                {"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"}
+            )
         )
         assert should_exist
         should_not_exist = nb_service._instance_exists(
-            instance=InstanceModel.parse_obj({"project_id": self.project_id, "zone": self.zone, "name": "confundo"})
+            instance=InstanceModel.parse_obj(
+                {"project_id": self.project_id, "zone": self.zone, "name": "confundo"}
+            )
         )
         assert not should_not_exist
 
@@ -146,7 +173,10 @@ class TestWorkbenchInstanceService:
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
         startup_script = nb_service._prepare_startup_script(instance)
-        assert "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name" in startup_script
+        assert (
+            "gcsfuse --implicit-dirs your-staging-bucket-name /gcs/your-staging-bucket-name"
+            in startup_script
+        )
 
     def test_build(self, vm_image_config):
         config = vm_image_config

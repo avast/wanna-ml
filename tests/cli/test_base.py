@@ -8,7 +8,6 @@ from wanna.cli import __main__
 
 
 class TestJobPlugin(unittest.TestCase):
-
     def test_version(self):
         result = CliRunner().invoke(
             __main__.app,
@@ -17,7 +16,6 @@ class TestJobPlugin(unittest.TestCase):
             ],
         )
         assert result.exit_code == 0
-
 
     def test_init(self):
         __main__.cookiecutter = MagicMock()

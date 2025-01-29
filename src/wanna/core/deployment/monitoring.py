@@ -36,7 +36,9 @@ class MonitoringMixin(GCPCredentialsMixIn):
     def upsert_notification_channel(self, resource: NotificationChannelResource):
         client = NotificationChannelServiceClient(credentials=self.credentials)
 
-        channel = MonitoringMixin._get_notification_channel(client, resource.project, resource.name)
+        channel = MonitoringMixin._get_notification_channel(
+            client, resource.project, resource.name
+        )
 
         if not channel:
             notification_channel = NotificationChannel(
@@ -101,12 +103,16 @@ class MonitoringMixin(GCPCredentialsMixIn):
             alert_policy.name = policy.name
             client.update_alert_policy(alert_policy=alert_policy)
         else:
-            client.create_alert_policy(name=f"projects/{resource.project}", alert_policy=alert_policy)
+            client.create_alert_policy(
+                name=f"projects/{resource.project}", alert_policy=alert_policy
+            )
 
     def upsert_log_metric(self, resource: LogMetricResource) -> dict[str, Any]:
         client = LoggingClient(credentials=self.credentials)
         try:
-            return client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
+            return client.metrics_api.metric_get(
+                project=resource.project, metric_name=resource.name
+            )
         except NotFound:
             client.metrics_api.metric_create(
                 project=resource.project,
@@ -116,9 +122,13 @@ class MonitoringMixin(GCPCredentialsMixIn):
             )
             with logger.user_spinner(f"Creating log metric: {resource.name}"):
                 wait(
-                    lambda: client.metrics_api.metric_get(project=resource.project, metric_name=resource.name),
+                    lambda: client.metrics_api.metric_get(
+                        project=resource.project, metric_name=resource.name
+                    ),
                     timeout_seconds=120,
                     sleep_seconds=5,
                     waiting_for="Log metric",
                 )
-            return client.metrics_api.metric_get(project=resource.project, metric_name=resource.name)
+            return client.metrics_api.metric_get(
+                project=resource.project, metric_name=resource.name
+            )

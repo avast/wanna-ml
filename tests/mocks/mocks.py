@@ -20,7 +20,12 @@ from google.cloud.notebooks_v2.types import (
 from google.cloud.storage import Blob
 from google.cloud.storage.bucket import Bucket
 
-from wanna.core.models.docker import DockerModel, DockerImageModel, ProvidedImageModel, ImageBuildType
+from wanna.core.models.docker import (
+    DockerImageModel,
+    DockerModel,
+    ImageBuildType,
+    ProvidedImageModel,
+)
 from wanna.core.models.gcp_profile import GCPProfileModel
 
 
@@ -69,7 +74,9 @@ class MockMachineTypesClient:
             "n2d-standard-2",
             "n1-standard-4",
         ]
-        return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
+        return MachineTypeList(
+            items=[MachineType({"name": mtype}) for mtype in machine_type_names]
+        )
 
 
 class MockStorageClient:
@@ -130,7 +137,9 @@ class MockWorkbenchInstanceServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
+        return ListInstancesResponse(
+            instances=[i for i in self.instances if i.name.startswith(parent)]
+        )
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]

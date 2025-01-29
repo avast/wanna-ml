@@ -5,7 +5,14 @@ from typing import Optional
 
 from google.api_core.operation import Operation
 from google.cloud import compute_v1
-from google.cloud.notebooks_v2 import AcceleratorConfig, BootDisk, DataDisk, GceSetup, GPUDriverConfig, NetworkInterface
+from google.cloud.notebooks_v2 import (
+    AcceleratorConfig,
+    BootDisk,
+    DataDisk,
+    GceSetup,
+    GPUDriverConfig,
+    NetworkInterface,
+)
 from google.cloud.notebooks_v2.services.notebook_service import NotebookServiceClient
 from google.cloud.notebooks_v2.types import (
     ContainerImage,
@@ -66,7 +73,8 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
     def _delete_instance_client(self, instance: InstanceModel) -> Operation:
         return self.notebook_client.delete_instance(
-            name=f"projects/{instance.project_id}/locations/" f"{instance.zone}/instances/{instance.name}"
+            name=f"projects/{instance.project_id}/locations/"
+            f"{instance.zone}/instances/{instance.name}"
         )
 
     def _create_instance_client(self, request: CreateInstanceRequest) -> Operation:
@@ -87,13 +95,19 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             instance_names: list of the full names on notebook instances (this includes project_id, and zone)
 
         """
-        instances = self.notebook_client.list_instances(parent=f"projects/{project_id}/locations/{location}")
+        instances = self.notebook_client.list_instances(
+            parent=f"projects/{project_id}/locations/{location}"
+        )
         instance_names = [i.name for i in instances.instances]
         return instance_names
 
     def _instance_exists(self, instance: InstanceModel) -> bool:
-        full_instance_name = f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
-        return full_instance_name in self._list_running_instances(instance.project_id, instance.zone)
+        full_instance_name = (
+            f"projects/{instance.project_id}/locations/{instance.zone}/instances/{instance.name}"
+        )
+        return full_instance_name in self._list_running_instances(
+            instance.project_id, instance.zone
+        )
 
     def _create_instance_request(
         self,
@@ -144,7 +158,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         # Environment
         if docker_image_ref := instance.environment.docker_image_ref:
             if self.docker_service:
-                image_url = self.docker_service.build_container_and_get_image_url(docker_image_ref, push_mode=push_mode)
+                image_url = self.docker_service.build_container_and_get_image_url(
+                    docker_image_ref, push_mode=push_mode
+                )
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
                 container_image = ContainerImage(
@@ -211,7 +227,10 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
         # post startup script
         if deploy and (
-            instance.bucket_mounts or instance.tensorboard_ref or self.config.gcp_profile.env_vars or instance.env_vars
+            instance.bucket_mounts
+            or instance.tensorboard_ref
+            or self.config.gcp_profile.env_vars
+            or instance.env_vars
         ):
             script = self._prepare_startup_script(instance)
 
@@ -262,12 +281,16 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             gcsfuse_metadata = {"container-allow-fuse": "true"}
             metadata = {**metadata, **gcsfuse_metadata}
         if instance.environment_auto_upgrade:
-            auto_upgrade_metadata = {"notebook-upgrade-schedule": instance.environment_auto_upgrade}
+            auto_upgrade_metadata = {
+                "notebook-upgrade-schedule": instance.environment_auto_upgrade
+            }
             metadata = {**metadata, **auto_upgrade_metadata}
         if instance.delete_to_trash:
             delete_to_trash_metadata = {"notebook-enable-delete-to-trash": "true"}
             metadata = {**metadata, **delete_to_trash_metadata}
-        report_health_metadata = {"report-event-health": "true" if instance.report_health else "false"}
+        report_health_metadata = {
+            "report-event-health": "true" if instance.report_health else "false"
+        }
         metadata = {**metadata, **report_health_metadata}
 
         gce_setup = GceSetup(
@@ -314,8 +337,10 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             env_vars = {**env_vars, **nb_instance.env_vars}
 
         if nb_instance.tensorboard_ref:
-            tensorboard_resource_name = self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
-                nb_instance.tensorboard_ref
+            tensorboard_resource_name = (
+                self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                    nb_instance.tensorboard_ref
+                )
             )
         else:
             tensorboard_resource_name = None
@@ -347,7 +372,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         instance_info = self.notebook_client.get_instance({"name": instance_id})
         return f"https://{instance_info.proxy_uri}"
 
-    def _ssh(self, workbench_instance: InstanceModel, run_in_background: bool, local_port: int) -> None:
+    def _ssh(
+        self, workbench_instance: InstanceModel, run_in_background: bool, local_port: int
+    ) -> None:
         """
         SSH connect to the notebook instance if the instance is already started.
 
@@ -401,7 +428,11 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         else:
             if instance_name in [notebook.name for notebook in self.config.notebooks]:
                 self._ssh(
-                    [notebook for notebook in self.config.notebooks if notebook.name == instance_name][0],
+                    [
+                        notebook
+                        for notebook in self.config.notebooks
+                        if notebook.name == instance_name
+                    ][0],
                     run_in_background,
                     local_port,
                 )
@@ -411,7 +442,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
 
     def build(self) -> int:
         for instance in self.instances:
-            self._create_instance_request(instance=instance, deploy=False, push_mode=PushMode.manifests)
+            self._create_instance_request(
+                instance=instance, deploy=False, push_mode=PushMode.manifests
+            )
         logger.user_success("Notebooks validation OK!")
         return 0
 
@@ -419,7 +452,11 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         instances = self._filter_instances_by_name(instance_name)
 
         docker_image_refs = set(
-            [instance.environment.docker_image_ref for instance in instances if instance.environment.docker_image_ref]
+            [
+                instance.environment.docker_image_ref
+                for instance in instances
+                if instance.environment.docker_image_ref
+            ]
         )
         if docker_image_refs:
             if self.docker_service:
@@ -442,7 +479,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
         request.project = self.config.gcp_profile.project_id
         agg_list = instance_client.aggregated_list(request=request)
-        gcp_instances = itertools.chain(*[resp.instances for zone, resp in agg_list if resp.instances])
+        gcp_instances = itertools.chain(
+            *[resp.instances for zone, resp in agg_list if resp.instances]
+        )
 
         active_notebooks = [
             InstanceModel.parse_obj(

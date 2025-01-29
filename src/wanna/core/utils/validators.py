@@ -37,7 +37,9 @@ def validate_machine_type(machine_type, values):
         project_id=values.get("project_id"), zone=values.get("zone")
     )
     if machine_type not in available_machine_types:
-        raise ValueError(f"Machine type invalid ({machine_type}). must be on of: {available_machine_types}")
+        raise ValueError(
+            f"Machine type invalid ({machine_type}). must be on of: {available_machine_types}"
+        )
     return machine_type
 
 
@@ -86,9 +88,13 @@ def validate_vm_image(cls, v):  # noqa: ARG001
         )
         available_frameworks = set(i.get("framework") for i in available_image_families)
         if framework not in available_frameworks:
-            raise ValueError(f"VM Image framework {framework} not available. Choose one of: {available_frameworks}")
+            raise ValueError(
+                f"VM Image framework {framework} not available. Choose one of: {available_frameworks}"
+            )
 
-        available_versions = set(i.get("version") for i in available_image_families if i.get("framework") == framework)
+        available_versions = set(
+            i.get("version") for i in available_image_families if i.get("framework") == framework
+        )
         if version not in available_versions:
             raise ValueError(
                 f"VM Image version {version} not available for {framework}. Choose one of: {available_versions}"
@@ -128,7 +134,9 @@ def validate_cron_schedule(schedule: str):
 def validate_disk_type(disk_type):
     disk_type = disk_type.upper()
     if disk_type not in Instance.DiskType.__members__:
-        raise ValueError(f"Disk type invalid ({type}). must be on of: {Instance.DiskType._member_names_}")
+        raise ValueError(
+            f"Disk type invalid ({type}). must be on of: {Instance.DiskType._member_names_}"
+        )
     return disk_type
 
 
@@ -157,7 +165,9 @@ def validate_project_id(project_id: str) -> str:
 
 def validate_labels(labels: dict[str, str]) -> dict[str, str]:
     for key, value in labels.items():
-        if not re.match(r"^[a-z]{1}[a-z0-9_-]{0,62}$", key) or not re.match(r"^[a-z0-9_-]{0,63}$", value):
+        if not re.match(r"^[a-z]{1}[a-z0-9_-]{0,62}$", key) or not re.match(
+            r"^[a-z0-9_-]{0,63}$", value
+        ):
             raise ValueError(
                 "Invalid custom label!"
                 "Keys and values can contain only lowercase letters, numeric characters,"

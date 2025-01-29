@@ -137,7 +137,9 @@ class BaseCustomJobModel(BaseInstanceModel):
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:
         if not values.get("base_output_directory"):
-            values["base_output_directory"] = f"gs://{values.get('bucket')}/wanna-jobs/{values.get('name')}/outputs"
+            values["base_output_directory"] = (
+                f"gs://{values.get('bucket')}/wanna-jobs/{values.get('name')}/outputs"
+            )
         return values
 
     @root_validator(pre=False)
@@ -163,7 +165,8 @@ class CustomJobModel(BaseCustomJobModel):
             containers = list(filter(lambda w: w.container is not None, workers))
             if len(python_packages) > 0 and len(containers) > 0:
                 raise ValueError(
-                    "CustomJobs must be of the same spec. " "Either just based on python_package or container"
+                    "CustomJobs must be of the same spec. "
+                    "Either just based on python_package or container"
                 )
 
         return workers

@@ -19,7 +19,9 @@ class TestBaseModel:
 
     def test_model_zone_not_existing(self):
         with pytest.raises(ValidationError):
-            _ = BaseInstanceModel.parse_obj({"name": "my-model", "project_id": "gcp-project", "zone": "the-burrow"})
+            _ = BaseInstanceModel.parse_obj(
+                {"name": "my-model", "project_id": "gcp-project", "zone": "the-burrow"}
+            )
 
     def test_model_zone_input_is_region_not_zone(self):
         with pytest.raises(ValidationError):

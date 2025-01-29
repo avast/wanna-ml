@@ -21,7 +21,19 @@ class TestPipelinePlugin(unittest.TestCase):
     plugin = PipelinePlugin()
     parent = Path(__file__).parent.parent.parent
     wanna_path = parent / "samples" / "pipelines" / "sklearn" / "wanna.yaml"
-    manifest_path = parent / "samples" / "pipelines" / "sklearn" / "build" / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test" / "manifests" / "wanna-manifest.json"
+    manifest_path = (
+        parent
+        / "samples"
+        / "pipelines"
+        / "sklearn"
+        / "build"
+        / "wanna-pipelines"
+        / "wanna-sklearn-sample"
+        / "deployment"
+        / "test"
+        / "manifests"
+        / "wanna-manifest.json"
+    )
 
     def setUp(self):
         self.original_env = os.environ.copy()
@@ -56,9 +68,7 @@ class TestPipelinePlugin(unittest.TestCase):
         self.assertEqual(0, result.exit_code)
 
     @patch("wanna.core.services.pipeline.PipelineService.run")
-    @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[
-        manifest_path
-    ])
+    @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[manifest_path])
     @patch("wanna.core.services.pipeline.PipelineService.push")
     def test_pipeline_run_cli(self, push_patch, build_patch, run_patch):
         result = self.runner.invoke(
@@ -81,13 +91,9 @@ class TestPipelinePlugin(unittest.TestCase):
         run_patch.assert_called_with([str(self.manifest_path)], extra_params=None, sync=False)
         self.assertEqual(0, result.exit_code)
 
-    @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[
-        manifest_path
-    ])
+    @patch("wanna.core.services.pipeline.PipelineService.build", return_value=[manifest_path])
     @patch("wanna.core.services.pipeline.PipelineService.push")
-    def test_pipeline_push_cli(self, push_patch,
-                               build_patch
-                               ):
+    def test_pipeline_push_cli(self, push_patch, build_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [

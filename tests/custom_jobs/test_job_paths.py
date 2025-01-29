@@ -12,7 +12,9 @@ class TestJobService(unittest.TestCase):
     job_build_dir = sample_job_dir / "build"
 
     def setUp(self) -> None:
-        self.job_paths = JobPaths(self.sample_job_dir, "gs://test_bucket", "custom-job-with-containers")
+        self.job_paths = JobPaths(
+            self.sample_job_dir, "gs://test_bucket", "custom-job-with-containers"
+        )
         self.version = "test"
 
     def test_job_paths(self) -> None:

@@ -127,7 +127,7 @@ docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 
 [tool.ruff]
-line-length = 120
+line-length = 99
 output-format = "full"
 extend-exclude = [
     "**pb2.py",

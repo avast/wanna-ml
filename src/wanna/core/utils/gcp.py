@@ -41,7 +41,9 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> list[str]
         list of available machine types
     """
     if should_validate:
-        response = MachineTypesClient(credentials=get_credentials()).list(project=project_id, zone=zone)
+        response = MachineTypesClient(credentials=get_credentials()).list(
+            project=project_id, zone=zone
+        )
         machine_types = [mtype.name for mtype in response.items]
     else:
         machine_types = [
@@ -232,7 +234,14 @@ def get_available_regions(project_id: str) -> list[str]:
         response = RegionsClient(credentials=get_credentials()).list(project=project_id)
         return [region.name for region in response.items]
     else:
-        return ["europe-west1", "europe-west3", "europe-west4", "us-east1", "us-west1", "us-central1"]
+        return [
+            "europe-west1",
+            "europe-west3",
+            "europe-west4",
+            "us-east1",
+            "us-west1",
+            "us-central1",
+        ]
 
 
 def get_region_from_zone(zone: str) -> str:
@@ -258,7 +267,11 @@ def convert_project_id_to_project_number(project_id: str) -> str:
     Returns:
         project_number: GCP project number
     """
-    project_name = ProjectsClient(credentials=get_credentials()).get_project(name=f"projects/{project_id}").name
+    project_name = (
+        ProjectsClient(credentials=get_credentials())
+        .get_project(name=f"projects/{project_id}")
+        .name
+    )
     project_number = re.sub("projects/", "", project_name)
     return project_number
 
@@ -305,7 +318,11 @@ def get_available_compute_image_families(
     list_images_request = ListImagesRequest(project=project, filter=image_filter)
     all_images = ImagesClient(credentials=get_credentials()).list(list_images_request)
     if family_must_contain:
-        return [parse_image_name_family(image.family) for image in all_images if family_must_contain in image.family]
+        return [
+            parse_image_name_family(image.family)
+            for image in all_images
+            if family_must_contain in image.family
+        ]
     return [parse_image_name_family(image.family) for image in all_images]
 
 

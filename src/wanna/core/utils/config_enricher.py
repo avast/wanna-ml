@@ -37,7 +37,9 @@ def generate_default_labels(wanna_project: WannaProjectModel) -> dict[str, str]:
     return {
         "wanna_project": wanna_project.name,
         "wanna_project_version": str(wanna_project.version).replace(".", "__"),
-        "wanna_project_authors": "_".join([email_fixer(author.partition("@")[0]) for author in wanna_project.authors]),
+        "wanna_project_authors": "_".join(
+            [email_fixer(author.partition("@")[0]) for author in wanna_project.authors]
+        ),
         "author": email_fixer(get_gcloud_user()),
     }
 

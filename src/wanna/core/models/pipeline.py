@@ -29,7 +29,9 @@ class PipelineModel(BaseInstanceModel):
     - `enable_caching` - [bool] enable KubeFlow pipeline execution caching
     """
 
-    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
+    name: str = Field(
+        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
+    )
     zone: str
     pipeline_function: str
     pipeline_params: Union[Path, dict[str, Any], None]

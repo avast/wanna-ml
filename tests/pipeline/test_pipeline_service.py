@@ -68,7 +68,9 @@ class TestPipelineService(unittest.TestCase):
         docker_mock.pull = MagicMock(return_value=None)
 
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
-        pipeline_service = PipelineService(config=config, workdir=self.sample_pipeline_dir, version="test")
+        pipeline_service = PipelineService(
+            config=config, workdir=self.sample_pipeline_dir, version="test"
+        )
         # Setup expected data/fixtures
         expected_train_docker_image_model = LocalBuildImageModel(
             name="train",
@@ -81,8 +83,12 @@ class TestPipelineService(unittest.TestCase):
             "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:test",
             "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:latest",
         ]
-        expected_serve_docker_tags = ["europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"]
-        exppected_pipeline_root = "gs://your-staging-bucket-name/wanna-pipelines/wanna-sklearn-sample/executions/"
+        expected_serve_docker_tags = [
+            "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
+        ]
+        exppected_pipeline_root = (
+            "gs://your-staging-bucket-name/wanna-pipelines/wanna-sklearn-sample/executions/"
+        )
 
         expected_pipeline_labels = (
             """{"wanna_project": "pipeline-sklearn-example-1", """
@@ -139,7 +145,9 @@ class TestPipelineService(unittest.TestCase):
         )
 
         # Mock Docker IO
-        DockerService._find_image_model_by_name = MagicMock(return_value=expected_train_docker_image_model)
+        DockerService._find_image_model_by_name = MagicMock(
+            return_value=expected_train_docker_image_model
+        )
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 
@@ -161,7 +169,9 @@ class TestPipelineService(unittest.TestCase):
             pipeline_params_path=self.test_pipeline_params_override_dir,
         )
         manifest_path = pipelines[0]
-        pipeline_meta = PipelineService.read_manifest(pipeline_service.connector, str(manifest_path))
+        pipeline_meta = PipelineService.read_manifest(
+            pipeline_service.connector, str(manifest_path)
+        )
 
         docker_mock.build.assert_called_with(
             self.sample_pipeline_dir,
@@ -211,7 +221,13 @@ class TestPipelineService(unittest.TestCase):
         push_result = pipeline_service.push(pipelines, local=True)
         DockerService.push_image.assert_called_once()
 
-        release_path = self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment" / "test"
+        release_path = (
+            self.pipeline_build_dir
+            / "wanna-pipelines"
+            / "wanna-sklearn-sample"
+            / "deployment"
+            / "test"
+        )
         manifest_path = release_path / "manifests"
         expected_manifest_json_path = str(manifest_path / "wanna-manifest.json")
         expected_pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
@@ -294,7 +310,9 @@ class TestPipelineService(unittest.TestCase):
         # Set Mocks
         NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
         NotificationChannelServiceClient.create_notification_channel = MagicMock(
-            return_value=NotificationChannel(name="projects/[PROJECT_ID_OR_NUMBER]/notificationChannels/[CHANNEL_ID]")
+            return_value=NotificationChannel(
+                name="projects/[PROJECT_ID_OR_NUMBER]/notificationChannels/[CHANNEL_ID]"
+            )
         )
         AlertPolicyServiceClient.list_alert_policies = MagicMock(return_value=[])
         AlertPolicyServiceClient.update_alert_policy = MagicMock()
@@ -322,13 +340,17 @@ class TestPipelineService(unittest.TestCase):
         CloudFunctionsServiceClient.get_function.assert_called_with(
             {"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}
         )
-        CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
+        CloudFunctionsServiceClient.update_function.assert_called_with(
+            {"function": expected_function}
+        )
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
             name="projects/your-gcp-project-id",
             notification_channel=NotificationChannel(
                 type_="pubsub",
                 display_name="wanna-sample-pipeline-pubsub-channel-wanna-alert-topic-channel",
-                labels={"topic": "projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"},
+                labels={
+                    "topic": "projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"
+                },
                 user_labels={
                     "wanna_project": "pipeline-sklearn-example-1",
                     "wanna_project_version": "1",
