@@ -23,6 +23,14 @@ poetry lock --no-update
 poetry install --all-extras
 ```
 
+### Formatting
+
+You can run the formatting by
+```bash
+poetry run poe format-code
+```
+which uses [Poe](https://github.com/nat-n/poethepoet) task to format the whole project using ruff.
+
 ## Static analysis
 
 This package uses mypy, you can run it by  

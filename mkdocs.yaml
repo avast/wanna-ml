@@ -64,6 +64,7 @@ nav:
         - 'WANNA Job': 'tutorial/job.md'
         - 'WANNA Pipeline': 'tutorial/pipeline.md'
     - CLI Reference: 'cli/commands.md'
+    - Configuration: 'configuration.md'
     - Development: 'development.md'
 
 plugins:

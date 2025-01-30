@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 from typing import Optional
 
@@ -47,7 +48,12 @@ def get_credentials() -> Optional[Credentials]:
 
 def get_gcloud_user() -> str:
     if gcp_access_allowed:
-        credentials, project = gcloud_config_helper.default()
+        try:
+            credentials, project = gcloud_config_helper.default()
+        except Exception as e:
+            # to get the error, because pydantic suppresses stack traces
+            logging.exception("failed to interact with gcloud")
+            raise e
         return credentials.properties.get("core", {}).get("account", "unidentified")[:60]
 
     return "no-gcp-access-not-allowed"
