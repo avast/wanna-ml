@@ -79,7 +79,9 @@ class NotebookPlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
-        nb_service = WorkbenchInstanceService(config=config, workdir=workdir, owner=owner, version=version)
+        nb_service = WorkbenchInstanceService(
+            config=config, workdir=workdir, owner=owner, version=version
+        )
         nb_service.create(instance_name, push_mode=mode)
 
     @staticmethod

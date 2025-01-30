@@ -72,9 +72,15 @@ class DockerService:
             or gcp_profile.docker_registry
             or f"{gcp_profile.region}-docker.pkg.dev"
         )
-        docker_repository = os.getenv("WANNA_DOCKER_REGISTRY_REPOSITORY") or docker_model.repository
-        self.docker_repository = docker_repository if docker_repository else gcp_profile.docker_repository
-        self.docker_project_id = os.getenv("WANNA_DOCKER_REGISTRY_PROJECT_ID") or gcp_profile.project_id
+        docker_repository = (
+            os.getenv("WANNA_DOCKER_REGISTRY_REPOSITORY") or docker_model.repository
+        )
+        self.docker_repository = (
+            docker_repository if docker_repository else gcp_profile.docker_repository
+        )
+        self.docker_project_id = (
+            os.getenv("WANNA_DOCKER_REGISTRY_PROJECT_ID") or gcp_profile.project_id
+        )
 
         self.version = version
         self.work_dir = work_dir
@@ -82,22 +88,30 @@ class DockerService:
         self.wanna_project_name = wanna_project_name
         self.project_id = gcp_profile.project_id
         self.location = gcp_profile.region
-        self.docker_build_config_path = os.getenv("WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml")
+        self.docker_build_config_path = os.getenv(
+            "WANNA_DOCKER_BUILD_CONFIG", self.work_dir / "dockerbuild.yaml"
+        )
         self.build_config = self._read_build_config(self.docker_build_config_path)
         self.cloud_build_timeout = docker_model.cloud_build_timeout
         self.cloud_build = (
-            False if not gcp_access_allowed or not cloud_build_access_allowed else docker_model.cloud_build
+            False
+            if not gcp_access_allowed or not cloud_build_access_allowed
+            else docker_model.cloud_build
         )
 
         self.cloud_build_workerpool = docker_model.cloud_build_workerpool
-        self.cloud_build_workerpool_location = docker_model.cloud_build_workerpool_location or self.location
+        self.cloud_build_workerpool_location = (
+            docker_model.cloud_build_workerpool_location or self.location
+        )
         self.bucket = gcp_profile.bucket
         self.quick_mode = quick_mode
         assert self.cloud_build or self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli with local docker build"
         )
 
-    def _read_build_config(self, config_path: Union[Path, str]) -> Union[DockerBuildConfigModel, None]:
+    def _read_build_config(
+        self, config_path: Union[Path, str]
+    ) -> Union[DockerBuildConfigModel, None]:
         """
         Reads the DockerBuildConfig from local file.
         If the file does not exist, return None.
@@ -145,7 +159,9 @@ class DockerService:
             with open(docker_ignore, "r", encoding="utf-8") as f:
                 lines = f.readlines()
                 ignores += [
-                    ignore.rstrip() for ignore in lines if not ignore.startswith("#") and not ignore.strip() == ""
+                    ignore.rstrip()
+                    for ignore in lines
+                    if not ignore.startswith("#") and not ignore.strip() == ""
                 ]
         return ignores
 
@@ -174,7 +190,9 @@ class DockerService:
         ignore_patterns = self._get_ignore_patterns(context_dir)
 
         # skip builds if we are in quick mode or the checksumdir of docker contex_dir has not changed
-        skip_build = self._should_skip_build(self.build_dir / docker_image_ref, context_dir, ignore_patterns)
+        skip_build = self._should_skip_build(
+            self.build_dir / docker_image_ref, context_dir, ignore_patterns
+        )
 
         if skip_build:
             logger.user_info(
@@ -193,9 +211,13 @@ class DockerService:
             )
             return None
         else:
-            logger.user_info(text=f"Building {docker_image_ref} docker image locally with {build_args}")
+            logger.user_info(
+                text=f"Building {docker_image_ref} docker image locally with {build_args}"
+            )
             image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
-            self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir, ignore_patterns)
+            self._write_context_dir_checksum(
+                self.build_dir / docker_image_ref, context_dir, ignore_patterns
+            )
             return image  # type: ignore
 
     def _pull_image(self, image_url: str) -> Union[Image, None]:
@@ -216,11 +238,15 @@ class DockerService:
         Returns:
             DockerImageModel
         """
-        matched_image_models = list(filter(lambda i: i.name.strip() == image_name.strip(), self.image_models))
+        matched_image_models = list(
+            filter(lambda i: i.name.strip() == image_name.strip(), self.image_models)
+        )
         if len(matched_image_models) == 0:
             raise ValueError(f"No docker image with name {image_name} found")
         elif len(matched_image_models) > 1:
-            raise ValueError(f"Multiple docker images with name {image_name} found, please use unique names")
+            raise ValueError(
+                f"Multiple docker images with name {image_name} found, please use unique names"
+            )
         else:
             return matched_image_models[0]
 
@@ -276,7 +302,9 @@ class DockerService:
                 self.work_dir / docker_image_model.requirements_txt,
                 build_dir / "requirements.txt",
             )
-            file_path = self._jinja_render_dockerfile(docker_image_model, template_path, build_dir=build_dir)
+            file_path = self._jinja_render_dockerfile(
+                docker_image_model, template_path, build_dir=build_dir
+            )
             context_dir = build_dir
             image = self._build_image(
                 context_dir,
@@ -337,7 +365,9 @@ class DockerService:
         os.makedirs(hash_cache_dir, exist_ok=True)
         return hash_cache_dir / f"{kebabcase(self.docker_repository)}-{version}-cache.sha256"
 
-    def _should_skip_build(self, hash_cache_dir: Path, context_dir: Path, ignore_patterns: list[str]) -> bool:
+    def _should_skip_build(
+        self, hash_cache_dir: Path, context_dir: Path, ignore_patterns: list[str]
+    ) -> bool:
         """
         Check if the context_dir has changed since the last build or if quick mode is enabled
         to decide if wanna should build the image again.
@@ -418,7 +448,9 @@ class DockerService:
         blob = self._upload_context_dir_to_gcs(context_dir, docker_image_ref, ignore_patterns)
 
         tags_args = " ".join([f"--destination={t}" for t in tags]).split()
-        kaniko_build_args = tags_args + self.docker_model.cloud_build_kaniko_flags + ["--dockerfile", dockerfile]
+        kaniko_build_args = (
+            tags_args + self.docker_model.cloud_build_kaniko_flags + ["--dockerfile", dockerfile]
+        )
 
         options, api_endpoint = (
             (None, "cloudbuild.googleapis.com")
@@ -434,7 +466,9 @@ class DockerService:
         )
 
         build = Build(
-            source=Source(storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)),
+            source=Source(
+                storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)
+            ),
             steps=[
                 BuildStep(
                     name=f"gcr.io/kaniko-project/executor:{self.docker_model.cloud_build_kaniko_version}",
@@ -463,7 +497,9 @@ class DockerService:
 
         try:
             op.result()
-            self._write_context_dir_checksum(self.build_dir / docker_image_ref, context_dir, ignore_patterns)
+            self._write_context_dir_checksum(
+                self.build_dir / docker_image_ref, context_dir, ignore_patterns
+            )
         except:
             raise Exception(f"Build failed {link}")
 
@@ -540,7 +576,9 @@ class DockerService:
             for version in versions
         ]
 
-    def build_container_and_get_image_url(self, docker_image_ref: str, push_mode: PushMode = PushMode.all) -> str:
+    def build_container_and_get_image_url(
+        self, docker_image_ref: str, push_mode: PushMode = PushMode.all
+    ) -> str:
         """
         Build a docker image and push it to the registry.
 
@@ -618,5 +656,7 @@ class DockerService:
         tar_docker_context(context_dir, tar_filename, ignore_patterns or [])
 
         blob_name = os.path.relpath(tar_filename, self.work_dir).replace("\\", "/")
-        blob = upload_file_to_gcs(filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name)
+        blob = upload_file_to_gcs(
+            filename=tar_filename, bucket_name=self.bucket, blob_name=blob_name
+        )
         return blob

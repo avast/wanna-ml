@@ -78,3 +78,13 @@ def _cloud_build_access_allowed(env_var="WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED") 
 
 cloud_build_access_allowed = _cloud_build_access_allowed()
 should_validate = gcp_access_allowed and _should_validate()
+
+
+def reload_setup() -> None:
+    """
+    Reloads the setup of the env vars
+    """
+    global gcp_access_allowed, should_validate, cloud_build_access_allowed
+    gcp_access_allowed = _gcp_access_allowed()
+    should_validate = gcp_access_allowed and _should_validate()
+    cloud_build_access_allowed = _cloud_build_access_allowed()

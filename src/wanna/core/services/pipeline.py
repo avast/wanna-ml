@@ -7,7 +7,6 @@ from typing import Any, Optional, Union, cast
 from caseconverter import snakecase
 from google.cloud import aiplatform
 from kfp.v2.compiler import Compiler
-from pydantic import EmailStr
 from python_on_whales import Image
 
 from wanna.core.deployment.artifacts_push import PushResult
@@ -63,7 +62,9 @@ class PipelineService(BaseService[PipelineModel]):
             quick_mode=push_mode.is_quick_mode(),
         )
         self.kubeflow_pipeline_caching = kubeflow_pipeline_caching
-        self.notification_channels = {channel.name: channel for channel in self.config.notification_channels}
+        self.notification_channels = {
+            channel.name: channel for channel in self.config.notification_channels
+        }
 
     def build(self, instance_name: str, pipeline_params_path: Optional[Path] = None) -> list[Path]:
         """
@@ -75,7 +76,9 @@ class PipelineService(BaseService[PipelineModel]):
                 if present will override one from wanna.yaml
         """
         instances = self._filter_instances_by_name(instance_name)
-        return [self._compile_one_instance(instance, pipeline_params_path) for instance in instances]
+        return [
+            self._compile_one_instance(instance, pipeline_params_path) for instance in instances
+        ]
 
     def push(self, manifests: list[Path], local: bool = False) -> PushResult:
         return self.connector.push_artifacts(
@@ -83,11 +86,15 @@ class PipelineService(BaseService[PipelineModel]):
             self._prepare_push(manifests, self.version, local),
         )
 
-    def _prepare_push(self, pipelines: list[Path], version: str, local: bool = False) -> list[PushTask]:
+    def _prepare_push(
+        self, pipelines: list[Path], version: str, local: bool = False
+    ) -> list[PushTask]:
         push_tasks = []
         for local_manifest_path in pipelines:
             manifest = PipelineService.read_manifest(self.connector, str(local_manifest_path))
-            pipeline_paths = PipelinePaths(self.workdir, manifest.pipeline_bucket, manifest.pipeline_name)
+            pipeline_paths = PipelinePaths(
+                self.workdir, manifest.pipeline_bucket, manifest.pipeline_name
+            )
             json_artifacts, manifest_artifacts, container_artifacts = [], [], []
 
             logger.user_info(text=f"Packaging {manifest.pipeline_name} pipeline resources")
@@ -101,14 +108,22 @@ class PipelineService(BaseService[PipelineModel]):
             # Push gcp resources if we are running on GCP build agent
             if self.push_mode.can_push_gcp_resources():
                 # Prepare manifest paths
-                local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
+                local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(
+                    version
+                )
                 wanna_manifest_publish_path = pipeline_paths.get_gcs_wanna_manifest_path(version)
-                kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
+                kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(
+                    version
+                )
 
                 if local:
                     # Override paths to local dir when in "local" mode, IE tests or local run
-                    wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(version)
-                    kubeflow_json_spec_publish_path = pipeline_paths.get_local_pipeline_json_spec_path(version)
+                    wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(
+                        version
+                    )
+                    kubeflow_json_spec_publish_path = (
+                        pipeline_paths.get_local_pipeline_json_spec_path(version)
+                    )
 
                 # Ensure to update manifest json_spec_path to have the actual gcs location
                 manifest.json_spec_path = kubeflow_json_spec_publish_path
@@ -150,8 +165,12 @@ class PipelineService(BaseService[PipelineModel]):
         instances = self._filter_instances_by_name(instance_name)
         for pipeline in instances:
             logger.user_info(f"Deploying {pipeline.name} version {self.version} to env {env}")
-            pipeline_bucket = PipelineService.get_pipeline_bucket(pipeline.bucket, self.config.gcp_profile.bucket)
-            pipeline_paths = PipelinePaths(self.workdir, pipeline_bucket, pipeline_name=pipeline.name)
+            pipeline_bucket = PipelineService.get_pipeline_bucket(
+                pipeline.bucket, self.config.gcp_profile.bucket
+            )
+            pipeline_paths = PipelinePaths(
+                self.workdir, pipeline_bucket, pipeline_name=pipeline.name
+            )
             manifest = PipelineService.read_manifest(
                 self.connector, pipeline_paths.get_gcs_wanna_manifest_path(self.version)
             )
@@ -220,17 +239,23 @@ class PipelineService(BaseService[PipelineModel]):
             pipeline_params_path = (self.workdir / pipeline_params_path).resolve()
             pipeline_compile_params = load_yaml_path(pipeline_params_path, self.workdir)
         else:
-            if pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, Path):
+            if pipeline_instance.pipeline_params and isinstance(
+                pipeline_instance.pipeline_params, Path
+            ):
                 pipeline_params_path = (self.workdir / pipeline_instance.pipeline_params).resolve()
                 pipeline_compile_params = load_yaml_path(pipeline_params_path, self.workdir)
-            elif pipeline_instance.pipeline_params and isinstance(pipeline_instance.pipeline_params, dict):
+            elif pipeline_instance.pipeline_params and isinstance(
+                pipeline_instance.pipeline_params, dict
+            ):
                 pipeline_compile_params = pipeline_instance.pipeline_params
             else:
                 pipeline_compile_params = {}
 
         return pipeline_env_params, pipeline_compile_params
 
-    def _compile_one_instance(self, pipeline: PipelineModel, pipeline_params_path: Optional[Path] = None) -> Path:
+    def _compile_one_instance(
+        self, pipeline: PipelineModel, pipeline_params_path: Optional[Path] = None
+    ) -> Path:
         image_tags = [
             self.docker_service.get_image(docker_image_ref=docker_image_ref)
             for docker_image_ref in pipeline.docker_image_ref
@@ -239,11 +264,15 @@ class PipelineService(BaseService[PipelineModel]):
         logger.user_info(text=f"Compiling pipeline {pipeline.name}")
 
         # Prep build dir
-        pipeline_bucket = PipelineService.get_pipeline_bucket(pipeline.bucket, self.config.gcp_profile.bucket)
+        pipeline_bucket = PipelineService.get_pipeline_bucket(
+            pipeline.bucket, self.config.gcp_profile.bucket
+        )
         pipeline_paths = PipelinePaths(self.workdir, pipeline_bucket, pipeline.name)
 
         tensorboard = (
-            self.tensorboard_service.get_or_create_tensorboard_instance_by_name(pipeline.tensorboard_ref)
+            self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
+                pipeline.tensorboard_ref
+            )
             if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()
             else None
         )

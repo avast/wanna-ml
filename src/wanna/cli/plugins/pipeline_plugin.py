@@ -56,7 +56,9 @@ class PipelinePlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.pipeline import PipelineService
 
-        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
+        pipeline_service = PipelineService(
+            config=config, workdir=workdir, version=version, push_mode=mode
+        )
         pipeline_service.build(instance_name, params)
 
     @staticmethod
@@ -82,7 +84,9 @@ class PipelinePlugin(BasePlugin):
         # doing this import here speeds up the CLI app considerably
         from wanna.core.services.pipeline import PipelineService
 
-        pipeline_service = PipelineService(config=config, workdir=workdir, version=version, push_mode=mode)
+        pipeline_service = PipelineService(
+            config=config, workdir=workdir, version=version, push_mode=mode
+        )
         manifests = pipeline_service.build(instance_name, params)
         pipeline_service.push(manifests)
 

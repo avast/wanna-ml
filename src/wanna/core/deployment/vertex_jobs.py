@@ -28,9 +28,13 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         parameter: HyperParamater,
     ) -> hpt._ParameterSpec:
         if isinstance(parameter, IntegerParameter) and parameter.type == "integer":
-            return hpt.IntegerParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
+            return hpt.IntegerParameterSpec(
+                min=parameter.min, max=parameter.max, scale=parameter.scale
+            )
         elif isinstance(parameter, DoubleParameter) and parameter.type == "double":
-            return hpt.DoubleParameterSpec(min=parameter.min, max=parameter.max, scale=parameter.scale)
+            return hpt.DoubleParameterSpec(
+                min=parameter.min, max=parameter.max, scale=parameter.scale
+            )
         elif isinstance(parameter, CategoricalParameter) and parameter.type == "categorical":
             return hpt.CategoricalParameterSpec(values=parameter.values)
         elif isinstance(parameter, DiscreteParameter) and parameter.type == "discrete":
@@ -128,11 +132,14 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             )
 
         with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job"):
-            logger.user_info(f"Outputs will be saved to {manifest.job_config.base_output_directory}")
+            logger.user_info(
+                f"Outputs will be saved to {manifest.job_config.base_output_directory}"
+            )
             training_job.run(
                 machine_type=manifest.job_config.worker.machine_type,
                 accelerator_type=manifest.job_config.worker.gpu.accelerator_type
-                if manifest.job_config.worker.gpu and manifest.job_config.worker.gpu.accelerator_type
+                if manifest.job_config.worker.gpu
+                and manifest.job_config.worker.gpu.accelerator_type
                 else "ACCELERATOR_TYPE_UNSPECIFIED",
                 accelerator_count=manifest.job_config.worker.gpu.count
                 if manifest.job_config.worker.gpu and manifest.job_config.worker.gpu.count
@@ -167,14 +174,18 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         if sync:
             training_job.wait_for_resource_creation()
             job_id = training_job.resource_name.split("/")[-1]
-            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in sync mode"):
+            with logger.user_spinner(
+                f"Running custom training job {manifest.job_config.name} in sync mode"
+            ):
                 logger.user_info(
                     "Job Dashboard in "
                     f"https://console.cloud.google.com/vertex-ai/locations/{manifest.job_config.region}/training/{job_id}?project={manifest.job_config.project_id}"  # noqa
                 )
                 training_job.wait()
         else:
-            with logger.user_spinner(f"Running custom training job {manifest.job_config.name} in async mode"):
+            with logger.user_spinner(
+                f"Running custom training job {manifest.job_config.name} in async mode"
+            ):
                 training_job.wait_for_resource_creation()
                 job_id = training_job.resource_name.split("/")[-1]
                 logger.user_info(

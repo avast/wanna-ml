@@ -1,7 +1,6 @@
 import os
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from mock import patch
 from typer.testing import CliRunner
@@ -9,7 +8,6 @@ from typer.testing import CliRunner
 from tests.mocks import mocks
 from wanna.cli.plugins.notebook_plugin import NotebookPlugin
 from wanna.core.deployment.models import PushMode
-from wanna.core.services.workbench_instance import WorkbenchInstanceService
 
 
 @patch(
@@ -22,9 +20,8 @@ class TestNotebookPlugin(unittest.TestCase):
     parent = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
     wanna_path = parent / "samples" / "notebook" / "vm_image" / "wanna.yaml"
 
-    def test_notebook_create_cli(self):
-        WorkbenchInstanceService.create = MagicMock()
-
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService.create")
+    def test_notebook_create_cli(self, create_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -37,14 +34,13 @@ class TestNotebookPlugin(unittest.TestCase):
                 "default",
             ],
         )
-        WorkbenchInstanceService.create.assert_called_once()
-        WorkbenchInstanceService.create.assert_called_with("wanna-notebook-vm", push_mode=PushMode.all)
+        create_patch.assert_called_once()
+        create_patch.assert_called_with("wanna-notebook-vm", push_mode=PushMode.all)
 
         self.assertEqual(0, result.exit_code)
 
-    def test_notebook_delete_cli(self):
-        WorkbenchInstanceService.delete = MagicMock()
-
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService.delete")
+    def test_notebook_delete_cli(self, delete_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -57,12 +53,12 @@ class TestNotebookPlugin(unittest.TestCase):
                 "default",
             ],
         )
-        WorkbenchInstanceService.delete.assert_called_once()
-        WorkbenchInstanceService.delete.assert_called_with("wanna-notebook-vm")
+        delete_patch.assert_called_once()
+        delete_patch.assert_called_with("wanna-notebook-vm")
         self.assertEqual(0, result.exit_code)
 
-    def test_notebook_ssh_cli(self):
-        WorkbenchInstanceService._ssh = MagicMock()
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService._ssh")
+    def test_notebook_ssh_cli(self, ssh_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -72,7 +68,7 @@ class TestNotebookPlugin(unittest.TestCase):
             ],
         )
 
-        WorkbenchInstanceService._ssh.assert_called_once()
+        ssh_patch.assert_called_once()
 
         self.assertEqual(0, result.exit_code)
 
@@ -90,8 +86,8 @@ class TestNotebookPlugin(unittest.TestCase):
 
         self.assertEqual(1, result.exit_code)
 
-    def test_notebook_build(self):
-        WorkbenchInstanceService.build = MagicMock()
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService.build")
+    def test_notebook_build(self, build_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -100,11 +96,11 @@ class TestNotebookPlugin(unittest.TestCase):
                 str(self.wanna_path),
             ],
         )
-        WorkbenchInstanceService.build.assert_called_once()
+        build_patch.assert_called_once()
         self.assertEqual(0, result.exit_code)
 
-    def test_notebook_report(self):
-        WorkbenchInstanceService.report = MagicMock()
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService.report")
+    def test_notebook_report(self, report_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -115,7 +111,7 @@ class TestNotebookPlugin(unittest.TestCase):
                 "wanna-notebook-vm",
             ],
         )
-        WorkbenchInstanceService.report.assert_called_with(
+        report_patch.assert_called_with(
             instance_name="wanna-notebook-vm",
             wanna_project="wanna-notebook-sample",
             wanna_resource="notebook",
@@ -125,9 +121,8 @@ class TestNotebookPlugin(unittest.TestCase):
         )
         self.assertEqual(0, result.exit_code)
 
-    def test_notebook_sync_cli(self):
-        WorkbenchInstanceService.sync = MagicMock()
-
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService.sync")
+    def test_notebook_sync_cli(self, sync_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -139,14 +134,13 @@ class TestNotebookPlugin(unittest.TestCase):
                 "--force",
             ],
         )
-        WorkbenchInstanceService.sync.assert_called_once()
-        WorkbenchInstanceService.sync.assert_called_with(force=True, push_mode=PushMode.all)
+        sync_patch.assert_called_once()
+        sync_patch.assert_called_with(force=True, push_mode=PushMode.all)
 
         self.assertEqual(0, result.exit_code)
 
-    def test_notebook_push_cli(self):
-        WorkbenchInstanceService.push = MagicMock()
-
+    @patch("wanna.core.services.workbench_instance.WorkbenchInstanceService.push")
+    def test_notebook_push_cli(self, push_patch):
         result = self.runner.invoke(
             self.plugin.app,
             [
@@ -155,7 +149,7 @@ class TestNotebookPlugin(unittest.TestCase):
                 self.wanna_path,
             ],
         )
-        WorkbenchInstanceService.push.assert_called_once()
-        WorkbenchInstanceService.push.assert_called_with(instance_name="all")
+        push_patch.assert_called_once()
+        push_patch.assert_called_with(instance_name="all")
 
         self.assertEqual(0, result.exit_code)

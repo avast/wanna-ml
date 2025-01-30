@@ -51,7 +51,9 @@ class BaseWorkbenchService(BaseService[T]):
         if should_end:
             return
         push_mode: PushMode = kwargs.get("push_mode")  # type: ignore
-        request = self._create_instance_request(instance=instance, deploy=True, push_mode=push_mode)
+        request = self._create_instance_request(
+            instance=instance, deploy=True, push_mode=push_mode
+        )
         logger.user_info(f"Creating underlying compute engine instance for {instance.name} ...")
         nb_instance = self._create_instance_client(request=request)
         instance_full_name = (
@@ -177,7 +179,9 @@ class BaseWorkbenchService(BaseService[T]):
         try:
             instance_info = self._client_get_instance(instance_id)
         except exceptions.NotFound:
-            raise exceptions.NotFound(f"{self.instance_type} {instance_id} was not found.") from None
+            raise exceptions.NotFound(
+                f"{self.instance_type} {instance_id} was not found."
+            ) from None
         return instance_info.state == state
 
     @abstractmethod

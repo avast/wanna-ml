@@ -22,7 +22,9 @@ class NotebookEnvironment(BaseModel, extra=Extra.forbid):
 
 
 class BaseWorkbenchModel(BaseInstanceModel):
-    name: str = Field(min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$")
+    name: str = Field(
+        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
+    )
     machine_type: str = "e2-standard-2"
     gpu: Optional[GPU]
     data_disk: Optional[Disk]
@@ -77,7 +79,9 @@ class InstanceModel(BaseWorkbenchModel):
     env_vars: Optional[dict[str, str]]
     bucket_mounts: Optional[list[BucketMount]]
     post_startup_script: Optional[str]  # todo: add validation for existing object in bucket
-    post_startup_script_behavior: Literal["run_once", "run_every_start", "download_and_run_every_start"] = "run_once"
+    post_startup_script_behavior: Literal[
+        "run_once", "run_every_start", "download_and_run_every_start"
+    ] = "run_once"
     environment_auto_upgrade: Optional[str] = None
     delete_to_trash: bool = False
     report_health: bool = True

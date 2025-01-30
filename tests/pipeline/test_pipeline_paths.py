@@ -12,7 +12,9 @@ class TestPipelineService(unittest.TestCase):
     pipeline_build_dir = sample_pipeline_dir / "build"
 
     def setUp(self) -> None:
-        self.pipeline_paths = PipelinePaths(self.sample_pipeline_dir, "gs://test_bucket", "sklearn")
+        self.pipeline_paths = PipelinePaths(
+            self.sample_pipeline_dir, "gs://test_bucket", "sklearn"
+        )
         self.version = "test"
 
     def test_gcs_paths(self) -> None:
@@ -37,11 +39,17 @@ class TestPipelineService(unittest.TestCase):
 
         self.assertEqual(
             json_spec_file,
-            str(self.pipeline_build_dir / "wanna-pipelines/sklearn/deployment/test/manifests/pipeline-spec.json"),
+            str(
+                self.pipeline_build_dir
+                / "wanna-pipelines/sklearn/deployment/test/manifests/pipeline-spec.json"
+            ),
         )
         self.assertEqual(
             wanna_manifest_file,
-            str(self.pipeline_build_dir / "wanna-pipelines/sklearn/deployment/test/manifests/wanna-manifest.json"),
+            str(
+                self.pipeline_build_dir
+                / "wanna-pipelines/sklearn/deployment/test/manifests/wanna-manifest.json"
+            ),
         )
         self.assertEqual(
             pipeline_root,

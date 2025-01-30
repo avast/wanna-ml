@@ -23,12 +23,18 @@ class WannaConfigModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     notebooks: list[InstanceModel] = Field(default_factory=list)
     notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
 
-    _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
+    _notebooks = validator("notebooks", pre=True, each_item=True, allow_reuse=True)(
+        enrich_instance_with_gcp_settings
+    )
     _tensorboards = validator("tensorboards", pre=True, each_item=True, allow_reuse=True)(
         enrich_instance_with_gcp_settings
     )
-    _jobs = validator("jobs", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
-    _pipelines = validator("pipelines", pre=True, each_item=True, allow_reuse=True)(enrich_instance_with_gcp_settings)
+    _jobs = validator("jobs", pre=True, each_item=True, allow_reuse=True)(
+        enrich_instance_with_gcp_settings
+    )
+    _pipelines = validator("pipelines", pre=True, each_item=True, allow_reuse=True)(
+        enrich_instance_with_gcp_settings
+    )
 
     # TODO:
     # _gcp_profile = validator("gcp_profile", pre=True, allow_reuse=True)(enrich_gcp_profile_with_wanna_default_labels)

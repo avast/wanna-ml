@@ -4,5 +4,4 @@ omit =
     */.local/*
     # omit this single file
     src/wanna/core/templates/*
-    src/wanna/components/templates/**
     */templates/**

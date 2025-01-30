@@ -110,7 +110,9 @@ class TestGCPConnector(unittest.TestCase):
             notification_channels=["projects/"],
             **self.common_resource_fields,
         )
-        expected_function_name = "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
+        expected_function_name = (
+            "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
+        )
         expected_function = {
             "name": expected_function_name,
             "description": "wanna test-function function for test pipeline",
@@ -150,9 +152,13 @@ class TestGCPConnector(unittest.TestCase):
 
         # Check cloudfunctions sdk methos were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_called_with(
-            {"name": "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"}
+            {
+                "name": "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"
+            }
         )
-        CloudFunctionsServiceClient.update_function.assert_called_with({"function": expected_function})
+        CloudFunctionsServiceClient.update_function.assert_called_with(
+            {"function": expected_function}
+        )
 
         AlertPolicyServiceClient.list_alert_policies.assert_called()
         AlertPolicyServiceClient.create_alert_policy.assert_called()

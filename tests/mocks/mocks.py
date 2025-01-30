@@ -12,16 +12,6 @@ from google.cloud.compute_v1.types.compute import (
     Zone,
     ZoneList,
 )
-from google.cloud.notebooks_v1.types import (
-    Instance as InstanceV1,
-)
-from google.cloud.notebooks_v1.types import (
-    ListInstancesResponse as ListInstancesResponseV1,
-)
-from google.cloud.notebooks_v1.types import (
-    ListRuntimesResponse,
-    Runtime,
-)
 from google.cloud.notebooks_v2.types import (
     Instance,
     ListInstancesResponse,
@@ -76,7 +66,9 @@ class MockMachineTypesClient:
             "n2d-standard-2",
             "n1-standard-4",
         ]
-        return MachineTypeList(items=[MachineType({"name": mtype}) for mtype in machine_type_names])
+        return MachineTypeList(
+            items=[MachineType({"name": mtype}) for mtype in machine_type_names]
+        )
 
 
 class MockStorageClient:
@@ -137,8 +129,14 @@ class MockWorkbenchInstanceServiceClient:
         ]
 
     def list_instances(self, parent):
-        return ListInstancesResponse(instances=[i for i in self.instances if i.name.startswith(parent)])
+        return ListInstancesResponse(
+            instances=[i for i in self.instances if i.name.startswith(parent)]
+        )
 
     def get_instance(self, name):
         matched_instances = [i for i in self.instances if name == i.name]
         return matched_instances[0]
+
+
+class MockVertexPipelinesMixInVertex:
+    pass

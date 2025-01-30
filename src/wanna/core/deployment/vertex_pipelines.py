@@ -43,7 +43,10 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         @atexit.register
         def stop_pipeline_job():
             if sync and pipeline_job and getattr(pipeline_job._gca_resource, "name", None):
-                if pipeline_job.state != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED:
+                if (
+                    pipeline_job.state
+                    != gca_pipeline_state_v1.PipelineState.PIPELINE_STATE_SUCCEEDED
+                ):
                     logger.user_error(
                         "detected exit signal, "
                         f"shutting down running pipeline {pipeline_name} "
@@ -87,7 +90,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         VertexPipelinesMixInVertex._at_pipeline_exit(resource.pipeline_name, pipeline_job, sync)
 
         # submit pipeline job for execution
-        experiment = resource.experiment if resource.experiment else f"{resource.pipeline_name}-experiment"
+        experiment = (
+            resource.experiment if resource.experiment else f"{resource.pipeline_name}-experiment"
+        )
 
         pipeline_job.submit(
             service_account=resource.service_account,
@@ -152,7 +157,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                     )
                     channels.append(channel.name)
             else:
-                raise ValueError(f"Validation error notification config {config} can't be handled by wanna-ml")
+                raise ValueError(
+                    f"Validation error notification config {config} can't be handled by wanna-ml"
+                )
 
         function = self.upsert_cloud_function(
             resource=CloudFunctionResource(
@@ -195,7 +202,9 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             )
 
         else:
-            logger.user_info("Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync")
+            logger.user_info(
+                "Deployment Manifest does not have a schedule set. Skipping Cloud Scheduler sync"
+            )
 
         logging_metric_ref = f"{resource.pipeline_name}-ml-pipeline-error"
         gcp_resource_type = "aiplatform.googleapis.com/PipelineJob"
@@ -259,9 +268,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         )
         parent = f"projects/{resource.project}/locations/{resource.location}"
         local_functions_package = "sla.zip"
-        functions_gcs_path_dir = (
-            f"{resource.pipeline_bucket}/wanna-pipelines/{resource.pipeline_name}/deployment/{version}/functions"
-        )
+        functions_gcs_path_dir = f"{resource.pipeline_bucket}/wanna-pipelines/{resource.pipeline_name}/deployment/{version}/functions"
         functions_gcs_path = f"{functions_gcs_path_dir}/sla.zip"
         function_name = f"{resource.pipeline_name}-{env}-{version}"
         function_path = f"{parent}/functions/{function_name}"
@@ -292,7 +299,8 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             "runtime": "python39",
             "event_trigger": {
                 "event_type": "google.storage.object.finalize",
-                "resource": f"projects/{resource.project}/buckets/" + f"{resource.pipeline_bucket}"[5:],
+                "resource": f"projects/{resource.project}/buckets/"
+                + f"{resource.pipeline_bucket}"[5:],
             },
             "service_account_email": resource.service_account,
             "labels": resource.labels,

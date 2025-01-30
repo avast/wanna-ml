@@ -100,13 +100,11 @@ addopts = """
     --cov-report xml:coverage.xml
     --cov=src
     --durations=0
-    --ignore=src/wanna/components/templates
     --ignore=templates
     --ignore=samples
     --ignore=dev_tests
     """
 #addopts = """
-#    --ignore=src/wanna/components/templates
 #    --ignore=templates
 #    --ignore=samples
 #    --ignore=dev_tests
@@ -129,12 +127,11 @@ docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 
 [tool.ruff]
-line-length = 120
+line-length = 99
 output-format = "full"
 extend-exclude = [
     "**pb2.py",
     "**pb2.pyi",
-    "src/wanna/components/templates/**",
     "samples/**",
     "templates/blank/**",
     "templates/sklearn/**",
@@ -153,9 +150,6 @@ ignore = [
 
 [tool.mypy]
 exclude = [
-    "src/wanna/components/templates/*",
-    "templates/blank/*",
-    "templates/sklearn/*",
     "samples/pipelines/*",
     "dev_tests/*",
 ]
