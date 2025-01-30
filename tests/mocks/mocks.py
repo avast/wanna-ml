@@ -99,6 +99,10 @@ def upload_string_to_gcs(filename: Path, bucket_name: str, blob_name: str):  # n
     return Blob(blob_name, MockStorageClient().get_bucket(bucket_name))
 
 
+def mock_verify_gcloud_presence() -> None:
+    return None
+
+
 def mock_list_running_instances(project_id: str, region: str):  # noqa
     tensorboard_names = ["tb1", "tb2"]
     return [
