@@ -88,6 +88,22 @@ def mock_get_gcloud_user():
 
 
 @pytest.fixture(scope="session", autouse=True)
+def mock_verify_gcloud_presence():
+    with mock.patch(
+        "wanna.core.utils.gcp.verify_gcloud_presence", mocks.mock_verify_gcloud_presence
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_config_loader_verify_gcloud_presence():
+    with mock.patch(
+        "wanna.core.utils.config_loader.verify_gcloud_presence", mocks.mock_verify_gcloud_presence
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="session", autouse=True)
 def mock_pipeline_get_project_id():
     with mock.patch(
         "wanna.core.services.base.convert_project_id_to_project_number",

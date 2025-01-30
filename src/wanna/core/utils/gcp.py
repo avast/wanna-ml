@@ -3,6 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
+from gcloud_config_helper import gcloud_config_helper
 from google.cloud.storage import Blob
 
 from wanna.core.utils.env import should_validate
@@ -409,3 +410,11 @@ def get_network_info(network: Optional[str]) -> Optional[tuple[str, str]]:
             return result.group(1), result.group(2)
 
     return None
+
+
+def verify_gcloud_presence():
+    if not gcloud_config_helper.on_path():
+        # gcloud is needed in the wanna.core.utils.config_enricher_generate_default_labels
+        raise EnvironmentError(
+            "gcloud is not on the path. Wanna-ml does not work properly without it."
+        )
