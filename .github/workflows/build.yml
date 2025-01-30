@@ -33,5 +33,4 @@ jobs:
       - name: Upload Coverage to Codecov
         if: ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.python-version }} == '3.9'
         uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV_TOKEN }}
