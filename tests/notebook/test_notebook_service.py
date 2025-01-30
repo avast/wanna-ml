@@ -180,5 +180,4 @@ class TestWorkbenchInstanceService:
     def test_build(self, vm_image_config):
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
-        # todo: now, the nb_service has push, report and sync as magic mock, which means stuff is leaking, I need to find a proper way to encapsulate it
         assert nb_service.build() == 0
