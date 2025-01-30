@@ -61,7 +61,9 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
     """
     if not gcloud_config_helper.on_path():
         # gcloud is needed in the wanna.core.utils.config_enricher_generate_default_labels
-        raise EnvironmentError("gcloud is not on the path. Wanna-ml does not work properly without it.")
+        raise EnvironmentError(
+            "gcloud is not on the path. Wanna-ml does not work properly without it."
+        )
     with logger.user_spinner("Reading and validating wanna yaml config"):
         with open(wanna_config_path, encoding="utf-8") as file:
             # Load workflow file
