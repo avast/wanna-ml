@@ -1,9 +1,9 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Extra
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
-class WannaProjectModel(BaseModel, extra=Extra.forbid):
+class WannaProjectModel(BaseModel):
     """
     `wanna_project` section of the yaml config consists of the following inputs:
 
@@ -19,5 +19,7 @@ class WannaProjectModel(BaseModel, extra=Extra.forbid):
     name: str
     version: str
     authors: list[EmailStr]
-    billing_id: Optional[str]
-    organization_id: Optional[str]
+    billing_id: Optional[str] = None
+    organization_id: Optional[str] = None
+
+    model_config = ConfigDict(extra="forbid", coerce_numbers_to_str=True)

@@ -1,36 +1,40 @@
 from typing import Any, Literal, Optional, Union
 
-from pydantic import BaseModel, Extra, Field, root_validator, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import Annotated
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.gcp_components import GPU, Disk
 
 
-class PythonPackageModel(BaseModel, extra=Extra.forbid):
+class PythonPackageModel(BaseModel):
     docker_image_ref: str
     package_gcs_uri: str
     module_name: str
 
+    model_config = ConfigDict(extra="forbid")
 
-class ContainerModel(BaseModel, extra=Extra.forbid):
+
+class ContainerModel(BaseModel):
     docker_image_ref: str
-    command: Optional[list[str]]
+    command: Optional[list[str]] = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
-class WorkerPoolModel(BaseModel, extra=Extra.forbid):
-    python_package: Optional[PythonPackageModel]
-    container: Optional[ContainerModel]
-    args: Optional[list[Union[str, float, int]]]
-    env: Optional[dict[str, str]]
+class WorkerPoolModel(BaseModel):
+    python_package: Optional[PythonPackageModel] = None
+    container: Optional[ContainerModel] = None
+    args: Optional[list[Union[str, float, int]]] = None
+    env: Optional[dict[str, str]] = None
     machine_type: str = "n1-standard-4"
-    gpu: Optional[GPU]
-    boot_disk: Optional[Disk]
+    gpu: Optional[GPU] = None
+    boot_disk: Optional[Disk] = None
     replica_count: int = 1
 
-    # _machine_type = validator("machine_type", allow_reuse=True)(validators.validate_machine_type)
+    model_config = ConfigDict(extra="forbid")
 
-    @root_validator
+    @model_validator(mode="before")
     def one_from_python_or_container_spec_must_be_set(cls, values):  # pylint: disable=no-self-argument,no-self-use
         if values.get("python_package") and values.get("container"):
             raise ValueError("Only one of python_package or container can be set")
@@ -39,39 +43,47 @@ class WorkerPoolModel(BaseModel, extra=Extra.forbid):
         return values
 
 
-class ReductionServerModel(BaseModel, extra=Extra.forbid):
+class ReductionServerModel(BaseModel):
     replica_count: int
     machine_type: str
     container_uri: str
 
 
-class IntegerParameter(BaseModel, extra=Extra.forbid):
+class IntegerParameter(BaseModel):
     type: Literal["integer"]
     var_name: str
     min: int
     max: int
     scale: Literal["log", "linear"] = "linear"
 
+    model_config = ConfigDict(extra="forbid")
 
-class DoubleParameter(BaseModel, extra=Extra.forbid):
+
+class DoubleParameter(BaseModel):
     type: Literal["double"]
     var_name: str
     min: float
     max: float
     scale: Literal["log", "linear"] = "linear"
 
+    model_config = ConfigDict(extra="forbid")
 
-class CategoricalParameter(BaseModel, extra=Extra.forbid):
+
+class CategoricalParameter(BaseModel):
     type: Literal["categorical"]
     var_name: str
     values: list[str]
 
+    model_config = ConfigDict(extra="forbid")
 
-class DiscreteParameter(BaseModel, extra=Extra.forbid):
+
+class DiscreteParameter(BaseModel):
     type: Literal["discrete"]
     var_name: str
     scale: Literal["log", "linear"] = "linear"
     values: list[int]
+
+    model_config = ConfigDict(extra="forbid")
 
 
 HyperParamater = Annotated[
@@ -96,8 +108,8 @@ class HyperparameterTuning(BaseModel):
     parameters: list[HyperParamater]
     max_trial_count: int = 15
     parallel_trial_count: int = 3
-    search_algorithm: Optional[Literal["grid", "random"]]
-    encryption_spec: Optional[str]
+    search_algorithm: Optional[Literal["grid", "random"]] = None
+    encryption_spec: Optional[str] = None
 
 
 class BaseCustomJobModel(BaseInstanceModel):
@@ -126,13 +138,13 @@ class BaseCustomJobModel(BaseInstanceModel):
     region: str
     enable_web_access: bool = False
     bucket: str
-    base_output_directory: Optional[str]
-    tensorboard_ref: Optional[str]
+    base_output_directory: Optional[str] = None
+    tensorboard_ref: Optional[str] = None
     timeout_seconds: int = 60 * 60 * 24  # 24 hours
-    encryption_spec: Optional[Any]
-    env_vars: Optional[dict[str, str]]
+    encryption_spec: Optional[Any] = None
+    env_vars: Optional[dict[str, str]] = None
 
-    @root_validator(pre=False)
+    @model_validator(mode="before")
     def _set_base_output_directory_if_not_provided(  # pylint: disable=no-self-argument,no-self-use
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:
@@ -142,7 +154,7 @@ class BaseCustomJobModel(BaseInstanceModel):
             )
         return values
 
-    @root_validator(pre=False)
+    @model_validator(mode="before")
     def _service_account_must_be_set_when_using_tensorboard(  # pylint: disable=no-self-argument,no-self-use
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:
@@ -154,9 +166,9 @@ class BaseCustomJobModel(BaseInstanceModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-custom-job
 class CustomJobModel(BaseCustomJobModel):
     workers: list[WorkerPoolModel]
-    hp_tuning: Optional[HyperparameterTuning]
+    hp_tuning: Optional[HyperparameterTuning] = None
 
-    @validator("workers", pre=False)
+    @field_validator("workers", mode="after")
     def _worker_pool_must_have_same_spec(  # pylint: disable=no-self-argument,no-self-use
         cls, workers: list[WorkerPoolModel]
     ) -> list[WorkerPoolModel]:
@@ -175,7 +187,7 @@ class CustomJobModel(BaseCustomJobModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-training-pipeline
 class TrainingCustomJobModel(BaseCustomJobModel):
     worker: WorkerPoolModel
-    reduction_server: Optional[ReductionServerModel]
+    reduction_server: Optional[ReductionServerModel] = None
 
 
 JobModelTypeAlias = Union[CustomJobModel, TrainingCustomJobModel]

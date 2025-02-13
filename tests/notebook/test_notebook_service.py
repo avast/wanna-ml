@@ -66,13 +66,13 @@ class TestWorkbenchInstanceService:
         config = custom_container_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         should_exist = nb_service._instance_exists(
-            instance=InstanceModel.parse_obj(
+            instance=InstanceModel.model_validate(
                 {"project_id": self.project_id, "zone": self.zone, "name": "tf-gpu"}
             )
         )
         assert should_exist
         should_not_exist = nb_service._instance_exists(
-            instance=InstanceModel.parse_obj(
+            instance=InstanceModel.model_validate(
                 {"project_id": self.project_id, "zone": self.zone, "name": "confundo"}
             )
         )
@@ -120,7 +120,7 @@ class TestWorkbenchInstanceService:
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.gpu = GPU.parse_obj({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
+        instance.gpu = GPU.model_validate({"accelerator_type": "NVIDIA_TESLA_V100", "count": 4})
         request = nb_service._create_instance_request(instance)
         assert request.instance.gce_setup.accelerator_configs[0].type_.name == "NVIDIA_TESLA_V100"
         assert request.instance.gce_setup.accelerator_configs[0].core_count == 4
@@ -150,7 +150,7 @@ class TestWorkbenchInstanceService:
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.boot_disk = Disk.parse_obj({"disk_type": "pd_ssd", "size_gb": 500})
+        instance.boot_disk = Disk.model_validate({"disk_type": "pd_ssd", "size_gb": 500})
         request = nb_service._create_instance_request(instance)
         assert request.instance.gce_setup.boot_disk.disk_type == DiskType.PD_SSD
         assert request.instance.gce_setup.boot_disk.disk_size_gb == 500
@@ -159,7 +159,7 @@ class TestWorkbenchInstanceService:
         config = vm_image_config
         nb_service = WorkbenchInstanceService(config=config, workdir=Path("."))
         instance = config.notebooks[0]
-        instance.data_disk = Disk.parse_obj({"disk_type": "pd_balanced", "size_gb": 750})
+        instance.data_disk = Disk.model_validate({"disk_type": "pd_balanced", "size_gb": 750})
         request = nb_service._create_instance_request(instance)
         assert request.instance.gce_setup.data_disks[0].disk_type == DiskType.PD_BALANCED
         assert request.instance.gce_setup.data_disks[0].disk_size_gb == 750

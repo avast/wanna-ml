@@ -484,7 +484,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
 
         active_notebooks = [
-            InstanceModel.parse_obj(
+            InstanceModel.model_validate(
                 {
                     "name": i.name,
                     "zone": i.zone.split("/")[-1],

@@ -1,7 +1,6 @@
-from typing import Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, EmailStr, Field
-from pydantic.typing import Annotated
 
 
 class BaseNotificationChannel(BaseModel):
@@ -13,7 +12,7 @@ class BaseNotificationChannel(BaseModel):
     """
 
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class EmailNotificationChannel(BaseNotificationChannel):

@@ -2,19 +2,21 @@ from enum import Enum
 from pathlib import Path
 from typing import Literal, Optional, Union
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class DockerBuildConfigModel(BaseModel, extra=Extra.forbid):
+class DockerBuildConfigModel(BaseModel):
     # Docu for more info: https://gabrieldemarmiesse.github.io/python-on-whales/sub-commands/buildx/#build
     build_args: dict[str, str] = Field(default_factory=dict)
     add_hosts: dict[str, str] = Field(default_factory=dict)
     labels: dict[str, str] = Field(default_factory=dict)
-    network: Optional[str]
-    platforms: Optional[list[str]]
-    secrets: Union[str, list[str]] = Field(default_factory=list)
-    ssh: Optional[str]
-    target: Optional[str]
+    network: Optional[str] = None
+    platforms: Optional[list[str]] = None
+    secrets: Union[str, list[str]] = Field(default_factory=lambda: [])
+    ssh: Optional[str] = None
+    target: Optional[str] = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class ImageBuildType(str, Enum):
@@ -23,8 +25,10 @@ class ImageBuildType(str, Enum):
     notebook_ready_image = "notebook_ready_image"
 
 
-class BaseDockerImageModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
-    name: str = Field(min_length=3, max_length=128)
+class BaseDockerImageModel(BaseModel):
+    name: str = Field(..., min_length=3, max_length=128)
+
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
 
 class LocalBuildImageModel(BaseDockerImageModel):
@@ -37,7 +41,7 @@ class LocalBuildImageModel(BaseDockerImageModel):
     """
 
     build_type: Literal[ImageBuildType.local_build_image]
-    build_args: Optional[dict[str, str]]
+    build_args: Optional[dict[str, str]] = None
     context_dir: Path
     dockerfile: Path
 
@@ -65,7 +69,7 @@ class NotebookReadyImageModel(BaseDockerImageModel):
     """
 
     build_type: Literal[ImageBuildType.notebook_ready_image]
-    build_args: Optional[dict[str, str]]
+    build_args: Optional[dict[str, str]] = None
     base_image: str = "gcr.io/deeplearning-platform-release/base-cpu"
     requirements_txt: Path
 
@@ -73,7 +77,7 @@ class NotebookReadyImageModel(BaseDockerImageModel):
 DockerImageModel = Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]
 
 
-class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
+class DockerModel(BaseModel):
     """
     - `images`- [list[Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]]] Docker images
     that will be used in wanna-ml resources
@@ -90,12 +94,12 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
     """
 
     images: list[DockerImageModel] = Field(default_factory=list)
-    repository: Optional[str]
-    registry: Optional[str]
+    repository: Optional[str] = None
+    registry: Optional[str] = None
     cloud_build_timeout: int = 12000
     cloud_build: bool = False
-    cloud_build_workerpool: Optional[str]
-    cloud_build_workerpool_location: Optional[str]
+    cloud_build_workerpool: Optional[str] = None
+    cloud_build_workerpool_location: Optional[str] = None
     cloud_build_kaniko_version: Optional[str] = "latest"
     cloud_build_kaniko_flags: list[str] = Field(
         default_factory=lambda: [
@@ -105,8 +109,12 @@ class DockerModel(BaseModel, extra=Extra.forbid, validate_assignment=True):
         ]
     )
 
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
-class DockerBuildResult(BaseModel, extra=Extra.forbid):
+
+class DockerBuildResult(BaseModel):
     name: str
     tags: list[str]
     build_type: ImageBuildType
+
+    model_config = ConfigDict(extra="forbid")

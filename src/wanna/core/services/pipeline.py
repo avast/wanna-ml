@@ -361,7 +361,7 @@ class PipelineService(BaseService[PipelineModel]):
 
     @staticmethod
     def read_manifest(connector: VertexConnector[PipelineResource], path: str) -> PipelineResource:
-        return PipelineResource.parse_obj(connector.read(path))
+        return PipelineResource.model_validate(connector.read(path))
 
     def _delete_one_instance(self, instance: PipelineModel) -> None:
         raise NotImplementedError

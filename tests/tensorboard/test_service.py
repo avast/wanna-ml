@@ -12,12 +12,12 @@ class TestTensorboardService:
             "_list_running_instances",
             mocks.mock_list_running_instances,
         )
-        tb = TensorboardModel.parse_obj(
+        tb = TensorboardModel.model_validate(
             {"name": "tb1", "project_id": "gcp-project", "region": "europe-west4"}
         )
         found = tb_service._find_existing_tensorboard_by_model(instance=tb)
         assert found is not None, ""
-        tb = TensorboardModel.parse_obj(
+        tb = TensorboardModel.model_validate(
             {"name": "tb13", "project_id": "gcp-project", "region": "europe-west4"}
         )
         found = tb_service._find_existing_tensorboard_by_model(instance=tb)
@@ -25,7 +25,7 @@ class TestTensorboardService:
 
 
 def get_config():
-    return WannaConfigModel.parse_obj(
+    return WannaConfigModel.model_validate(
         {
             "wanna_project": {
                 "name": "the-leaky-couldron",

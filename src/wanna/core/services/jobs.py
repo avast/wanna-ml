@@ -218,7 +218,7 @@ class JobService(BaseService[JobModelTypeAlias]):
                         if manifest.job_config.hp_tuning
                         else {}
                     )
-                    overriden_hp_tuning = HyperparameterTuning.parse_obj(
+                    overriden_hp_tuning = HyperparameterTuning.model_validate(
                         {**manifest_hp_params, **override_hp_params}
                     )
                     manifest.job_config.hp_tuning = overriden_hp_tuning
@@ -517,9 +517,9 @@ class JobService(BaseService[JobModelTypeAlias]):
 
         json_dict = connector.read(manifest_path)
         try:
-            return JobResource[CustomJobModel].parse_obj(json_dict)
+            return JobResource[CustomJobModel].model_validate(json_dict)
         except:
-            return JobResource[TrainingCustomJobModel].parse_obj(json_dict)
+            return JobResource[TrainingCustomJobModel].model_validate(json_dict)
 
     def write_manifest(
         self,
