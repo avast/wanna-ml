@@ -1,4 +1,6 @@
-from typing import Any
+from typing import Any, cast
+
+from pydantic_core.core_schema import ValidationInfo
 
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_project import WannaProjectModel
@@ -60,7 +62,7 @@ def enrich_instance_info_with_gcp_settings_dict(
         dict: enriched with general gcp_settings if those information was not set on instance level
 
     """
-    gcp_settings_dict = gcp_profile.dict().copy()
+    gcp_settings_dict = gcp_profile.model_dump().copy()
     gcp_settings_dict = {k: v for k, v in gcp_settings_dict.items() if v is not None}
     instance_info = gcp_settings_dict
     instance_info.update(instance_dict)
@@ -87,7 +89,7 @@ def enrich_gcp_profile_with_wanna_default_labels(
     return values_inst
 
 
-def enrich_instance_with_gcp_settings(cls, values_inst, values):  # noqa: ARG001
+def enrich_instance_with_gcp_settings_v2(value, info: ValidationInfo):  # noqa: ARG001
     """
     Enrich dictionary representing one instance (one notebook, job, etc.)
     with information wanna_project and gcp_settings. This is useful in scenario when
@@ -102,9 +104,11 @@ def enrich_instance_with_gcp_settings(cls, values_inst, values):  # noqa: ARG001
     Returns:
         values_inst: values representing one instance enriched with information from wanna_project and gcp_settings
     """
-    values_inst = enrich_instance_info_with_gcp_settings_dict(
-        instance_dict=values_inst, gcp_profile=values.get("gcp_profile")
+    value = enrich_instance_info_with_gcp_settings_dict(
+        instance_dict=value, gcp_profile=cast(GCPProfileModel, info.data.get("gcp_profile"))
     )
-    labels = generate_default_labels(wanna_project=values.get("wanna_project"))
-    values_inst = add_labels(instance_dict=values_inst, new_labels=labels)
-    return values_inst
+    labels = generate_default_labels(
+        wanna_project=cast(WannaProjectModel, info.data.get("wanna_project"))
+    )
+    value = add_labels(instance_dict=value, new_labels=labels)
+    return value

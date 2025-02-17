@@ -1,10 +1,17 @@
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Annotated, Any, Optional, Union
 
-from pydantic import Field, root_validator
+from pydantic import Field, StringConstraints, model_validator
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+
+PipelineName = Annotated[
+    str,
+    StringConstraints(
+        min_length=3, max_length=63, pattern="^[a-z][a-z0-9-]*[a-z0-9]$", to_lower=True
+    ),
+]
 
 
 class PipelineModel(BaseInstanceModel):
@@ -29,22 +36,20 @@ class PipelineModel(BaseInstanceModel):
     - `enable_caching` - [bool] enable KubeFlow pipeline execution caching
     """
 
-    name: str = Field(
-        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
-    )
+    name: PipelineName
     zone: str
     pipeline_function: str
-    pipeline_params: Union[Path, dict[str, Any], None]
+    pipeline_params: Union[Path, dict[str, Any], None] = None
     docker_image_ref: list[str] = Field(default_factory=list)
-    schedule: Optional[CloudSchedulerModel]
-    tensorboard_ref: Optional[str]
-    network: Optional[str]
+    schedule: Optional[CloudSchedulerModel] = None
+    tensorboard_ref: Optional[str] = None
+    network: Optional[str] = None
     notification_channels_ref: list[str] = Field(default_factory=list)
-    sla_hours: Optional[float]
+    sla_hours: Optional[float] = None
     enable_caching: bool = True
-    experiment: Optional[str]
+    experiment: Optional[str] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def set_experiment(cls, values):  # pylint: disable=no-self-argument,no-self-use
         """
         Set default pipeline experiment name based on pipeline name

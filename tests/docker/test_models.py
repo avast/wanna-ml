@@ -5,7 +5,7 @@ from wanna.core.models.docker import DockerModel
 
 class TestDockerModel(unittest.TestCase):
     def test_local_build_image(self):
-        DockerModel.parse_obj(
+        DockerModel.model_validate(
             {
                 "images": [
                     {
@@ -20,7 +20,7 @@ class TestDockerModel(unittest.TestCase):
         )
 
     def test_provided_image(self):
-        DockerModel.parse_obj(
+        DockerModel.model_validate(
             {
                 "images": [
                     {
@@ -34,7 +34,7 @@ class TestDockerModel(unittest.TestCase):
         )
 
     def test_notebook_ready_image(self):
-        DockerModel.parse_obj(
+        DockerModel.model_validate(
             {
                 "images": [
                     {

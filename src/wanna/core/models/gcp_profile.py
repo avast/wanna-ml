@@ -1,12 +1,12 @@
 from typing import Optional
 
-from pydantic import BaseModel, Extra, root_validator, validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from wanna.core.utils import validators
 from wanna.core.utils.gcp import get_region_from_zone
 
 
-class GCPProfileModel(BaseModel, extra=Extra.forbid):
+class GCPProfileModel(BaseModel):
     """
     `wanna_profile` section of the yaml config consists of the following inputs:
 
@@ -35,23 +35,26 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
 
     profile_name: str
     project_id: str
-    zone: Optional[str]
+    zone: Optional[str] = None
     region: str
-    labels: Optional[dict[str, str]]
+    labels: Optional[dict[str, str]] = None
     bucket: str
-    service_account: Optional[str]
-    network: Optional[str]
-    subnet: Optional[str]
-    kms_key: Optional[str]
+    service_account: Optional[str] = None
+    network: Optional[str] = None
+    subnet: Optional[str] = None
+    kms_key: Optional[str] = None
     docker_repository: str = "wanna"
-    docker_registry: Optional[str]
-    env_vars: Optional[dict[str, str]]
+    docker_registry: Optional[str] = None
+    env_vars: Optional[dict[str, str]] = None
 
-    _ = validator("project_id", allow_reuse=True)(validators.validate_project_id)
-    _ = validator("zone", allow_reuse=True)(validators.validate_zone)
-    _ = validator("labels", allow_reuse=True)(validators.validate_labels)
+    model_config = ConfigDict(extra="forbid")
 
-    @root_validator(pre=True)
+    _project_id = field_validator("project_id")(validators.validate_project_id)
+    _zone = field_validator("zone")(validators.validate_zone)
+    _labels = field_validator("labels")(validators.validate_labels)
+    _region = field_validator("region")(validators.validate_region)
+
+    @model_validator(mode="before")
     def parse_region_from_zone(cls, values):  # pylint: disable=no-self-argument,no-self-use
         """
         In some cases, the zone is defined and region not.
@@ -64,5 +67,3 @@ class GCPProfileModel(BaseModel, extra=Extra.forbid):
         if (region is None) and (zone is not None):
             values["region"] = get_region_from_zone(zone)
         return values
-
-    _ = validator("region", allow_reuse=True)(validators.validate_region)

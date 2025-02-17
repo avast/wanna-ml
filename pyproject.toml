@@ -52,7 +52,7 @@ gitpython = "^3.1.43"
 halo = "^0.0.31"
 Jinja2 = "^3.1.4"
 pathvalidate = "^3.2.0"
-pydantic = "^1.10.13"
+pydantic = "^2.10.6"
 python-on-whales = "^0.71.0"
 pyyaml-include = "^1.3.2"
 PyYAML = "^6.0.1"
@@ -90,15 +90,17 @@ types-pyyaml = "^6.0.12"
 types-requests = "^2.31.0"
 types-setuptools = "^68.2.0"
 pre-commit = "^2.19.0"
+pytest-env = "^1.1.5"
 
 [tool.pytest.ini_options]
 addopts = """
     --verbose
     --ruff
-    --mypy
+    --ruff-format
     --cov-report term
     --cov-report xml:coverage.xml
     --cov=src
+    --mypy
     --durations=0
     --ignore=templates
     --ignore=samples
@@ -116,6 +118,9 @@ filterwarnings = [
     'ignore::DeprecationWarning',
     'ignore::SyntaxWarning',
     'ignore::ResourceWarning',
+]
+env = [
+    "LABEL = test"
 ]
 
 [tool.poe.tasks]

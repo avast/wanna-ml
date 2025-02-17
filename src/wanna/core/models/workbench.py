@@ -1,35 +1,53 @@
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, EmailStr, Extra, Field, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Extra,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.gcp_components import GPU, Disk, VMImage
 from wanna.core.utils import validators
+
+WorkbenchName = Annotated[
+    str,
+    StringConstraints(
+        min_length=3, max_length=63, pattern="^[a-z][a-z0-9-]*[a-z0-9]$", to_lower=True
+    ),
+]
 
 
 class BucketMount(BaseModel, extra=Extra.forbid):
     bucket_name: str
     mount_path: str = "/gcs"
 
-    _bucket_name = validator("bucket_name")(validators.validate_bucket_name)
+    model_config = ConfigDict(extra="forbid")
+
+    _bucket_name = field_validator("bucket_name")(validators.validate_bucket_name)
 
 
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
     vm_image: Optional[VMImage] = None
     docker_image_ref: Optional[str] = None
 
-    _ = root_validator()(validators.validate_only_one_must_be_set)
+    model_config = ConfigDict(extra="forbid")
+
+    _ = model_validator(mode="before")(validators.validate_only_one_must_be_set)
 
 
 class BaseWorkbenchModel(BaseInstanceModel):
-    name: str = Field(
-        min_length=3, max_length=63, to_lower=True, regex="^[a-z][a-z0-9-]*[a-z0-9]$"
-    )
+    name: WorkbenchName
     machine_type: str = "e2-standard-2"
-    gpu: Optional[GPU]
-    data_disk: Optional[Disk]
-    subnet: Optional[str]
-    tensorboard_ref: Optional[str]
+    gpu: Optional[GPU] = None
+    data_disk: Optional[Disk] = None
+    subnet: Optional[str] = None
+    tensorboard_ref: Optional[str] = None
 
 
 class InstanceModel(BaseWorkbenchModel):
@@ -66,8 +84,8 @@ class InstanceModel(BaseWorkbenchModel):
 
     type: Literal["instance"] = "instance"
     zone: str
-    owner: Optional[EmailStr]
-    boot_disk: Optional[Disk]
+    owner: Optional[EmailStr] = None
+    boot_disk: Optional[Disk] = None
     environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage())
     no_public_ip: bool = True
     enable_dataproc: bool = False
@@ -76,9 +94,9 @@ class InstanceModel(BaseWorkbenchModel):
     enable_monitoring: bool = True
     idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=720)  # 12 hours
     collaborative: bool = False
-    env_vars: Optional[dict[str, str]]
-    bucket_mounts: Optional[list[BucketMount]]
-    post_startup_script: Optional[str]  # todo: add validation for existing object in bucket
+    env_vars: Optional[dict[str, str]] = None
+    bucket_mounts: Optional[list[BucketMount]] = None
+    post_startup_script: Optional[str] = None  # todo: add validation for existing object in bucket
     post_startup_script_behavior: Literal[
         "run_once", "run_every_start", "download_and_run_every_start"
     ] = "run_once"
@@ -86,7 +104,7 @@ class InstanceModel(BaseWorkbenchModel):
     delete_to_trash: bool = False
     report_health: bool = True
 
-    _environment_auto_upgrade = validator("environment_auto_upgrade", allow_reuse=True)(
+    _environment_auto_upgrade = field_validator("environment_auto_upgrade")(
         validators.validate_cron_schedule
     )
-    _machine_type = validator("machine_type")(validators.validate_machine_type)
+    _machine_type = field_validator("machine_type")(validators.validate_machine_type)

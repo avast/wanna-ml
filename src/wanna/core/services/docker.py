@@ -126,7 +126,7 @@ class DockerService:
             with open(config_path, encoding="utf-8") as file:
                 # Load workflow file
                 build_config_dict = loaders.load_yaml(file, self.work_dir)
-            build_config = DockerBuildConfigModel.parse_obj(build_config_dict)
+            build_config = DockerBuildConfigModel.model_validate(build_config_dict)
             return build_config
         return None
 

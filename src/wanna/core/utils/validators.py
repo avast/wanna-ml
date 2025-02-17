@@ -6,11 +6,12 @@ from cron_validator import CronValidator
 from google.api_core import exceptions
 from google.cloud.notebooks_v1.types.instance import Instance
 from google.cloud.storage import Client as StorageClient
+from pydantic_core.core_schema import ValidationInfo
 
+from wanna.core.models.docker import DockerModel
 from wanna.core.utils.credentials import get_credentials
 from wanna.core.utils.env import should_validate
 from wanna.core.utils.gcp import (
-    get_available_compute_image_families,
     get_available_compute_machine_types,
     get_available_regions,
     get_available_zones,
@@ -18,15 +19,29 @@ from wanna.core.utils.gcp import (
 )
 
 
+def validate_docker_images_defined(value, info: ValidationInfo):
+    docker_image_ref = info.data.get("environment", {}).get("docker_image_ref")
+    if docker_image_ref:
+        if not info.data.get("docker"):
+            raise ValueError(f"Docker image with name {docker_image_ref} is not defined")
+        docker_configuration: Optional[DockerModel] = info.data.get("docker")
+        defined_images = (
+            [i.name for i in docker_configuration.images] if docker_configuration else []
+        )
+        if docker_image_ref not in defined_images:
+            raise ValueError(f"Docker image with name {docker_image_ref} is not defined")
+    return value
+
+
 def validate_zone(zone, values):
-    available_zones = get_available_zones(project_id=values.get("project_id"))
+    available_zones = get_available_zones(project_id=values.data.get("project_id"))
     if zone not in available_zones:
         raise ValueError(f"Zone invalid ({zone}). must be on of: {available_zones}")
     return zone
 
 
 def validate_region(region, values):
-    available_regions = get_available_regions(project_id=values.get("project_id"))
+    available_regions = get_available_regions(project_id=values.data.get("project_id"))
     if region not in available_regions:
         raise ValueError(f"Region invalid ({region}). must be on of: {available_regions}")
     return region
@@ -34,7 +49,7 @@ def validate_region(region, values):
 
 def validate_machine_type(machine_type, values):
     available_machine_types = get_available_compute_machine_types(
-        project_id=values.get("project_id"), zone=values.get("zone")
+        project_id=values.data.get("project_id"), zone=values.data.get("zone")
     )
     if machine_type not in available_machine_types:
         raise ValueError(
@@ -115,6 +130,9 @@ def validate_project_id(project_id: str) -> str:
 
 
 def validate_labels(labels: dict[str, str]) -> dict[str, str]:
+    if not labels:
+        return {}
+
     for key, value in labels.items():
         if not re.match(r"^[a-z]{1}[a-z0-9_-]{0,62}$", key) or not re.match(
             r"^[a-z0-9_-]{0,63}$", value

@@ -1,6 +1,6 @@
 wanna_project:
   name: wanna-notebook-sample-custom-container
-  version: 1
+  version: "1"
   authors: ["john.doe@example.com", "jane.doe@example.com"]
 
 gcp_profiles:

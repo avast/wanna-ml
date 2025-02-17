@@ -2,8 +2,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Generic, Literal, Optional, TypeVar, Union
 
-from pydantic import BaseModel, EmailStr, Extra, Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
@@ -13,26 +12,25 @@ from wanna.core.models.training_custom_job import JobModelTypeAlias
 PipelineEnvParams = dict[str, Union[str, None, EmailStr]]
 
 
-class GCPResource(
-    GenericModel,
-    extra=Extra.forbid,
-    validate_assignment=True,
-    arbitrary_types_allowed=True,
-):
+class GCPResource(BaseModel):
     name: str
     project: str
     location: str
     service_account: Optional[str] = None
 
+    model_config = ConfigDict(
+        extra="forbid", validate_assignment=True, arbitrary_types_allowed=True
+    )
+
     def get_base_resource(self):
-        return self.dict()
+        return self.model_dump()
 
 
 class NotificationChannelResource(GCPResource):
     type_: Literal["email", "pubsub"]
     config: dict[str, str]
     labels: dict[str, str]
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class CloudSchedulerResource(GCPResource):
@@ -79,10 +77,10 @@ class PipelineResource(GCPResource):
     schedule: Optional[CloudSchedulerModel]
     docker_refs: list[DockerBuildResult]
     compile_env_params: PipelineEnvParams
-    network: Optional[str]
+    network: Optional[str] = None
     notification_channels: list[NotificationChannelModel] = Field(default_factory=list)
-    encryption_spec_key_name: Optional[str]
-    experiment: Optional[str]
+    encryption_spec_key_name: Optional[str] = None
+    experiment: Optional[str] = None
 
 
 # BaseCustomJobModel
@@ -92,11 +90,11 @@ JOB = TypeVar("JOB", bound=JobModelTypeAlias)  # dependency from wanna models
 class JobResource(GCPResource, Generic[JOB]):
     job_payload: dict[str, Any]
     image_refs: list[str] = Field(default_factory=list)
-    tensorboard: Optional[str]
-    network: Optional[str]
+    tensorboard: Optional[str] = None
+    network: Optional[str] = None
     job_config: JOB
-    encryption_spec: Optional[str]
-    environment_variables: Optional[dict[str, str]]
+    encryption_spec: Optional[str] = None
+    environment_variables: Optional[dict[str, str]] = None
 
 
 class PushArtifact(BaseModel):

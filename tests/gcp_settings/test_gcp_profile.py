@@ -16,7 +16,7 @@ class TestWannaConfigModel:
             "bucket": "bucket",
             "network": "default",
         }
-        gcp_settings = GCPProfileModel.parse_obj(gcp_settings_dict)
+        gcp_settings = GCPProfileModel.model_validate(gcp_settings_dict)
         assert gcp_settings.region == "europe-west1"
 
     def test_load_profile_profile_name_set(self):

@@ -6,6 +6,7 @@ from typing import Any
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.models.wanna_config import WannaConfigModel
+from wanna.core.models.wanna_project import WannaProjectModel
 from wanna.core.utils import loaders
 from wanna.core.utils.env import gcp_access_allowed
 from wanna.core.utils.gcp import verify_gcloud_presence
@@ -41,7 +42,7 @@ def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfil
         raise ValueError(f"Profile {profile_name} not found")
 
     selected_profile = profiles.get(profile_name)
-    profile_model = GCPProfileModel.parse_obj(selected_profile)
+    profile_model = GCPProfileModel.model_validate(selected_profile)
     return profile_model
 
 
@@ -63,11 +64,21 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
         with open(wanna_config_path, encoding="utf-8") as file:
             # Load workflow file
             wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
+
+        # GCP Profile & Wanna Project metadata is required to be validated first, since are used as enrichers
         profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
         os.environ["GOOGLE_CLOUD_PROJECT"] = profile_model.project_id
         wanna_dict.update({"gcp_profile": profile_model})
+
+        wanna_project = WannaProjectModel.model_validate(wanna_dict["wanna_project"])
+        wanna_dict.update({"wanna_project": wanna_project})
+
+        # Remove gcp_profiles from the dictionary
         del wanna_dict["gcp_profiles"]
-        wanna_config = WannaConfigModel.parse_obj(wanna_dict)
+
+        # Complete validation and metadata enrichment
+        wanna_config = WannaConfigModel.model_validate(wanna_dict)
+
     logger.user_info(f"GCP profile '{profile_model.profile_name}' will be used.")
     logger.user_info(f"Profile details: {profile_model}")
 
