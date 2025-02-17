@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Generic, Literal, Optional, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from pydantic.generics import GenericModel
 
 from wanna.core.models.cloud_scheduler import CloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
@@ -13,7 +12,7 @@ from wanna.core.models.training_custom_job import JobModelTypeAlias
 PipelineEnvParams = dict[str, Union[str, None, EmailStr]]
 
 
-class GCPResource(GenericModel):
+class GCPResource(BaseModel):
     name: str
     project: str
     location: str
@@ -24,7 +23,7 @@ class GCPResource(GenericModel):
     )
 
     def get_base_resource(self):
-        return self.dict()
+        return self.model_dump()
 
 
 class NotificationChannelResource(GCPResource):
