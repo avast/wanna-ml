@@ -4,7 +4,7 @@ from typing import Any, Generic, Literal, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.cloud_scheduler import CloudSchedulerModel, EnvCloudSchedulerModel
 from wanna.core.models.docker import DockerBuildResult
 from wanna.core.models.notification_channel import NotificationChannelModel
 from wanna.core.models.training_custom_job import JobModelTypeAlias
@@ -74,7 +74,7 @@ class PipelineResource(GCPResource):
     parameter_values: dict[str, Any] = Field(default_factory=dict)
     labels: dict[str, str] = Field(default_factory=dict)
     enable_caching: bool = True
-    schedule: CloudSchedulerModel | None
+    schedule: CloudSchedulerModel | list[EnvCloudSchedulerModel] | None
     docker_refs: list[DockerBuildResult]
     compile_env_params: PipelineEnvParams
     network: str | None = None

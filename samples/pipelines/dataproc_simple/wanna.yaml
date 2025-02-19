@@ -26,6 +26,7 @@ docker:
 pipelines:
   - name: kubeflow-dataproc-pipeline
     schedule:
+      # applies to all environments by default
       cron: 2 * * * *
     bucket: "your-staging-bucket-name"
     pipeline_function: dataproc_simple.pipeline.wanna_pipeline

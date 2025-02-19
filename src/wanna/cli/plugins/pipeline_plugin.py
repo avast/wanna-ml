@@ -93,7 +93,7 @@ class PipelinePlugin(BasePlugin):
     @staticmethod
     def deploy(
         version: str = version_option(instance_type="pipeline"),
-        env: str = typer.Option("local", "--env", "-e", help="Pipeline env"),
+        env: str = typer.Option("local", "--env", "-e", envvar="WANNA_ENV", help="Pipeline env"),
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "deploy"),
