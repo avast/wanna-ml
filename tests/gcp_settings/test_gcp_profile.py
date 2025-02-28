@@ -1,4 +1,5 @@
 import os
+from io import StringIO
 from unittest import mock
 
 import pytest
@@ -8,6 +9,9 @@ from wanna.core.utils.config_loader import load_config_from_yaml
 
 
 class TestWannaConfigModel:
+    with open("samples/notebook/custom_container/wanna.yaml") as f:
+        yaml_content = f.read()
+
     def test_parse_region_from_zone(self):
         gcp_settings_dict = {
             "project_id": "gcp-project",
@@ -47,4 +51,13 @@ class TestWannaConfigModel:
     def test_load_env_variable(self):
         os.environ["LABEL"] = "label_from_env_var"
         config = load_config_from_yaml("samples/notebook/custom_container/wanna.yaml", "test")
+        assert config.gcp_profile.labels["env_var"] == "label_from_env_var"
+
+    @mock.patch("sys.stdin", StringIO(yaml_content))
+    def test_load_stdin(self):
+        os.environ["LABEL"] = "label_from_env_var"
+        config = load_config_from_yaml("-", "test")
+        assert config.gcp_profile.zone == "europe-west4-a"
+        assert config.gcp_profile.profile_name == "test"
+        assert config.gcp_profile.bucket == "your-staging-bucket-name"
         assert config.gcp_profile.labels["env_var"] == "label_from_env_var"

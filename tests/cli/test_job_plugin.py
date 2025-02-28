@@ -2,11 +2,10 @@ import os
 import unittest
 from pathlib import Path
 
-from mock.mock import MagicMock, patch
+from mock.mock import patch
 from typer.testing import CliRunner
 
 from wanna.cli.plugins.job_plugin import JobPlugin
-from wanna.core.services import jobs
 
 
 class TestJobPlugin(unittest.TestCase):
