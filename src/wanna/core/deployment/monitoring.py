@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from google.cloud.exceptions import NotFound
 from google.cloud.logging import Client as LoggingClient
@@ -26,7 +26,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
     @staticmethod
     def _get_notification_channel(
         client: NotificationChannelServiceClient, project: str, display_name: str
-    ) -> Optional[NotificationChannel]:
+    ) -> NotificationChannel | None:
         channels = list(client.list_notification_channels(name=f"projects/{project}"))
         channels = [channel for channel in channels if channel.display_name == display_name]
         if channels:

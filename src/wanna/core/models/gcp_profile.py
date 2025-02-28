@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from wanna.core.utils import validators
@@ -35,17 +33,17 @@ class GCPProfileModel(BaseModel):
 
     profile_name: str
     project_id: str
-    zone: Optional[str] = None
+    zone: str | None = None
     region: str
-    labels: Optional[dict[str, str]] = None
+    labels: dict[str, str] | None = None
     bucket: str
-    service_account: Optional[str] = None
-    network: Optional[str] = None
-    subnet: Optional[str] = None
-    kms_key: Optional[str] = None
+    service_account: str | None = None
+    network: str | None = None
+    subnet: str | None = None
+    kms_key: str | None = None
     docker_repository: str = "wanna"
-    docker_registry: Optional[str] = None
-    env_vars: Optional[dict[str, str]] = None
+    docker_registry: str | None = None
+    env_vars: dict[str, str] | None = None
 
     model_config = ConfigDict(extra="forbid")
 

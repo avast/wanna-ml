@@ -3,8 +3,7 @@ import pathlib
 import sys
 from io import StringIO
 from pathlib import Path
-from typing import Any, TypeVar, Union
-from typing_extensions import ParamSpec
+from typing import Any, ParamSpec, TypeVar
 
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
@@ -54,7 +53,7 @@ def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfil
 
 
 def load_config_from_yaml(
-    wanna_config_path: Union[Path, str], gcp_profile_name: str
+    wanna_config_path: Path | str, gcp_profile_name: str
 ) -> WannaConfigModel:
     """
     Load the yaml file from wanna_config_path and parses the information to the models.

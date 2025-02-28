@@ -1,7 +1,6 @@
 import itertools
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from google.api_core.operation import Operation
 from google.cloud import compute_v1
@@ -44,7 +43,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         self,
         config: WannaConfigModel,
         workdir: Path,
-        owner: Optional[str] = None,
+        owner: str | None = None,
         version: str = "dev",
     ):
         super().__init__(
@@ -451,13 +450,11 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
     def push(self, instance_name: str):
         instances = self._filter_instances_by_name(instance_name)
 
-        docker_image_refs = set(
-            [
-                instance.environment.docker_image_ref
-                for instance in instances
-                if instance.environment.docker_image_ref
-            ]
-        )
+        docker_image_refs = {
+            instance.environment.docker_image_ref
+            for instance in instances
+            if instance.environment.docker_image_ref
+        }
         if docker_image_refs:
             if self.docker_service:
                 for docker_image_ref in docker_image_refs:

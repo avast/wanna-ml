@@ -1,4 +1,4 @@
-from typing import Annotated, Optional, Union
+from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, Field
 
@@ -19,13 +19,13 @@ from wanna.core.utils.validators import validate_docker_images_defined
 class WannaConfigModel(BaseModel, validate_assignment=True):
     wanna_project: WannaProjectModel
     gcp_profile: GCPProfileModel
-    docker: Optional[DockerModel] = None
+    docker: DockerModel | None = None
     tensorboards: list[
         Annotated[TensorboardModel, BeforeValidator(enrich_instance_with_gcp_settings_v2)]
     ] = Field(default_factory=list)
     jobs: list[
         Annotated[
-            Union[CustomJobModel, TrainingCustomJobModel],
+            CustomJobModel | TrainingCustomJobModel,
             BeforeValidator(enrich_instance_with_gcp_settings_v2),
         ]
     ] = Field(default_factory=list)

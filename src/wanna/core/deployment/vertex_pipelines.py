@@ -3,7 +3,6 @@ import json
 import os
 import zipfile
 from pathlib import Path
-from typing import Optional
 
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import logging
@@ -58,7 +57,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
     def run_pipeline(
         self,
         resource: PipelineResource,
-        extra_params: Optional[Path],
+        extra_params: Path | None,
         sync: bool = True,
     ) -> None:
         mode = "sync mode" if sync else "fire-forget mode"
@@ -256,11 +255,11 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         sink = logging_client.sink(sink_name, filter_=filter_, destination=destination)
 
         if sink.exists():
-            logger.user_error("Sink {} already exists.".format(sink.name))
+            logger.user_error(f"Sink {sink.name} already exists.")
             return
 
         sink.create()
-        logger.user_info("Created sink {}".format(sink.name))
+        logger.user_info(f"Created sink {sink.name}")
 
     def upsert_sla_function(self, resource: PipelineResource, version: str, env: str) -> None:
         logger.user_info(

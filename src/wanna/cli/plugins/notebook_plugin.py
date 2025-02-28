@@ -1,6 +1,5 @@
 import pathlib
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -61,7 +60,7 @@ class NotebookPlugin(BasePlugin):
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("workbench instance", "create"),
-        owner: Optional[str] = typer.Option(None, "--owner", "-o", help=""),
+        owner: str | None = typer.Option(None, "--owner", "-o", help=""),
         version: str = version_option(instance_type="workbench instance"),
         mode: PushMode = push_mode_option,
     ) -> None:

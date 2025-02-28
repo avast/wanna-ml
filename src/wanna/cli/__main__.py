@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Optional
 
 import typer
 from cookiecutter.main import cookiecutter
@@ -39,13 +38,13 @@ def init(
         "-t",
         help="The git repository of the template you want to use",
     ),
-    checkout: Optional[str] = typer.Option(
+    checkout: str | None = typer.Option(
         None,
         "--checkout",
         "-c",
         help="The branch, tag or commit to checkout after cloning the repository",
     ),
-    directory: Optional[str] = typer.Option(
+    directory: str | None = typer.Option(
         None,
         "--directory",
         "-d",

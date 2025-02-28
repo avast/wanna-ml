@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
@@ -8,15 +8,15 @@ from wanna.core.utils import validators
 class BaseInstanceModel(BaseModel, validate_assignment=True):
     name: str
     project_id: str
-    zone: Optional[str] = None
-    region: Optional[str] = None
-    labels: Optional[dict[str, str]] = None
-    description: Optional[str] = None
-    service_account: Optional[EmailStr] = None
-    network: Optional[str] = None
-    bucket: Optional[str] = None
-    tags: Optional[list[str]] = None
-    metadata: Optional[dict[str, Any]] = None
+    zone: str | None = None
+    region: str | None = None
+    labels: dict[str, str] | None = None
+    description: str | None = None
+    service_account: EmailStr | None = None
+    network: str | None = None
+    bucket: str | None = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
 
     model_config = ConfigDict(extra="ignore", validate_assignment=True)
 

@@ -1,7 +1,6 @@
-from typing import Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from typing_extensions import Annotated
 
 from wanna.core.models.base_instance import BaseInstanceModel
 from wanna.core.models.gcp_components import GPU, Disk
@@ -17,19 +16,19 @@ class PythonPackageModel(BaseModel):
 
 class ContainerModel(BaseModel):
     docker_image_ref: str
-    command: Optional[list[str]] = None
+    command: list[str] | None = None
 
     model_config = ConfigDict(extra="forbid")
 
 
 class WorkerPoolModel(BaseModel):
-    python_package: Optional[PythonPackageModel] = None
-    container: Optional[ContainerModel] = None
-    args: Optional[list[Union[str, float, int]]] = None
-    env: Optional[dict[str, str]] = None
+    python_package: PythonPackageModel | None = None
+    container: ContainerModel | None = None
+    args: list[str | float | int] | None = None
+    env: dict[str, str] | None = None
     machine_type: str = "n1-standard-4"
-    gpu: Optional[GPU] = None
-    boot_disk: Optional[Disk] = None
+    gpu: GPU | None = None
+    boot_disk: Disk | None = None
     replica_count: int = 1
 
     model_config = ConfigDict(extra="forbid")
@@ -108,8 +107,8 @@ class HyperparameterTuning(BaseModel):
     parameters: list[HyperParamater]
     max_trial_count: int = 15
     parallel_trial_count: int = 3
-    search_algorithm: Optional[Literal["grid", "random"]] = None
-    encryption_spec: Optional[str] = None
+    search_algorithm: Literal["grid", "random"] | None = None
+    encryption_spec: str | None = None
 
 
 class BaseCustomJobModel(BaseInstanceModel):
@@ -138,11 +137,11 @@ class BaseCustomJobModel(BaseInstanceModel):
     region: str
     enable_web_access: bool = False
     bucket: str
-    base_output_directory: Optional[str] = None
-    tensorboard_ref: Optional[str] = None
+    base_output_directory: str | None = None
+    tensorboard_ref: str | None = None
     timeout_seconds: int = 60 * 60 * 24  # 24 hours
-    encryption_spec: Optional[Any] = None
-    env_vars: Optional[dict[str, str]] = None
+    encryption_spec: Any | None = None
+    env_vars: dict[str, str] | None = None
 
     @model_validator(mode="before")
     def _set_base_output_directory_if_not_provided(  # pylint: disable=no-self-argument,no-self-use
@@ -166,7 +165,7 @@ class BaseCustomJobModel(BaseInstanceModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-custom-job
 class CustomJobModel(BaseCustomJobModel):
     workers: list[WorkerPoolModel]
-    hp_tuning: Optional[HyperparameterTuning] = None
+    hp_tuning: HyperparameterTuning | None = None
 
     @field_validator("workers", mode="after")
     def _worker_pool_must_have_same_spec(  # pylint: disable=no-self-argument,no-self-use
@@ -187,7 +186,7 @@ class CustomJobModel(BaseCustomJobModel):
 # https://cloud.google.com/vertex-ai/docs/training/create-training-pipeline
 class TrainingCustomJobModel(BaseCustomJobModel):
     worker: WorkerPoolModel
-    reduction_server: Optional[ReductionServerModel] = None
+    reduction_server: ReductionServerModel | None = None
 
 
 JobModelTypeAlias = Union[CustomJobModel, TrainingCustomJobModel]

@@ -1,12 +1,11 @@
 import os
-from typing import Optional
 
 from wanna.core.loggers.wanna_logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def get_env_bool(value: Optional[str], fallback: bool) -> bool:
+def get_env_bool(value: str | None, fallback: bool) -> bool:
     """
     Checks if a str value can be considered True or False,
         mostly used to extract bool values from env vars

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from google.auth.credentials import Credentials
 from google.cloud.aiplatform_v1.types import Tensorboard
@@ -22,7 +21,7 @@ from google.cloud.storage.bucket import Bucket
 
 
 class MockZonesClient:
-    def __init__(self, credentials: Optional[Credentials] = None):
+    def __init__(self, credentials: Credentials | None = None):
         self.credentials = credentials
 
     def list(self, project: str):  # noqa: ARG002
@@ -31,7 +30,7 @@ class MockZonesClient:
 
 
 class MockRegionsClient:
-    def __init__(self, credentials: Optional[Credentials] = None):
+    def __init__(self, credentials: Credentials | None = None):
         self.credentials = credentials
 
     def list(self, project: str):  # noqa: ARG002
@@ -40,7 +39,7 @@ class MockRegionsClient:
 
 
 class MockImagesClient:
-    def __init__(self, credentials: Optional[Credentials] = None):
+    def __init__(self, credentials: Credentials | None = None):
         self.credentials = credentials
 
     def list(self, list_images_request):  # noqa: ARG002
@@ -55,7 +54,7 @@ class MockImagesClient:
 
 
 class MockMachineTypesClient:
-    def __init__(self, credentials: Optional[Credentials] = None):
+    def __init__(self, credentials: Credentials | None = None):
         self.credentials = credentials
 
     def list(self, project: str, zone: str):  # noqa
@@ -72,14 +71,14 @@ class MockMachineTypesClient:
 
 
 class MockStorageClient:
-    def __init__(self, credentials: Optional[Credentials] = None):
+    def __init__(self, credentials: Credentials | None = None):
         self.credentials = credentials
 
     def get_bucket(self, bucket_name: str):
         return Bucket(client=self, name=bucket_name)
 
 
-def mock_get_credentials() -> Optional[Credentials]:
+def mock_get_credentials() -> Credentials | None:
     return None
 
 

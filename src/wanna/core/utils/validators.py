@@ -1,6 +1,5 @@
 import logging
 import re
-from typing import Optional
 
 from cron_validator import CronValidator
 from google.api_core import exceptions
@@ -24,7 +23,7 @@ def validate_docker_images_defined(value, info: ValidationInfo):
     if docker_image_ref:
         if not info.data.get("docker"):
             raise ValueError(f"Docker image with name {docker_image_ref} is not defined")
-        docker_configuration: Optional[DockerModel] = info.data.get("docker")
+        docker_configuration: DockerModel | None = info.data.get("docker")
         defined_images = (
             [i.name for i in docker_configuration.images] if docker_configuration else []
         )
@@ -58,7 +57,7 @@ def validate_machine_type(machine_type, values):
     return machine_type
 
 
-def validate_network_name(network_name: Optional[str]):
+def validate_network_name(network_name: str | None):
     if network_name and not get_network_info(network_name):
         if not re.match("^[a-z][a-z0-9-]+$", network_name):
             raise ValueError(
