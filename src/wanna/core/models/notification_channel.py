@@ -12,7 +12,7 @@ class BaseNotificationChannel(BaseModel):
     """
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class EmailNotificationChannel(BaseNotificationChannel):

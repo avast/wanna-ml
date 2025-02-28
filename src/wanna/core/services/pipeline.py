@@ -2,7 +2,7 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 from caseconverter import snakecase
 from google.cloud import aiplatform
@@ -41,7 +41,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str = "dev",
         push_mode: PushMode = PushMode.all,
         connector: VertexConnector[PipelineResource] = VertexConnector[PipelineResource](),
-        kubeflow_pipeline_caching: Optional[bool] = None,
+        kubeflow_pipeline_caching: bool | None = None,
     ):
         super().__init__(
             instance_type="pipeline",
@@ -66,7 +66,7 @@ class PipelineService(BaseService[PipelineModel]):
             channel.name: channel for channel in self.config.notification_channels
         }
 
-    def build(self, instance_name: str, pipeline_params_path: Optional[Path] = None) -> list[Path]:
+    def build(self, instance_name: str, pipeline_params_path: Path | None = None) -> list[Path]:
         """
         Create an instance with name "name" based on wanna-ml config.
         Args:
@@ -155,7 +155,7 @@ class PipelineService(BaseService[PipelineModel]):
         return push_tasks
 
     @staticmethod
-    def get_pipeline_bucket(bucket: Optional[str], fallback_bucket: str) -> str:
+    def get_pipeline_bucket(bucket: str | None, fallback_bucket: str) -> str:
         if bucket:
             return bucket if bucket.startswith("gs://") else f"gs://{bucket}"
         else:
@@ -179,7 +179,7 @@ class PipelineService(BaseService[PipelineModel]):
     @staticmethod
     def run(
         pipelines: list[str],
-        extra_params: Optional[Path] = None,
+        extra_params: Path | None = None,
         sync: bool = True,
     ) -> None:
         connector = VertexConnector[PipelineResource]()
@@ -193,11 +193,11 @@ class PipelineService(BaseService[PipelineModel]):
         pipeline_paths: PipelinePaths,
         pipeline_instance: PipelineModel,
         version: str,
-        images: list[tuple[DockerImageModel, Optional[Image], str]],
-        tensorboard: Optional[str],
-        network: Optional[str],
-        pipeline_params_path: Optional[Path] = None,
-    ) -> tuple[PipelineEnvParams, Union[dict[Any, Any], dict[str, Any]]]:
+        images: list[tuple[DockerImageModel, Image | None, str]],
+        tensorboard: str | None,
+        network: str | None,
+        pipeline_params_path: Path | None = None,
+    ) -> tuple[PipelineEnvParams, dict[Any, Any] | dict[str, Any]]:
         # Prepare env params to be exported
         pipeline_env_params = {
             "project_id": pipeline_instance.project_id,
@@ -254,7 +254,7 @@ class PipelineService(BaseService[PipelineModel]):
         return pipeline_env_params, pipeline_compile_params
 
     def _compile_one_instance(
-        self, pipeline: PipelineModel, pipeline_params_path: Optional[Path] = None
+        self, pipeline: PipelineModel, pipeline_params_path: Path | None = None
     ) -> Path:
         image_tags = [
             self.docker_service.get_image(docker_image_ref=docker_image_ref)

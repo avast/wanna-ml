@@ -1,7 +1,6 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Optional, Union
 
 from caseconverter import kebabcase
 from dirhash import dirhash
@@ -61,7 +60,7 @@ class DockerService:
     ):
         self.docker_model = docker_model
         self.image_models = docker_model.images
-        self.image_store: dict[str, tuple[DockerImageModel, Optional[Image], str]] = {}
+        self.image_store: dict[str, tuple[DockerImageModel, Image | None, str]] = {}
 
         # Artifactory mirrors to different registry/projectid/repository combo
         registry_suffix = os.getenv("WANNA_DOCKER_REGISTRY_SUFFIX")
@@ -109,9 +108,7 @@ class DockerService:
             "You need running docker client on your machine to use WANNA cli with local docker build"
         )
 
-    def _read_build_config(
-        self, config_path: Union[Path, str]
-    ) -> Union[DockerBuildConfigModel, None]:
+    def _read_build_config(self, config_path: Path | str) -> DockerBuildConfigModel | None:
         """
         Reads the DockerBuildConfig from local file.
         If the file does not exist, return None.
@@ -156,7 +153,7 @@ class DockerService:
         ignores = []
 
         if docker_ignore.exists():
-            with open(docker_ignore, "r", encoding="utf-8") as f:
+            with open(docker_ignore, encoding="utf-8") as f:
                 lines = f.readlines()
                 ignores += [
                     ignore.rstrip()
@@ -172,7 +169,7 @@ class DockerService:
         tags: list[str],
         docker_image_ref: str,
         **build_args,
-    ) -> Optional[Image]:
+    ) -> Image | None:
         """
         Build a docker image locally or in GCP Cloud Build.
 
@@ -220,7 +217,7 @@ class DockerService:
             )
             return image  # type: ignore
 
-    def _pull_image(self, image_url: str) -> Union[Image, None]:
+    def _pull_image(self, image_url: str) -> Image | None:
         if self.cloud_build or self.quick_mode:
             # TODO: verify that images exists remotely but dont pull them to local
             return None
@@ -253,7 +250,7 @@ class DockerService:
     def get_image(
         self,
         docker_image_ref: str,
-    ) -> tuple[DockerImageModel, Optional[Image], str]:
+    ) -> tuple[DockerImageModel, Image | None, str]:
         """
         A wrapper around _get_image that checks if the docker image has been already build / pulled
 
@@ -275,7 +272,7 @@ class DockerService:
     def _get_image(
         self,
         docker_image_ref: str,
-    ) -> tuple[DockerImageModel, Optional[Image], str]:
+    ) -> tuple[DockerImageModel, Image | None, str]:
         """
         Given the docker_image_ref, this function prepares the image for you.
         Depending on the build_type, it either build the docker image or
@@ -339,7 +336,7 @@ class DockerService:
         )
 
     @staticmethod
-    def _get_dirhash(directory: Path, ignore_patterns: Optional[list[str]] = None) -> str:
+    def _get_dirhash(directory: Path, ignore_patterns: list[str] | None = None) -> str:
         """
         Get the checksum of the directory.
 
@@ -385,7 +382,7 @@ class DockerService:
         context_dir_hash_match = False
 
         if cache_file.exists():
-            with open(cache_file, "r", encoding="utf-8") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 old_hash = f.read().replace("\n", "")
                 context_dir_hash_match = old_hash == sha256hash
 
@@ -395,7 +392,7 @@ class DockerService:
         self,
         hash_cache_dir: Path,
         context_dir: Path,
-        ignore_patterns: Optional[list[str]] = None,
+        ignore_patterns: list[str] | None = None,
     ) -> None:
         """
         Write the checksum of the context_dir to a file.
@@ -419,7 +416,7 @@ class DockerService:
         file_path: Path,
         tags: list[str],
         docker_image_ref: str,
-        ignore_patterns: Optional[list[str]] = None,
+        ignore_patterns: list[str] | None = None,
     ) -> None:
         """
         Build a docker container in GCP Cloud Build and push the images to registry.
@@ -503,7 +500,7 @@ class DockerService:
         except:
             raise Exception(f"Build failed {link}")
 
-    def push_image(self, image_or_tags: Union[Image, list[str]], quiet: bool = False) -> None:
+    def push_image(self, image_or_tags: Image | list[str], quiet: bool = False) -> None:
         """
         Push a docker image to the registry (image must have tags)
         If you are in the cloud_build mode, nothing is pushed, images already live in cloud.
@@ -639,7 +636,7 @@ class DockerService:
         self,
         context_dir: Path,
         docker_image_ref: str,
-        ignore_patterns: Optional[list[str]] = None,
+        ignore_patterns: list[str] | None = None,
     ) -> Blob:
         """
         Tar the context_dir and upload it to GCS.

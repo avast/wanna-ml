@@ -1,5 +1,5 @@
 import logging
-from typing import Union, cast
+from typing import cast
 
 import typer
 from google.cloud import aiplatform
@@ -84,7 +84,7 @@ class TensorboardService(BaseService[TensorboardModel]):
 
     def _find_existing_tensorboard_by_model(
         self, instance: TensorboardModel
-    ) -> Union[Tensorboard, None]:
+    ) -> Tensorboard | None:
         """
         Given pydantic tensorboard model, find the actual running tensorboard instance on GCP.
 

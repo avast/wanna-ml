@@ -1,7 +1,6 @@
 import functools
 import logging
 import os
-from typing import Optional
 
 import gcloud_config_helper
 from google import auth
@@ -16,7 +15,7 @@ logger = get_logger(__name__)
 
 
 @functools.lru_cache(maxsize=1)
-def get_credentials() -> Optional[Credentials]:
+def get_credentials() -> Credentials | None:
     if gcp_access_allowed:
         impersonate_account = os.getenv("WANNA_IMPERSONATE_ACCOUNT")
         target_scopes = ["https://www.googleapis.com/auth/cloud-platform"]

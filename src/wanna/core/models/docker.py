@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,11 +10,11 @@ class DockerBuildConfigModel(BaseModel):
     build_args: dict[str, str] = Field(default_factory=dict)
     add_hosts: dict[str, str] = Field(default_factory=dict)
     labels: dict[str, str] = Field(default_factory=dict)
-    network: Optional[str] = None
-    platforms: Optional[list[str]] = None
-    secrets: Union[str, list[str]] = Field(default_factory=lambda: [])
-    ssh: Optional[str] = None
-    target: Optional[str] = None
+    network: str | None = None
+    platforms: list[str] | None = None
+    secrets: str | list[str] = Field(default_factory=lambda: [])
+    ssh: str | None = None
+    target: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -41,7 +41,7 @@ class LocalBuildImageModel(BaseDockerImageModel):
     """
 
     build_type: Literal[ImageBuildType.local_build_image]
-    build_args: Optional[dict[str, str]] = None
+    build_args: dict[str, str] | None = None
     context_dir: Path
     dockerfile: Path
 
@@ -69,7 +69,7 @@ class NotebookReadyImageModel(BaseDockerImageModel):
     """
 
     build_type: Literal[ImageBuildType.notebook_ready_image]
-    build_args: Optional[dict[str, str]] = None
+    build_args: dict[str, str] | None = None
     base_image: str = "gcr.io/deeplearning-platform-release/base-cpu"
     requirements_txt: Path
 
@@ -94,13 +94,13 @@ class DockerModel(BaseModel):
     """
 
     images: list[DockerImageModel] = Field(default_factory=list)
-    repository: Optional[str] = None
-    registry: Optional[str] = None
+    repository: str | None = None
+    registry: str | None = None
     cloud_build_timeout: int = 12000
     cloud_build: bool = False
-    cloud_build_workerpool: Optional[str] = None
-    cloud_build_workerpool_location: Optional[str] = None
-    cloud_build_kaniko_version: Optional[str] = "latest"
+    cloud_build_workerpool: str | None = None
+    cloud_build_workerpool_location: str | None = None
+    cloud_build_kaniko_version: str | None = "latest"
     cloud_build_kaniko_flags: list[str] = Field(
         default_factory=lambda: [
             "--cache=true",

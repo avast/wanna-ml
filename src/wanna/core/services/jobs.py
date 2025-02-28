@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import typer
 from google.cloud import aiplatform
@@ -165,9 +165,9 @@ class JobService(BaseService[JobModelTypeAlias]):
     def run(
         manifests: list[str],
         sync: bool = True,
-        hp_params: Optional[Path] = None,
-        command_override: Optional[list[str]] = None,
-        args_override: Optional[list[Union[str, float, int]]] = None,
+        hp_params: Path | None = None,
+        command_override: list[str] | None = None,
+        args_override: list[str | float | int] | None = None,
     ) -> None:
         """
         Run a Vertex AI Custom Job(s) with a given JobManifest
@@ -226,7 +226,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             else:
                 connector.run_training_job(manifest, sync)
 
-    def _build(self, instance: Union[CustomJobModel, TrainingCustomJobModel]) -> Path:
+    def _build(self, instance: CustomJobModel | TrainingCustomJobModel) -> Path:
         """
         Creates a JobManifest that can later be pushed, deployed or run
 
@@ -241,7 +241,7 @@ class JobService(BaseService[JobModelTypeAlias]):
             instance.name,
         )
         manifest_path = Path(job_paths.get_local_job_wanna_manifest_path(self.version))
-        resource: Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]] = (
+        resource: JobResource[CustomJobModel] | JobResource[TrainingCustomJobModel] = (
             self._create_training_job_resource(instance)
             if isinstance(instance, TrainingCustomJobModel)
             else self._create_custom_job_resource(instance)
@@ -441,7 +441,7 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     @staticmethod
     def _create_list_jobs_filter_expr(
-        states: list[PipelineState], job_name: Optional[str] = None
+        states: list[PipelineState], job_name: str | None = None
     ) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
@@ -458,7 +458,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         return filter_expr
 
     def _list_jobs(
-        self, states: list[PipelineState], job_name: Optional[str] = None
+        self, states: list[PipelineState], job_name: str | None = None
     ) -> list[CustomTrainingJob]:
         """
         List all custom jobs with given project_id, region with given states.
@@ -474,7 +474,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         jobs = aiplatform.CustomTrainingJob.list(filter=filter_expr)
         return jobs  # type: ignore
 
-    def _stop_one_instance(self, instance: Union[CustomJobModel, TrainingCustomJobModel]) -> None:
+    def _stop_one_instance(self, instance: CustomJobModel | TrainingCustomJobModel) -> None:
         """
         Pause one all jobs that have the same region and name as "instance".
         First we list all jobs with state running and pending and then
@@ -502,7 +502,7 @@ class JobService(BaseService[JobModelTypeAlias]):
     def read_manifest(
         connector: VertexConnector[JobResource[JobModelTypeAlias]],
         manifest_path: str,
-    ) -> Union[JobResource[CustomJobModel], JobResource[TrainingCustomJobModel]]:
+    ) -> JobResource[CustomJobModel] | JobResource[TrainingCustomJobModel]:
         """
         Reads a job manifest file
 
@@ -524,7 +524,7 @@ class JobService(BaseService[JobModelTypeAlias]):
     def write_manifest(
         self,
         local_manifest_path: Path,
-        resource: Union[JobResource[TrainingCustomJobModel], JobResource[CustomJobModel]],
+        resource: JobResource[TrainingCustomJobModel] | JobResource[CustomJobModel],
     ) -> Path:
         """
         Writes a JobManifest to a local path
@@ -559,7 +559,7 @@ class JobService(BaseService[JobModelTypeAlias]):
         json_dump = json.dumps(
             remove_nones(json_dict),
             allow_nan=False,
-            default=lambda o: dict((key, value) for key, value in o.__dict__.items() if value),
+            default=lambda o: {key: value for key, value in o.__dict__.items() if value},
         )
         self.connector.write(local_manifest_path, json_dump)
 

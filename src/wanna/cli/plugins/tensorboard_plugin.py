@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -73,7 +72,7 @@ class TensorboardPlugin(BasePlugin):
     def list(
         file: Path = wanna_file_option,
         profile_name: str = profile_name_option,
-        region: Optional[str] = typer.Option(
+        region: str | None = typer.Option(
             None,
             "--region",
             help="Overwrites the region from wanna-ml yaml configuration",

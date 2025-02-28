@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
@@ -19,7 +17,7 @@ class WannaProjectModel(BaseModel):
     name: str
     version: str
     authors: list[EmailStr]
-    billing_id: Optional[str] = None
-    organization_id: Optional[str] = None
+    billing_id: str | None = None
+    organization_id: str | None = None
 
     model_config = ConfigDict(extra="forbid", coerce_numbers_to_str=True)

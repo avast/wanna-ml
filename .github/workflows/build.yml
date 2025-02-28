@@ -10,8 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest ]
-        # there is no scipy working on both 3.9 and 3.13
-        python-version: [ '3.9', '3.10', '3.11', '3.12' ]
+        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
 
     name: Build ${{ matrix.os }} ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
@@ -31,7 +30,7 @@ jobs:
         run: |
           poetry run pytest
       - name: Upload Coverage to Codecov
-        if: ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.python-version }} == '3.9'
+        if: ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.python-version }} == '3.10'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

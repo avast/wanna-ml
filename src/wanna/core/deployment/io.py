@@ -1,7 +1,7 @@
 import contextlib
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from google.cloud.storage import Client
 from smart_open import open as gcs_open
@@ -23,10 +23,10 @@ class IOMixin(GCPCredentialsMixIn):
             with self._open(destination, "wb") as fout:
                 fout.write(f.read())
 
-    def write(self, destination: Union[Path, str], body: str) -> None:
+    def write(self, destination: Path | str, body: str) -> None:
         with self._open(destination, "w") as fout:
             fout.write(body)
 
-    def read(self, source: Union[Path, str]) -> dict[Any, Any]:
+    def read(self, source: Path | str) -> dict[Any, Any]:
         with self._open(source, "r") as fin:
             return json.loads(fin.read())

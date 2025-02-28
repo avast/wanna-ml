@@ -1,6 +1,6 @@
 from abc import ABC
 from threading import Thread
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 import typer
 
@@ -122,8 +122,8 @@ class BaseService(ABC, Generic[T]):
         wanna_project: str,
         wanna_resource: str,
         gcp_project: str,
-        billing_id: Optional[str],
-        organization_id: Optional[str],
+        billing_id: str | None,
+        organization_id: str | None,
     ) -> None:
         """
         Displays a link to the Google Cloud cost report
@@ -156,8 +156,8 @@ class BaseService(ABC, Generic[T]):
         self,
         project_id: str,
         push_mode: PushMode,
-        resource_network: Optional[str],
-        fallback_project_network: Optional[str],
+        resource_network: str | None,
+        fallback_project_network: str | None,
         use_project_number: bool = True,
     ):
         resource_network = resource_network if resource_network else fallback_project_network
@@ -176,9 +176,7 @@ class BaseService(ABC, Generic[T]):
         else:
             return None
 
-    def _get_resource_subnet(
-        self, network: Optional[str], subnet: Optional[str], region: Optional[str]
-    ):
+    def _get_resource_subnet(self, network: str | None, subnet: str | None, region: str | None):
         if subnet:
             # Assumes the full qualified path was provided in config
             if "/" in subnet:

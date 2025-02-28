@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 
 from pydantic import (
     BaseModel,
@@ -33,8 +33,8 @@ class BucketMount(BaseModel, extra=Extra.forbid):
 
 
 class NotebookEnvironment(BaseModel, extra=Extra.forbid):
-    vm_image: Optional[VMImage] = None
-    docker_image_ref: Optional[str] = None
+    vm_image: VMImage | None = None
+    docker_image_ref: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -44,10 +44,10 @@ class NotebookEnvironment(BaseModel, extra=Extra.forbid):
 class BaseWorkbenchModel(BaseInstanceModel):
     name: WorkbenchName
     machine_type: str = "e2-standard-2"
-    gpu: Optional[GPU] = None
-    data_disk: Optional[Disk] = None
-    subnet: Optional[str] = None
-    tensorboard_ref: Optional[str] = None
+    gpu: GPU | None = None
+    data_disk: Disk | None = None
+    subnet: str | None = None
+    tensorboard_ref: str | None = None
 
 
 class InstanceModel(BaseWorkbenchModel):
@@ -84,23 +84,23 @@ class InstanceModel(BaseWorkbenchModel):
 
     type: Literal["instance"] = "instance"
     zone: str
-    owner: Optional[EmailStr] = None
-    boot_disk: Optional[Disk] = None
+    owner: EmailStr | None = None
+    boot_disk: Disk | None = None
     environment: NotebookEnvironment = NotebookEnvironment(vm_image=VMImage())
     no_public_ip: bool = True
     enable_dataproc: bool = False
     enable_ip_forwarding: bool = False
     no_proxy_access: bool = False
     enable_monitoring: bool = True
-    idle_shutdown_timeout: Optional[int] = Field(ge=10, le=1440, default=720)  # 12 hours
+    idle_shutdown_timeout: int | None = Field(ge=10, le=1440, default=720)  # 12 hours
     collaborative: bool = False
-    env_vars: Optional[dict[str, str]] = None
-    bucket_mounts: Optional[list[BucketMount]] = None
-    post_startup_script: Optional[str] = None  # todo: add validation for existing object in bucket
+    env_vars: dict[str, str] | None = None
+    bucket_mounts: list[BucketMount] | None = None
+    post_startup_script: str | None = None  # todo: add validation for existing object in bucket
     post_startup_script_behavior: Literal[
         "run_once", "run_every_start", "download_and_run_every_start"
     ] = "run_once"
-    environment_auto_upgrade: Optional[str] = None
+    environment_auto_upgrade: str | None = None
     delete_to_trash: bool = False
     report_health: bool = True
 

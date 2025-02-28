@@ -1,7 +1,7 @@
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from gcloud_config_helper import gcloud_config_helper
 from google.cloud.storage import Blob
@@ -300,8 +300,8 @@ def parse_image_name_family(name: str) -> dict[str, Any]:
 @lru_cache(maxsize=128)
 def get_available_compute_image_families(
     project: str,
-    image_filter: Optional[str] = None,
-    family_must_contain: Optional[str] = None,
+    image_filter: str | None = None,
+    family_must_contain: str | None = None,
 ) -> list[dict[str, str]]:
     """
     List available Compute Engine VM image families.
@@ -393,7 +393,7 @@ def is_gcs_path(path: str):
     return path.startswith("gs://")
 
 
-def get_network_info(network: Optional[str]) -> Optional[tuple[str, str]]:
+def get_network_info(network: str | None) -> tuple[str, str] | None:
     """
     gets information about a network if set in long format
     Args:
@@ -415,6 +415,4 @@ def get_network_info(network: Optional[str]) -> Optional[tuple[str, str]]:
 def verify_gcloud_presence():
     if not gcloud_config_helper.on_path():
         # gcloud is needed in the wanna.core.utils.config_enricher_generate_default_labels
-        raise EnvironmentError(
-            "gcloud is not on the path. Wanna-ml does not work properly without it."
-        )
+        raise OSError("gcloud is not on the path. Wanna-ml does not work properly without it.")

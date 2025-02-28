@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -6,7 +6,7 @@ from wanna.core.utils import validators
 
 
 class VMImage(BaseModel):
-    version: Optional[str] = None
+    version: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -24,7 +24,7 @@ class GPU(BaseModel):
     count: Literal[1, 2, 4, 8]
     accelerator_type: str
     install_gpu_driver: bool = True
-    custom_gpu_driver_path: Optional[str] = None
+    custom_gpu_driver_path: str | None = None
 
     model_config = ConfigDict(extra="forbid")
 

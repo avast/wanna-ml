@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, Any, Optional, Union
+from typing import Annotated, Any
 
 from pydantic import Field, StringConstraints, model_validator
 
@@ -39,15 +39,15 @@ class PipelineModel(BaseInstanceModel):
     name: PipelineName
     zone: str
     pipeline_function: str
-    pipeline_params: Union[Path, dict[str, Any], None] = None
+    pipeline_params: Path | dict[str, Any] | None = None
     docker_image_ref: list[str] = Field(default_factory=list)
-    schedule: Optional[CloudSchedulerModel] = None
-    tensorboard_ref: Optional[str] = None
-    network: Optional[str] = None
+    schedule: CloudSchedulerModel | None = None
+    tensorboard_ref: str | None = None
+    network: str | None = None
     notification_channels_ref: list[str] = Field(default_factory=list)
-    sla_hours: Optional[float] = None
+    sla_hours: float | None = None
     enable_caching: bool = True
-    experiment: Optional[str] = None
+    experiment: str | None = None
 
     @model_validator(mode="before")
     def set_experiment(cls, values):  # pylint: disable=no-self-argument,no-self-use
