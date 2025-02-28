@@ -1,10 +1,10 @@
 import os
 import pathlib
 import sys
-from functools import wraps
 from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, ParamSpec, TypeVar, Union
+from typing import Any, TypeVar, Union
+from typing_extensions import ParamSpec
 
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
