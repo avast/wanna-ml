@@ -29,3 +29,10 @@ If you prefer local Docker image building, install  [Docker Desktop](https://www
 ### GCP IAM Roles and Permissions
 Different WANNA-ML calls require different GCP permissions to create given resources on GCP. Our [documentation page](https://avast.github.io/wanna-ml/)
 lists recommended GCP IAM roles for each `wanna` command.
+
+### Passing configuration
+
+Most of the commands are accepting `--file <path_to_yaml>` parameter, or `-f <path_to_yaml>` for short.
+It can be passed using environment variable `WANNA_CONFIG_FILE` as well.
+If you have the yaml configuration dynamic, and use .e.g. `cat wanna.yaml | envsubstr` to replace environment variables, 
+you can use `-` as a file name, so the usage would be `cat wanna.yaml | envsubstr | wanna <command> -f -`.

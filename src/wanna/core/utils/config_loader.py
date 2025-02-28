@@ -1,7 +1,10 @@
 import os
 import pathlib
+import sys
+from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar, Union
+from typing_extensions import ParamSpec
 
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.gcp_profile import GCPProfileModel
@@ -12,6 +15,10 @@ from wanna.core.utils.env import gcp_access_allowed
 from wanna.core.utils.gcp import verify_gcloud_presence
 
 logger = get_logger(__name__)
+
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfileModel:
@@ -46,7 +53,9 @@ def load_gcp_profile(profile_name: str, wanna_dict: dict[str, Any]) -> GCPProfil
     return profile_model
 
 
-def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> WannaConfigModel:
+def load_config_from_yaml(
+    wanna_config_path: Union[Path, str], gcp_profile_name: str
+) -> WannaConfigModel:
     """
     Load the yaml file from wanna_config_path and parses the information to the models.
     This also includes the data validation.
@@ -59,11 +68,12 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
         WannaConfigModel
 
     """
+    wanna_config_path = (
+        Path(wanna_config_path) if isinstance(wanna_config_path, str) else wanna_config_path
+    )
     verify_gcloud_presence()
     with logger.user_spinner("Reading and validating wanna yaml config"):
-        with open(wanna_config_path, encoding="utf-8") as file:
-            # Load workflow file
-            wanna_dict = loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())
+        wanna_dict = load_yaml_maybe_stdin(wanna_config_path)
 
         # GCP Profile & Wanna Project metadata is required to be validated first, since are used as enrichers
         profile_model = load_gcp_profile(profile_name=gcp_profile_name, wanna_dict=wanna_dict)
@@ -95,3 +105,23 @@ def load_config_from_yaml(wanna_config_path: Path, gcp_profile_name: str) -> Wan
         )
 
     return wanna_config
+
+
+def load_yaml_maybe_stdin(wanna_config_path: Path) -> dict[str, Any]:
+    """
+    Loads yaml file from path or stdin if path is '-'
+
+    Args:
+        wanna_config_path: path to the yaml file or -
+
+    Returns: loaded yaml
+
+    """
+    if str(wanna_config_path) == "-":
+        return loaders.load_yaml(
+            StringIO(sys.stdin.read()), pathlib.Path(wanna_config_path).parent.resolve()
+        )
+    else:
+        with open(wanna_config_path, encoding="utf-8") as file:
+            # Load workflow file
+            return loaders.load_yaml(file, pathlib.Path(wanna_config_path).parent.resolve())

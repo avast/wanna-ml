@@ -19,7 +19,7 @@ wanna_file_option = typer.Option(
     "--file",
     "-f",
     envvar="WANNA_FILE",
-    help="Path to the wanna-ml yaml configuration",
+    help="Path to the wanna-ml yaml configuration. Use -f - to pass the configuration through stdin.",
 )
 
 push_mode_option: PushMode = typer.Option(
