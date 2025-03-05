@@ -221,15 +221,18 @@ class TestPipelineService(unittest.TestCase):
         push_result = pipeline_service.push(pipelines, local=True)
         DockerService.push_image.assert_called_once()
 
-        release_path = (
-            self.pipeline_build_dir
-            / "wanna-pipelines"
-            / "wanna-sklearn-sample"
-            / "deployment"
-            / "test"
+        release_manifests_path = (
+            self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment"
         )
+
+        release_path = release_manifests_path / "test"
+        latest_release_path = release_manifests_path / "latest"
+
         manifest_path = release_path / "manifests"
+        latest_manifest_path = latest_release_path / "manifests"
+
         expected_manifest_json_path = str(manifest_path / "wanna-manifest.json")
+        expected_latest_manifest_json_path = str(latest_manifest_path / "wanna-manifest.json")
         expected_pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
 
         # Should have been updated to new pushed path
@@ -250,8 +253,13 @@ class TestPipelineService(unittest.TestCase):
                 [
                     JsonArtifact(
                         name="WANNA pipeline manifest",
-                        json_body=pipeline_meta.dict(),
+                        json_body=pipeline_meta.model_dump(),
                         destination=expected_manifest_json_path,
+                    ),
+                    JsonArtifact(
+                        name="WANNA pipeline manifest",
+                        json_body=pipeline_meta.model_dump(),
+                        destination=expected_latest_manifest_json_path,
                     ),
                 ],
             )
@@ -260,6 +268,7 @@ class TestPipelineService(unittest.TestCase):
         self.assertEqual(push_result, expected_push_result)
         self.assertTrue(os.path.exists(expected_pipeline_spec_path))
         self.assertTrue(os.path.exists(expected_manifest_json_path))
+        self.assertTrue(os.path.exists(expected_latest_manifest_json_path))
 
         # === Deploy ===
         parent = "projects/your-gcp-project-id/locations/europe-west1"
