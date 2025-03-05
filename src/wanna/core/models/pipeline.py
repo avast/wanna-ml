@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from pydantic import Field, StringConstraints, model_validator
 
 from wanna.core.models.base_instance import BaseInstanceModel
-from wanna.core.models.cloud_scheduler import CloudSchedulerModel
+from wanna.core.models.cloud_scheduler import CloudSchedulerModel, EnvCloudSchedulerModel
 
 PipelineName = Annotated[
     str,
@@ -41,7 +41,7 @@ class PipelineModel(BaseInstanceModel):
     pipeline_function: str
     pipeline_params: Path | dict[str, Any] | None = None
     docker_image_ref: list[str] = Field(default_factory=list)
-    schedule: CloudSchedulerModel | None = None
+    schedule: CloudSchedulerModel | list[EnvCloudSchedulerModel] | None = None
     tensorboard_ref: str | None = None
     network: str | None = None
     notification_channels_ref: list[str] = Field(default_factory=list)

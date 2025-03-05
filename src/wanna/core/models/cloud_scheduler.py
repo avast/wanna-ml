@@ -10,3 +10,7 @@ class CloudSchedulerModel(BaseModel):
 
     # Validators
     _schedule = field_validator("cron")(validators.validate_cron_schedule)
+
+
+class EnvCloudSchedulerModel(CloudSchedulerModel):
+    environment: str | None = None

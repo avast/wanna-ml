@@ -56,7 +56,10 @@ notebooks:
 pipelines:
   - name: wanna-sklearn-sample
     schedule:
-      cron: 2 * * * *
+      - environment: prod
+        cron: 2 * * * *
+      - environment: local
+        cron: 4 * * * *
     bucket: gs://your-staging-bucket-name
     pipeline_function: "wanna_simple.pipeline.wanna_sklearn_sample"
     pipeline_params: params.yaml

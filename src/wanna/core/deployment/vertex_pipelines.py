@@ -110,9 +110,18 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         version: str,
         env: str,
     ) -> None:
+        schedule = (
+            next(
+                iter([s for s in resource.schedule if s.environment == env]),
+                None,
+            )
+            if isinstance(resource.schedule, list)
+            else resource.schedule
+        )
+
         pipeline_service_account = (
-            resource.schedule.service_account
-            if resource.schedule and resource.schedule.service_account
+            schedule.service_account
+            if schedule and schedule.service_account
             else resource.service_account
         )
 
@@ -178,7 +187,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             version=version,
         )
 
-        if resource.schedule:
+        if schedule:
             pipeline_spec_path = pipeline_paths.get_gcs_pipeline_json_spec_path(version)
             body = {
                 "pipeline_spec_uri": pipeline_spec_path,
@@ -191,7 +200,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                 resource=CloudSchedulerResource(
                     name=resource.pipeline_name,
                     body=body,
-                    cloud_scheduler=resource.schedule,
+                    cloud_scheduler=schedule,
                     labels=resource.labels,
                     notification_channels=channels,
                     **base_resource,
