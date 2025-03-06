@@ -108,33 +108,43 @@ class PipelineService(BaseService[PipelineModel]):
             # Push gcp resources if we are running on GCP build agent
             if self.push_mode.can_push_gcp_resources():
                 # Prepare manifest paths
+                wanna_manifest_publish_paths = []
+
                 local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(
-                    version
-                )
-                wanna_manifest_publish_path = pipeline_paths.get_gcs_wanna_manifest_path(version)
-                kubeflow_json_spec_publish_path = pipeline_paths.get_gcs_pipeline_json_spec_path(
                     version
                 )
 
                 if local:
                     # Override paths to local dir when in "local" mode, IE tests or local run
-                    wanna_manifest_publish_path = pipeline_paths.get_local_wanna_manifest_path(
-                        version
-                    )
+                    for v in [version, "latest"]:
+                        wanna_manifest_publish_paths.append(
+                            pipeline_paths.get_local_wanna_manifest_path(v)
+                        )
+
                     kubeflow_json_spec_publish_path = (
                         pipeline_paths.get_local_pipeline_json_spec_path(version)
+                    )
+                else:
+                    for v in [version, "latest"]:
+                        wanna_manifest_publish_paths.append(
+                            pipeline_paths.get_gcs_wanna_manifest_path(v)
+                        )
+
+                    kubeflow_json_spec_publish_path = (
+                        pipeline_paths.get_gcs_pipeline_json_spec_path(version)
                     )
 
                 # Ensure to update manifest json_spec_path to have the actual gcs location
                 manifest.json_spec_path = kubeflow_json_spec_publish_path
 
-                json_artifacts.append(
-                    JsonArtifact(
-                        name="WANNA pipeline manifest",
-                        json_body=manifest.dict(),
-                        destination=wanna_manifest_publish_path,
+                for wanna_manifest_publish_path in wanna_manifest_publish_paths:
+                    json_artifacts.append(
+                        JsonArtifact(
+                            name="WANNA pipeline manifest",
+                            json_body=manifest.model_dump(),
+                            destination=wanna_manifest_publish_path,
+                        )
                     )
-                )
 
                 manifest_artifacts.append(
                     PathArtifact(
