@@ -89,7 +89,6 @@ class PipelinePlugin(BasePlugin):
         )
         manifests = pipeline_service.build(instance_name, params)
         pipeline_service.push(manifests)
-
     @staticmethod
     def deploy(
         version: str = version_option(instance_type="pipeline"),

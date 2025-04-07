@@ -90,6 +90,7 @@ class PipelineService(BaseService[PipelineModel]):
         self, pipelines: list[Path], version: str, local: bool = False
     ) -> list[PushTask]:
         push_tasks = []
+        tags2push = set()   # for deduplicating the pushes
         for local_manifest_path in pipelines:
             manifest = PipelineService.read_manifest(self.connector, str(local_manifest_path))
             pipeline_paths = PipelinePaths(
@@ -103,8 +104,15 @@ class PipelineService(BaseService[PipelineModel]):
             if self.push_mode.can_push_containers():
                 for ref in manifest.docker_refs:
                     if ref.build_type != ImageBuildType.provided_image:
-                        container_artifacts.append(ContainerArtifact(name=ref.name, tags=ref.tags))
-
+                        if any(tag in tags2push for tag in ref.tags):
+                            # Filter out tags that are already in some task
+                            new_tags = [tag for tag in ref.tags if tag not in tags2push]
+                            if new_tags:  # Only add if there are any new tags
+                                container_artifacts.append(ContainerArtifact(name=ref.name, tags=new_tags))
+                        else:
+                            container_artifacts.append(ContainerArtifact(name=ref.name, tags=ref.tags))
+                        # Add all tags to the set to track what's been pushed
+                        tags2push.update(ref.tags)
             # Push gcp resources if we are running on GCP build agent
             if self.push_mode.can_push_gcp_resources():
                 # Prepare manifest paths
