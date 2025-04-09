@@ -1,3 +1,4 @@
+import copy
 import os
 import shutil
 import sys
@@ -16,7 +17,7 @@ from google.cloud.monitoring_v3 import (
     NotificationChannelServiceClient,
 )
 from mock import patch
-from mock.mock import MagicMock
+from mock.mock import MagicMock, call
 
 import wanna.core.services.pipeline
 from wanna.core.deployment.models import (
@@ -115,6 +116,7 @@ class TestPipelineService(unittest.TestCase):
         expected_parameter_values = {
             "eval_acc_threshold": 0.95,
             "start_date": """{{ modules.pendulum.now().in_timezone('UTC').subtract(days=1).format('YYYY/MM/DD') }}""",
+            "model_path": "gs://my-bucket/wanna-jobs/a/outputs/xgb_model.pkl",
         }
         expected_images = [
             DockerBuildResult(
@@ -132,6 +134,15 @@ class TestPipelineService(unittest.TestCase):
             self.pipeline_build_dir
             / "wanna-pipelines"
             / "wanna-sklearn-sample"
+            / "deployment"
+            / "test"
+            / "manifests"
+            / "pipeline-spec.json"
+        )
+        expected_json_spec_eval_path = (
+            self.pipeline_build_dir
+            / "wanna-pipelines"
+            / "wanna-sklearn-sample-eval"
             / "deployment"
             / "test"
             / "manifests"
@@ -165,12 +176,15 @@ class TestPipelineService(unittest.TestCase):
         # === Build ===
         # Get compile result metadata
         pipelines = pipeline_service.build(
-            instance_name="wanna-sklearn-sample",
+            instance_name="all",
             pipeline_params_path=self.test_pipeline_params_override_dir,
         )
-        manifest_path = pipelines[0]
+        manifest_path, manifest_eval_path = pipelines
         pipeline_meta = PipelineService.read_manifest(
             pipeline_service.connector, str(manifest_path)
+        )
+        pipeline_eval_meta = PipelineService.read_manifest(
+            pipeline_service.connector, str(manifest_eval_path)
         )
 
         docker_mock.build.assert_called_with(
@@ -224,16 +238,26 @@ class TestPipelineService(unittest.TestCase):
         release_manifests_path = (
             self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment"
         )
+        release_manifests_eval_path = (
+            self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample-eval" / "deployment"
+        )
 
         release_path = release_manifests_path / "test"
+        release_eval_path = release_manifests_eval_path / "test"
         latest_release_path = release_manifests_path / "latest"
+        latest_release_eval_path = release_manifests_path / "latest"
 
         manifest_path = release_path / "manifests"
+        manifest_eval_path = release_eval_path / "manifests"
         latest_manifest_path = latest_release_path / "manifests"
+        latest_manifest_eval_path = latest_release_eval_path / "manifests"
 
         expected_manifest_json_path = str(manifest_path / "wanna-manifest.json")
+        expected_manifest_json_eval_path = str(manifest_eval_path / "wanna-manifest.json")
         expected_latest_manifest_json_path = str(latest_manifest_path / "wanna-manifest.json")
+        expected_latest_manifest_json_eval_path = str(latest_manifest_eval_path / "wanna-manifest.json")
         expected_pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
+        expected_pipeline_spec_eval_path = str(manifest_eval_path / "pipeline-spec.json")
 
         # Should have been updated to new pushed path
         pipeline_meta.json_spec_path = expected_pipeline_spec_path
@@ -262,7 +286,27 @@ class TestPipelineService(unittest.TestCase):
                         destination=expected_latest_manifest_json_path,
                     ),
                 ],
-            )
+            ),
+            ([],
+             [
+                 PathArtifact(
+                     name='Kubeflow V2 pipeline spec',
+                     source=str(expected_json_spec_eval_path),
+                     destination=expected_pipeline_spec_eval_path,
+                 ),
+             ],
+             [
+                 JsonArtifact(
+                     name='WANNA pipeline manifest',
+                     json_body=pipeline_eval_meta.model_dump(),
+                     destination=expected_manifest_json_eval_path
+                 ),
+                 JsonArtifact(
+                     name='WANNA pipeline manifest',
+                     json_body=pipeline_eval_meta.model_dump(),
+                     destination=expected_latest_manifest_json_eval_path
+                 )
+             ])
         ]
 
         self.assertEqual(push_result, expected_push_result)
@@ -276,6 +320,10 @@ class TestPipelineService(unittest.TestCase):
         copied_cloud_functions_package = (
             "gs://your-staging-bucket-name/"
             "wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"
+        )
+        copied_cloud_functions_eval_package = (
+            "gs://your-staging-bucket-name/"
+            "wanna-pipelines/wanna-sklearn-sample-eval/deployment/test/functions/package.zip"
         )
 
         expected_function_name = "wanna-sklearn-sample-local"
@@ -315,6 +363,8 @@ class TestPipelineService(unittest.TestCase):
             },
             "available_memory_mb": 512,
         }
+        expected_function_eval = copy.deepcopy(expected_function)
+        expected_function_eval["source_archive_url"] = copied_cloud_functions_eval_package
 
         # Set Mocks
         NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
@@ -345,13 +395,17 @@ class TestPipelineService(unittest.TestCase):
         # Check cloud functions packaged was copied to pipeline-root
         self.assertTrue(os.path.exists(local_cloud_functions_package))
 
-        # Check cloudfunctions sdk methos were called with expected function params
-        CloudFunctionsServiceClient.get_function.assert_called_with(
-            {"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}
-        )
-        CloudFunctionsServiceClient.update_function.assert_called_with(
-            {"function": expected_function}
-        )
+        # Check cloudfunctions sdk methods were called with expected function params
+        CloudFunctionsServiceClient.get_function.assert_has_calls([
+            call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
+            call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
+        ])
+        CloudFunctionsServiceClient.update_function.assert_has_calls([
+            call({"function": expected_function}),
+            call().result(),
+            call({"function": expected_function_eval}),
+            call().result(),
+        ])
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
             name="projects/your-gcp-project-id",
             notification_channel=NotificationChannel(

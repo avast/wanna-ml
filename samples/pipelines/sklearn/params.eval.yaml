@@ -1,0 +1,2 @@
+eval_acc_threshold: 0.87
+model_path: gs://my-bucket/wanna-jobs/a/outputs/xgb_model.pkl

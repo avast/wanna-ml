@@ -34,6 +34,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
         return None
 
     def upsert_notification_channel(self, resource: NotificationChannelResource):
+        # todo: print that we found existing channel
         client = NotificationChannelServiceClient(credentials=self.credentials)
 
         channel = MonitoringMixin._get_notification_channel(
@@ -50,10 +51,11 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 verification_status=NotificationChannel.VerificationStatus.VERIFIED,
                 enabled=True,
             )
-            return client.create_notification_channel(
-                name=f"projects/{resource.project}",
-                notification_channel=notification_channel,
-            )
+            with logger.user_spinner(f"Creating notification channel: {resource.name}"):
+                return client.create_notification_channel(
+                    name=f"projects/{resource.project}",
+                    notification_channel=notification_channel,
+                )
         else:
             return channel
 
@@ -108,6 +110,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
             )
 
     def upsert_log_metric(self, resource: LogMetricResource) -> dict[str, Any]:
+        # todo: print that we found existing channel
         client = LoggingClient(credentials=self.credentials)
         try:
             return client.metrics_api.metric_get(

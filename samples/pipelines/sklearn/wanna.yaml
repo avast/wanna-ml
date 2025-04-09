@@ -69,3 +69,10 @@ pipelines:
     experiment: "wanna-sample-experiment"
     notification_channels_ref:
       - wanna-sample-pipeline-pubsub-channel
+  - name: wanna-sklearn-sample-eval
+    bucket: gs://your-staging-bucket-name
+    pipeline_function: "wanna_simple.pipeline.wanna_sklearn_sample_eval"
+    pipeline_params: params.eval.yaml
+    docker_image_ref: ["train"]
+    enable_caching: false
+    experiment: "wanna-sample-experiment"
