@@ -17,6 +17,7 @@ from google.cloud.monitoring_v3 import (
     NotificationChannel,
     NotificationChannelServiceClient,
 )
+from google.cloud.pubsub_v1 import PublisherClient
 from mock import patch
 from mock.mock import MagicMock, call
 
@@ -412,6 +413,8 @@ class TestPipelineService(unittest.TestCase):
         logging.Client.metrics_api.metric_create = MagicMock()
         logging.Client.metrics_api.metric_get = MagicMock()
 
+        PublisherClient.get_topic = MagicMock()
+
         CloudFunctionsServiceClient.get_function = MagicMock()
         CloudFunctionsServiceClient.update_function = MagicMock()
         scheduler_v1.CloudSchedulerClient.get_job = MagicMock()
@@ -426,6 +429,12 @@ class TestPipelineService(unittest.TestCase):
 
         # Check cloud functions packaged was copied to pipeline-root
         self.assertTrue(os.path.exists(local_cloud_functions_package))
+
+        # Check pubsub topic existence was checked
+        PublisherClient.get_topic.assert_has_calls([
+            call(topic="projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"),
+            call(topic="projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"),
+        ])
 
         # Check cloudfunctions sdk methods were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_has_calls([

@@ -63,6 +63,7 @@ waiting = "^1.4.1"
 rich = "^13.7.1"
 pendulum = "^3.0.0" # missing 3.13 support https://github.com/python-pendulum/pendulum/issues/844
 igittigitt = "^2.1.4"
+google-cloud-pubsub = "^2.29.0"
 
 [tool.poetry.group.samples.dependencies]
 google-cloud-pipeline-components = "^2.8.0"
