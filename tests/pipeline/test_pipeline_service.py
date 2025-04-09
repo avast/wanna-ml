@@ -38,9 +38,11 @@ from wanna.core.services.pipeline import PipelineService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
 
+
 @dataclass
 class DeploymentPaths:
     """Container for deployment artifact paths."""
+
     release_path: Path
     latest_release_path: Path
     manifest_path: Path
@@ -78,7 +80,7 @@ def create_deployment_paths(base_path: Path, version: str) -> DeploymentPaths:
         latest_manifest_path=latest_manifest_path,
         manifest_json_path=manifest_json_path,
         latest_manifest_json_path=latest_manifest_json_path,
-        pipeline_spec_path=pipeline_spec_path
+        pipeline_spec_path=pipeline_spec_path,
     )
 
 
@@ -284,7 +286,10 @@ class TestPipelineService(unittest.TestCase):
             self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment"
         )
         release_manifests_eval_path = (
-            self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample-eval" / "deployment"
+            self.pipeline_build_dir
+            / "wanna-pipelines"
+            / "wanna-sklearn-sample-eval"
+            / "deployment"
         )
         expected_train = create_deployment_paths(release_manifests_path, "test")
         expected_eval = create_deployment_paths(release_manifests_eval_path, "test")
@@ -317,26 +322,28 @@ class TestPipelineService(unittest.TestCase):
                     ),
                 ],
             ),
-            ([],
-             [
-                 PathArtifact(
-                     name='Kubeflow V2 pipeline spec',
-                     source=str(expected_json_spec_eval_path),
-                     destination=expected_eval.pipeline_spec_path,
-                 ),
-             ],
-             [
-                 JsonArtifact(
-                     name='WANNA pipeline manifest',
-                     json_body=pipeline_eval_meta.model_dump(),
-                     destination=expected_eval.manifest_json_path
-                 ),
-                 JsonArtifact(
-                     name='WANNA pipeline manifest',
-                     json_body=pipeline_eval_meta.model_dump(),
-                     destination=expected_eval.latest_manifest_json_path
-                 )
-             ])
+            (
+                [],
+                [
+                    PathArtifact(
+                        name="Kubeflow V2 pipeline spec",
+                        source=str(expected_json_spec_eval_path),
+                        destination=expected_eval.pipeline_spec_path,
+                    ),
+                ],
+                [
+                    JsonArtifact(
+                        name="WANNA pipeline manifest",
+                        json_body=pipeline_eval_meta.model_dump(),
+                        destination=expected_eval.manifest_json_path,
+                    ),
+                    JsonArtifact(
+                        name="WANNA pipeline manifest",
+                        json_body=pipeline_eval_meta.model_dump(),
+                        destination=expected_eval.latest_manifest_json_path,
+                    ),
+                ],
+            ),
         ]
 
         self.assertEqual(push_result, expected_push_result)
@@ -431,22 +438,32 @@ class TestPipelineService(unittest.TestCase):
         self.assertTrue(os.path.exists(local_cloud_functions_package))
 
         # Check pubsub topic existence was checked
-        PublisherClient.get_topic.assert_has_calls([
-            call(topic="projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"),
-            call(topic="projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"),
-        ])
+        PublisherClient.get_topic.assert_has_calls(
+            [
+                call(
+                    topic="projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"
+                ),
+                call(
+                    topic="projects/your-gcp-project-id/topics/wanna-sample-pipeline-pubsub-channel"
+                ),
+            ]
+        )
 
         # Check cloudfunctions sdk methods were called with expected function params
-        CloudFunctionsServiceClient.get_function.assert_has_calls([
-            call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
-            call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
-        ])
-        CloudFunctionsServiceClient.update_function.assert_has_calls([
-            call({"function": expected_function}),
-            call().result(),
-            call({"function": expected_function_eval}),
-            call().result(),
-        ])
+        CloudFunctionsServiceClient.get_function.assert_has_calls(
+            [
+                call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
+                call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
+            ]
+        )
+        CloudFunctionsServiceClient.update_function.assert_has_calls(
+            [
+                call({"function": expected_function}),
+                call().result(),
+                call({"function": expected_function_eval}),
+                call().result(),
+            ]
+        )
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
             name="projects/your-gcp-project-id",
             notification_channel=NotificationChannel(

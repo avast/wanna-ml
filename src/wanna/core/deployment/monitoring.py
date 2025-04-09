@@ -1,7 +1,6 @@
 import json
 from typing import Any, cast
 
-from google.cloud.pubsub_v1 import PublisherClient
 from google.cloud.exceptions import NotFound
 from google.cloud.logging import Client as LoggingClient
 from google.cloud.monitoring_v3 import (
@@ -10,6 +9,7 @@ from google.cloud.monitoring_v3 import (
     NotificationChannel,
     NotificationChannelServiceClient,
 )
+from google.cloud.pubsub_v1 import PublisherClient
 from waiting import wait
 
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
@@ -63,7 +63,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
         )
         if resource.type_ == "pubsub" and "topic" in resource.config:
             topic_path = resource.config["topic"]
-            parts = topic_path.split('/')
+            parts = topic_path.split("/")
             if len(parts) == 4 and parts[0] == "projects" and parts[2] == "topics":
                 project_id = parts[1]
                 topic_id = parts[3]
