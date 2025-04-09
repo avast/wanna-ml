@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 
 from google import auth
@@ -35,6 +36,49 @@ from wanna.core.services.docker import DockerService
 from wanna.core.services.pipeline import PipelineService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
+
+@dataclass
+class DeploymentPaths:
+    """Container for deployment artifact paths."""
+    release_path: Path
+    latest_release_path: Path
+    manifest_path: Path
+    latest_manifest_path: Path
+    manifest_json_path: str
+    latest_manifest_json_path: str
+    pipeline_spec_path: str
+
+
+def create_deployment_paths(base_path: Path, version: str) -> DeploymentPaths:
+    """
+    Create deployment artifact paths for a pipeline.
+
+    Args:
+        base_path: Base directory path for deployment manifests
+        version: Version identifier (e.g. "test")
+
+    Returns:
+        DeploymentPaths object containing all relevant paths
+    """
+    release_path = base_path / version
+    latest_release_path = base_path / "latest"
+
+    manifest_path = release_path / "manifests"
+    latest_manifest_path = latest_release_path / "manifests"
+
+    manifest_json_path = str(manifest_path / "wanna-manifest.json")
+    latest_manifest_json_path = str(latest_manifest_path / "wanna-manifest.json")
+    pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
+
+    return DeploymentPaths(
+        release_path=release_path,
+        latest_release_path=latest_release_path,
+        manifest_path=manifest_path,
+        latest_manifest_path=latest_manifest_path,
+        manifest_json_path=manifest_json_path,
+        latest_manifest_json_path=latest_manifest_json_path,
+        pipeline_spec_path=pipeline_spec_path
+    )
 
 
 class TestPipelineService(unittest.TestCase):
@@ -241,26 +285,11 @@ class TestPipelineService(unittest.TestCase):
         release_manifests_eval_path = (
             self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample-eval" / "deployment"
         )
-
-        release_path = release_manifests_path / "test"
-        release_eval_path = release_manifests_eval_path / "test"
-        latest_release_path = release_manifests_path / "latest"
-        latest_release_eval_path = release_manifests_path / "latest"
-
-        manifest_path = release_path / "manifests"
-        manifest_eval_path = release_eval_path / "manifests"
-        latest_manifest_path = latest_release_path / "manifests"
-        latest_manifest_eval_path = latest_release_eval_path / "manifests"
-
-        expected_manifest_json_path = str(manifest_path / "wanna-manifest.json")
-        expected_manifest_json_eval_path = str(manifest_eval_path / "wanna-manifest.json")
-        expected_latest_manifest_json_path = str(latest_manifest_path / "wanna-manifest.json")
-        expected_latest_manifest_json_eval_path = str(latest_manifest_eval_path / "wanna-manifest.json")
-        expected_pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
-        expected_pipeline_spec_eval_path = str(manifest_eval_path / "pipeline-spec.json")
+        expected_train = create_deployment_paths(release_manifests_path, "test")
+        expected_eval = create_deployment_paths(release_manifests_eval_path, "test")
 
         # Should have been updated to new pushed path
-        pipeline_meta.json_spec_path = expected_pipeline_spec_path
+        pipeline_meta.json_spec_path = expected_train.pipeline_spec_path
 
         expected_push_result = [
             (
@@ -271,19 +300,19 @@ class TestPipelineService(unittest.TestCase):
                     PathArtifact(
                         name="Kubeflow V2 pipeline spec",
                         source=str(expected_json_spec_path),
-                        destination=expected_pipeline_spec_path,
+                        destination=expected_train.pipeline_spec_path,
                     ),
                 ],
                 [
                     JsonArtifact(
                         name="WANNA pipeline manifest",
                         json_body=pipeline_meta.model_dump(),
-                        destination=expected_manifest_json_path,
+                        destination=expected_train.manifest_json_path,
                     ),
                     JsonArtifact(
                         name="WANNA pipeline manifest",
                         json_body=pipeline_meta.model_dump(),
-                        destination=expected_latest_manifest_json_path,
+                        destination=expected_train.latest_manifest_json_path,
                     ),
                 ],
             ),
@@ -292,31 +321,34 @@ class TestPipelineService(unittest.TestCase):
                  PathArtifact(
                      name='Kubeflow V2 pipeline spec',
                      source=str(expected_json_spec_eval_path),
-                     destination=expected_pipeline_spec_eval_path,
+                     destination=expected_eval.pipeline_spec_path,
                  ),
              ],
              [
                  JsonArtifact(
                      name='WANNA pipeline manifest',
                      json_body=pipeline_eval_meta.model_dump(),
-                     destination=expected_manifest_json_eval_path
+                     destination=expected_eval.manifest_json_path
                  ),
                  JsonArtifact(
                      name='WANNA pipeline manifest',
                      json_body=pipeline_eval_meta.model_dump(),
-                     destination=expected_latest_manifest_json_eval_path
+                     destination=expected_eval.latest_manifest_json_path
                  )
              ])
         ]
 
         self.assertEqual(push_result, expected_push_result)
-        self.assertTrue(os.path.exists(expected_pipeline_spec_path))
-        self.assertTrue(os.path.exists(expected_manifest_json_path))
-        self.assertTrue(os.path.exists(expected_latest_manifest_json_path))
+        self.assertTrue(os.path.exists(expected_train.pipeline_spec_path))
+        self.assertTrue(os.path.exists(expected_eval.pipeline_spec_path))
+        self.assertTrue(os.path.exists(expected_train.manifest_json_path))
+        self.assertTrue(os.path.exists(expected_eval.manifest_json_path))
+        self.assertTrue(os.path.exists(expected_train.latest_manifest_json_path))
+        self.assertTrue(os.path.exists(expected_eval.latest_manifest_json_path))
 
         # === Deploy ===
         parent = "projects/your-gcp-project-id/locations/europe-west1"
-        local_cloud_functions_package = release_path / "functions" / "package.zip"
+        local_cloud_functions_package = expected_train.release_path / "functions" / "package.zip"
         copied_cloud_functions_package = (
             "gs://your-staging-bucket-name/"
             "wanna-pipelines/wanna-sklearn-sample/deployment/test/functions/package.zip"
@@ -386,7 +418,7 @@ class TestPipelineService(unittest.TestCase):
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
         scheduler_v1.CloudSchedulerClient.update_job = MagicMock()
         wanna.core.services.path_utils.PipelinePaths.get_gcs_wanna_manifest_path = MagicMock(
-            return_value=expected_manifest_json_path
+            return_value=expected_train.manifest_json_path
         )
 
         # Deploy the thing
@@ -430,12 +462,12 @@ class TestPipelineService(unittest.TestCase):
         # Assert Cloud Scheduler calls
         expected_job_name = expected_function_name
         job_name = f"{parent}/jobs/{expected_job_name}"
-        scheduler_v1.CloudSchedulerClient.get_job.assert_called_once()
-        scheduler_v1.CloudSchedulerClient.update_job.assert_called_once()
+        self.assertEqual(scheduler_v1.CloudSchedulerClient.get_job.call_count, 2)
+        self.assertEqual(scheduler_v1.CloudSchedulerClient.update_job.call_count, 2)
         scheduler_v1.CloudSchedulerClient.get_job.assert_called_with({"name": job_name})
 
-        self.assertEqual(AlertPolicyServiceClient.list_alert_policies.call_count, 3)
-        self.assertEqual(AlertPolicyServiceClient.create_alert_policy.call_count, 3)
+        self.assertEqual(AlertPolicyServiceClient.list_alert_policies.call_count, 6)
+        self.assertEqual(AlertPolicyServiceClient.create_alert_policy.call_count, 6)
 
         push_network = pipeline_service._get_resource_network(
             project_id="test-project-id",
