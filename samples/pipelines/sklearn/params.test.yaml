@@ -1,2 +1,3 @@
 eval_acc_threshold: 0.95
 start_date: "{{ modules.pendulum.now().in_timezone('UTC').subtract(days=1).format('YYYY/MM/DD') }}"
+model_path: gs://my-bucket/wanna-jobs/a/outputs/xgb_model.pkl
