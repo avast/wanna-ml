@@ -141,9 +141,9 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 )
 
     def upsert_log_metric(self, resource: LogMetricResource) -> dict[str, Any]:
-        # todo: print that we found existing channel
         client = LoggingClient(credentials=self.credentials)
         try:
+            logger.user_info(f"Found existing log metric: {resource.name}")
             return client.metrics_api.metric_get(
                 project=resource.project, metric_name=resource.name
             )
