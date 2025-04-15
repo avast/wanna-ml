@@ -5,7 +5,8 @@ from pydantic import BaseModel, EmailStr, Field
 
 class BaseNotificationChannel(BaseModel):
     """
-    Base class for multiple GCP notification channels types
+    Base class for multiple GCP notification channels types.
+    Note that the notification channels is not created until it's referenced by a deployed pipeline.
 
     :param str name: Friendly name for the channel
     :param Optional[str] description: Short description of the channel

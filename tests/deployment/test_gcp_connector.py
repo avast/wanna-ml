@@ -10,6 +10,7 @@ from google.cloud.monitoring_v3 import (
     NotificationChannel,
     NotificationChannelServiceClient,
 )
+from google.cloud.pubsub_v1 import PublisherClient
 from mock import MagicMock
 
 from wanna.core.deployment.models import (
@@ -54,6 +55,8 @@ class TestGCPConnector(unittest.TestCase):
 
         NotificationChannelServiceClient.list_notification_channels = MagicMock(return_value=[])
         NotificationChannelServiceClient.create_notification_channel = MagicMock()
+        PublisherClient.get_topic = MagicMock()
+
         self.connector.upsert_notification_channel(notification_channel_resource)
 
         NotificationChannelServiceClient.list_notification_channels.assert_called_with(
@@ -62,6 +65,9 @@ class TestGCPConnector(unittest.TestCase):
         NotificationChannelServiceClient.create_notification_channel.assert_called_with(
             name="projects/test-gcp-connector",
             notification_channel=expected_notification_channel,
+        )
+        PublisherClient.get_topic.assert_called_with(
+            topic="projects/test-gcp-connector/topics/project"
         )
 
     def test_upsert_notification_channel(self):
