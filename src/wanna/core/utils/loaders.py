@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 import yaml
-from yamlinclude import YamlIncludeConstructor
+from yaml_include import Constructor
 
 
 def replace_environment_variables() -> None:
@@ -26,7 +26,13 @@ def load_yaml(stream: TextIO, context_dir: Path, **extras: Any) -> dict[Any, Any
     """
     Convert a YAML stream into a class via the OrderedLoader class.
     """
-    YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=context_dir)
+
+    include_constructor = Constructor(base_dir=context_dir)
+
+    # Register the `!inc` tag with the FullLoader (https://pyyaml-include.readthedocs.io/en/stable/apidocs/yaml_include.constructor.html)
+    # This allows us to use `!inc` in the YAML file to include other YAML files.
+    yaml.add_constructor("!inc", include_constructor, Loader=yaml.FullLoader)
+
     replace_environment_variables()
     yaml_dict = yaml.load(stream, Loader=yaml.FullLoader) or {}
     yaml_dict.update(extras)
