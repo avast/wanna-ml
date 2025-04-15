@@ -191,7 +191,7 @@ class TensorboardService(BaseService[TensorboardModel]):
         """
         return (
             f"https://{experiment.location}.tensorboard.googleusercontent.com/"
-            f'experiment/{experiment.resource_name.replace("/", "+")}'
+            f"experiment/{experiment.resource_name.replace('/', '+')}"
         )
 
     def _create_tensorboard_tree(self, region: str, filter_expr: str, show_url: bool) -> Tree:

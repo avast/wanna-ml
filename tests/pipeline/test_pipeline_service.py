@@ -347,7 +347,7 @@ class TestPipelineService(unittest.TestCase):
 
         # Check cloudfunctions sdk methos were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_called_with(
-            {"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}
+            {"name": f"{parent}/functions/wanna-sklearn-sample-local"}
         )
         CloudFunctionsServiceClient.update_function.assert_called_with(
             {"function": expected_function}
