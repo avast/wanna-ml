@@ -452,8 +452,8 @@ class TestPipelineService(unittest.TestCase):
         # Check cloudfunctions sdk methods were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_has_calls(
             [
-                call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
-                call({"name": f"{parent}/functions/wanna-sklearn" "-sample-local"}),
+                call({"name": f"{parent}/functions/wanna-sklearn-sample-local"}),
+                call({"name": f"{parent}/functions/wanna-sklearn-sample-local"}),
             ]
         )
         CloudFunctionsServiceClient.update_function.assert_has_calls(
