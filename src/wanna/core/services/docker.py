@@ -107,7 +107,7 @@ class DockerService:
         assert self.cloud_build or self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli with local docker build"
         )
-        self.overwrite_images = get_env_bool("WANNA_OVERWRITE_DOCKER_IMAGE", True)
+        self.overwrite_images = get_env_bool(os.environ.get("WANNA_OVERWRITE_DOCKER_IMAGE"), True)
 
     def _read_build_config(self, config_path: Path | str) -> DockerBuildConfigModel | None:
         """
@@ -536,7 +536,7 @@ class DockerService:
             tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
             for tag in tags:
                 # Check if tags are already pushed
-                if self.overwrite_images and self.remote_image_tag_exists(tag):
+                if (not self.overwrite_images) and self.remote_image_tag_exists(tag):
                     logger.user_info(
                         text=f"Skipping push for {tag} as it already exists in registry"
                     )
