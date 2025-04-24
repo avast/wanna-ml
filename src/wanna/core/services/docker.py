@@ -17,7 +17,7 @@ from google.cloud.devtools.cloudbuild_v1.types import (
 )
 from google.cloud.storage import Blob
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
-from python_on_whales import Image, docker
+from python_on_whales import Image, docker, DockerException
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -33,7 +33,7 @@ from wanna.core.models.docker import (
 from wanna.core.models.gcp_profile import GCPProfileModel
 from wanna.core.utils import loaders
 from wanna.core.utils.credentials import get_credentials
-from wanna.core.utils.env import cloud_build_access_allowed, gcp_access_allowed
+from wanna.core.utils.env import cloud_build_access_allowed, gcp_access_allowed, get_env_bool
 from wanna.core.utils.gcp import (
     convert_project_id_to_project_number,
     upload_file_to_gcs,
@@ -107,6 +107,7 @@ class DockerService:
         assert self.cloud_build or self._is_docker_client_active(), DockerClientException(
             "You need running docker client on your machine to use WANNA cli with local docker build"
         )
+        self.overwrite_images = get_env_bool("WANNA_OVERWRITE_DOCKER_IMAGE", True)
 
     def _read_build_config(self, config_path: Path | str) -> DockerBuildConfigModel | None:
         """
@@ -500,6 +501,25 @@ class DockerService:
         except:
             raise Exception(f"Build failed {link}")
 
+    @staticmethod
+    def remote_image_tag_exists(tag: str) -> bool:
+        """
+        Checks if the image tag exists in the registry.
+
+        Args:
+            tag: the docker image tag, e.g. europe-west1-docker.pkg.dev/ppd-ctores-mlops-f6/mlops-dev/wanna-mlops/data:dev
+
+        Returns: true if the image tag exists, false otherwise
+
+        """
+        try:
+            docker.manifest.inspect(tag)
+            return True
+        except DockerException as e:
+            if "no such manifest" in e.stderr:
+                return False
+            raise e
+
     def push_image(self, image_or_tags: Image | list[str], quiet: bool = False) -> None:
         """
         Push a docker image to the registry (image must have tags)
@@ -512,11 +532,15 @@ class DockerService:
         Returns:
             None
         """
-
         if not self.cloud_build:
             tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
-            logger.user_info(text=f"Pushing docker image {tags}")
-            docker.image.push(tags, quiet)
+            for tag in tags:
+                # Check if tags are already pushed
+                if self.overwrite_images and self.remote_image_tag_exists(tag):
+                    logger.user_info(text=f"Skipping push for {tag} as it already exists in registry")
+                    continue
+                logger.user_info(text=f"Pushing docker image {tag}")
+                docker.image.push(tag, quiet)
 
     def push_image_ref(
         self,

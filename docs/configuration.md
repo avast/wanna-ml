@@ -25,6 +25,9 @@ This section is related to partial or full offline mode without actually calling
 - `WANNA_GCP_CLOUD_BUILD_ACCESS_ALLOWED` allows using cloud build instead of local docker build.
   - Default true.
   - Disable for local docker build if you can't or don't want to use the cloud build.
+- `WANNA_OVERWRITE_DOCKER_IMAGE` overwrites the docker image name in the repository.
+  - Default true.
+  - Disable for docker image repositories which don't allow overwriting the image.
 
 ### Docker push configuration
 
