@@ -516,8 +516,7 @@ class DockerService:
             docker.manifest.inspect(tag)
             return True
         except DockerException as e:
-            if "no such manifest" in e.stderr:
-                return False
+            if hasattr(e, "stderr") and "no such manifest" in e.stderr:
             raise e
 
     def push_image(self, image_or_tags: Image | list[str], quiet: bool = False) -> None:
