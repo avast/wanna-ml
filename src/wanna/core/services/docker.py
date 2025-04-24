@@ -17,7 +17,7 @@ from google.cloud.devtools.cloudbuild_v1.types import (
 )
 from google.cloud.storage import Blob
 from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
-from python_on_whales import Image, docker, DockerException
+from python_on_whales import DockerException, Image, docker
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -537,7 +537,9 @@ class DockerService:
             for tag in tags:
                 # Check if tags are already pushed
                 if self.overwrite_images and self.remote_image_tag_exists(tag):
-                    logger.user_info(text=f"Skipping push for {tag} as it already exists in registry")
+                    logger.user_info(
+                        text=f"Skipping push for {tag} as it already exists in registry"
+                    )
                     continue
                 logger.user_info(text=f"Pushing docker image {tag}")
                 docker.image.push(tag, quiet)
