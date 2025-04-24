@@ -516,7 +516,7 @@ class DockerService:
             docker.manifest.inspect(tag)
             return True
         except DockerException as e:
-            if hasattr(e, "stderr") and "no such manifest" in e.stderr:
+            if hasattr(e, "stderr") and e.stderr is not None and "no such manifest" in e.stderr:
                 return False
             raise e
 
