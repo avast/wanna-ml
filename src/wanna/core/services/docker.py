@@ -517,6 +517,7 @@ class DockerService:
             return True
         except DockerException as e:
             if hasattr(e, "stderr") and "no such manifest" in e.stderr:
+                return False
             raise e
 
     def push_image(self, image_or_tags: Image | list[str], quiet: bool = False) -> None:
