@@ -296,7 +296,8 @@ class PipelineService(BaseService[PipelineModel]):
             self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                 pipeline.tensorboard_ref
             )
-            if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources(gcp_access_allowed)
+            if pipeline.tensorboard_ref
+            and self.push_mode.can_push_gcp_resources(gcp_access_allowed)
             else None
         )
 
