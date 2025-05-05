@@ -7,6 +7,7 @@ import typer
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.base_instance import BaseInstanceModel
+from wanna.core.utils.env import gcp_access_allowed
 from wanna.core.utils.gcp import convert_project_id_to_project_number, get_network_info
 
 logger = get_logger(__name__)
@@ -159,7 +160,7 @@ class BaseService(ABC, Generic[T]):
         resource_network: str | None,
         fallback_project_network: str | None,
         use_project_number: bool = True,
-    ):
+    ) -> str | None:
         resource_network = resource_network if resource_network else fallback_project_network
         if resource_network:
             result = get_network_info(resource_network)
@@ -168,7 +169,7 @@ class BaseService(ABC, Generic[T]):
                 project_id, resource_network = result
 
             # In certain scenarios we can't build on GCP and have no access to GCP from within Avast build infra
-            if push_mode.can_push_gcp_resources():
+            if push_mode.can_push_gcp_resources(gcp_access_allowed):
                 if not project_id.isdigit() and use_project_number:
                     project_id = convert_project_id_to_project_number(project_id)
 
