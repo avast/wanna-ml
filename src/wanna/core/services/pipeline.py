@@ -28,6 +28,7 @@ from wanna.core.services.base import BaseService
 from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import PipelinePaths
 from wanna.core.services.tensorboard import TensorboardService
+from wanna.core.utils.env import gcp_access_allowed
 from wanna.core.utils.loaders import load_yaml_path
 
 logger = get_logger(__name__)
@@ -118,7 +119,7 @@ class PipelineService(BaseService[PipelineModel]):
                         # Add all tags to the set to track what's been pushed
                         tags2push.update(ref.tags)
             # Push gcp resources if we are running on GCP build agent
-            if self.push_mode.can_push_gcp_resources():
+            if self.push_mode.can_push_gcp_resources(gcp_access_allowed):
                 # Prepare manifest paths
                 wanna_manifest_publish_paths = []
 
@@ -295,7 +296,8 @@ class PipelineService(BaseService[PipelineModel]):
             self.tensorboard_service.get_or_create_tensorboard_instance_by_name(
                 pipeline.tensorboard_ref
             )
-            if pipeline.tensorboard_ref and self.push_mode.can_push_gcp_resources()
+            if pipeline.tensorboard_ref
+            and self.push_mode.can_push_gcp_resources(gcp_access_allowed)
             else None
         )
 

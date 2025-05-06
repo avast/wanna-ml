@@ -38,6 +38,7 @@ from wanna.core.services.base import BaseService, T
 from wanna.core.services.docker import DockerService
 from wanna.core.services.path_utils import JobPaths
 from wanna.core.services.tensorboard import TensorboardService
+from wanna.core.utils.env import gcp_access_allowed
 from wanna.core.utils.json import remove_nones
 from wanna.core.utils.loaders import load_yaml_path
 
@@ -139,7 +140,7 @@ class JobService(BaseService[JobModelTypeAlias]):
                         tags = image.repo_tags if image and image.repo_tags else [tag]
                         container_artifacts.append(ContainerArtifact(name=model.name, tags=tags))
 
-            if self.push_mode.can_push_gcp_resources():
+            if self.push_mode.can_push_gcp_resources(gcp_access_allowed):
                 gcs_manifest_path = job_paths.get_gcs_job_wanna_manifest_path(version)
 
                 if not local:

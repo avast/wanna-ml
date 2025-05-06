@@ -130,8 +130,8 @@ class PushMode(str, Enum):
     def can_push_containers(self) -> bool:
         return self == PushMode.all or self == PushMode.containers
 
-    def can_push_gcp_resources(self) -> bool:
-        return self == PushMode.all or self == PushMode.manifests
+    def can_push_gcp_resources(self, gcp_access_allowed: bool) -> bool:
+        return (self == PushMode.all or self == PushMode.manifests) and gcp_access_allowed
 
 
 class PushTask(BaseModel):
