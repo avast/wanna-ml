@@ -8,6 +8,7 @@ from google.api_core.exceptions import PermissionDenied
 from google.cloud import scheduler_v1
 from google.cloud.exceptions import NotFound
 from google.cloud.functions_v1 import CloudFunctionsServiceClient
+from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 
 from wanna.core.deployment.io import IOMixin
 from wanna.core.deployment.models import (
@@ -151,6 +152,8 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         function_url = (
             f"https://{resource.location}-{resource.project}.cloudfunctions.net/{function_name}"
         )
+        timeout = Duration()
+        timeout.seconds = 120  # 2 minutes
         function = {
             "name": function_path,
             "description": f"wanna {resource.name} function for {env} pipeline",
@@ -166,7 +169,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 snakecase(k).upper(): v for k, v in resource.env_params.items()
             },
             "available_memory_mb": 512,
-            "timeout": 120,  # 2 minutes
+            "timeout": timeout,
         }
 
         try:
