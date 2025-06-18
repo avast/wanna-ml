@@ -304,7 +304,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             "description": f"wanna {resource.pipeline_name} function for {env} pipeline",
             "source_archive_url": functions_gcs_path,
             "entry_point": "main",
-            "runtime": "python39",
+            "runtime": "python312",
             "event_trigger": {
                 "event_type": "google.storage.object.finalize",
                 "resource": f"projects/{resource.project}/buckets/"

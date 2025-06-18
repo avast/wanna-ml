@@ -3,10 +3,14 @@ import json
 import os
 from typing import Any
 
+import google.cloud.logging
 import pendulum
 from google.api_core.exceptions import NotFound
 from google.cloud import aiplatform
 from jinja2 import Environment
+
+logging_client = google.cloud.logging.Client()
+logging_client.setup_logging()
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 REGION = os.getenv("REGION")
