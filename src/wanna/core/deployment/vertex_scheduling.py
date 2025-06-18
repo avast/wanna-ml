@@ -156,7 +156,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             "description": f"wanna {resource.name} function for {env} pipeline",
             "source_archive_url": functions_gcs_path,
             "entry_point": "process_request",
-            "runtime": "python39",
+            "runtime": "python312",
             "https_trigger": {
                 "url": function_url,
             },
@@ -166,7 +166,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 snakecase(k).upper(): v for k, v in resource.env_params.items()
             },
             "available_memory_mb": 512,
-            # TODO: timeout
+            "timeout": 120,  # 2 minutes
         }
 
         try:

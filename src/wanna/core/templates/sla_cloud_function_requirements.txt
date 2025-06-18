@@ -1,4 +1,3 @@
-# --extra-index-url AVAST internal artifactory
-# wanna :-)
+# wanna-ml :-)
 google-cloud>=0.34.0
 google-cloud-aiplatform

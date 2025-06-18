@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 import pendulum
+from google.api_core.exceptions import NotFound
 from google.cloud import aiplatform
 from jinja2 import Environment
 
@@ -13,7 +14,7 @@ PIPELINE_ROOT = os.getenv("PIPELINE_ROOT")
 PIPELINE_NETWORK = os.getenv("PIPELINE_NETWORK")
 PIPELINE_SERVICE_ACCOUNT = os.getenv("PIPELINE_SERVICE_ACCOUNT")
 PIPELINE_EXPERIMENT = os.getenv("PIPELINE_EXPERIMENT")
-PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not define we won't run it
+PIPELINE_LABELS = json.loads(os.environ["PIPELINE_LABELS"])  # if not defined we won't run it
 PIPELINE_JOB_ID = os.getenv("PIPELINE_JOB_ID")
 ENCRYPTION_SPEC_KEY_NAME = os.getenv("ENCRYPTION_SPEC_KEY_NAME")
 
@@ -52,21 +53,24 @@ def process_request(request):
 
     aiplatform.init(project=PROJECT_ID, location=REGION, experiment=PIPELINE_EXPERIMENT)
 
-    job = aiplatform.PipelineJob(
-        display_name="{{manifest.pipeline_name}}",
-        job_id=PIPELINE_JOB_ID,
-        template_path=pipeline_spec_uri,
-        pipeline_root=PIPELINE_ROOT,
-        enable_caching=enable_caching,
-        parameter_values=parameter_values,
-        labels=PIPELINE_LABELS,
-        encryption_spec_key_name=ENCRYPTION_SPEC_KEY_NAME,
-    )
+    try:
+        job = aiplatform.PipelineJob(
+            display_name="{{manifest.pipeline_name}}",
+            job_id=PIPELINE_JOB_ID,
+            template_path=pipeline_spec_uri,
+            pipeline_root=PIPELINE_ROOT,
+            enable_caching=enable_caching,
+            parameter_values=parameter_values,
+            labels=PIPELINE_LABELS,
+            encryption_spec_key_name=ENCRYPTION_SPEC_KEY_NAME,
+        )
 
-    job.submit(
-        service_account=PIPELINE_SERVICE_ACCOUNT,
-        network=PIPELINE_NETWORK,
-        experiment=PIPELINE_EXPERIMENT,
-    )
+        job.submit(
+            service_account=PIPELINE_SERVICE_ACCOUNT,
+            network=PIPELINE_NETWORK,
+            experiment=PIPELINE_EXPERIMENT,
+        )
+    except NotFound:
+        return f"Pipeline spec {pipeline_spec_uri} not found", 404
 
-    return "Job submitted"
+    return "Job submitted", 200

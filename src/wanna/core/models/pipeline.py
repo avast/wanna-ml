@@ -30,7 +30,7 @@ class PipelineModel(BaseInstanceModel):
     - `docker_image_ref` - [list[str]] - list of names of docker images
     - `schedule` - [str] (optional) - Scheduler using a cron syntax
     - `tensorboard_ref` - [str] (optional) - Name of the Vertex AI Experiment
-    - `notification_channels_ref` - [list[str]] (optional) list of names of notificartins channel described
+    - `notification_channels_ref` - [list[str]] (optional) list of names of notifications channel described
     by a model: (name: str, type: Literal["email"], emails: list[EmailStr])
     - `sla_hours` - [float] (optional) Time after which the running pipeline gets stopped
     - `enable_caching` - [bool] enable KubeFlow pipeline execution caching
