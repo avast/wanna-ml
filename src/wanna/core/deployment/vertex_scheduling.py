@@ -152,8 +152,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
         function_url = (
             f"https://{resource.location}-{resource.project}.cloudfunctions.net/{function_name}"
         )
-        timeout = Duration()
-        timeout.seconds = 120  # 2 minutes
+        timeout = Duration(seconds=120)  # 2 minutes
         function = {
             "name": function_path,
             "description": f"wanna {resource.name} function for {env} pipeline",
