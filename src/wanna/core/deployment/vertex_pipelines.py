@@ -176,7 +176,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
                 resource_root=pipeline_paths.get_gcs_pipeline_deployment_path(version),
                 resource_function_template="scheduler_cloud_function.py",
                 resource_requirements_template="scheduler_cloud_function_requirements.txt",
-                template_vars=resource.dict(),
+                template_vars=resource.model_dump(),
                 env_params=resource.compile_env_params,
                 labels=resource.labels,
                 network=resource.network,
@@ -304,7 +304,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
             "description": f"wanna {resource.pipeline_name} function for {env} pipeline",
             "source_archive_url": functions_gcs_path,
             "entry_point": "main",
-            "runtime": "python39",
+            "runtime": "python312",
             "event_trigger": {
                 "event_type": "google.storage.object.finalize",
                 "resource": f"projects/{resource.project}/buckets/"

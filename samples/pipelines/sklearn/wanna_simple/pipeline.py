@@ -17,7 +17,7 @@ from .components.trainer.train_xgb_model import train_xgb_model_op
 
 
 @component(
-    base_image="python:3.9",
+    base_image="python:3.12",
     packages_to_install=["slack-webhook-cli"],
 )
 def slack_notification(slack_channel: str, status: str):

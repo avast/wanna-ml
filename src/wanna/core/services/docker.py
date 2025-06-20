@@ -437,8 +437,7 @@ class DockerService:
 
         # Set the pooling timeout to self.cloud_build_timeout seconds
         # since often large GPUs builds exceed the 900s limit
-        timeout = Duration()
-        timeout.seconds = self.cloud_build_timeout
+        timeout = Duration(seconds=self.cloud_build_timeout)
         DEFAULT_POLLING._timeout = self.cloud_build_timeout
         project_number = convert_project_id_to_project_number(self.project_id)
 

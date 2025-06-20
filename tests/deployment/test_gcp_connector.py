@@ -11,6 +11,7 @@ from google.cloud.monitoring_v3 import (
     NotificationChannelServiceClient,
 )
 from google.cloud.pubsub_v1 import PublisherClient
+from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from mock import MagicMock
 
 from wanna.core.deployment.models import (
@@ -124,7 +125,7 @@ class TestGCPConnector(unittest.TestCase):
             "description": "wanna test-function function for test pipeline",
             "source_archive_url": f"{resource_root}/functions/package.zip",
             "entry_point": "process_request",
-            "runtime": "python39",
+            "runtime": "python312",
             "https_trigger": {
                 "url": "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test",
             },
@@ -132,6 +133,7 @@ class TestGCPConnector(unittest.TestCase):
             "labels": {},
             "environment_variables": {},
             "available_memory_mb": 512,
+            "timeout": Duration(seconds=120),
         }
 
         # Set Mocks
@@ -156,7 +158,7 @@ class TestGCPConnector(unittest.TestCase):
             "https://europe-west-1-test-gcp-connector.cloudfunctions.net/test-function-test",
         )
 
-        # Check cloudfunctions sdk methos were called with expected function params
+        # Check cloudfunctions sdk methods were called with expected function params
         CloudFunctionsServiceClient.get_function.assert_called_with(
             {
                 "name": "projects/test-gcp-connector/locations/europe-west-1/functions/test-function-test"

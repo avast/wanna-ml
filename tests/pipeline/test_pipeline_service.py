@@ -18,6 +18,7 @@ from google.cloud.monitoring_v3 import (
     NotificationChannelServiceClient,
 )
 from google.cloud.pubsub_v1 import PublisherClient
+from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
 from mock import patch
 from mock.mock import MagicMock, call
 
@@ -374,7 +375,7 @@ class TestPipelineService(unittest.TestCase):
             "description": "wanna wanna-sklearn-sample function for local pipeline",
             "source_archive_url": copied_cloud_functions_package,
             "entry_point": "process_request",
-            "runtime": "python39",
+            "runtime": "python312",
             "https_trigger": {
                 "url": expected_function_url,
             },
@@ -402,6 +403,7 @@ class TestPipelineService(unittest.TestCase):
                 "PIPELINE_EXPERIMENT": "wanna-sample-experiment",
             },
             "available_memory_mb": 512,
+            "timeout": Duration(seconds=120),
         }
         expected_function_eval = copy.deepcopy(expected_function)
         expected_function_eval["source_archive_url"] = copied_cloud_functions_eval_package
