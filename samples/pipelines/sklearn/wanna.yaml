@@ -65,7 +65,7 @@ pipelines:
     pipeline_params: params.yaml
     docker_image_ref: ["train", "serve"]
     tensorboard_ref: wanna-sample-pipeline-board
-    enable_caching: false
+    enable_caching: true
     experiment: "wanna-sample-experiment"
     notification_channels_ref:
       - wanna-sample-pipeline-pubsub-channel
@@ -74,5 +74,5 @@ pipelines:
     pipeline_function: "wanna_simple.pipeline.wanna_sklearn_sample_eval"
     pipeline_params: params.eval.yaml
     docker_image_ref: ["train"]
-    enable_caching: false
+    enable_caching: true
     experiment: "wanna-sample-experiment"

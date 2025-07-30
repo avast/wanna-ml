@@ -128,7 +128,7 @@ class PipelinePlugin(BasePlugin):
         skip_execution_cache: bool = typer.Option(
             False,
             "--skip-execution-cache",
-            help="Kubeflow pipeline cache configuration",
+            help="configuration to skip kfp execution cache",
         ),
     ) -> None:
         """
@@ -145,7 +145,7 @@ class PipelinePlugin(BasePlugin):
             workdir=workdir,
             version=version,
             push_mode=mode,
-            kubeflow_pipeline_caching=skip_execution_cache,
+            skip_execution_cache=skip_execution_cache,
         )
         manifests = pipeline_service.build(instance_name)
         pipeline_service.push(manifests, local=False)
