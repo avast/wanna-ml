@@ -121,7 +121,10 @@ class TestPipelineService(unittest.TestCase):
 
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
         pipeline_service = PipelineService(
-            config=config, workdir=self.sample_pipeline_dir, version="test"
+            config=config,
+            workdir=self.sample_pipeline_dir,
+            version="test",
+            skip_execution_cache=True,
         )
         # Setup expected data/fixtures
         expected_train_docker_image_model = LocalBuildImageModel(
