@@ -50,7 +50,7 @@ class PipelinePaths:
     wanna_manifest_filename = "wanna-manifest.json"
     job_manifest_filename = "job-manifest.json"
 
-    def __init__(self, workdir: Path, bucket: str, pipeline_name: str):
+    def __init__(self, workdir: Path, bucket: str, pipeline_name: str, local: bool = False):
         self.pipeline_name = pipeline_name
         self.workdir = workdir
         self.bucket = bucket
@@ -59,6 +59,7 @@ class PipelinePaths:
         self.gcs_pipeline_path = self._get_gcs_pipeline_path(self.bucket, pipeline_name)
         self.local_job_path = self._get_local_pipeline_path(self.pipelines_dir, pipeline_name)
         self.gcs_job_path = self._get_gcs_pipeline_path(self.bucket, pipeline_name)
+        self.local = local
 
     def _get_local_pipeline_path(self, base_path: Path, pipeline_name: str) -> Path:
         os.makedirs(base_path, exist_ok=True)
@@ -105,3 +106,13 @@ class PipelinePaths:
     def get_local_pipeline_root(self) -> str:
         path = self.local_pipeline_path / "executions"
         return str(path)
+
+    def get_wanna_manifest_path(self, version: str) -> str:
+        if self.local:
+            return self.get_local_wanna_manifest_path(version)
+        return self.get_gcs_wanna_manifest_path(version)
+
+    def get_wanna_pipeline_json_spec_path(self, version: str) -> str:
+        if self.local:
+            return self.get_local_pipeline_json_spec_path(version)
+        return self.get_gcs_pipeline_json_spec_path(version)

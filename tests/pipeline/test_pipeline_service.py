@@ -51,6 +51,7 @@ class DeploymentPaths:
     manifest_json_path: str
     latest_manifest_json_path: str
     pipeline_spec_path: str
+    latest_pipeline_spec_path: str
 
 
 def create_deployment_paths(base_path: Path, version: str) -> DeploymentPaths:
@@ -73,6 +74,7 @@ def create_deployment_paths(base_path: Path, version: str) -> DeploymentPaths:
     manifest_json_path = str(manifest_path / "wanna-manifest.json")
     latest_manifest_json_path = str(latest_manifest_path / "wanna-manifest.json")
     pipeline_spec_path = str(manifest_path / "pipeline-spec.json")
+    latest_pipeline_spec_path = str(latest_manifest_path / "pipeline-spec.json")
 
     return DeploymentPaths(
         release_path=release_path,
@@ -82,6 +84,7 @@ def create_deployment_paths(base_path: Path, version: str) -> DeploymentPaths:
         manifest_json_path=manifest_json_path,
         latest_manifest_json_path=latest_manifest_json_path,
         pipeline_spec_path=pipeline_spec_path,
+        latest_pipeline_spec_path=latest_pipeline_spec_path,
     )
 
 
@@ -309,6 +312,11 @@ class TestPipelineService(unittest.TestCase):
                         source=str(expected_json_spec_path),
                         destination=expected_train.pipeline_spec_path,
                     ),
+                    PathArtifact(
+                        name="Kubeflow V2 pipeline spec",
+                        source=str(expected_json_spec_path),
+                        destination=expected_train.latest_pipeline_spec_path,
+                    ),
                 ],
                 [
                     JsonArtifact(
@@ -318,7 +326,9 @@ class TestPipelineService(unittest.TestCase):
                     ),
                     JsonArtifact(
                         name="WANNA pipeline manifest",
-                        json_body=pipeline_meta.model_dump(),
+                        json_body=pipeline_meta.model_copy(
+                            update={"json_spec_path": expected_train.latest_pipeline_spec_path}
+                        ).model_dump(),
                         destination=expected_train.latest_manifest_json_path,
                     ),
                 ],
@@ -331,6 +341,11 @@ class TestPipelineService(unittest.TestCase):
                         source=str(expected_json_spec_eval_path),
                         destination=expected_eval.pipeline_spec_path,
                     ),
+                    PathArtifact(
+                        name="Kubeflow V2 pipeline spec",
+                        source=str(expected_json_spec_eval_path),
+                        destination=expected_eval.latest_pipeline_spec_path,
+                    ),
                 ],
                 [
                     JsonArtifact(
@@ -340,7 +355,9 @@ class TestPipelineService(unittest.TestCase):
                     ),
                     JsonArtifact(
                         name="WANNA pipeline manifest",
-                        json_body=pipeline_eval_meta.model_dump(),
+                        json_body=pipeline_eval_meta.model_copy(
+                            update={"json_spec_path": expected_eval.latest_pipeline_spec_path}
+                        ).model_dump(),
                         destination=expected_eval.latest_manifest_json_path,
                     ),
                 ],
@@ -354,6 +371,8 @@ class TestPipelineService(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_eval.manifest_json_path))
         self.assertTrue(os.path.exists(expected_train.latest_manifest_json_path))
         self.assertTrue(os.path.exists(expected_eval.latest_manifest_json_path))
+        self.assertTrue(os.path.exists(expected_train.latest_pipeline_spec_path))
+        self.assertTrue(os.path.exists(expected_eval.latest_pipeline_spec_path))
 
         # === Deploy ===
         parent = "projects/your-gcp-project-id/locations/europe-west1"

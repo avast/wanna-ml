@@ -42,7 +42,7 @@ def mock_storage_client():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def mock_mock_upload_file():
+def mock_upload_file():
     with mock.patch(
         "wanna.core.deployment.io.IOMixin.upload_file",
         mocks.mock_upload_file,

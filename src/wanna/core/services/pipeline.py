@@ -95,7 +95,7 @@ class PipelineService(BaseService[PipelineModel]):
         for local_manifest_path in pipelines:
             manifest = PipelineService.read_manifest(self.connector, str(local_manifest_path))
             pipeline_paths = PipelinePaths(
-                self.workdir, manifest.pipeline_bucket, manifest.pipeline_name
+                self.workdir, manifest.pipeline_bucket, manifest.pipeline_name, local=local
             )
             json_artifacts, manifest_artifacts, container_artifacts = [], [], []
 
@@ -118,39 +118,21 @@ class PipelineService(BaseService[PipelineModel]):
                             )
                         # Add all tags to the set to track what's been pushed
                         tags2push.update(ref.tags)
+
             # Push gcp resources if we are running on GCP build agent
             if self.push_mode.can_push_gcp_resources(gcp_access_allowed):
-                # Prepare manifest paths
-                wanna_manifest_publish_paths = []
-
                 local_kubeflow_json_spec_path = pipeline_paths.get_local_pipeline_json_spec_path(
                     version
                 )
 
-                if local:
-                    # Override paths to local dir when in "local" mode, IE tests or local run
-                    for v in [version, "latest"]:
-                        wanna_manifest_publish_paths.append(
-                            pipeline_paths.get_local_wanna_manifest_path(v)
-                        )
-
-                    kubeflow_json_spec_publish_path = (
-                        pipeline_paths.get_local_pipeline_json_spec_path(version)
-                    )
-                else:
-                    for v in [version, "latest"]:
-                        wanna_manifest_publish_paths.append(
-                            pipeline_paths.get_gcs_wanna_manifest_path(v)
-                        )
-
-                    kubeflow_json_spec_publish_path = (
-                        pipeline_paths.get_gcs_pipeline_json_spec_path(version)
+                for v in [version, "latest"]:
+                    wanna_manifest_publish_path, kubeflow_json_spec_publish_path = (
+                        pipeline_paths.get_wanna_manifest_path(v),
+                        pipeline_paths.get_wanna_pipeline_json_spec_path(v),
                     )
 
-                # Ensure to update manifest json_spec_path to have the actual gcs location
-                manifest.json_spec_path = kubeflow_json_spec_publish_path
+                    manifest.json_spec_path = kubeflow_json_spec_publish_path
 
-                for wanna_manifest_publish_path in wanna_manifest_publish_paths:
                     json_artifacts.append(
                         JsonArtifact(
                             name="WANNA pipeline manifest",
@@ -159,13 +141,13 @@ class PipelineService(BaseService[PipelineModel]):
                         )
                     )
 
-                manifest_artifacts.append(
-                    PathArtifact(
-                        name="Kubeflow V2 pipeline spec",
-                        source=local_kubeflow_json_spec_path,
-                        destination=manifest.json_spec_path,
+                    manifest_artifacts.append(
+                        PathArtifact(
+                            name=f"Kubeflow V2 pipeline spec",
+                            source=local_kubeflow_json_spec_path,
+                            destination=manifest.json_spec_path,
+                        )
                     )
-                )
 
             push_tasks.append(
                 PushTask(

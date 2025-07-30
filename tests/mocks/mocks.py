@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from google.auth.credentials import Credentials
@@ -91,6 +92,12 @@ def mock_get_gcloud_user() -> str:
 
 
 def mock_upload_file(any, src: str, dest: str):  # noqa
+    def _is_local_path(path: str) -> bool:
+        return not path.startswith("gs://")
+
+    if _is_local_path(src) and _is_local_path(dest) and src != dest:
+        shutil.copy(src, dest)
+
     return None
 
 
