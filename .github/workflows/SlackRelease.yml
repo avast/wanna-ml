@@ -27,6 +27,6 @@ jobs:
             repository: "${{ github.repository }}"
             repo_name: "${{ github.event.repository.name }}"
             release_body: ${{ toJSON(github.event.release.body) }}
-            release_url_slack: "<${{ github.event.release.html_url }}|View Release>"
+            release_url: "${{ github.event.release.html_url }}"
             published_at: "${{ github.event.release.published_at }}"
             is_prerelease: "${{ github.event.release.prerelease }}"
