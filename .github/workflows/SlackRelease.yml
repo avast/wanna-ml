@@ -21,25 +21,11 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: webhook-trigger
           payload: |
-            text: "A release is published."
-            blocks:
-              - type: header
-                text:
-                  type: plain_text
-                  text: "wanna-ml ${{ github.event.release.name }} is published!"
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Author:*\n${{ github.actor }}"
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "*Information:*"
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: ${{ toJSON(github.event.release.body) }}
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: "${{ github.event.release.html_url }}"
+            release_name: "${{ github.event.release.name }}"
+            release_tag: "${{ github.event.release.tag_name }}"
+            author: "${{ github.actor }}"
+            repository: "${{ github.repository }}"
+            release_body: ${{ toJSON(github.event.release.body) }}
+            release_url: "${{ github.event.release.html_url }}"
+            published_at: "${{ github.event.release.published_at }}"
+            is_prerelease: "${{ github.event.release.prerelease }}"
