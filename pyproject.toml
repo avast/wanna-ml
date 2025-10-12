@@ -31,6 +31,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10.0, <4.0"
+typed-lazyimport = ">=0.3.1,<0.4.0"
 kfp = "^2.7.0"
 google-cloud-aiplatform = "^1.56.0"
 google-cloud-build = "^3.24.0"

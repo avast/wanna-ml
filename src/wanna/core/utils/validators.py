@@ -1,11 +1,21 @@
+from __future__ import annotations
+
 import logging
 import re
+from typing import TYPE_CHECKING
 
 from cron_validator import CronValidator
-from google.api_core import exceptions
-from google.cloud.notebooks_v1.types.instance import Instance
-from google.cloud.storage import Client as StorageClient
+from lazyimport import Import
 from pydantic_core.core_schema import ValidationInfo
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.notebooks_v1.types.instance as gcloud_notebooks_v1_types_instance
+    import google.cloud.storage as gcloud_storage
+    from google.api_core import exceptions as gapi_core_exceptions
+else:
+    gapi_core_exceptions = Import("google.api_core.exceptions")
+    gcloud_notebooks_v1_types_instance = Import("google.cloud.notebooks_v1.types.instance")
+    gcloud_storage = Import("google.cloud.storage")
 
 from wanna.core.models.docker import DockerModel
 from wanna.core.utils.credentials import get_credentials
@@ -71,10 +81,10 @@ def validate_network_name(network_name: str | None):
 def validate_bucket_name(bucket_name):
     if should_validate:
         try:
-            _ = StorageClient(credentials=get_credentials()).get_bucket(bucket_name)
-        except exceptions.NotFound:
+            _ = gcloud_storage.Client(credentials=get_credentials()).get_bucket(bucket_name)
+        except gapi_core_exceptions.NotFound:
             raise ValueError(f"Bucket with name {bucket_name} does not exist")
-        except exceptions.Forbidden:
+        except gapi_core_exceptions.Forbidden:
             logging.warning(f"Your user does not have permission to access bucket {bucket_name}")
 
     return bucket_name
@@ -98,20 +108,23 @@ def validate_cron_schedule(schedule: str):
 
 def validate_disk_type(disk_type):
     disk_type = disk_type.upper()
-    if disk_type not in Instance.DiskType.__members__:
+    if disk_type not in gcloud_notebooks_v1_types_instance.Instance.DiskType.__members__:
         raise ValueError(
-            f"Disk type invalid ({type}). must be on of: {Instance.DiskType._member_names_}"
+            f"Disk type invalid ({type}). must be on of: {gcloud_notebooks_v1_types_instance.Instance.DiskType._member_names_}"
         )
     return disk_type
 
 
 def validate_accelerator_type(
-    accelerator_type: Instance.AcceleratorType,
-) -> Instance.AcceleratorType:
-    if accelerator_type not in Instance.AcceleratorType.__members__:
+    accelerator_type: gcloud_notebooks_v1_types_instance.Instance.AcceleratorType,
+) -> gcloud_notebooks_v1_types_instance.Instance.AcceleratorType:
+    if (
+        accelerator_type
+        not in gcloud_notebooks_v1_types_instance.Instance.AcceleratorType.__members__
+    ):
         raise ValueError(
             f"GPU accelerator type invalid ({accelerator_type})."
-            f"must be on of: {Instance.AcceleratorType._member_names_}"
+            f"must be on of: {gcloud_notebooks_v1_types_instance.Instance.AcceleratorType._member_names_}"
         )
     return accelerator_type
 

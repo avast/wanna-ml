@@ -27,17 +27,18 @@ def wanna_config_dict() -> dict[str, Any]:
     }
 
 
-class TestWannaConfigModel:
-    def test_labels_inheritance(self, wanna_config_dict):
-        wanna_config = WannaConfigModel.model_validate(wanna_config_dict)
-        assert wanna_config.notebooks[0].labels.get("grade") == "a"
-        assert wanna_config.notebooks[0].labels.get("wanna_project") == "hogwarts-owl"
-        assert wanna_config.notebooks[0].labels.get("wanna_project_authors") == "luna-lovegood"
+def test_labels_inheritance(wanna_config_dict):
+    wanna_config = WannaConfigModel.model_validate(wanna_config_dict)
+    assert wanna_config.notebooks[0].labels.get("grade") == "a"
+    assert wanna_config.notebooks[0].labels.get("wanna_project") == "hogwarts-owl"
+    assert wanna_config.notebooks[0].labels.get("wanna_project_authors") == "luna-lovegood"
 
-    def test_parameters_propagation_dont_overwrite_if_exist(self, wanna_config_dict):
-        wanna_config = WannaConfigModel.model_validate(wanna_config_dict)
-        assert wanna_config.notebooks[0].zone == "europe-west4-a"
 
-    def test_parameters_propagation_overwrite_if_not_exist(self, wanna_config_dict):
-        wanna_config = WannaConfigModel.model_validate(wanna_config_dict)
-        assert wanna_config.notebooks[1].zone == "us-east1-a"
+def test_parameters_propagation_dont_overwrite_if_exist(wanna_config_dict):
+    wanna_config = WannaConfigModel.model_validate(wanna_config_dict)
+    assert wanna_config.notebooks[0].zone == "europe-west4-a"
+
+
+def test_parameters_propagation_overwrite_if_not_exist(wanna_config_dict):
+    wanna_config = WannaConfigModel.model_validate(wanna_config_dict)
+    assert wanna_config.notebooks[1].zone == "us-east1-a"

@@ -1,7 +1,14 @@
 import json
 from datetime import datetime as dt
+from typing import TYPE_CHECKING
 
-from google.cloud import aiplatform_v1, storage
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    from google.cloud import aiplatform_v1, storage
+else:
+    aiplatform_v1 = Import("google.cloud.aiplatform_v1")
+    storage = Import("google.cloud.storage")
 
 
 def main(event, context):  # noqa: ARG001

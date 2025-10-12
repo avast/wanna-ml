@@ -1,23 +1,34 @@
+from __future__ import annotations
+
 import os
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from caseconverter import kebabcase
 from dirhash import dirhash
-from google.api_core.client_options import ClientOptions
-from google.api_core.future.polling import DEFAULT_POLLING
-from google.cloud.devtools import cloudbuild_v1
-from google.cloud.devtools.cloudbuild_v1.services.cloud_build import CloudBuildClient
-from google.cloud.devtools.cloudbuild_v1.types import (
-    Build,
-    BuildOptions,
-    BuildStep,
-    Source,
-    StorageSource,
-)
-from google.cloud.storage import Blob
-from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
-from python_on_whales import DockerException, Image, docker
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.api_core.client_options as gapi_core_client_options
+    import google.api_core.future.polling as gapi_core_future_polling
+    import google.cloud.devtools.cloudbuild_v1 as cloudbuild_v1
+    import google.cloud.devtools.cloudbuild_v1.services.cloud_build as gcloud_devtools_cloudbuild_v1_services_cloud_build
+    import google.cloud.devtools.cloudbuild_v1.types as gcloud_devtools_cloudbuild_v1_types
+    import google.cloud.storage as gcloud_storage
+    import google.protobuf.duration_pb2 as gprotobuf_duration_pb2
+    import python_on_whales
+else:
+    gapi_core_client_options = Import("google.api_core.client_options")
+    gapi_core_future_polling = Import("google.api_core.future.polling")
+    gcloud_devtools_cloudbuild_v1_services_cloud_build = Import(
+        "google.cloud.devtools.cloudbuild_v1.services.cloud_build"
+    )
+    gcloud_devtools_cloudbuild_v1_types = Import("google.cloud.devtools.cloudbuild_v1.types")
+    gcloud_storage = Import("google.cloud.storage")
+    gprotobuf_duration_pb2 = Import("google.protobuf.duration_pb2")
+    python_on_whales = Import("python_on_whales")
+    cloudbuild_v1 = Import("google.cloud.devtools.cloudbuild_v1")
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -60,7 +71,9 @@ class DockerService:
     ):
         self.docker_model = docker_model
         self.image_models = docker_model.images
-        self.image_store: dict[str, tuple[DockerImageModel, Image | None, str]] = {}
+        self.image_store: dict[
+            str, tuple[DockerImageModel, python_on_whales.Image | None, str]
+        ] = {}
 
         # Artifactory mirrors to different registry/projectid/repository combo
         registry_suffix = os.getenv("WANNA_DOCKER_REGISTRY_SUFFIX")
@@ -136,7 +149,7 @@ class DockerService:
         Returns:
             True if docker client found, False otherwise
         """
-        return docker.info().id is not None
+        return python_on_whales.docker.info().id is not None
 
     @staticmethod
     def _get_ignore_patterns(context_dir: Path) -> list[str]:
@@ -170,7 +183,7 @@ class DockerService:
         tags: list[str],
         docker_image_ref: str,
         **build_args,
-    ) -> Image | None:
+    ) -> python_on_whales.Image | None:
         """
         Build a docker image locally or in GCP Cloud Build.
 
@@ -212,19 +225,21 @@ class DockerService:
             logger.user_info(
                 text=f"Building {docker_image_ref} docker image locally with {build_args}"
             )
-            image = docker.build(context_dir, file=file_path, load=True, tags=tags, **build_args)
+            image = python_on_whales.docker.build(
+                context_dir, file=file_path, load=True, tags=tags, **build_args
+            )
             self._write_context_dir_checksum(
                 self.build_dir / docker_image_ref, context_dir, ignore_patterns
             )
             return image  # type: ignore
 
-    def _pull_image(self, image_url: str) -> Image | None:
+    def _pull_image(self, image_url: str) -> python_on_whales.Image | None:
         if self.cloud_build or self.quick_mode:
             # TODO: verify that images exists remotely but dont pull them to local
             return None
         else:
             with logger.user_spinner("Pulling image locally"):
-                image = docker.pull(image_url, quiet=True)
+                image = python_on_whales.docker.pull(image_url, quiet=True)
             return image  # type: ignore
 
     def find_image_model_by_name(self, image_name: str) -> DockerImageModel:
@@ -251,7 +266,7 @@ class DockerService:
     def get_image(
         self,
         docker_image_ref: str,
-    ) -> tuple[DockerImageModel, Image | None, str]:
+    ) -> tuple[DockerImageModel, python_on_whales.Image | None, str]:
         """
         A wrapper around _get_image that checks if the docker image has been already build / pulled
 
@@ -273,7 +288,7 @@ class DockerService:
     def _get_image(
         self,
         docker_image_ref: str,
-    ) -> tuple[DockerImageModel, Image | None, str]:
+    ) -> tuple[DockerImageModel, python_on_whales.Image | None, str]:
         """
         Given the docker_image_ref, this function prepares the image for you.
         Depending on the build_type, it either build the docker image or
@@ -437,8 +452,8 @@ class DockerService:
 
         # Set the pooling timeout to self.cloud_build_timeout seconds
         # since often large GPUs builds exceed the 900s limit
-        timeout = Duration(seconds=self.cloud_build_timeout)
-        DEFAULT_POLLING._timeout = self.cloud_build_timeout
+        timeout = gprotobuf_duration_pb2.Duration(seconds=self.cloud_build_timeout)
+        gapi_core_future_polling.DEFAULT_POLLING._timeout = self.cloud_build_timeout
         project_number = convert_project_id_to_project_number(self.project_id)
 
         dockerfile = os.path.relpath(file_path, context_dir)
@@ -453,8 +468,8 @@ class DockerService:
             (None, "cloudbuild.googleapis.com")
             if not self.cloud_build_workerpool
             else (
-                BuildOptions(
-                    pool=BuildOptions.PoolOption(
+                gcloud_devtools_cloudbuild_v1_types.BuildOptions(
+                    pool=gcloud_devtools_cloudbuild_v1_types.BuildOptions.PoolOption(
                         name=f"projects/{project_number}/locations/{self.cloud_build_workerpool_location}/workerPools/{self.cloud_build_workerpool}"
                     )
                 ),
@@ -462,12 +477,14 @@ class DockerService:
             )
         )
 
-        build = Build(
-            source=Source(
-                storage_source=StorageSource(bucket=blob.bucket.name, object_=blob.name)
+        build = gcloud_devtools_cloudbuild_v1_types.Build(
+            source=gcloud_devtools_cloudbuild_v1_types.Source(
+                storage_source=gcloud_devtools_cloudbuild_v1_types.StorageSource(
+                    bucket=blob.bucket.name, object_=blob.name
+                )
             ),
             steps=[
-                BuildStep(
+                gcloud_devtools_cloudbuild_v1_types.BuildStep(
                     name=f"gcr.io/kaniko-project/executor:{self.docker_model.cloud_build_kaniko_version}",
                     args=kaniko_build_args,
                 )
@@ -475,9 +492,9 @@ class DockerService:
             timeout=timeout,
             options=options,
         )
-        client = CloudBuildClient(
+        client = gcloud_devtools_cloudbuild_v1_services_cloud_build.CloudBuildClient(
             credentials=get_credentials(),
-            client_options=ClientOptions(api_endpoint=api_endpoint),
+            client_options=gapi_core_client_options.ClientOptions(api_endpoint=api_endpoint),
         )
         request = cloudbuild_v1.CreateBuildRequest(project_id=self.project_id, build=build)
 
@@ -512,14 +529,16 @@ class DockerService:
 
         """
         try:
-            docker.manifest.inspect(tag)
+            python_on_whales.docker.manifest.inspect(tag)
             return True
-        except DockerException as e:
+        except python_on_whales.DockerException as e:
             if hasattr(e, "stderr") and e.stderr is not None and "no such manifest" in e.stderr:
                 return False
             raise e
 
-    def push_image(self, image_or_tags: Image | list[str], quiet: bool = False) -> None:
+    def push_image(
+        self, image_or_tags: python_on_whales.Image | list[str], quiet: bool = False
+    ) -> None:
         """
         Push a docker image to the registry (image must have tags)
         If you are in the cloud_build mode, nothing is pushed, images already live in cloud.
@@ -532,7 +551,11 @@ class DockerService:
             None
         """
         if not self.cloud_build:
-            tags = image_or_tags.repo_tags if isinstance(image_or_tags, Image) else image_or_tags
+            tags = (
+                image_or_tags.repo_tags
+                if isinstance(image_or_tags, python_on_whales.Image)
+                else image_or_tags
+            )
             for tag in tags:
                 # Check if tags are already pushed
                 if (not self.overwrite_images) and self.remote_image_tag_exists(tag):
@@ -541,7 +564,7 @@ class DockerService:
                     )
                     continue
                 logger.user_info(text=f"Pushing docker image {tag}")
-                docker.image.push(tag, quiet)
+                python_on_whales.docker.image.push(tag, quiet)
 
     def push_image_ref(
         self,
@@ -563,7 +586,7 @@ class DockerService:
             self.push_image(image or [tag])
 
     @staticmethod
-    def remove_image(image: Image, force=False, prune=True) -> None:
+    def remove_image(image: python_on_whales.Image, force=False, prune=True) -> None:
         """
         Remove docker image, useful if you don't want to clutter your machine.
 
@@ -576,7 +599,7 @@ class DockerService:
             None
 
         """
-        docker.image.remove(image, force=force, prune=prune)
+        python_on_whales.docker.image.remove(image, force=force, prune=prune)
 
     def construct_image_tag(
         self,
@@ -662,7 +685,7 @@ class DockerService:
         context_dir: Path,
         docker_image_ref: str,
         ignore_patterns: list[str] | None = None,
-    ) -> Blob:
+    ) -> gcloud_storage.Blob:
         """
         Tar the context_dir and upload it to GCS.
 

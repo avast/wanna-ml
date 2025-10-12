@@ -1,16 +1,22 @@
-import json
-from typing import Any, cast
+from __future__ import annotations
 
-from google.cloud.exceptions import NotFound
-from google.cloud.logging import Client as LoggingClient
-from google.cloud.monitoring_v3 import (
-    AlertPolicy,
-    AlertPolicyServiceClient,
-    NotificationChannel,
-    NotificationChannelServiceClient,
-)
-from google.cloud.pubsub_v1 import PublisherClient
-from waiting import wait
+import json
+from typing import TYPE_CHECKING, Any, cast
+
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.exceptions as gcloud_exceptions
+    import google.cloud.logging as gcloud_logging
+    import google.cloud.monitoring_v3 as gcloud_monitoring_v3
+    import google.cloud.pubsub_v1 as gcloud_pubsub_v1
+    from waiting import wait
+else:
+    gcloud_exceptions = Import("google.cloud.exceptions")
+    gcloud_logging = Import("google.cloud.logging")
+    gcloud_monitoring_v3 = Import("google.cloud.monitoring_v3")
+    gcloud_pubsub_v1 = Import("google.cloud.pubsub_v1")
+    wait = Import("waiting.wait")
 
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
 from wanna.core.deployment.models import (
@@ -26,8 +32,10 @@ logger = get_logger(__name__)
 class MonitoringMixin(GCPCredentialsMixIn):
     @staticmethod
     def _get_notification_channel(
-        client: NotificationChannelServiceClient, project: str, display_name: str
-    ) -> NotificationChannel | None:
+        client: gcloud_monitoring_v3.NotificationChannelServiceClient,
+        project: str,
+        display_name: str,
+    ) -> gcloud_monitoring_v3.NotificationChannel | None:
         channels = list(client.list_notification_channels(name=f"projects/{project}"))
         channels = [channel for channel in channels if channel.display_name == display_name]
         if channels:
@@ -45,18 +53,20 @@ class MonitoringMixin(GCPCredentialsMixIn):
         Raises:
             NotFound: If the topic does not exist
         """
-        client = PublisherClient(credentials=self.credentials)
+        client = gcloud_pubsub_v1.PublisherClient(credentials=self.credentials)
         topic_path = client.topic_path(project_id, topic_id)
 
         try:
             client.get_topic(topic=topic_path)
             logger.user_info(f"Found existing Pubsub topic: {topic_path}")
-        except NotFound as e:
+        except gcloud_exceptions.NotFound as e:
             logger.user_info(f"Pubsub topic not found: {topic_path}")
             raise e
 
     def upsert_notification_channel(self, resource: NotificationChannelResource):
-        client = NotificationChannelServiceClient(credentials=self.credentials)
+        client = gcloud_monitoring_v3.NotificationChannelServiceClient(
+            credentials=self.credentials
+        )
 
         channel = MonitoringMixin._get_notification_channel(
             client, resource.project, resource.name
@@ -71,13 +81,13 @@ class MonitoringMixin(GCPCredentialsMixIn):
 
         if not channel:
             with logger.user_spinner(f"Creating notification channel: {resource.name}"):
-                notification_channel = NotificationChannel(
+                notification_channel = gcloud_monitoring_v3.NotificationChannel(
                     type_=resource.type_,
                     display_name=resource.name,
                     description=resource.description,
                     labels=resource.config,
                     user_labels=resource.labels,
-                    verification_status=NotificationChannel.VerificationStatus.VERIFIED,
+                    verification_status=gcloud_monitoring_v3.NotificationChannel.VerificationStatus.VERIFIED,
                     enabled=True,
                 )
                 return client.create_notification_channel(
@@ -89,7 +99,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
             return channel
 
     def upsert_alert_policy(self, resource: AlertPolicyResource):
-        client = AlertPolicyServiceClient(credentials=self.credentials)
+        client = gcloud_monitoring_v3.AlertPolicyServiceClient(credentials=self.credentials)
 
         alert_policy = {
             "display_name": resource.display_name,
@@ -126,7 +136,10 @@ class MonitoringMixin(GCPCredentialsMixIn):
             "notification_channels": resource.notification_channels,
         }
 
-        alert_policy = cast(AlertPolicy, AlertPolicy.from_json(json.dumps(alert_policy)))
+        alert_policy = cast(
+            gcloud_monitoring_v3.AlertPolicy,
+            gcloud_monitoring_v3.AlertPolicy.from_json(json.dumps(alert_policy)),
+        )
         policies = client.list_alert_policies(name=f"projects/{resource.project}")
         policy = [policy for policy in policies if policy.display_name == resource.name]
         if policy:
@@ -141,13 +154,13 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 )
 
     def upsert_log_metric(self, resource: LogMetricResource) -> dict[str, Any]:
-        client = LoggingClient(credentials=self.credentials)
+        client = gcloud_logging.Client(credentials=self.credentials)
         try:
             logger.user_info(f"Found existing log metric: {resource.name}")
             return client.metrics_api.metric_get(
                 project=resource.project, metric_name=resource.name
             )
-        except NotFound:
+        except gcloud_exceptions.NotFound:
             client.metrics_api.metric_create(
                 project=resource.project,
                 metric_name=resource.name,

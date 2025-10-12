@@ -1,25 +1,26 @@
+from __future__ import annotations
+
 import itertools
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from google.api_core.operation import Operation
-from google.cloud import compute_v1
-from google.cloud.notebooks_v2 import (
-    AcceleratorConfig,
-    BootDisk,
-    DataDisk,
-    GceSetup,
-    GPUDriverConfig,
-    NetworkInterface,
-)
-from google.cloud.notebooks_v2.services.notebook_service import NotebookServiceClient
-from google.cloud.notebooks_v2.types import (
-    ContainerImage,
-    CreateInstanceRequest,
-    Instance,
-    ServiceAccount,
-    VmImage,
-)
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.api_core.operation as gapi_core_operation
+    import google.cloud.notebooks_v2 as gcloud_notebooks_v2
+    import google.cloud.notebooks_v2.services.notebook_service as gcloud_notebooks_v2_services_notebook_service
+    import google.cloud.notebooks_v2.types as gcloud_notebooks_v2_types
+    from google.cloud import compute_v1 as gcloud_compute_v1
+else:
+    gapi_core_operation = Import("google.api_core.operation")
+    gcloud_compute_v1 = Import("google.cloud.compute_v1")
+    gcloud_notebooks_v2 = Import("google.cloud.notebooks_v2")
+    gcloud_notebooks_v2_services_notebook_service = Import(
+        "google.cloud.notebooks_v2.services.notebook_service"
+    )
+    gcloud_notebooks_v2_types = Import("google.cloud.notebooks_v2.types")
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -53,7 +54,9 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         self.instances = config.notebooks
         self.wanna_project = config.wanna_project
         self.bucket_name = config.gcp_profile.bucket
-        self.notebook_client = NotebookServiceClient()
+        self.notebook_client = (
+            gcloud_notebooks_v2_services_notebook_service.NotebookServiceClient()
+        )
         self.config = config
         self.docker_service = (
             DockerService(
@@ -70,13 +73,15 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         self.owner = owner
         self.tensorboard_service = TensorboardService(config=config)
 
-    def _delete_instance_client(self, instance: InstanceModel) -> Operation:
+    def _delete_instance_client(self, instance: InstanceModel) -> gapi_core_operation.Operation:
         return self.notebook_client.delete_instance(
             name=f"projects/{instance.project_id}/locations/"
             f"{instance.zone}/instances/{instance.name}"
         )
 
-    def _create_instance_client(self, request: CreateInstanceRequest) -> Operation:
+    def _create_instance_client(
+        self, request: gcloud_notebooks_v2_types.CreateInstanceRequest
+    ) -> gapi_core_operation.Operation:
         return self.notebook_client.create_instance(request)
 
     def workbench_location(self, instance: InstanceModel) -> str:
@@ -113,7 +118,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         instance: InstanceModel,
         deploy: bool = True,
         push_mode: PushMode = PushMode.all,
-    ) -> CreateInstanceRequest:
+    ) -> gcloud_notebooks_v2_types.CreateInstanceRequest:
         # Network
         full_network_name = self._get_resource_network(
             project_id=self.config.gcp_profile.project_id,
@@ -130,7 +135,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
         network_interfaces = (
             [
-                NetworkInterface(
+                gcloud_notebooks_v2.NetworkInterface(
                     network=full_network_name,
                     subnet=full_subnet_name,
                 )
@@ -141,12 +146,12 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         # GPU
         if gpu := instance.gpu:
             accelerator_configs = [
-                AcceleratorConfig(
+                gcloud_notebooks_v2.AcceleratorConfig(
                     core_count=gpu.count,
                     type_=gpu.accelerator_type,
                 )
             ]
-            gpu_driver_config = GPUDriverConfig(
+            gpu_driver_config = gcloud_notebooks_v2.GPUDriverConfig(
                 enable_gpu_driver=gpu.install_gpu_driver,
                 custom_gpu_driver_path=gpu.custom_gpu_driver_path,
             )
@@ -162,7 +167,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
                 )
                 repository = image_url.partition(":")[0]
                 tag = image_url.partition(":")[-1]
-                container_image = ContainerImage(
+                container_image = gcloud_notebooks_v2_types.ContainerImage(
                     repository=repository,
                     tag=tag,
                 )
@@ -170,7 +175,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             else:
                 raise Exception("Docker params in wanna-ml config not defined")
         elif vm_i := instance.environment.vm_image:
-            vm_image = VmImage(
+            vm_image = gcloud_notebooks_v2_types.VmImage(
                 project="cloud-notebooks-managed",
                 family=f"workbench-instances" if vm_i.version is None else None,
                 name=f"workbench-instances-{vm_i.version}" if vm_i.version is not None else None,
@@ -186,7 +191,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         disk_encryption = "CMEK" if self.config.gcp_profile.kms_key else None
         kms_key = self.config.gcp_profile.kms_key if self.config.gcp_profile.kms_key else None
         boot_disk = (
-            BootDisk(
+            gcloud_notebooks_v2.BootDisk(
                 disk_size_gb=boot_d.size_gb,
                 disk_type=boot_d.disk_type,
                 disk_encryption=disk_encryption,
@@ -197,7 +202,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
         data_disks = (
             [
-                DataDisk(
+                gcloud_notebooks_v2.DataDisk(
                     disk_size_gb=data_d.size_gb,
                     disk_type=data_d.disk_type,
                     disk_encryption=disk_encryption,
@@ -209,7 +214,11 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         )
 
         # service account and instance owners
-        service_accounts = [ServiceAccount(email=sa)] if (sa := instance.service_account) else None
+        service_accounts = (
+            [gcloud_notebooks_v2_types.ServiceAccount(email=sa)]
+            if (sa := instance.service_account)
+            else None
+        )
         instance_owner = self.owner or instance.owner
         instance_owners = [instance_owner] if instance_owner else None
 
@@ -292,7 +301,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         }
         metadata = {**metadata, **report_health_metadata}
 
-        gce_setup = GceSetup(
+        gce_setup = gcloud_notebooks_v2.GceSetup(
             machine_type=instance.machine_type,
             accelerator_configs=accelerator_configs,
             service_accounts=service_accounts,
@@ -307,14 +316,14 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
             enable_ip_forwarding=instance.enable_ip_forwarding,
             gpu_driver_config=gpu_driver_config,
         )
-        instance_proto = Instance(
+        instance_proto = gcloud_notebooks_v2_types.Instance(
             gce_setup=gce_setup,
             instance_owners=instance_owners,
             disable_proxy_access=instance.no_proxy_access,
             labels=labels,
         )
 
-        return CreateInstanceRequest(
+        return gcloud_notebooks_v2_types.CreateInstanceRequest(
             parent=f"projects/{instance.project_id}/locations/{instance.zone}",
             instance_id=instance.name,
             instance=instance_proto,
@@ -470,8 +479,8 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         """
         # We list compute instances and not notebooks, because with notebooks you cannot list instances in all zones.
         # So instead we list all Compute Engine instances with notebook labels
-        instance_client = compute_v1.InstancesClient()
-        request = compute_v1.AggregatedListInstancesRequest(
+        instance_client = gcloud_compute_v1.InstancesClient()
+        request = gcloud_compute_v1.AggregatedListInstancesRequest(
             filter=f"(labels.wanna_resource:notebook) (labels.wanna_project:{self.wanna_project.name})"
         )
         request.project = self.config.gcp_profile.project_id

@@ -1,8 +1,14 @@
 import os
 from pathlib import Path
 from string import Template
+from typing import TYPE_CHECKING
 
-import kfp.components as comp
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import kfp.components as comp
+else:
+    comp = Import("kfp.components")
 
 
 def load_wanna_component(path: Path | str):

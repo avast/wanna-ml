@@ -1,19 +1,24 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import typer
-from google.cloud import aiplatform
-from google.cloud.aiplatform import CustomTrainingJob
-from google.cloud.aiplatform.gapic import WorkerPoolSpec
-from google.cloud.aiplatform_v1.types import (
-    ContainerSpec,
-    DiskSpec,
-    MachineSpec,
-    PythonPackageSpec,
-)
-from google.cloud.aiplatform_v1.types.pipeline_state import PipelineState
-from google.protobuf.json_format import MessageToDict
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.aiplatform.gapic as gcloud_aiplatform_gapic
+    import google.cloud.aiplatform_v1.types as gcloud_aiplatform_v1_types
+    import google.cloud.aiplatform_v1.types.pipeline_state as gcloud_pipeline_state
+    import google.protobuf.json_format as gprotobuf_json_format
+    from google.cloud import aiplatform
+else:
+    aiplatform = Import("google.cloud.aiplatform")
+    gcloud_aiplatform_gapic = Import("google.cloud.aiplatform.gapic")
+    gcloud_aiplatform_v1_types = Import("google.cloud.aiplatform_v1.types")
+    gcloud_pipeline_state = Import("google.cloud.aiplatform_v1.types.pipeline_state")
+    gprotobuf_json_format = Import("google.protobuf.json_format")
 
 from wanna.core.deployment.models import (
     ContainerArtifact,
@@ -287,7 +292,11 @@ class JobService(BaseService[JobModelTypeAlias]):
             job_payload={
                 "display_name": job_model.name,
                 "worker_pool_specs": [
-                    remove_nones(MessageToDict(s._pb, preserving_proto_field_name=True))
+                    remove_nones(
+                        gprotobuf_json_format.MessageToDict(
+                            s._pb, preserving_proto_field_name=True
+                        )
+                    )
                     for s in list(worker_pool_specs)
                 ],
                 "labels": labels,
@@ -387,7 +396,7 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     def _create_worker_pool_spec(
         self, worker_pool_model: WorkerPoolModel
-    ) -> tuple[str, WorkerPoolSpec]:
+    ) -> tuple[str, gcloud_aiplatform_gapic.WorkerPoolSpec]:
         """
         Converts the friendlier WANNA WorkerPoolModel to aiplatform sdk equivalent
         Args:
@@ -408,8 +417,8 @@ class JobService(BaseService[JobModelTypeAlias]):
                 "This means validation has a bug."
             )
 
-        return image_ref, WorkerPoolSpec(
-            container_spec=ContainerSpec(
+        return image_ref, gcloud_aiplatform_gapic.WorkerPoolSpec(
+            container_spec=gcloud_aiplatform_v1_types.ContainerSpec(
                 image_uri=self.docker_service.get_image(image_ref)[2],
                 command=worker_pool_model.container.command,
                 args=worker_pool_model.args,
@@ -417,21 +426,21 @@ class JobService(BaseService[JobModelTypeAlias]):
             )
             if worker_pool_model.container
             else None,
-            python_package_spec=PythonPackageSpec(
+            python_package_spec=gcloud_aiplatform_v1_types.PythonPackageSpec(
                 executor_image_uri=self.docker_service.get_image(image_ref)[2],
                 package_uris=[worker_pool_model.python_package.package_gcs_uri],
                 python_module=worker_pool_model.python_package.module_name,
             )
             if worker_pool_model.python_package
             else None,
-            machine_spec=MachineSpec(
+            machine_spec=gcloud_aiplatform_v1_types.MachineSpec(
                 machine_type=worker_pool_model.machine_type,
                 accelerator_type=worker_pool_model.gpu.accelerator_type
                 if worker_pool_model.gpu
                 else None,
                 accelerator_count=worker_pool_model.gpu.count if worker_pool_model.gpu else None,
             ),
-            disk_spec=DiskSpec(
+            disk_spec=gcloud_aiplatform_v1_types.DiskSpec(
                 boot_disk_type=worker_pool_model.boot_disk.disk_type,
                 boot_disk_size_gb=worker_pool_model.boot_disk.size_gb,
             )
@@ -442,7 +451,8 @@ class JobService(BaseService[JobModelTypeAlias]):
 
     @staticmethod
     def _create_list_jobs_filter_expr(
-        states: list[PipelineState], job_name: str | None = None
+        states: list[gcloud_pipeline_state.PipelineState],
+        job_name: str | None = None,
     ) -> str:
         """
         Creates a filter expression that can be used when listing current jobs on GCP.
@@ -459,8 +469,10 @@ class JobService(BaseService[JobModelTypeAlias]):
         return filter_expr
 
     def _list_jobs(
-        self, states: list[PipelineState], job_name: str | None = None
-    ) -> list[CustomTrainingJob]:
+        self,
+        states: list[gcloud_pipeline_state.PipelineState],
+        job_name: str | None = None,
+    ) -> list[aiplatform.CustomTrainingJob]:
         """
         List all custom jobs with given project_id, region with given states.
 
@@ -484,8 +496,18 @@ class JobService(BaseService[JobModelTypeAlias]):
         Args:
             instance: custom job model
         """
+        # Use actual enum values with cast to satisfy mypy
+        running_state = cast(
+            gcloud_pipeline_state.PipelineState,
+            gcloud_pipeline_state.PipelineState.PIPELINE_STATE_RUNNING,
+        )
+        pending_state = cast(
+            gcloud_pipeline_state.PipelineState,
+            gcloud_pipeline_state.PipelineState.PIPELINE_STATE_PENDING,
+        )
+
         active_jobs = self._list_jobs(
-            states=[PipelineState.PIPELINE_STATE_RUNNING, PipelineState.PIPELINE_STATE_PENDING],  # type: ignore
+            states=[running_state, pending_state],
             job_name=instance.name,
         )
         if active_jobs:

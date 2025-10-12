@@ -1,15 +1,22 @@
 # Generated file do not change
 import json
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import google.cloud.logging
 import pendulum
-from google.api_core.exceptions import NotFound
-from google.cloud import aiplatform
 from jinja2 import Environment
+from lazyimport import Import
 
-logging_client = google.cloud.logging.Client()
+if TYPE_CHECKING:  # pragma: no cover
+    import google.api_core.exceptions as gapi_core_exceptions
+    import google.cloud.logging as gcloud_logging
+    from google.cloud import aiplatform
+else:
+    gcloud_logging = Import("google.cloud.logging")
+    gapi_core_exceptions = Import("google.api_core.exceptions")
+    aiplatform = Import("google.cloud.aiplatform")
+
+logging_client = gcloud_logging.Client()
 logging_client.setup_logging()
 
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -74,7 +81,7 @@ def process_request(request):
             network=PIPELINE_NETWORK,
             experiment=PIPELINE_EXPERIMENT,
         )
-    except NotFound:
+    except gapi_core_exceptions.NotFound:
         return f"Pipeline spec {pipeline_spec_uri} not found", 404
 
     return "Job submitted", 200

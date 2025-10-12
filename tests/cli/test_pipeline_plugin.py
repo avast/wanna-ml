@@ -15,7 +15,7 @@ from wanna.core.utils.env import reload_setup
     "wanna.core.services.pipeline.VertexConnector",
     mocks.MockVertexPipelinesMixInVertex,
 )
-@patch("wanna.core.services.docker.docker", new=MagicMock())
+@patch("python_on_whales.docker", new=MagicMock())
 class TestPipelinePlugin(unittest.TestCase):
     runner = CliRunner()
     plugin = PipelinePlugin()

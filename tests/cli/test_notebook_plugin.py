@@ -11,7 +11,7 @@ from wanna.core.deployment.models import PushMode
 
 
 @patch(
-    "wanna.core.services.workbench_instance.NotebookServiceClient",
+    "google.cloud.notebooks_v2.services.notebook_service.NotebookServiceClient",
     mocks.MockWorkbenchInstanceServiceClient,
 )
 class TestNotebookPlugin(unittest.TestCase):
