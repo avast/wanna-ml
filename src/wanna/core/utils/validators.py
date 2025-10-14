@@ -110,7 +110,7 @@ def validate_disk_type(disk_type):
     disk_type = disk_type.upper()
     if disk_type not in gcloud_notebooks_v1_types_instance.Instance.DiskType.__members__:
         raise ValueError(
-            f"Disk type invalid ({type}). must be on of: {gcloud_notebooks_v1_types_instance.Instance.DiskType._member_names_}"
+            f"Disk type invalid ({type}). must be one of: {gcloud_notebooks_v1_types_instance.Instance.DiskType._member_names_}"
         )
     return disk_type
 
