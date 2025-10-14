@@ -124,7 +124,7 @@ def validate_accelerator_type(
     ):
         raise ValueError(
             f"GPU accelerator type invalid ({accelerator_type})."
-            f"must be on of: {gcloud_notebooks_v1_types_instance.Instance.AcceleratorType._member_names_}"
+            f"must be one of: {gcloud_notebooks_v1_types_instance.Instance.AcceleratorType._member_names_}"
         )
     return accelerator_type
 
