@@ -114,7 +114,7 @@ class TestPipelineService(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    @patch("wanna.core.services.docker.docker")
+    @patch("python_on_whales.docker")
     def test_run_pipeline(self, docker_mock):
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)

@@ -1,13 +1,22 @@
+from __future__ import annotations
+
 import importlib
 import json
 import os
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from caseconverter import snakecase
-from google.cloud import aiplatform
-from kfp.v2.compiler import Compiler
-from python_on_whales import Image
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import kfp.v2.compiler as kfp_v2_compiler
+    import python_on_whales
+    from google.cloud import aiplatform
+else:
+    aiplatform = Import("google.cloud.aiplatform")
+    kfp_v2_compiler = Import("kfp.v2.compiler")
+    python_on_whales = Import("python_on_whales")
 
 from wanna.core.deployment.artifacts_push import PushResult
 from wanna.core.deployment.models import (
@@ -198,7 +207,7 @@ class PipelineService(BaseService[PipelineModel]):
         pipeline_paths: PipelinePaths,
         pipeline_instance: PipelineModel,
         version: str,
-        images: list[tuple[DockerImageModel, Image | None, str]],
+        images: list[tuple[DockerImageModel, python_on_whales.Image | None, str]],
         tensorboard: str | None,
         network: str | None,
         pipeline_params_path: Path | None = None,
@@ -313,9 +322,11 @@ class PipelineService(BaseService[PipelineModel]):
         # The current version implies that the pipeline_function is a python import path. ex: module1.module2.function
         mod_name, func_name = pipeline.pipeline_function.rsplit(".", 1)
         module = importlib.import_module(mod_name)
-        logger.user_info(f"Using Compiler.compile with function {pipeline.pipeline_function}")
+        logger.user_info(
+            f"Using kfp.v2.compiler.Compiler.compile with function {pipeline.pipeline_function}"
+        )
         func = getattr(module, func_name)
-        Compiler().compile(
+        kfp_v2_compiler.Compiler().compile(
             pipeline_func=func,
             pipeline_parameters=pipeline_params,
             package_path=pipeline_paths.get_local_pipeline_json_spec_path(self.version),

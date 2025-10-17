@@ -19,7 +19,7 @@ def custom_job_config():
 
 
 class TestJobService:
-    @patch("wanna.core.services.docker.docker")
+    @patch("python_on_whales.docker")
     def test_create_training_job_manifest_python_package_spec(
         self, docker_mock, custom_job_config
     ):
@@ -48,7 +48,7 @@ class TestJobService:
         )
         assert job_manifest.job_payload.get("python_module_name") == "trainer.task"
 
-    @patch("wanna.core.services.docker.docker")
+    @patch("python_on_whales.docker")
     def test_create_worker_pool_spec_container_spec(self, docker_mock, custom_job_config):
         auth.default = MagicMock(
             return_value=(

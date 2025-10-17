@@ -1,27 +1,28 @@
+from __future__ import annotations
+
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from gcloud_config_helper import gcloud_config_helper
-from google.cloud.storage import Blob
+from lazyimport import Import
 
-from wanna.core.utils.env import should_validate
-
-if should_validate:
-    # since is very slow to import all these, we do it only when validation is required
-    from google.cloud.compute_v1 import (
-        ImagesClient,
-        MachineTypesClient,
-        RegionsClient,
-        ZonesClient,
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.compute_v1 as gcloud_compute_v1
+    import google.cloud.compute_v1.types as gcloud_compute_v1_types
+    import google.cloud.resourcemanager_v3.services.projects as gcloud_resourcemanager_v3_services_projects
+    import google.cloud.storage as gcloud_storage
+else:
+    gcloud_storage = Import("google.cloud.storage")
+    gcloud_compute_v1 = Import("google.cloud.compute_v1")
+    gcloud_compute_v1_types = Import("google.cloud.compute_v1.types")
+    gcloud_resourcemanager_v3_services_projects = Import(
+        "google.cloud.resourcemanager_v3.services.projects"
     )
-    from google.cloud.compute_v1.types import ListImagesRequest
-
-from google.cloud import storage
-from google.cloud.resourcemanager_v3.services.projects import ProjectsClient
 
 from wanna.core.utils.credentials import get_credentials
+from wanna.core.utils.env import should_validate
 
 NETWORK_REGEX = (
     "projects/((?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)"
@@ -42,7 +43,7 @@ def get_available_compute_machine_types(project_id: str, zone: str) -> list[str]
         list of available machine types
     """
     if should_validate:
-        response = MachineTypesClient(credentials=get_credentials()).list(
+        response = gcloud_compute_v1.MachineTypesClient(credentials=get_credentials()).list(
             project=project_id, zone=zone
         )
         machine_types = [mtype.name for mtype in response.items]
@@ -195,7 +196,9 @@ def get_available_zones(project_id: str) -> list[str]:
     """
 
     if should_validate:
-        response = ZonesClient(credentials=get_credentials()).list(project=project_id)
+        response = gcloud_compute_v1.ZonesClient(credentials=get_credentials()).list(
+            project=project_id
+        )
         return [zone.name for zone in response.items]
     else:
         return [
@@ -232,7 +235,9 @@ def get_available_regions(project_id: str) -> list[str]:
         list of available regions
     """
     if should_validate:
-        response = RegionsClient(credentials=get_credentials()).list(project=project_id)
+        response = gcloud_compute_v1.RegionsClient(credentials=get_credentials()).list(
+            project=project_id
+        )
         return [region.name for region in response.items]
     else:
         return [
@@ -269,7 +274,7 @@ def convert_project_id_to_project_number(project_id: str) -> str:
         project_number: GCP project number
     """
     project_name = (
-        ProjectsClient(credentials=get_credentials())
+        gcloud_resourcemanager_v3_services_projects.ProjectsClient(credentials=get_credentials())
         .get_project(name=f"projects/{project_id}")
         .name
     )
@@ -316,8 +321,12 @@ def get_available_compute_image_families(
         List of dicts from parse_image_name_family
 
     """  # noqa: E501
-    list_images_request = ListImagesRequest(project=project, filter=image_filter)
-    all_images = ImagesClient(credentials=get_credentials()).list(list_images_request)
+    list_images_request = gcloud_compute_v1_types.ListImagesRequest(
+        project=project, filter=image_filter
+    )
+    all_images = gcloud_compute_v1.ImagesClient(credentials=get_credentials()).list(
+        list_images_request
+    )
     if family_must_contain:
         return [
             parse_image_name_family(image.family)
@@ -327,7 +336,9 @@ def get_available_compute_image_families(
     return [parse_image_name_family(image.family) for image in all_images]
 
 
-def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> storage.blob.Blob:
+def upload_file_to_gcs(
+    filename: Path, bucket_name: str, blob_name: str
+) -> gcloud_storage.blob.Blob:
     """
     Upload file to GCS bucket
 
@@ -345,7 +356,7 @@ def upload_file_to_gcs(filename: Path, bucket_name: str, blob_name: str) -> stor
     return blob
 
 
-def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage.blob.Blob:
+def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> gcloud_storage.blob.Blob:
     """
     Upload a string to GCS bucket without saving it locally as a file.
     Args:
@@ -363,8 +374,8 @@ def upload_string_to_gcs(data: str, bucket_name: str, blob_name: str) -> storage
 
 
 @lru_cache(maxsize=1)
-def storage_client() -> storage.Client:
-    return storage.Client(credentials=get_credentials())
+def storage_client() -> gcloud_storage.Client:
+    return gcloud_storage.Client(credentials=get_credentials())
 
 
 def download_script_from_gcs(gcs_path: str) -> str:
@@ -377,7 +388,7 @@ def download_script_from_gcs(gcs_path: str) -> str:
     Returns:
         str
     """
-    blob = Blob.from_string(gcs_path, storage_client())
+    blob = gcloud_storage.Blob.from_string(gcs_path, storage_client())
     return blob.download_as_string().decode("utf-8")
 
 

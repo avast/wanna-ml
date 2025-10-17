@@ -3,14 +3,24 @@ import json
 import os
 import zipfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from google.api_core.exceptions import AlreadyExists
-from google.cloud import logging
-from google.cloud.aiplatform import PipelineJob
-from google.cloud.aiplatform.compat.types import (
-    pipeline_state_v1 as gca_pipeline_state_v1,
-)
-from google.cloud.functions_v1 import CloudFunctionsServiceClient
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.api_core.exceptions as gapi_core_exceptions
+    import google.cloud.aiplatform as gcloud_aiplatform
+    import google.cloud.functions_v1 as gcloud_functions_v1
+    from google.cloud import logging
+    from google.cloud.aiplatform.compat.types import (
+        pipeline_state_v1 as gca_pipeline_state_v1,
+    )
+else:
+    gapi_core_exceptions = Import("google.api_core.exceptions")
+    logging = Import("google.cloud.logging")
+    gcloud_aiplatform = Import("google.cloud.aiplatform")
+    gca_pipeline_state_v1 = Import("google.cloud.aiplatform.compat.types.pipeline_state_v1")
+    gcloud_functions_v1 = Import("google.cloud.functions_v1")
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import (
@@ -38,7 +48,9 @@ logger = get_logger(__name__)
 
 class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
     @staticmethod
-    def _at_pipeline_exit(pipeline_name: str, pipeline_job: PipelineJob, sync: bool) -> None:
+    def _at_pipeline_exit(
+        pipeline_name: str, pipeline_job: gcloud_aiplatform.PipelineJob, sync: bool
+    ) -> None:
         @atexit.register
         def stop_pipeline_job():
             if sync and pipeline_job and getattr(pipeline_job._gca_resource, "name", None):
@@ -73,7 +85,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         pipeline_params = update_time_template(pipeline_params)
 
         # Define Vertex AI Pipeline job
-        pipeline_job = PipelineJob(
+        pipeline_job = gcloud_aiplatform.PipelineJob(
             display_name=resource.pipeline_name,
             job_id=pipeline_job_id,
             template_path=str(resource.json_spec_path),
@@ -297,7 +309,7 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
 
         self.upload_file(str(local_functions_package), functions_gcs_path)
 
-        cf = CloudFunctionsServiceClient(credentials=self.credentials)
+        cf = gcloud_functions_v1.CloudFunctionsServiceClient(credentials=self.credentials)
 
         function = {
             "name": function_path,
@@ -315,5 +327,5 @@ class VertexPipelinesMixInVertex(VertexSchedulingMixIn, ArtifactsPushMixin):
         }
         try:
             cf.create_function({"location": parent, "function": function}).result()
-        except AlreadyExists:
+        except gapi_core_exceptions.AlreadyExists:
             logger.user_error(f"Function {function_name} already exists, no need to re-deploy")

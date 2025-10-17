@@ -1,14 +1,22 @@
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import TypeVar, Union
+from typing import TYPE_CHECKING, TypeVar, Union
 
 import typer
-from google.api_core import exceptions
-from google.api_core.operation import Operation
-from google.cloud.notebooks_v1 import CreateInstanceRequest as CreateInstanceRequestV1
-from google.cloud.notebooks_v1 import CreateRuntimeRequest, Runtime
-from google.cloud.notebooks_v1 import Instance as InstanceV1
-from google.cloud.notebooks_v2 import CreateInstanceRequest, Instance
+from lazyimport import Import
 from waiting import wait
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.api_core.operation as gapi_core_operation
+    import google.cloud.notebooks_v1 as gcloud_notebooks_v1
+    import google.cloud.notebooks_v2 as gcloud_notebooks_v2
+    from google.api_core import exceptions as gapi_core_exceptions
+else:
+    gapi_core_exceptions = Import("google.api_core.exceptions")
+    gapi_core_operation = Import("google.api_core.operation")
+    gcloud_notebooks_v1 = Import("google.cloud.notebooks_v1")
+    gcloud_notebooks_v2 = Import("google.cloud.notebooks_v2")
 
 from wanna.core.deployment.models import PushMode
 from wanna.core.loggers.wanna_logger import get_logger
@@ -16,8 +24,14 @@ from wanna.core.models.workbench import BaseWorkbenchModel
 from wanna.core.services.base import BaseService
 
 T = TypeVar("T", bound=BaseWorkbenchModel)
-CreateRequest = Union[CreateRuntimeRequest, CreateInstanceRequestV1, CreateInstanceRequest]
-Instances = Union[Runtime, InstanceV1, Instance]
+CreateRequest = Union[
+    gcloud_notebooks_v1.CreateRuntimeRequest,
+    gcloud_notebooks_v1.CreateInstanceRequest,
+    gcloud_notebooks_v2.CreateInstanceRequest,
+]
+Instances = Union[
+    gcloud_notebooks_v1.Runtime, gcloud_notebooks_v1.Instance, gcloud_notebooks_v2.Instance
+]
 
 logger = get_logger(__name__)
 
@@ -61,7 +75,9 @@ class BaseWorkbenchService(BaseService[T]):
         )  # .result() waits for compute engine behind the notebook to start
         logger.user_info(f"Starting JupyterLab for {instance.name} ...")
         wait(
-            lambda: self._validate_jupyterlab_state(instance_full_name, Runtime.State.ACTIVE),
+            lambda: self._validate_jupyterlab_state(
+                instance_full_name, gcloud_notebooks_v1.Runtime.State.ACTIVE
+            ),
             timeout_seconds=450,
             sleep_seconds=20,
             waiting_for="Starting JupyterLab in your instance",
@@ -142,7 +158,7 @@ class BaseWorkbenchService(BaseService[T]):
             typer.Exit(1)
 
     @abstractmethod
-    def _delete_instance_client(self, instance: T) -> Operation:
+    def _delete_instance_client(self, instance: T) -> gapi_core_operation.Operation:
         """
         Actually delete the instance from Vertex AI.
 
@@ -154,7 +170,7 @@ class BaseWorkbenchService(BaseService[T]):
         """
 
     @abstractmethod
-    def _create_instance_client(self, request: CreateRequest) -> Operation:
+    def _create_instance_client(self, request: CreateRequest) -> gapi_core_operation.Operation:
         """
         Actually create the instance in Vertex AI.
 
@@ -178,8 +194,8 @@ class BaseWorkbenchService(BaseService[T]):
         """
         try:
             instance_info = self._client_get_instance(instance_id)
-        except exceptions.NotFound:
-            raise exceptions.NotFound(
+        except gapi_core_exceptions.NotFound:
+            raise gapi_core_exceptions.NotFound(
                 f"{self.instance_type} {instance_id} was not found."
             ) from None
         return instance_info.state == state

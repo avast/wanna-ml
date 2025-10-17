@@ -1,10 +1,17 @@
-from google.cloud.aiplatform import (
-    CustomContainerTrainingJob,
-    CustomJob,
-    CustomPythonPackageTrainingJob,
-    HyperparameterTuningJob,
-)
-from google.cloud.aiplatform import hyperparameter_tuning as hpt
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.aiplatform as gcloud_aiplatform
+    import google.cloud.aiplatform.hyperparameter_tuning as gcloud_aiplatform_hyperparameter_tuning
+else:
+    gcloud_aiplatform = Import("google.cloud.aiplatform")
+    gcloud_aiplatform_hyperparameter_tuning = Import(
+        "google.cloud.aiplatform.hyperparameter_tuning"
+    )
 
 from wanna.core.deployment.artifacts_push import ArtifactsPushMixin
 from wanna.core.deployment.models import JobResource
@@ -26,19 +33,23 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
     def _create_hyperparameter_spec(
         self,
         parameter: HyperParamater,
-    ) -> hpt._ParameterSpec:
+    ) -> gcloud_aiplatform_hyperparameter_tuning._ParameterSpec:
         if isinstance(parameter, IntegerParameter) and parameter.type == "integer":
-            return hpt.IntegerParameterSpec(
+            return gcloud_aiplatform_hyperparameter_tuning.IntegerParameterSpec(
                 min=parameter.min, max=parameter.max, scale=parameter.scale
             )
         elif isinstance(parameter, DoubleParameter) and parameter.type == "double":
-            return hpt.DoubleParameterSpec(
+            return gcloud_aiplatform_hyperparameter_tuning.DoubleParameterSpec(
                 min=parameter.min, max=parameter.max, scale=parameter.scale
             )
         elif isinstance(parameter, CategoricalParameter) and parameter.type == "categorical":
-            return hpt.CategoricalParameterSpec(values=parameter.values)
+            return gcloud_aiplatform_hyperparameter_tuning.CategoricalParameterSpec(
+                values=parameter.values
+            )
         elif isinstance(parameter, DiscreteParameter) and parameter.type == "discrete":
-            return hpt.DiscreteParameterSpec(values=parameter.values, scale=parameter.scale)
+            return gcloud_aiplatform_hyperparameter_tuning.DiscreteParameterSpec(
+                values=parameter.values, scale=parameter.scale
+            )
         else:
             raise ValueError(f"Unsupported parameter type {parameter.type}")
 
@@ -52,7 +63,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             sync (bool): Allows to run the job in async vs sync mode
 
         """
-        custom_job = CustomJob(**manifest.job_payload)
+        custom_job = gcloud_aiplatform.CustomJob(**manifest.job_payload)
 
         if manifest.job_config.hp_tuning:
             parameter_spec = {
@@ -63,7 +74,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             for key in manifest.job_config.hp_tuning.metrics:
                 metric_spec_dict[key] = str(manifest.job_config.hp_tuning.metrics[key])
 
-            runable = HyperparameterTuningJob(
+            runable = gcloud_aiplatform.HyperparameterTuningJob(
                 display_name=manifest.job_config.name,
                 custom_job=custom_job,
                 metric_spec=metric_spec_dict,
@@ -114,13 +125,13 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         """
 
         if manifest.job_config.worker and manifest.job_config.worker.container:
-            training_job = CustomContainerTrainingJob(
+            training_job = gcloud_aiplatform.CustomContainerTrainingJob(
                 training_encryption_spec_key_name=manifest.encryption_spec,
                 model_encryption_spec_key_name=manifest.encryption_spec,
                 **manifest.job_payload,
             )
         elif manifest.job_config.worker and manifest.job_config.worker.python_package:
-            training_job = CustomPythonPackageTrainingJob(
+            training_job = gcloud_aiplatform.CustomPythonPackageTrainingJob(
                 training_encryption_spec_key_name=manifest.encryption_spec,
                 model_encryption_spec_key_name=manifest.encryption_spec,
                 **manifest.job_payload,

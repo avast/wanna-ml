@@ -1,6 +1,11 @@
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
-from kfp.v2 import dsl
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    from kfp.v2 import dsl
+else:
+    dsl = Import("kfp.v2.dsl")
 
 
 @dsl.component(

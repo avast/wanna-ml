@@ -1,13 +1,21 @@
+from __future__ import annotations
+
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import typer
-from google.cloud import aiplatform
-from google.cloud.aiplatform.tensorboard.tensorboard_resource import (
-    Tensorboard,
-    TensorboardExperiment,
-)
-from treelib import Tree
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.aiplatform as gcloud_aiplatform
+    import google.cloud.aiplatform.tensorboard.tensorboard_resource as gcloud_tensorboard_resource
+    import treelib as treelib_
+else:
+    gcloud_aiplatform = Import("google.cloud.aiplatform")
+    gcloud_tensorboard_resource = Import(
+        "google.cloud.aiplatform.tensorboard.tensorboard_resource"
+    )
+    treelib_ = Import("treelib")
 
 from wanna.core.loggers.wanna_logger import get_logger
 from wanna.core.models.tensorboard import TensorboardModel
@@ -40,7 +48,7 @@ class TensorboardService(BaseService[TensorboardModel]):
             logger.user_info(f"Tensorboard {instance.name} does not exist, nothing to delete.")
         else:
             with logger.user_spinner(f"Deleting Tensorboard {instance.name}"):
-                aiplatform.Tensorboard(tensorboard_name=tensorboard.resource_name).delete()
+                gcloud_aiplatform.Tensorboard(tensorboard_name=tensorboard.resource_name).delete()
 
     def _create_one_instance(
         self,
@@ -70,7 +78,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                 else:
                     return
         with logger.user_spinner(f"Creating Tensorboard {instance.name}"):
-            aiplatform.Tensorboard.create(
+            gcloud_aiplatform.Tensorboard.create(
                 display_name=instance.name,
                 description=instance.description,
                 labels=instance.labels,
@@ -84,7 +92,7 @@ class TensorboardService(BaseService[TensorboardModel]):
 
     def _find_existing_tensorboard_by_model(
         self, instance: TensorboardModel
-    ) -> Tensorboard | None:
+    ) -> gcloud_tensorboard_resource.Tensorboard | None:
         """
         Given pydantic tensorboard model, find the actual running tensorboard instance on GCP.
 
@@ -115,7 +123,9 @@ class TensorboardService(BaseService[TensorboardModel]):
         return found is not None
 
     @staticmethod
-    def _list_running_instances(project_id: str, region: str) -> list["Tensorboard"]:
+    def _list_running_instances(
+        project_id: str, region: str
+    ) -> list[gcloud_tensorboard_resource.Tensorboard]:
         """
         list all tensorboards with given project_id and region
 
@@ -128,8 +138,8 @@ class TensorboardService(BaseService[TensorboardModel]):
 
         """
         instances = cast(
-            list[Tensorboard],
-            aiplatform.Tensorboard.list(project=project_id, location=region),
+            list[gcloud_tensorboard_resource.Tensorboard],
+            gcloud_aiplatform.Tensorboard.list(project=project_id, location=region),
         )
         return instances
 
@@ -179,7 +189,9 @@ class TensorboardService(BaseService[TensorboardModel]):
         return tb_existing.resource_name
 
     @staticmethod
-    def construct_tb_experiment_url_link(experiment: TensorboardExperiment) -> str:
+    def construct_tb_experiment_url_link(
+        experiment: gcloud_tensorboard_resource.TensorboardExperiment,
+    ) -> str:
         """
         Google API doesnt provide any support for getting a URL link to tensorboard experiment.
         Hence use this helper function to do it.
@@ -194,7 +206,9 @@ class TensorboardService(BaseService[TensorboardModel]):
             f"experiment/{experiment.resource_name.replace('/', '+')}"
         )
 
-    def _create_tensorboard_tree(self, region: str, filter_expr: str, show_url: bool) -> Tree:
+    def _create_tensorboard_tree(
+        self, region: str, filter_expr: str, show_url: bool
+    ) -> treelib_.Tree:
         """
         Create a tensorboard instance - tensorboard experiment - tensorboard run tree
         Args:
@@ -205,12 +219,12 @@ class TensorboardService(BaseService[TensorboardModel]):
         Returns:
             tree
         """
-        tree = Tree()
+        tree = treelib_.Tree()
         project_id = self.config.gcp_profile.project_id
         root_tag = f"{project_id} / {region}"
         tree.create_node(tag=root_tag, identifier=root_tag)
 
-        tensorboards = aiplatform.Tensorboard.list(
+        tensorboards = gcloud_aiplatform.Tensorboard.list(
             project=project_id, location=region, filter=filter_expr
         )
         for tensorboard in tensorboards:
@@ -221,7 +235,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                 parent=root_tag,
                 data=tensorboard,
             )
-            experiments = aiplatform.TensorboardExperiment.list(tensorboard.resource_name)
+            experiments = gcloud_aiplatform.TensorboardExperiment.list(tensorboard.resource_name)
             for experiment in experiments:
                 tag = f"Experiment: {experiment.display_name or experiment.name}"
                 if show_url:
@@ -232,7 +246,7 @@ class TensorboardService(BaseService[TensorboardModel]):
                     parent=tensorboard.resource_name,
                     data=experiment,
                 )
-                runs = aiplatform.TensorboardRun.list(
+                runs = gcloud_aiplatform.TensorboardRun.list(
                     tensorboard_experiment_name=experiment.resource_name
                 )
                 for run in runs:

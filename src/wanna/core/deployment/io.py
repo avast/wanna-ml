@@ -1,10 +1,16 @@
 import contextlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from google.cloud.storage import Client
-from smart_open import open as gcs_open
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.storage as gcloud_storage
+    import smart_open
+else:
+    gcloud_storage = Import("google.cloud.storage")
+    smart_open = Import("smart_open")
 
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
 
@@ -13,9 +19,11 @@ class IOMixin(GCPCredentialsMixIn):
     @contextlib.contextmanager
     def _open(self, uri, mode="r", **kwargs):
         transport_params = (
-            {"client": Client(credentials=self.credentials)} if str(uri).startswith("gs") else {}
+            {"client": gcloud_storage.Client(credentials=self.credentials)}
+            if str(uri).startswith("gs")
+            else {}
         )
-        with gcs_open(uri, mode, transport_params=transport_params, **kwargs) as c:
+        with smart_open.open(uri, mode, transport_params=transport_params, **kwargs) as c:
             yield c
 
     def upload_file(self, source: str, destination: str) -> None:

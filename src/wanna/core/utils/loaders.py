@@ -1,3 +1,5 @@
+import os
+import re
 from pathlib import Path
 from typing import Any, TextIO
 
@@ -7,8 +9,6 @@ from yaml_include import Constructor
 
 def replace_environment_variables() -> None:
     """Enable yaml loader to process the environment variables in the yaml file."""
-    import os
-    import re
 
     # eg. ${USER_NAME}, ${PASSWORD}
     env_var_pattern = re.compile(r"^(.*)\$\{(.*)\}(.*)$")

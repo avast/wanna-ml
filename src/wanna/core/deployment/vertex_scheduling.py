@@ -2,13 +2,23 @@ import json
 import os
 import zipfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from caseconverter import snakecase
-from google.api_core.exceptions import PermissionDenied
-from google.cloud import scheduler_v1
-from google.cloud.exceptions import NotFound
-from google.cloud.functions_v1 import CloudFunctionsServiceClient
-from google.protobuf.duration_pb2 import Duration  # pylint: disable=no-name-in-module
+from lazyimport import Import
+
+if TYPE_CHECKING:  # pragma: no cover
+    import google.api_core.exceptions as gapi_core_exceptions
+    import google.cloud.exceptions as gcloud_exceptions
+    import google.cloud.functions_v1 as gcloud_functions_v1
+    import google.protobuf.duration_pb2 as gprotobuf_duration_pb2
+    from google.cloud import scheduler_v1
+else:
+    gapi_core_exceptions = Import("google.api_core.exceptions")
+    scheduler_v1 = Import("google.cloud.scheduler_v1")
+    gcloud_exceptions = Import("google.cloud.exceptions")
+    gcloud_functions_v1 = Import("google.cloud.functions_v1")
+    gprotobuf_duration_pb2 = Import("google.protobuf.duration_pb2")
 
 from wanna.core.deployment.io import IOMixin
 from wanna.core.deployment.models import (
@@ -79,7 +89,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
                 }
             )
 
-        except NotFound:
+        except gcloud_exceptions.NotFound:
             # Does not exist let's create it
             logger.user_info(
                 f"Creating {job_name} with deployment manifest for {env} with version {version}"
@@ -148,11 +158,11 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
 
         self.upload_file(str(local_functions_package), functions_gcs_path)
 
-        cf = CloudFunctionsServiceClient(credentials=self.credentials)
+        cf = gcloud_functions_v1.CloudFunctionsServiceClient(credentials=self.credentials)
         function_url = (
             f"https://{resource.location}-{resource.project}.cloudfunctions.net/{function_name}"
         )
-        timeout = Duration(seconds=120)  # 2 minutes
+        timeout = gprotobuf_duration_pb2.Duration(seconds=120)  # 2 minutes
         function = {
             "name": function_path,
             "description": f"wanna {resource.name} function for {env} pipeline",
@@ -176,7 +186,7 @@ class VertexSchedulingMixIn(MonitoringMixin, IOMixin):
             cf.update_function({"function": function}).result()
         # it can raise denied on resource 'projects/{project_id}/locations/{loaction}/functions/{function_name}'
         # (or resource may not exist).
-        except (NotFound, PermissionDenied):
+        except (gcloud_exceptions.NotFound, gapi_core_exceptions.PermissionDenied):
             cf.create_function({"location": parent, "function": function}).result()
 
         logging_metric_ref = f"{function_name}-cloud-function-errors"

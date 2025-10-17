@@ -33,7 +33,7 @@ def vm_image_config():
 
 
 @patch(
-    "wanna.core.services.workbench_instance.NotebookServiceClient",
+    "google.cloud.notebooks_v2.services.notebook_service.NotebookServiceClient",
     mocks.MockWorkbenchInstanceServiceClient,
 )
 class TestWorkbenchInstanceService:
