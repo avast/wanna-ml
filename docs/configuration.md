@@ -28,6 +28,10 @@ This section is related to partial or full offline mode without actually calling
 - `WANNA_OVERWRITE_DOCKER_IMAGE` overwrites the docker image name in the repository.
   - Default true.
   - Disable for docker image repositories which don't allow overwriting the image.
+- `WANNA_ALWAYS_OVERWRITE_DOCKER_TAGS` sets which tags should be overwritten every time. Useful for e.g. `latest` tag,
+which usually can be overwritten even when other tags can not. Set them as comma-separated list. This variable is used
+only when `WANNA_OVERWRITE_DOCKER_IMAGE` is set to false.
+  - Default `latest`.
 
 ### Docker push configuration
 
