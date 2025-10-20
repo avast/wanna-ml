@@ -2,3 +2,4 @@
 google-cloud>=0.34.0
 google-cloud-logging
 google-cloud-aiplatform
+typed-lazyimport
