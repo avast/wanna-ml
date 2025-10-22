@@ -140,9 +140,9 @@ class JobService(BaseService[JobModelTypeAlias]):
 
             if self.push_mode.can_push_containers():
                 for docker_image_ref in loaded_manifest.image_refs:
-                    model, image, tag = self.docker_service.get_image(docker_image_ref)
+                    model, image, tags = self.docker_service.get_image(docker_image_ref)
                     if model.build_type != ImageBuildType.provided_image:
-                        tags = image.repo_tags if image and image.repo_tags else [tag]
+                        tags = image.repo_tags if image and image.repo_tags else tags
                         container_artifacts.append(ContainerArtifact(name=model.name, tags=tags))
 
             if self.push_mode.can_push_gcp_resources(gcp_access_allowed):
@@ -335,25 +335,27 @@ class JobService(BaseService[JobModelTypeAlias]):
         job_payload: dict[str, Any] = {}
         if job_model.worker.python_package:
             image_ref = job_model.worker.python_package.docker_image_ref
-            _, _, tag = self.docker_service.get_image(
+            _, _, tags = self.docker_service.get_image(
                 docker_image_ref=job_model.worker.python_package.docker_image_ref
             )
             job_payload = {
                 "display_name": job_model.name,
                 "python_package_gcs_uri": job_model.worker.python_package.package_gcs_uri,
                 "python_module_name": job_model.worker.python_package.module_name,
-                "container_uri": tag,
+                "container_uri": tags[0],
                 "labels": labels,
                 "staging_bucket": job_model.bucket,
             }
+
         elif job_model.worker.container:
             image_ref = job_model.worker.container.docker_image_ref
-            _, _, tag = self.docker_service.get_image(
+            _, _, tags = self.docker_service.get_image(
                 docker_image_ref=job_model.worker.container.docker_image_ref
             )
+
             job_payload = {
                 "display_name": job_model.name,
-                "container_uri": tag,
+                "container_uri": tags[0],
                 "command": job_model.worker.container.command,
                 "labels": labels,
                 "staging_bucket": job_model.bucket,

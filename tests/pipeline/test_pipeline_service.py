@@ -175,7 +175,7 @@ class TestPipelineService(unittest.TestCase):
         expected_images = [
             DockerBuildResult(
                 name="train",
-                tags=[expected_train_docker_tags[0]],
+                tags=expected_train_docker_tags,
                 build_type=ImageBuildType.local_build_image,
             ),
             DockerBuildResult(
@@ -256,7 +256,7 @@ class TestPipelineService(unittest.TestCase):
         # asserting the non "latest" docker tag was created
         self.assertEqual(
             pipeline_meta.docker_refs,
-            expected_images,  # for now we only want the one with version, not latest
+            expected_images,
         )
 
         # Check expected env vars are set
@@ -287,7 +287,12 @@ class TestPipelineService(unittest.TestCase):
         # === Push ===
         DockerService.push_image = MagicMock(return_value=None)
         push_result = pipeline_service.push(pipelines, local=True)
-        DockerService.push_image.assert_called_once()
+        DockerService.push_image.assert_called_once_with(
+            [
+                "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:test",
+                "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:latest",
+            ]
+        )
 
         release_manifests_path = (
             self.pipeline_build_dir / "wanna-pipelines" / "wanna-sklearn-sample" / "deployment"
@@ -307,7 +312,7 @@ class TestPipelineService(unittest.TestCase):
         expected_push_result = [
             (
                 [
-                    ContainerArtifact(name="train", tags=[expected_train_docker_tags[0]]),
+                    ContainerArtifact(name="train", tags=expected_train_docker_tags),
                 ],
                 [
                     PathArtifact(

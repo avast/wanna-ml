@@ -207,7 +207,7 @@ class PipelineService(BaseService[PipelineModel]):
         pipeline_paths: PipelinePaths,
         pipeline_instance: PipelineModel,
         version: str,
-        images: list[tuple[DockerImageModel, python_on_whales.Image | None, str]],
+        images: list[tuple[DockerImageModel, python_on_whales.Image | None, list[str]]],
         tensorboard: str | None,
         network: str | None,
         pipeline_params_path: Path | None = None,
@@ -244,9 +244,17 @@ class PipelineService(BaseService[PipelineModel]):
             env_name = snakecase(f"{pipeline_name_prefix}_{key.upper()}").upper()
             os.environ[env_name] = str(value)
 
-        for docker_image_model, _, tag in images:
-            env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI").upper()
-            os.environ[env_name] = tag
+        for docker_image_model, _, tags in images:
+            for tag in tags:
+                if (
+                    docker_image_model.build_type == ImageBuildType.local_build_image
+                    and ":latest" in tag
+                ):
+                    env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI_LATEST").upper()
+                    os.environ[env_name] = tag
+                else:
+                    env_name = snakecase(f"{docker_image_model.name}_DOCKER_URI").upper()
+                    os.environ[env_name] = tag
 
         # Collect pipeline compile params from wanna config
         if pipeline_params_path:
@@ -336,10 +344,10 @@ class PipelineService(BaseService[PipelineModel]):
         docker_refs = [
             DockerBuildResult(
                 name=model.name,
-                tags=image.repo_tags if image and image.repo_tags else [tag],
+                tags=image.repo_tags if image and image.repo_tags else tags,
                 build_type=model.build_type,
             )
-            for model, image, tag in image_tags
+            for model, image, tags in image_tags
         ]
 
         channels = []
