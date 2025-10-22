@@ -72,7 +72,7 @@ class DockerService:
         self.docker_model = docker_model
         self.image_models = docker_model.images
         self.image_store: dict[
-            str, tuple[DockerImageModel, python_on_whales.Image | None, str]
+            str, tuple[DockerImageModel, python_on_whales.Image | None, list[str]]
         ] = {}
 
         # Artifactory mirrors to different registry/projectid/repository combo
@@ -269,7 +269,7 @@ class DockerService:
     def get_image(
         self,
         docker_image_ref: str,
-    ) -> tuple[DockerImageModel, python_on_whales.Image | None, str]:
+    ) -> tuple[DockerImageModel, python_on_whales.Image | None, list[str]]:
         """
         A wrapper around _get_image that checks if the docker image has been already build / pulled
 
@@ -291,7 +291,7 @@ class DockerService:
     def _get_image(
         self,
         docker_image_ref: str,
-    ) -> tuple[DockerImageModel, python_on_whales.Image | None, str]:
+    ) -> tuple[DockerImageModel, python_on_whales.Image | None, list[str]]:
         """
         Given the docker_image_ref, this function prepares the image for you.
         Depending on the build_type, it either build the docker image or
@@ -351,7 +351,7 @@ class DockerService:
         return (
             docker_image_model,
             image,
-            tags[0],
+            tags,
         )
 
     @staticmethod
@@ -560,10 +560,13 @@ class DockerService:
                 else image_or_tags
             )
             for tag in tags:
+                # the tag suffix (part after the last ':')
+                tag_suffix = tag.split(":")[-1] if ":" in tag else ""
+
                 # Check if tags are already pushed
                 if (
                     (not self.overwrite_images)
-                    and tag not in self.always_overwrite_tags
+                    and tag_suffix not in self.always_overwrite_tags
                     and self.remote_image_tag_exists(tag)
                 ):
                     logger.user_info(
@@ -572,25 +575,6 @@ class DockerService:
                     continue
                 logger.user_info(text=f"Pushing docker image {tag}")
                 python_on_whales.docker.image.push(tag, quiet)
-
-    def push_image_ref(
-        self,
-        image_ref: str,
-        quiet: bool = False,  # noqa: ARG002
-    ) -> None:
-        """
-        Push a docker image ref to the registry (image must have tags)
-
-        Args:
-            image_ref: image_ref to push
-            quiet: If you don't want to see the progress bars.
-
-        Returns:
-            None
-        """
-        model, image, tag = self.get_image(image_ref)
-        if (image or tag) and model.build_type != ImageBuildType.provided_image:
-            self.push_image(image or [tag])
 
     @staticmethod
     def remove_image(image: python_on_whales.Image, force=False, prune=True) -> None:
@@ -642,17 +626,20 @@ class DockerService:
             # only get image tag
             docker_image_model = self.find_image_model_by_name(docker_image_ref)
             tags = self.construct_image_tag(image_name=docker_image_model.name)
+            # TODO: give option to use latest
             image_url = tags[0]
         elif push_mode == PushMode.manifests:
             # only build image
-            image_tag = self.get_image(docker_image_ref=docker_image_ref)
-            image_url = image_tag[2]
+            model, image, tags = self.get_image(docker_image_ref=docker_image_ref)
+            # TODO: give option to use latest
+            image_url = tags[0]
         else:
             # build image and push
-            image_tag = self.get_image(docker_image_ref=docker_image_ref)
-            if len(image_tag) > 1 and image_tag[1]:
-                self.push_image(image_tag[1])
-            image_url = image_tag[2]
+            model, image, tags = self.get_image(docker_image_ref=docker_image_ref)
+            if image:
+                self.push_image(image)
+            # TODO: give option to use latest
+            image_url = tags[0]
         return image_url
 
     @staticmethod

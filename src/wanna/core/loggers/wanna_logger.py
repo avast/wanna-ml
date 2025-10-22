@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import cast
 
@@ -21,7 +23,7 @@ class Spinner(Live):
         self.text = text
         super().__init__(text, **kwargs)
 
-    def __enter__(self) -> Live:
+    def __enter__(self) -> Spinner:
         self.update(f"{in_progress_sign} {self.text}")
         self.start(refresh=self._renderable is not None)
         return self
