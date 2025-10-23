@@ -61,7 +61,7 @@ pyyaml-include = "^2.2"
 PyYAML = "^6.0.3"
 smart-open = {extras = ["gcs"], version = "^7.3.1"}
 treelib = "^1.8.0"
-typer = "0.19.2"
+typer = "^0.20.0"
 waiting = "^1.5.0"
 rich = "^14.2.0"
 pendulum = "^3.1.0"
