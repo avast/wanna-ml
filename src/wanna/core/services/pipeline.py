@@ -51,7 +51,7 @@ class PipelineService(BaseService[PipelineModel]):
         version: str = "dev",
         push_mode: PushMode = PushMode.all,
         connector: VertexConnector[PipelineResource] = VertexConnector[PipelineResource](),
-        skip_execution_cache: bool = False,
+        skip_execution_cache: bool | None = None,
     ):
         super().__init__(
             instance_type="pipeline",

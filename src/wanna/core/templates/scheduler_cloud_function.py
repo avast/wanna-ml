@@ -60,7 +60,7 @@ def process_request(request):
 
     pipeline_spec_uri = request_json["pipeline_spec_uri"]
     parameter_values = _update_time_template(request_json["parameter_values"])
-    enable_caching = request_json.get("enable_caching", False)
+    enable_caching = request_json.get("enable_caching")
 
     aiplatform.init(project=PROJECT_ID, location=REGION, experiment=PIPELINE_EXPERIMENT)
 

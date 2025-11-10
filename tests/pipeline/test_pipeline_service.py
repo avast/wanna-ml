@@ -121,10 +121,7 @@ class TestPipelineService(unittest.TestCase):
 
         config = load_config_from_yaml(self.sample_pipeline_dir / "wanna.yaml", "default")
         pipeline_service = PipelineService(
-            config=config,
-            workdir=self.sample_pipeline_dir,
-            version="test",
-            skip_execution_cache=True,
+            config=config, workdir=self.sample_pipeline_dir, version="test"
         )
         # Setup expected data/fixtures
         expected_train_docker_image_model = LocalBuildImageModel(
@@ -248,10 +245,11 @@ class TestPipelineService(unittest.TestCase):
             load=True,
         )
 
-        self.assertEqual(pipeline_meta.enable_caching, False)
+        self.assertEqual(pipeline_meta.enable_caching, True)
         self.assertEqual(pipeline_meta.compile_env_params, expected_compile_env_params)
         self.assertEqual(Path(pipeline_meta.json_spec_path), expected_json_spec_path)
         self.assertEqual(pipeline_meta.parameter_values, expected_parameter_values)
+        self.assertEqual(pipeline_eval_meta.enable_caching, None)
 
         # asserting the non "latest" docker tag was created
         self.assertEqual(

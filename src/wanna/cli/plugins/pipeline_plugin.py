@@ -125,8 +125,8 @@ class PipelinePlugin(BasePlugin):
         profile_name: str = profile_name_option,
         instance_name: str = instance_name_option("pipeline", "run"),
         mode: PushMode = push_mode_option,
-        skip_execution_cache: bool = typer.Option(
-            False,
+        skip_execution_cache: bool | None = typer.Option(
+            None,
             "--skip-execution-cache",
             help="configuration to skip kfp execution cache",
         ),

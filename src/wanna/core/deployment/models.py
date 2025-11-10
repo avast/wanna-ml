@@ -73,7 +73,7 @@ class PipelineResource(GCPResource):
     json_spec_path: str
     parameter_values: dict[str, Any] = Field(default_factory=dict)
     labels: dict[str, str] = Field(default_factory=dict)
-    enable_caching: bool = True
+    enable_caching: bool | None
     schedule: CloudSchedulerModel | list[EnvCloudSchedulerModel] | None
     docker_refs: list[DockerBuildResult]
     compile_env_params: PipelineEnvParams
