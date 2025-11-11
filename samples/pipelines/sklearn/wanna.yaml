@@ -74,5 +74,4 @@ pipelines:
     pipeline_function: "wanna_simple.pipeline.wanna_sklearn_sample_eval"
     pipeline_params: params.eval.yaml
     docker_image_ref: ["train"]
-    enable_caching: true
     experiment: "wanna-sample-experiment"

@@ -46,7 +46,7 @@ class PipelineModel(BaseInstanceModel):
     network: str | None = None
     notification_channels_ref: list[str] = Field(default_factory=list)
     sla_hours: float | None = None
-    enable_caching: bool = True
+    enable_caching: bool | None = None
     experiment: str | None = None
 
     @model_validator(mode="before")
