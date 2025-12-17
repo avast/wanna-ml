@@ -36,7 +36,6 @@ from wanna.core.models.docker import (
     DockerBuildConfigModel,
     DockerImageModel,
     DockerModel,
-    ImageBuildType,
     LocalBuildImageModel,
     NotebookReadyImageModel,
     ProvidedImageModel,

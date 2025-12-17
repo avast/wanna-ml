@@ -177,7 +177,7 @@ class WorkbenchInstanceService(BaseWorkbenchService[InstanceModel]):
         elif vm_i := instance.environment.vm_image:
             vm_image = gcloud_notebooks_v2_types.VmImage(
                 project="cloud-notebooks-managed",
-                family=f"workbench-instances" if vm_i.version is None else None,
+                family="workbench-instances" if vm_i.version is None else None,
                 name=f"workbench-instances-{vm_i.version}" if vm_i.version is not None else None,
             )
             container_image = None
