@@ -33,8 +33,8 @@ from wanna.core.models.docker import (
     DockerBuildResult,
     ImageBuildType,
     LocalBuildImageModel,
+    ProvidedImageModel,
 )
-from wanna.core.services.docker import DockerService
 from wanna.core.services.pipeline import PipelineService
 from wanna.core.services.tensorboard import TensorboardService
 from wanna.core.utils.config_loader import load_config_from_yaml
@@ -115,7 +115,9 @@ class TestPipelineService(unittest.TestCase):
         pass
 
     @patch("python_on_whales.docker")
-    def test_run_pipeline(self, docker_mock):
+    @patch("wanna.core.services.docker.DockerService.push_image")
+    @patch("wanna.core.services.docker.DockerService.find_image_model_by_name")
+    def test_run_pipeline(self, find_image_mock, push_mock, docker_mock):
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 
@@ -128,8 +130,8 @@ class TestPipelineService(unittest.TestCase):
             name="train",
             build_type=ImageBuildType.local_build_image,
             build_args=None,
-            context_dir=".",
-            dockerfile="Dockerfile.train",
+            context_dir=Path("."),
+            dockerfile=Path("Dockerfile.train"),
         )
         expected_train_docker_tags = [
             "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:test",
@@ -138,7 +140,12 @@ class TestPipelineService(unittest.TestCase):
         expected_serve_docker_tags = [
             "europe-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-4:latest"
         ]
-        exppected_pipeline_root = (
+        expected_server_docker_image_model = ProvidedImageModel(
+            name="serve",
+            build_type=ImageBuildType.provided_image,
+            image_url=expected_serve_docker_tags[0],
+        )
+        expected_pipeline_root = (
             "gs://your-staging-bucket-name/wanna-pipelines/wanna-sklearn-sample/executions/"
         )
 
@@ -155,7 +162,7 @@ class TestPipelineService(unittest.TestCase):
             "bucket": "gs://your-staging-bucket-name",
             "region": "europe-west1",
             "version": "test",
-            "pipeline_root": exppected_pipeline_root,
+            "pipeline_root": expected_pipeline_root,
             "pipeline_labels": expected_pipeline_labels,
             "tensorboard": "projects/123456789/locations/europe-west4/tensorboards/123456789",
             "pipeline_network": "projects/123456789/global/networks/default",
@@ -201,15 +208,16 @@ class TestPipelineService(unittest.TestCase):
         )
 
         # Mock PipelineService
-        PipelineService._make_pipeline_root = MagicMock(return_value=exppected_pipeline_root)
+        PipelineService._make_pipeline_root = MagicMock(return_value=expected_pipeline_root)
         TensorboardService.get_or_create_tensorboard_instance_by_name = MagicMock(
             return_value="projects/123456789/locations/europe-west4/tensorboards/123456789"
         )
 
         # Mock Docker IO
-        DockerService._find_image_model_by_name = MagicMock(
-            return_value=expected_train_docker_image_model
-        )
+        find_image_mock.side_effect = [
+            expected_train_docker_image_model,  # First call - return train image
+            expected_server_docker_image_model,  # Second call - return serve image
+        ]
         docker_mock.build = MagicMock(return_value=None)
         docker_mock.pull = MagicMock(return_value=None)
 
@@ -283,9 +291,8 @@ class TestPipelineService(unittest.TestCase):
         PipelineJob._dashboard_uri.assert_called_once()
 
         # === Push ===
-        DockerService.push_image = MagicMock(return_value=None)
         push_result = pipeline_service.push(pipelines, local=True)
-        DockerService.push_image.assert_called_once_with(
+        push_mock.assert_called_once_with(
             [
                 "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:test",
                 "europe-west1-docker.pkg.dev/your-gcp-project-id/wanna-samples/pipeline-sklearn-example-1/train:latest",

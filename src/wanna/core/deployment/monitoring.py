@@ -10,13 +10,13 @@ if TYPE_CHECKING:  # pragma: no cover
     import google.cloud.logging as gcloud_logging
     import google.cloud.monitoring_v3 as gcloud_monitoring_v3
     import google.cloud.pubsub_v1 as gcloud_pubsub_v1
-    from waiting import wait
+    import waiting
 else:
     gcloud_exceptions = Import("google.cloud.exceptions")
     gcloud_logging = Import("google.cloud.logging")
     gcloud_monitoring_v3 = Import("google.cloud.monitoring_v3")
     gcloud_pubsub_v1 = Import("google.cloud.pubsub_v1")
-    wait = Import("waiting.wait")
+    waiting = Import("waiting")
 
 from wanna.core.deployment.credentials import GCPCredentialsMixIn
 from wanna.core.deployment.models import (
@@ -168,7 +168,7 @@ class MonitoringMixin(GCPCredentialsMixIn):
                 description=resource.description,
             )
             with logger.user_spinner(f"Creating log metric: {resource.name}"):
-                wait(
+                waiting.wait(
                     lambda: client.metrics_api.metric_get(
                         project=resource.project, metric_name=resource.name
                     ),

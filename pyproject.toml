@@ -126,10 +126,10 @@ env = [
 ]
 
 [tool.poe.tasks]
-# Separate import sorting until https://github.com/astral-sh/ruff/issues/8232 is merged
-_ruff_sort_imports = "ruff check --select I --fix ."
+# Separate checks until https://github.com/astral-sh/ruff/issues/8232 is merged
+_ruff_lint = "ruff check --fix ."
 _ruff_format = "ruff format ."
-format-code = ["_ruff_sort_imports", "_ruff_format"]
+format-code = ["_ruff_lint", "_ruff_format"]
 docs-deploy = "mkdocs gh-deploy --force"
 docs-serve = "mkdocs serve"
 
@@ -153,6 +153,12 @@ ignore = [
     "E5", # handled by formatter
     "E722",
     "PERF401"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [
+    "ARG001",  # needed for mocks
+    "ARG002"  # needed for mocks
 ]
 
 [tool.mypy]

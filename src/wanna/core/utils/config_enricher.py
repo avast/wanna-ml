@@ -70,9 +70,9 @@ def enrich_instance_info_with_gcp_settings_dict(
 
 
 def enrich_gcp_profile_with_wanna_default_labels(
-    cls,
+    cls,  # noqa: ARG001
     values_inst,
-    values,  # noqa: ARG001
+    values,
 ):
     """
     Enrich gcp_profile with wanna default project labels

@@ -152,7 +152,7 @@ class PipelineService(BaseService[PipelineModel]):
 
                     manifest_artifacts.append(
                         PathArtifact(
-                            name=f"Kubeflow V2 pipeline spec",
+                            name="Kubeflow V2 pipeline spec",
                             source=local_kubeflow_json_spec_path,
                             destination=manifest.json_spec_path,
                         )
