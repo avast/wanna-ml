@@ -31,15 +31,21 @@ gcloud auth configure-docker europe-west3-docker.pkg.dev
 conda create -n wanna python=3.8 poetry nomkl --channel conda-forge
 
 # Install project dependencies (including dev dependencies) and load our cli  into a Python virtual environment managed by Poetry 
-poetry install
+poetry install --without samples
 
 # Run the cli during dev
 wanna version
 
+# Format the code
+poe format-code
+
 # Check all is good in paradise - pylint, isort, mypy, tests
-task build
+pytest
 
 ```
+
+The `--without samples` is because it uses lots of packages which depend on numpy which tightens the testable python
+range. To try out everything locally, feel free to use `poetry install`, but make sure 
 
 ### Editable mode
 Project based on the `setuptools` package had to be installed in "editable mode"

@@ -38,7 +38,7 @@ def get_credentials() -> Union[google_auth_credentials.Credentials, None]:
                     source_credentials=_credentials,
                     target_principal=impersonate_account,
                     target_scopes=_credentials.scopes
-                    if _credentials and _credentials.scopes
+                    if _credentials and hasattr(_credentials, "scopes") and _credentials.scopes
                     else target_scopes,
                     lifetime=500,
                 )

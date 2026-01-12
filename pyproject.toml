@@ -70,6 +70,7 @@ igittigitt = "^2.1.5"
 google-cloud-pipeline-components = "^2.21.0"
 xgboost = "^3.1.1"
 scikit-learn = "^1.7.2"
+pandas = "^2.3.3"
 
 [tool.poetry.group.dev.dependencies]
 mkdocs-click = "^0.8.1"
@@ -120,6 +121,7 @@ filterwarnings = [
     'ignore::DeprecationWarning',
     'ignore::SyntaxWarning',
     'ignore::ResourceWarning',
+    'ignore::FutureWarning',    # is raised on python 3.10
 ]
 env = [
     "LABEL = test"
