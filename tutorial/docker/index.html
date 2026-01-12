@@ -1,0 +1,1118 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../profile/">
+      
+      
+        <link rel="next" href="../tensorboard/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>WANNA Docker - WANNA ML</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#wanna-docker" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="WANNA ML" class="md-header__button md-logo" aria-label="WANNA ML" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WANNA ML
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              WANNA Docker
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/avast/wanna-ml/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avast/wanna-ml
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="WANNA ML" class="md-nav__button md-logo" aria-label="WANNA ML" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WANNA ML
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/avast/wanna-ml/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    avast/wanna-ml
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Docker
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types-of-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types of docker images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#referencing-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Referencing docker images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-build-vs-gcp-cloud-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local build vs GCP Cloud Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters-for-docker-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters for docker section
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roles-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles and permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tensorboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Tensorboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Notebook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Job
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WANNA Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types-of-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types of docker images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#referencing-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Referencing docker images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-build-vs-gcp-cloud-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local build vs GCP Cloud Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters-for-docker-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters for docker section
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roles-and-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles and permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="wanna-docker">WANNA Docker<a class="headerlink" href="#wanna-docker" title="Permanent link">#</a></h1>
+<p>Multiple resources created by WANNA rely on Docker containers. We make it easy for you to
+build your images either locally or using GCP Cloud Build.</p>
+<h3 id="types-of-docker-images">Types of docker images<a class="headerlink" href="#types-of-docker-images" title="Permanent link">#</a></h3>
+<p>We currently support three types of docker images:</p>
+<ul>
+<li><code>provided_image</code> - you supply a link to the docker image in the registry. We don't build anything,
+  just redirect this link to GCP.</li>
+<li><code>local_build_image</code> - you supply a Dockerfile with a context directory and additional information.
+  We build the image for you on your machine or in the cloud.</li>
+<li><code>notebook_ready_image</code> - you supply a list of pip requirements to install in your Jupyter Notebook.
+This is useful if you want to start a notebook with custom libraries, but you don't want to handle
+  Dockerfile information.</li>
+</ul>
+<h3 id="referencing-docker-images">Referencing docker images<a class="headerlink" href="#referencing-docker-images" title="Permanent link">#</a></h3>
+<p>Each docker image must have a <code>name</code>. By this name, you can later reference it in 
+resource configuration, usually as <code>docker_image_ref</code>.</p>
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">docker</span><span class="o">:</span>
+<span class="w">  </span><span class="n">images</span><span class="o">:</span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">build_type</span><span class="o">:</span><span class="w"> </span><span class="n">local_build_image</span>
+<span class="w">      </span><span class="n">name</span><span class="o">:</span><span class="w"> </span><span class="n">custom</span><span class="o">-</span><span class="n">notebook</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">julia</span>
+<span class="w">      </span><span class="n">context_dir</span><span class="o">:</span><span class="w"> </span><span class="o">.</span>
+<span class="w">      </span><span class="n">dockerfile</span><span class="o">:</span><span class="w"> </span><span class="n">Dockerfile</span><span class="o">.</span><span class="na">notebook</span>
+<span class="w">  </span><span class="n">repository</span><span class="o">:</span><span class="w"> </span><span class="n">wanna</span><span class="o">-</span><span class="n">samples</span>
+<span class="w">  </span><span class="n">cloud_build</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+
+<span class="n">notebooks</span><span class="o">:</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="n">name</span><span class="o">:</span><span class="w"> </span><span class="n">wanna</span><span class="o">-</span><span class="n">notebook</span><span class="o">-</span><span class="n">julia</span>
+<span class="w">    </span><span class="n">environment</span><span class="o">:</span>
+<span class="w">      </span><span class="n">docker_image_ref</span><span class="o">:</span><span class="w"> </span><span class="n">custom</span><span class="o">-</span><span class="n">notebook</span><span class="o">-</span><span class="n">container</span><span class="o">-</span><span class="n">julia</span>
+</code></pre></div>
+
+<h3 id="local-build-vs-gcp-cloud-build">Local build vs GCP Cloud Build<a class="headerlink" href="#local-build-vs-gcp-cloud-build" title="Permanent link">#</a></h3>
+<p>By default, all docker images are built locally on your machine and then pushed to the registry.
+For faster testing lifecycle you can build images directly using GCP Cloud Build. 
+The only needed change is to set <code>cloud_build: true</code> in <code>docker</code> section of the WANNA yaml config
+or set <code>WANNA_DOCKER_BUILD_IN_CLOUD=true</code> (env variable takes precedence).</p>
+<p>Building in the cloud is generally faster as the docker images are automatically already in the registry
+and there is no need to push the images over the network. That makes it suitable for fast testing. 
+However, building images in the cloud is not allowed for production.</p>
+<h3 id="build-configuration">Build configuration<a class="headerlink" href="#build-configuration" title="Permanent link">#</a></h3>
+<p>When building locally, we offer you a way to set additional build parameters. These parameters
+must be specified in a separate yaml file in path <code>WANNA_DOCKER_BUILD_CONFIG</code>. If this is not set,
+it defaults to the <code>dockerbuild.yaml</code> in the working directory.</p>
+<p>These parameters refer to <a href="https://github.com/docker/buildx#buildx-bake-options-target">standard docker build parameters</a>.</p>
+<p>One example use case can be when you want to git clone your internal repository during
+the docker build.</p>
+<p>In the <code>dockerbuild.yaml</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">ssh</span><span class="o">:</span><span class="w"> </span><span class="n">github</span><span class="o">=~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span>
+</code></pre></div>
+
+<p>In the <code>Dockerfile</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nx">RUN</span><span class="w"> </span><span class="nx">mkdir</span><span class="w"> </span><span class="o">-</span><span class="nx">m</span><span class="w"> </span><span class="mi">700</span><span class="w"> </span><span class="o">/</span><span class="nx">root</span><span class="o">/</span><span class="p">.</span><span class="nx">ssh</span><span class="p">;</span><span class="w"> </span>\
+<span class="w">  </span><span class="nx">touch</span><span class="w"> </span><span class="o">-</span><span class="nx">m</span><span class="w"> </span><span class="mi">600</span><span class="w"> </span><span class="o">/</span><span class="nx">root</span><span class="o">/</span><span class="p">.</span><span class="nx">ssh</span><span class="o">/</span><span class="nx">known_hosts</span><span class="p">;</span><span class="w"> </span>\
+<span class="w">  </span><span class="nx">ssh</span><span class="o">-</span><span class="nx">keyscan</span><span class="w"> </span><span class="nx">git</span><span class="p">.</span><span class="nx">int</span><span class="p">.</span><span class="nx">avast</span><span class="p">.</span><span class="nx">com</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="o">/</span><span class="nx">root</span><span class="o">/</span><span class="p">.</span><span class="nx">ssh</span><span class="o">/</span><span class="nx">known_hosts</span>
+
+<span class="nx">RUN</span><span class="w"> </span><span class="o">--</span><span class="nx">mount</span><span class="p">=</span><span class="k">type</span><span class="p">=</span><span class="nx">ssh</span><span class="p">,</span><span class="nx">id</span><span class="p">=</span><span class="nx">github</span><span class="w"> </span><span class="nx">git</span><span class="w"> </span><span class="nx">clone</span><span class="w"> </span><span class="nx">git</span><span class="err">@</span><span class="nx">git</span><span class="p">.</span><span class="nx">your</span><span class="p">.</span><span class="nx">company</span><span class="p">.</span><span class="nx">com</span><span class="p">:</span><span class="nx">your_profile</span><span class="o">/</span><span class="nx">your_repo</span><span class="p">.</span><span class="nx">git</span>
+</code></pre></div>
+
+<h3 id="parameters-for-docker-section">Parameters for docker section<a class="headerlink" href="#parameters-for-docker-section" title="Permanent link">#</a></h3>
+<div class="autodoc">
+<div class="autodoc-signature"><em>class </em><code>wanna.core.models.docker.<strong>DockerModel</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">*</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">images=<factory></em><span class="autodoc-punctuation">, </span><em class="autodoc-param">repository=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">registry=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">cloud_build_timeout=12000</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">cloud_build=False</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">cloud_build_workerpool=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">cloud_build_workerpool_location=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">cloud_build_kaniko_version='latest'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">cloud_build_kaniko_flags=<factory></em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"><ul>
+<li><code>images</code>- [list[Union[LocalBuildImageModel, ProvidedImageModel, NotebookReadyImageModel]]] Docker images
+that will be used in wanna-ml resources</li>
+<li><code>repository</code> - [str] (optional) GCP Artifact Registry repository for pushing images</li>
+<li><code>registry</code> - [str] (optional) GCP Artifact Registry, when not set it defaults
+to <code>{gcp_profile.region}-docker.pkg.dev</code></li>
+<li><code>cloud_build_timeout</code> - [int] <code>12000</code> how many seconds before cloud build timeout</li>
+<li><code>cloud_build</code> - [str] (optional) <code>false</code> (default) to build locally, <code>true</code> to use GCP Cloud Build</li>
+<li><code>cloud_build_workerpool</code> - [str] (optional) Name of the GCP Cloud Build workerpool if you want to use one</li>
+<li><code>cloud_build_workerpool_location</code> - [str] (optional) Location of the GCP Cloud Build workerpool. Must be specified
+if cloud_build_workerpool is set.</li>
+<li><code>cloud_build_kaniko_version</code> - [str] (optional) which https://github.com/GoogleContainerTools/kaniko/ version to use</li>
+<li><code>cloud_build_kaniko_flags</code> - [str] (optional) which https://github.com/GoogleContainerTools/kaniko/ flags to use</li>
+</ul></div>
+</div>
+<div class="autodoc">
+<div class="autodoc-signature"><em>class </em><code>wanna.core.models.docker.<strong>ProvidedImageModel</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">*</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">name</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">build_type</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">image_url</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"><ul>
+<li><code>build_type</code> - [str] "provided_image"</li>
+<li><code>name</code> - [str] This will later be used in <code>docker_image_ref</code> in other resources</li>
+<li><code>image_url</code> - [str] URL link to the image</li>
+</ul></div>
+</div>
+<div class="autodoc">
+<div class="autodoc-signature"><em>class </em><code>wanna.core.models.docker.<strong>LocalBuildImageModel</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">*</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">name</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">build_type</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">build_args=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">context_dir</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dockerfile</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"><ul>
+<li><code>build_type</code> - [str] "local_build_image"</li>
+<li><code>name</code> - [str] This will later be used in <code>docker_image_ref</code> in other resources</li>
+<li><code>build_args</code> [dict[str, str]] - (optional) docker build args</li>
+<li><code>context_dir</code> [Path] - Path to the docker build context directory</li>
+<li><code>dockerfile</code> [Path] - Path to the Dockerfile</li>
+</ul></div>
+</div>
+<div class="autodoc">
+<div class="autodoc-signature"><em>class </em><code>wanna.core.models.docker.<strong>NotebookReadyImageModel</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">*</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">name</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">build_type</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">build_args=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">base_image='gcr.io/deeplearning-platform-release/base-cpu'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">requirements_txt</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"><ul>
+<li><code>build_type</code> - [str] "notebook_ready_image"</li>
+<li><code>name</code> - [str] This will later be used in <code>docker_image_ref</code> in other resources</li>
+<li><code>build_args</code> [dict[str, str]] - (optional) docker build args</li>
+<li><code>base_image</code> [str] - (optional) base notebook docker image, you can check
+available images https://cloud.google.com/deep-learning-vm/docs/images
+  when not set, it defaults to standard base CPU notebook.</li>
+<li><code>requirements_txt</code> [Path] - Path to the <code>requirements.txt</code> file containing python packages that will be installed</li>
+</ul></div>
+</div>
+<h3 id="roles-and-permissions">Roles and permissions<a class="headerlink" href="#roles-and-permissions" title="Permanent link">#</a></h3>
+<p>Permission and suggested roles (applying the principle of least privilege) required for docker images manipulation:</p>
+<table>
+<thead>
+<tr>
+<th>WANNA action</th>
+<th>Permissions</th>
+<th>Suggested Roles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>build in Cloud Build</td>
+<td><code>cloudbuild.builds.create</code> and <a href="https://cloud.google.com/build/docs/iam-roles-permissions">more</a></td>
+<td><code>roles/cloudbuild.builds.builder</code></td>
+</tr>
+<tr>
+<td>push</td>
+<td><code>artifactregistry.repositories.uploadArtifacts</code>, <code>artifactregistry.tags.create</code>, <code>artifactregistry.tags.update</code></td>
+<td><code>roles/artifactregistry.writer</code></td>
+</tr>
+</tbody>
+</table>
+<p>For building the docker images locally, you will need permission to push to GCP as described above and running local Docker daemon.
+You also have to authenticate docker with GCP, detailed documentation is <a href="https://cloud.google.com/artifact-registry/docs/docker/authentication">here</a>.
+But generally, you should be fine with running:</p>
+<div class="codehilite"><pre><span></span><code>gcloud<span class="w"> </span>auth<span class="w"> </span>login
+
+gcloud<span class="w"> </span>auth<span class="w"> </span>configure-docker<span class="w"> </span>europe-west1-docker.pkg.dev<span class="w"> </span><span class="c1"># Add more comma-separated repository hostnames if you wish</span>
+</code></pre></div>
+
+<p><a href="https://cloud.google.com/build/docs/iam-roles-permissions">Full list of available roles and permission.</a></p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
