@@ -36,6 +36,9 @@ poetry install --without samples
 # Run the cli during dev
 wanna version
 
+# Format the code
+poe format-code
+
 # Check all is good in paradise - pylint, isort, mypy, tests
 pytest
 
