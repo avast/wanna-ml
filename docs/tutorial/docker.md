@@ -74,9 +74,29 @@ In the `Dockerfile`:
 ```
 RUN mkdir -m 700 /root/.ssh; \
   touch -m 600 /root/.ssh/known_hosts; \
-  ssh-keyscan git.int.avast.com > /root/.ssh/known_hosts
+  ssh-keyscan git.your.company.com > /root/.ssh/known_hosts
 
 RUN --mount=type=ssh,id=github git clone git@git.your.company.com:your_profile/your_repo.git
+```
+
+Or if you use ssh agent, have this the `dockerbuild.yaml`:
+```
+ssh: default
+```
+
+and it works the same, here is example with poetry using dependency from git
+
+```toml
+[tool.poetry.dependencies]
+my-library = {git = "ssh://git@git.your.company.com:your_profile/your_repo.git", develop = true}
+```
+
+```
+RUN mkdir -m 700 /root/.ssh; \
+  touch -m 600 /root/.ssh/known_hosts; \
+  ssh-keyscan git.your.company.com > /root/.ssh/known_hosts
+
+RUN --mount=type=ssh poetry install
 ```
 
 ### Parameters for docker section
