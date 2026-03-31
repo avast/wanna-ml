@@ -63,6 +63,8 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             sync (bool): Allows to run the job in async vs sync mode
 
         """
+        import google.cloud.aiplatform_v1.types.pipeline_state  # noqa: F401 - needed for proto enum name resolution in logs
+
         custom_job = gcloud_aiplatform.CustomJob(**manifest.job_payload)
 
         if manifest.job_config.hp_tuning:
@@ -124,6 +126,8 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
             sync: Allows to run the job in async vs sync mode
         """
 
+        import google.cloud.aiplatform_v1.types.pipeline_state  # noqa: F401 - needed for proto enum name resolution in logs
+
         if manifest.job_config.worker and manifest.job_config.worker.container:
             training_job = gcloud_aiplatform.CustomContainerTrainingJob(
                 training_encryption_spec_key_name=manifest.encryption_spec,
@@ -139,7 +143,7 @@ class VertexJobsMixInVertex(ArtifactsPushMixin):
         else:
             raise ValueError(
                 "Wanna could not identify the type of job. Either container or python_package"
-                "must be set on the owrker"
+                "must be set on the worker"
             )
 
         with logger.user_spinner(f"Initiating {manifest.job_config.name} custom job"):
