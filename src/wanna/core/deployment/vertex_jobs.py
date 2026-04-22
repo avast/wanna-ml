@@ -9,8 +9,8 @@ from lazyimport import Import
 
 if TYPE_CHECKING:  # pragma: no cover
     import google.cloud.aiplatform as gcloud_aiplatform
-    import google.cloud.aiplatform_v1.types.pipeline_state as gcloud_aiplatform_v1_ps
     import google.cloud.aiplatform.hyperparameter_tuning as gcloud_aiplatform_hyperparameter_tuning
+    import google.cloud.aiplatform_v1.types.pipeline_state as gcloud_aiplatform_v1_ps
 else:
     gcloud_aiplatform = Import("google.cloud.aiplatform")
     gcloud_aiplatform_v1_ps = Import("google.cloud.aiplatform_v1.types.pipeline_state")
@@ -48,6 +48,7 @@ def _fmt_aiplatform_state_log(record: logging.LogRecord) -> bool:
             for a in record.args
         )
     if isinstance(record.msg, str) and "current state:" in record.msg:
+
         def _replace(m: re.Match) -> str:  # type: ignore[type-arg]
             try:
                 s = gcloud_aiplatform_v1_ps.PipelineState(int(m.group(2)))
