@@ -288,3 +288,31 @@ wanna pipeline run --manifest gs://wanna-cloudlab-europe-west1/wanna-pipelines/w
 
 The above snippet will run the pipeline we published earlier with a new set of params. Each manifest version is pushed to `gs://${PIPELINE_BUCKET}/pipeline-root/${PIPELINE_NAME}/deployment/release/${VERSION}/wanna_manifest.json` so it's easy to trigger these pipelines.
 
+## Scheduler
+
+### Configuration
+
+The Cloud Scheduler job is configured via the `schedule` block in `wanna.yaml`:
+
+```yaml
+pipelines:
+  - name: my-pipeline
+    schedule:
+      cron: "0 6 * * *"
+      timezone: "Europe/Prague"   # optional, default Etc/UTC
+      service_account: sa@project.iam.gserviceaccount.com  # optional
+```
+
+### Pause / unpause
+
+**Pause state is not configurable via `wanna.yaml`.** To pause or resume a scheduler job, use `gcloud` directly:
+
+```bash
+gcloud scheduler jobs pause   <job-name> --location <region>
+gcloud scheduler jobs resume  <job-name> --location <region>
+```
+
+### Behaviour on deploy when scheduler is paused
+
+`wanna pipeline deploy` calls `update_job` with an update mask of `["schedule", "http_target", "time_zone"]`. The `state` field is not part of the mask, so **a paused scheduler job remains paused after deploy** — the cron expression and HTTP target are updated, but the job is not resumed automatically.
+
