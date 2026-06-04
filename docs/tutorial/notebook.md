@@ -66,6 +66,73 @@ tutorial on this tool can be found [here](https://cloud.google.com/vertex-ai/doc
 If you set the `tensorboard_ref` in the WANNA yaml config, we will export the tensorboard resource name
 as `AIP_TENSORBOARD_LOG_DIR`.
 
+### GPU Accelerators
+
+Two categories of GPU configuration exist depending on the machine type:
+
+**Attachable GPUs** — added to N1 general-purpose machines; must be specified explicitly via `gpu`:
+
+```yaml
+notebooks:
+  - name: wanna-notebook-t4
+    machine_type: n1-standard-8
+    gpu:
+      count: 1
+      accelerator_type: NVIDIA_TESLA_T4
+      install_gpu_driver: true
+```
+
+| `accelerator_type`    | Notes                          |
+|-----------------------|--------------------------------|
+| `NVIDIA_TESLA_T4`     |                                |
+| `NVIDIA_TESLA_P4`     |                                |
+| `NVIDIA_TESLA_V100`   |                                |
+| `NVIDIA_TESLA_P100`   |                                |
+| `NVIDIA_TESLA_K80`    |                                |
+
+**Dedicated-hardware GPUs** — the GPU is physically part of the machine; **do not set `gpu` at all**. The accelerator is inferred from the machine type automatically. Setting `accelerator_type` to any of these values (e.g. `NVIDIA_L4`, `NVIDIA_TESLA_A100`) will fail validation.
+
+| GPU | Machine type family | Example machine types |
+|-----|--------------------|-----------------------|
+| GPU | Family | GPUs × machine type |
+|-----|--------|---------------------|
+| NVIDIA L4 | `g2` | 1× `g2-standard-4/8/16`, 2× `g2-standard-24/32`, 4× `g2-standard-48`, 8× `g2-standard-96` |
+| NVIDIA A100 40 GB | `a2-highgpu` | 1× `a2-highgpu-1g`, 2× `a2-highgpu-2g`, 4× `a2-highgpu-4g`, 8× `a2-highgpu-8g` |
+| NVIDIA A100 80 GB | `a2-ultragpu` | 1× `a2-ultragpu-1g`, 2× `a2-ultragpu-2g`, 4× `a2-ultragpu-4g`, 8× `a2-ultragpu-8g` |
+| NVIDIA H100 80 GB | `a3-highgpu` | 1× `a3-highgpu-1g`, 2× `a3-highgpu-2g`, 4× `a3-highgpu-4g`, 8× `a3-highgpu-8g` |
+| NVIDIA H200 | `a3-ultragpu` | 8× `a3-ultragpu-8g` |
+| NVIDIA B200 | `a4` | 1× `a4-highgpu-1g`, 4× `a4-highgpu-4g`, 8× `a4-highgpu-8g` |
+
+For dedicated-hardware GPUs the GPU count is determined by the machine type — there is no `gpu.count` field. Pick a larger machine type to get more GPUs.
+
+```yaml
+notebooks:
+  - name: wanna-notebook-1x-l4
+    machine_type: g2-standard-4      # 1× L4
+    environment:
+      vm_image: {}
+
+  - name: wanna-notebook-4x-l4
+    machine_type: g2-standard-48     # 4× L4
+    environment:
+      vm_image: {}
+
+  - name: wanna-notebook-1x-a100-40gb
+    machine_type: a2-highgpu-1g      # 1× A100 40 GB
+    environment:
+      vm_image: {}
+
+  - name: wanna-notebook-4x-a100-40gb
+    machine_type: a2-highgpu-4g      # 4× A100 40 GB
+    environment:
+      vm_image: {}
+
+  - name: wanna-notebook-2x-h100
+    machine_type: a3-highgpu-2g      # 2× H100 80 GB
+    environment:
+      vm_image: {}
+```
+
 ### Roles and permissions
 Permission and suggested roles (applying the principle of least privilege) required for notebook manipulation:
 
