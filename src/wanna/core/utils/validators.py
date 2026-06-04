@@ -9,12 +9,16 @@ from lazyimport import Import
 from pydantic_core.core_schema import ValidationInfo
 
 if TYPE_CHECKING:  # pragma: no cover
+    import google.cloud.aiplatform_v1.types.accelerator_type as gcloud_aiplatform_v1_types_accelerator_type
     import google.cloud.notebooks_v1.types.instance as gcloud_notebooks_v1_types_instance
     import google.cloud.storage as gcloud_storage
     from google.api_core import exceptions as gapi_core_exceptions
 else:
     gapi_core_exceptions = Import("google.api_core.exceptions")
     gcloud_notebooks_v1_types_instance = Import("google.cloud.notebooks_v1.types.instance")
+    gcloud_aiplatform_v1_types_accelerator_type = Import(
+        "google.cloud.aiplatform_v1.types.accelerator_type"
+    )
     gcloud_storage = Import("google.cloud.storage")
 
 from wanna.core.models.docker import DockerModel
@@ -110,7 +114,7 @@ def validate_disk_type(disk_type):
     disk_type = disk_type.upper()
     if disk_type not in gcloud_notebooks_v1_types_instance.Instance.DiskType.__members__:
         raise ValueError(
-            f"Disk type invalid ({type}). must be one of: {gcloud_notebooks_v1_types_instance.Instance.DiskType._member_names_}"
+            f"Disk type invalid ({disk_type}). must be one of: {gcloud_notebooks_v1_types_instance.Instance.DiskType._member_names_}"
         )
     return disk_type
 
@@ -122,6 +126,14 @@ def validate_accelerator_type(
         accelerator_type
         not in gcloud_notebooks_v1_types_instance.Instance.AcceleratorType.__members__
     ):
+        if (
+            accelerator_type
+            in gcloud_aiplatform_v1_types_accelerator_type.AcceleratorType.__members__
+        ):
+            logging.warning(
+                "GPUs with dedicated HW such as Nvidia L4, Nvidia A100 etc. must not be specified explicitly. "
+                "They are added automatically based on HW machine type."
+            )
         raise ValueError(
             f"GPU accelerator type invalid ({accelerator_type})."
             f"must be one of: {gcloud_notebooks_v1_types_instance.Instance.AcceleratorType._member_names_}"

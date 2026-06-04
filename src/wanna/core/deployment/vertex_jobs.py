@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import enum
-import logging
-import re
 from typing import TYPE_CHECKING
 
 from lazyimport import Import
@@ -10,10 +7,8 @@ from lazyimport import Import
 if TYPE_CHECKING:  # pragma: no cover
     import google.cloud.aiplatform as gcloud_aiplatform
     import google.cloud.aiplatform.hyperparameter_tuning as gcloud_aiplatform_hyperparameter_tuning
-    import google.cloud.aiplatform_v1.types.pipeline_state as gcloud_aiplatform_v1_ps
 else:
     gcloud_aiplatform = Import("google.cloud.aiplatform")
-    gcloud_aiplatform_v1_ps = Import("google.cloud.aiplatform_v1.types.pipeline_state")
     gcloud_aiplatform_hyperparameter_tuning = Import(
         "google.cloud.aiplatform.hyperparameter_tuning"
     )
@@ -32,35 +27,6 @@ from wanna.core.models.training_custom_job import (
 )
 
 logger = get_logger(__name__)
-
-
-_STATE_PATTERN = re.compile(r"(current state:)\n(\d+)")
-
-
-def _fmt_aiplatform_state_log(record: logging.LogRecord) -> bool:
-    # aiplatform pre-formats log messages with `"%s" % (...)` before calling the logger,
-    # so by the time the filter runs, the state int is already a string in record.msg.
-    # Replace "current state:\n3" with "current state:\nPipelineState.PIPELINE_STATE_RUNNING".
-    if record.args:
-        # Handle deferred-formatting case (future-proofing)
-        record.args = tuple(
-            f"{type(a).__name__}.{a.name}" if isinstance(a, enum.IntEnum) else a
-            for a in record.args
-        )
-    if isinstance(record.msg, str) and "current state:" in record.msg:
-
-        def _replace(m: re.Match) -> str:  # type: ignore[type-arg]
-            try:
-                s = gcloud_aiplatform_v1_ps.PipelineState(int(m.group(2)))
-                return f"{m.group(1)}\n{type(s).__name__}.{s.name}"
-            except (ValueError, KeyError):
-                return m.group(0)
-
-        record.msg = _STATE_PATTERN.sub(_replace, record.msg)
-    return True
-
-
-logging.getLogger("google.cloud.aiplatform.training_jobs").addFilter(_fmt_aiplatform_state_log)
 
 
 class VertexJobsMixInVertex(ArtifactsPushMixin):
