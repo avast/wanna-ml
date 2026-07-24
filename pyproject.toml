@@ -58,7 +58,7 @@ pydantic = "^2.12.3"
 python-on-whales = "^0.78.0"
 pyyaml-include = "^2.2"
 PyYAML = "^6.0.3"
-smart-open = {extras = ["gcs"], version = "^7.3.1"}
+smart-open = {extras = ["gcs"], version = ">=7.3.1,<9.0.0"}
 treelib = "^1.8.0"
 typer = ">=0.20.0,<1.0.0"
 waiting = "^1.5.0"
