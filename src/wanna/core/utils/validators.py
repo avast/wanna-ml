@@ -49,14 +49,14 @@ def validate_docker_images_defined(value, info: ValidationInfo):
 def validate_zone(zone, values):
     available_zones = get_available_zones(project_id=values.data.get("project_id"))
     if zone not in available_zones:
-        raise ValueError(f"Zone invalid ({zone}). must be on of: {available_zones}")
+        raise ValueError(f"Zone invalid ({zone}). must be one of: {available_zones}")
     return zone
 
 
 def validate_region(region, values):
     available_regions = get_available_regions(project_id=values.data.get("project_id"))
     if region not in available_regions:
-        raise ValueError(f"Region invalid ({region}). must be on of: {available_regions}")
+        raise ValueError(f"Region invalid ({region}). must be one of: {available_regions}")
     return region
 
 
@@ -66,7 +66,7 @@ def validate_machine_type(machine_type, values):
     )
     if machine_type not in available_machine_types:
         raise ValueError(
-            f"Machine type invalid ({machine_type}). must be on of: {available_machine_types}"
+            f"Machine type invalid ({machine_type}). must be one of: {available_machine_types}"
         )
     return machine_type
 
