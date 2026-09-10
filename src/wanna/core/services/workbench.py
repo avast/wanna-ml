@@ -100,7 +100,9 @@ class BaseWorkbenchService(BaseService[T]):
             logger.user_info(
                 f"{self.instance_type} {instance.name} already exists in location {self.workbench_location(instance)}"
             )
-            should_recreate = typer.confirm("Are you sure you want to delete it and start a new?")
+            should_recreate = typer.confirm(
+                "Are you sure you want to delete it and start a new one?"
+            )
             if should_recreate:
                 self._delete_one_instance(instance)
             else:
